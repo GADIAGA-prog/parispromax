@@ -2,13 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { useSettings } from '../context/SettingsContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 // Wraps premium content. When `locked` is true, the children are blurred and
 // an interactive lock overlay redirects the user to the Paywall.
 export default function LockCard({ locked, onUnlockPress, children, label }) {
-  const { currency } = useSettings();
   if (!locked) return <>{children}</>;
 
   return (
@@ -32,9 +30,7 @@ export default function LockCard({ locked, onUnlockPress, children, label }) {
         </Text>
         <View style={styles.cta}>
           <Ionicons name="diamond" size={14} color="#06251c" />
-          <Text style={styles.ctaText}>
-            Débloquer — {currency.price.toLocaleString('fr-FR')} {currency.symbol} / mois
-          </Text>
+          <Text style={styles.ctaText}>Voir les abonnements</Text>
         </View>
       </Pressable>
     </View>

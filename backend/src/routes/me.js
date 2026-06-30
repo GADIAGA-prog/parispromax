@@ -11,15 +11,13 @@ router.get('/', requireAuth, async (req, res) => {
   if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
   const access = await getAccess(req.userId);
 
-  const trialMsLeft = access.trialEnd ? Math.max(0, access.trialEnd - Date.now()) : 0;
   res.json({
     user: { id: user.id, phone: user.phone },
     access: {
       hasAccess: access.hasAccess,
       hasPaid: access.hasPaid,
-      trialActive: access.trialActive,
-      hoursRemaining: Math.ceil(trialMsLeft / (60 * 60 * 1000)),
-      paidUntil: access.paidEnd,
+      plan: access.plan,
+      paidUntil: access.paidUntil,
     },
   });
 });

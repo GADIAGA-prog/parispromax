@@ -1,47 +1,56 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { useSettings } from '../context/SettingsContext';
+import api from '../services/api';
 import { sendTestNotification } from '../services/NotificationService';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
+const STATUS_LABEL = {
+  success: 'Réussi',
+  pending: 'En attente',
+  failed: 'Échoué',
+  cancelled: 'Annulé',
+};
+
 export default function ProfileScreen({ navigation }) {
-  const {
-    phone,
-    hasPaid,
-    isTrialActive,
-    hoursRemaining,
-    logout,
-    simulateDay1,
-    simulateDay3,
-  } = useAuth();
-  const { currency, currencies, currencyCode, setCurrency } = useSettings();
+  const { phone, hasPaid, plan, paidUntil, logout, refreshAccess } = useAuth();
 
-  // The Dev Panel is hidden until the gear is tapped 5 times (discreet).
-  const [taps, setTaps] = useState(0);
-  const [devOpen, setDevOpen] = useState(false);
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const onGearTap = () => {
-    const next = taps + 1;
-    setTaps(next);
-    if (next >= 5) setDevOpen(true);
+  const loadPayments = useCallback(async () => {
+    try {
+      const data = await api.myPayments();
+      setPayments(data.payments || []);
+    } catch (e) {
+      // offline / not critical
+    } finally {
+      setLoadingPayments(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPayments();
+  }, [loadPayments]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refreshAccess(), loadPayments()]);
+    setRefreshing(false);
   };
 
-  const statusLabel = hasPaid
-    ? 'VIP — Abonné'
-    : isTrialActive
-    ? `Essai gratuit · ${hoursRemaining}h restantes`
-    : 'Essai expiré';
+  const statusLabel = hasPaid ? 'Abonné VIP' : 'Non abonné';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Mon profil</Text>
-          <Pressable onPress={onGearTap} hitSlop={10}>
-            <Ionicons name="settings-outline" size={22} color={COLORS.textMuted} />
+          <Pressable onPress={onRefresh} hitSlop={10}>
+            <Ionicons name={refreshing ? 'sync' : 'refresh'} size={22} color={COLORS.textMuted} />
           </Pressable>
         </View>
 
@@ -54,39 +63,31 @@ export default function ProfileScreen({ navigation }) {
           <View
             style={[
               styles.statusPill,
-              {
-                backgroundColor: hasPaid
-                  ? COLORS.gold
-                  : isTrialActive
-                  ? COLORS.accent
-                  : COLORS.danger,
-              },
+              { backgroundColor: hasPaid ? COLORS.gold : COLORS.danger },
             ]}
           >
             <Text style={styles.statusText}>{statusLabel}</Text>
           </View>
+          {hasPaid && paidUntil && (
+            <Text style={styles.paidUntil}>
+              Valable jusqu'au {new Date(paidUntil).toLocaleDateString('fr-FR')}
+            </Text>
+          )}
         </View>
 
         {/* Actions */}
-        {!hasPaid && (
-          <Pressable style={styles.action} onPress={() => navigation.navigate('Paywall')}>
-            <Ionicons name="diamond" size={20} color={COLORS.gold} />
-            <Text style={styles.actionText}>
-              Passer VIP — {currency.price.toLocaleString('fr-FR')} {currency.symbol} / mois
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
-          </Pressable>
-        )}
+        <Pressable style={styles.action} onPress={() => navigation.navigate('Paywall')}>
+          <Ionicons name="diamond" size={20} color={COLORS.gold} />
+          <Text style={styles.actionText}>{hasPaid ? 'Changer / prolonger mon abonnement' : 'Voir les abonnements'}</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+        </Pressable>
 
         <Pressable
           style={styles.action}
           onPress={async () => {
             const ok = await sendTestNotification();
             if (!ok) {
-              Alert.alert(
-                'Notifications',
-                "Les notifications fonctionnent dans l'app installée (APK). Indisponibles dans Expo Go depuis le SDK 53."
-              );
+              Alert.alert('Notifications', "Disponibles dans l'app installée (APK). Indisponibles dans Expo Go.");
             }
           }}
         >
@@ -95,60 +96,36 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
 
-        {/* Currency selector */}
-        <Text style={styles.sectionLabel}>Devise</Text>
-        <View style={styles.currencyRow}>
-          {Object.values(currencies).map((c) => {
-            const active = c.code === currencyCode;
-            return (
-              <Pressable
-                key={c.code}
-                style={[styles.currencyChip, active && styles.currencyChipActive]}
-                onPress={() => setCurrency(c.code)}
-              >
-                <Text style={[styles.currencyChipText, active && { color: '#06251c' }]}>
-                  {c.symbol}
+        {/* Payment history */}
+        <Text style={styles.sectionLabel}>Historique des paiements</Text>
+        {loadingPayments ? (
+          <ActivityIndicator color={COLORS.accent} style={{ marginVertical: SPACING.md }} />
+        ) : payments.length === 0 ? (
+          <Text style={styles.empty}>Aucun paiement pour le moment.</Text>
+        ) : (
+          payments.map((p) => (
+            <View key={p.transactionId} style={styles.payRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.payAmount}>
+                  {p.amount.toLocaleString('fr-FR')} {p.currency}
                 </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                <Text style={styles.payMeta}>
+                  {new Date(p.createdAt).toLocaleDateString('fr-FR')} · {p.method || '—'}
+                </Text>
+              </View>
+              <View style={[styles.payBadge, styles[`pay_${p.status}`]]}>
+                <Text style={styles.payBadgeText}>{STATUS_LABEL[p.status] || p.status}</Text>
+              </View>
+            </View>
+          ))
+        )}
 
-        <Pressable style={styles.action} onPress={logout}>
+        <Pressable style={[styles.action, { marginTop: SPACING.lg }]} onPress={logout}>
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
           <Text style={[styles.actionText, { color: COLORS.danger }]}>Se déconnecter</Text>
         </Pressable>
 
-        {/* Discreet Dev Panel */}
-        {devOpen && (
-          <View style={styles.devPanel}>
-            <View style={styles.devHead}>
-              <Ionicons name="construct" size={16} color={COLORS.gold} />
-              <Text style={styles.devTitle}>Dev Panel</Text>
-            </View>
-            <Text style={styles.devHint}>
-              Simulez l'état de l'essai pour tester la mise en page réactive.
-            </Text>
-            <Pressable
-              style={[styles.devBtn, { backgroundColor: COLORS.accent }]}
-              onPress={simulateDay1}
-            >
-              <Text style={styles.devBtnText}>Simulate Day 1 (Trial Active)</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.devBtn, { backgroundColor: COLORS.danger }]}
-              onPress={simulateDay3}
-            >
-              <Text style={[styles.devBtnText, { color: '#fff' }]}>
-                Simulate Day 3 (Trial Expired)
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        {!devOpen && (
-          <Text style={styles.version}>ParisPromax v1.0.0</Text>
-        )}
+        <Text style={styles.version}>ParisPromax v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,88 +134,45 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.lg },
   title: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900' },
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.lg,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
+    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md,
   },
   phone: { color: COLORS.text, fontSize: FONT.xl, fontWeight: '900' },
-  statusPill: {
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 4,
-    borderRadius: RADIUS.pill,
-  },
+  statusPill: { marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: 4, borderRadius: RADIUS.pill },
   statusText: { color: '#06251c', fontWeight: '800', fontSize: FONT.sm },
+  paidUntil: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.sm },
   action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
   },
   actionText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '700', flex: 1 },
-  sectionLabel: {
-    color: COLORS.textMuted,
-    fontSize: FONT.sm,
-    fontWeight: '700',
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
+  sectionLabel: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700', marginTop: SPACING.md, marginBottom: SPACING.sm },
   currencyRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm, flexWrap: 'wrap' },
   currencyChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    minWidth: 56,
-    alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.border, minWidth: 56, alignItems: 'center',
   },
   currencyChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   currencyChipText: { color: COLORS.text, fontWeight: '800', fontSize: FONT.sm },
-  devPanel: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginTop: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.gold,
+  empty: { color: COLORS.textFaint, fontSize: FONT.sm, fontStyle: 'italic', marginBottom: SPACING.sm },
+  payRow: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
   },
-  devHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  devTitle: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.md },
-  devHint: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.md },
-  devBtn: {
-    borderRadius: RADIUS.sm,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  devBtnText: { color: '#06251c', fontWeight: '900', fontSize: FONT.md },
+  payAmount: { color: COLORS.text, fontWeight: '800', fontSize: FONT.md },
+  payMeta: { color: COLORS.textFaint, fontSize: FONT.sm - 1, marginTop: 2 },
+  payBadge: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.sm },
+  payBadgeText: { fontWeight: '800', fontSize: FONT.sm - 2, color: COLORS.text },
+  pay_success: { backgroundColor: 'rgba(34,197,94,0.15)' },
+  pay_pending: { backgroundColor: 'rgba(251,191,36,0.15)' },
+  pay_failed: { backgroundColor: 'rgba(239,68,68,0.15)' },
+  pay_cancelled: { backgroundColor: 'rgba(148,163,184,0.15)' },
   version: { color: COLORS.textFaint, textAlign: 'center', marginTop: SPACING.xl, fontSize: FONT.sm },
 });

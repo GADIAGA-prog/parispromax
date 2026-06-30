@@ -7,162 +7,124 @@ import React, {
   useCallback,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api, { getToken, setToken, clearToken } from '../services/api';
 
 // ---------------------------------------------------------------------------
-// PARISPROMAX — Authentication, Free Trial & Subscription context
+// PARISPROMAX — Auth context backed by the hosted backend.
 //
-// Business rules:
-//  - On first phone login we stamp a "trialStart" timestamp.
-//  - The free trial lasts 48h (2 days). While active -> full VIP access.
-//  - When the trial expires, the user must subscribe (hasPaid) to keep access.
-//  - A Dev Panel can rewind/advance the trialStart timestamp to test layouts.
+//  - Login = phone -> OTP code -> JWT (stored).
+//  - Access state (trial / paid) comes from the backend /me endpoint and is
+//    cached locally so the paywall still resolves while briefly offline.
 // ---------------------------------------------------------------------------
 
-const TRIAL_DURATION_MS = 48 * 60 * 60 * 1000; // 48 hours
+const ACCESS_CACHE = '@ppm_access_cache';
+const PHONE_KEY = '@ppm_phone';
 
-const STORAGE_KEYS = {
-  phone: '@ppm_phone',
-  trialStart: '@ppm_trial_start',
-  hasPaid: '@ppm_has_paid',
+const defaultAccess = {
+  hasAccess: false,
+  hasPaid: false,
+  plan: null,
+  paidUntil: null,
 };
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [phone, setPhone] = useState(null);
-  const [trialStart, setTrialStart] = useState(null); // ms timestamp
-  const [hasPaid, setHasPaid] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [access, setAccess] = useState(defaultAccess);
   const [loading, setLoading] = useState(true);
 
-  // A ticking "now" so countdowns and lock state stay reactive.
-  const [now, setNow] = useState(Date.now());
-
-  // Hydrate persisted state.
+  // Hydrate token + cached access on boot.
   useEffect(() => {
     (async () => {
       try {
-        const [storedPhone, storedTrial, storedPaid] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.phone),
-          AsyncStorage.getItem(STORAGE_KEYS.trialStart),
-          AsyncStorage.getItem(STORAGE_KEYS.hasPaid),
+        const [token, storedPhone, cached] = await Promise.all([
+          getToken(),
+          AsyncStorage.getItem(PHONE_KEY),
+          AsyncStorage.getItem(ACCESS_CACHE),
         ]);
         if (storedPhone) setPhone(storedPhone);
-        if (storedTrial) setTrialStart(Number(storedTrial));
-        if (storedPaid === 'true') setHasPaid(true);
+        if (cached) setAccess({ ...defaultAccess, ...JSON.parse(cached) });
+        if (token) {
+          setIsLoggedIn(true);
+          await refreshAccess(); // get fresh state
+        }
       } catch (e) {
-        console.warn('Auth hydrate failed', e);
+        // ignore — stay logged out
       } finally {
         setLoading(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Refresh "now" every 30s so the trial banner counts down live.
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30 * 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  // --- Actions -------------------------------------------------------------
-
-  const login = useCallback(
-    async (phoneNumber) => {
-      const clean = String(phoneNumber || '').trim();
-      setPhone(clean);
-      await AsyncStorage.setItem(STORAGE_KEYS.phone, clean);
-
-      // Start the trial only if it has never been started.
-      let start = trialStart;
-      if (!start) {
-        start = Date.now();
-        setTrialStart(start);
-        await AsyncStorage.setItem(STORAGE_KEYS.trialStart, String(start));
+  const refreshAccess = useCallback(async () => {
+    try {
+      const data = await api.me();
+      const a = { ...defaultAccess, ...data.access };
+      setAccess(a);
+      setIsLoggedIn(true);
+      if (data.user?.phone) setPhone(data.user.phone);
+      await AsyncStorage.setItem(ACCESS_CACHE, JSON.stringify(a));
+      return a;
+    } catch (e) {
+      if (e.status === 401) {
+        await doLogout();
       }
-      setNow(Date.now());
-      return true;
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Step 1: request an OTP for a phone number. Returns { devCode? }.
+  const requestOtp = useCallback(async (phoneNumber) => {
+    const clean = String(phoneNumber || '').replace(/[^\d+]/g, '');
+    const res = await api.requestOtp(clean);
+    return res; // { ok, ttlMinutes, devCode? }
+  }, []);
+
+  // Step 2: verify the OTP -> store token, load access.
+  const verifyOtp = useCallback(
+    async (phoneNumber, code) => {
+      const clean = String(phoneNumber || '').replace(/[^\d+]/g, '');
+      const res = await api.verifyOtp(clean, code);
+      await setToken(res.token);
+      setPhone(res.user.phone);
+      await AsyncStorage.setItem(PHONE_KEY, res.user.phone);
+      setIsLoggedIn(true);
+      await refreshAccess();
+      return res.user;
     },
-    [trialStart]
+    [refreshAccess]
   );
 
-  const logout = useCallback(async () => {
-    setPhone(null);
-    await AsyncStorage.removeItem(STORAGE_KEYS.phone);
+  const doLogout = useCallback(async () => {
+    await clearToken();
+    await AsyncStorage.removeItem(ACCESS_CACHE);
+    setIsLoggedIn(false);
+    setAccess(defaultAccess);
   }, []);
-
-  const subscribe = useCallback(async () => {
-    setHasPaid(true);
-    await AsyncStorage.setItem(STORAGE_KEYS.hasPaid, 'true');
-  }, []);
-
-  // --- Dev Panel helpers ---------------------------------------------------
-
-  const simulateDay1 = useCallback(async () => {
-    // Trial just started -> ~48h remaining, active.
-    const start = Date.now();
-    setTrialStart(start);
-    setHasPaid(false);
-    await AsyncStorage.multiSet([
-      [STORAGE_KEYS.trialStart, String(start)],
-      [STORAGE_KEYS.hasPaid, 'false'],
-    ]);
-    setNow(Date.now());
-  }, []);
-
-  const simulateDay3 = useCallback(async () => {
-    // Trial started 3 days ago -> expired.
-    const start = Date.now() - 72 * 60 * 60 * 1000;
-    setTrialStart(start);
-    setHasPaid(false);
-    await AsyncStorage.multiSet([
-      [STORAGE_KEYS.trialStart, String(start)],
-      [STORAGE_KEYS.hasPaid, 'false'],
-    ]);
-    setNow(Date.now());
-  }, []);
-
-  // --- Derived values ------------------------------------------------------
-
-  const derived = useMemo(() => {
-    const elapsed = trialStart ? now - trialStart : 0;
-    const remainingMs = trialStart ? Math.max(0, TRIAL_DURATION_MS - elapsed) : 0;
-    const isTrialActive = !!trialStart && remainingMs > 0;
-    const hoursRemaining = Math.ceil(remainingMs / (60 * 60 * 1000));
-    const daysRemaining = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
-
-    // Full premium access if subscribed OR trial still running.
-    const hasAccess = hasPaid || isTrialActive;
-    // Hard paywall lockdown when trial expired AND not paid.
-    const isLocked = !hasAccess;
-
-    return {
-      isTrialActive,
-      hoursRemaining,
-      daysRemaining,
-      remainingMs,
-      hasAccess,
-      isLocked,
-    };
-  }, [trialStart, now, hasPaid]);
 
   const value = useMemo(
     () => ({
-      // state
+      // identity
       phone,
-      isLoggedIn: !!phone,
-      hasPaid,
-      trialStart,
+      isLoggedIn,
       loading,
-      now,
-      // derived
-      ...derived,
+      // access
+      hasPaid: access.hasPaid,
+      hasAccess: access.hasAccess,
+      isLocked: !access.hasAccess,
+      plan: access.plan,
+      paidUntil: access.paidUntil,
       // actions
-      login,
-      logout,
-      subscribe,
-      simulateDay1,
-      simulateDay3,
+      requestOtp,
+      verifyOtp,
+      refreshAccess,
+      logout: doLogout,
     }),
-    [phone, hasPaid, trialStart, loading, now, derived, login, logout, subscribe, simulateDay1, simulateDay3]
+    [phone, isLoggedIn, loading, access, requestOtp, verifyOtp, refreshAccess, doLogout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

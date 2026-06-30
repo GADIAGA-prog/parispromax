@@ -1,16 +1,16 @@
 const prisma = require('../db');
-const config = require('../config');
 
-// Activate (or extend) a user's paid subscription after a successful payment.
-async function activateSubscription(userId) {
-  const periodMs = config.subscription.periodDays * 24 * 60 * 60 * 1000;
+// Activate (or extend) a user's subscription after a successful payment.
+// `days` and `planId` come from the purchased plan.
+async function activateSubscription(userId, days, planId) {
+  const periodMs = (days || 30) * 24 * 60 * 60 * 1000;
 
   const existing = await prisma.subscription.findFirst({
-    where: { userId, plan: 'monthly' },
-    orderBy: { createdAt: 'desc' },
+    where: { userId },
+    orderBy: { currentPeriodEnd: 'desc' },
   });
 
-  // Extend from the later of now / current end.
+  // Extend from the later of now / current end (stacking remaining time).
   const base =
     existing?.currentPeriodEnd && existing.currentPeriodEnd > new Date()
       ? existing.currentPeriodEnd.getTime()
@@ -20,41 +20,28 @@ async function activateSubscription(userId) {
   if (existing) {
     return prisma.subscription.update({
       where: { id: existing.id },
-      data: { status: 'active', currentPeriodEnd },
+      data: { status: 'active', plan: planId || existing.plan, currentPeriodEnd },
     });
   }
   return prisma.subscription.create({
-    data: { userId, plan: 'monthly', status: 'active', currentPeriodEnd },
+    data: { userId, plan: planId || 'monthly', status: 'active', currentPeriodEnd },
   });
 }
 
-// Compute current access for a user: paid OR trial still valid.
+// Access = an active (non-expired) paid subscription. No trial anymore.
 async function getAccess(userId) {
-  const subs = await prisma.subscription.findMany({ where: { userId } });
   const now = new Date();
-  let hasPaid = false;
-  let trialActive = false;
-  let trialEnd = null;
-  let paidEnd = null;
+  const sub = await prisma.subscription.findFirst({
+    where: { userId, status: 'active', currentPeriodEnd: { gt: now } },
+    orderBy: { currentPeriodEnd: 'desc' },
+  });
 
-  for (const s of subs) {
-    if (s.status === 'active' && s.currentPeriodEnd && s.currentPeriodEnd > now) {
-      if (s.plan === 'monthly') {
-        hasPaid = true;
-        paidEnd = s.currentPeriodEnd;
-      } else if (s.plan === 'trial') {
-        trialActive = true;
-        trialEnd = s.currentPeriodEnd;
-      }
-    }
-  }
-
+  const hasPaid = !!sub;
   return {
-    hasAccess: hasPaid || trialActive,
+    hasAccess: hasPaid,
     hasPaid,
-    trialActive,
-    trialEnd,
-    paidEnd,
+    plan: sub?.plan || null,
+    paidUntil: sub?.currentPeriodEnd || null,
   };
 }
 

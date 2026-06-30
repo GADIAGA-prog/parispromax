@@ -5,6 +5,7 @@ const config = require('./config');
 const authRoutes = require('./routes/auth');
 const meRoutes = require('./routes/me');
 const paymentRoutes = require('./routes/payments');
+const planRoutes = require('./routes/plans');
 const raceRoutes = require('./routes/races');
 const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
@@ -56,6 +57,7 @@ app.get('/', (_req, res) => {
 app.use('/auth', authRoutes);
 app.use('/me', meRoutes);
 app.use('/payments', paymentRoutes);
+app.use('/plans', planRoutes);
 app.use('/races', raceRoutes);
 app.use('/stats', statsRoutes);
 app.use('/admin', adminRoutes);

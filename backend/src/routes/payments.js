@@ -1,9 +1,9 @@
 const express = require('express');
 const prisma = require('../db');
-const config = require('../config');
 const { requireAuth } = require('../auth');
 const cinetpay = require('../services/cinetpay');
 const { activateSubscription } = require('../services/subscription');
+const { getPlan } = require('../plans');
 
 const router = express.Router();
 
@@ -11,11 +11,14 @@ function genTxnId() {
   return `PPM-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 }
 
-// POST /payments/initiate  (auth)  { method?, channels? }
-// Creates a pending Payment and returns the PSP payment URL.
+// POST /payments/initiate  (auth)  { planId, method?, channels? }
+// Creates a pending Payment for a plan and returns the PSP payment URL.
 router.post('/initiate', requireAuth, async (req, res) => {
   try {
-    const amount = config.subscription.priceXOF;
+    const plan = getPlan(req.body.planId);
+    if (!plan) return res.status(400).json({ error: 'Plan invalide' });
+
+    const amount = plan.pricePromo;
     const transactionId = genTxnId();
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
 
@@ -26,9 +29,10 @@ router.post('/initiate', requireAuth, async (req, res) => {
         transactionId,
         amount,
         currency: 'XOF',
+        plan: plan.id,
         method: req.body.method || null,
         status: 'pending',
-        description: 'Abonnement VIP ParisPromax (mensuel)',
+        description: `Abonnement ParisPromax — ${plan.label}`,
       },
     });
 
@@ -47,6 +51,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
       mode: init.mode,
       amount,
       currency: 'XOF',
+      plan: plan.id,
     });
   } catch (e) {
     console.error('initiate error', e.message);
@@ -68,7 +73,10 @@ async function finalizeSuccess(transactionId, { method, raw } = {}) {
       rawPayload: raw ? JSON.stringify(raw) : payment.rawPayload,
     },
   });
-  if (payment.userId) await activateSubscription(payment.userId);
+  if (payment.userId) {
+    const plan = getPlan(payment.plan) || { days: 30, id: payment.plan };
+    await activateSubscription(payment.userId, plan.days, plan.id);
+  }
   return updated;
 }
 

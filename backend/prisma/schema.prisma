@@ -55,6 +55,7 @@ model Payment {
   providerRef   String?  // id returned by the PSP
   amount        Int
   currency      String   @default("XOF")
+  plan          String?  // plan id: daily | weekly | monthly | quarterly | annual
   method        String?  // card | orange-money | wave | mtn | moov
   status        String   @default("pending") // pending | success | failed | cancelled
   description   String?

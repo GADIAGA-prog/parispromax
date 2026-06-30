@@ -50,18 +50,8 @@ router.post('/verify-otp', async (req, res) => {
   let isNew = false;
   if (!user) {
     isNew = true;
-    user = await prisma.user.create({
-      data: { phone, trialStartedAt: new Date() },
-    });
-    // Start a 48h trial subscription record.
-    await prisma.subscription.create({
-      data: {
-        userId: user.id,
-        plan: 'trial',
-        status: 'active',
-        currentPeriodEnd: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      },
-    });
+    // No free trial: new users have no access until they subscribe.
+    user = await prisma.user.create({ data: { phone } });
   }
 
   const token = signToken(user);
