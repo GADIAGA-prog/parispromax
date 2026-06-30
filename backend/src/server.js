@@ -35,6 +35,24 @@ app.get('/health', (_req, res) =>
   })
 );
 
+// Friendly landing page so the root URL isn't a bare "Not found".
+app.get('/', (_req, res) => {
+  res.type('html').send(`<!doctype html><html lang="fr"><head><meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ParisPromax API</title>
+  <style>body{margin:0;background:#0f172a;color:#f8fafc;font-family:system-ui,Arial,sans-serif;
+  display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}
+  .card{background:#111c33;border:1px solid #1e293b;border-radius:16px;padding:36px;max-width:420px}
+  h1{color:#10b981;margin:0 0 8px} a{display:inline-block;margin:6px;padding:10px 18px;border-radius:10px;
+  background:#10b981;color:#06251c;font-weight:800;text-decoration:none}
+  .muted{color:#94a3b8;font-size:14px}</style></head>
+  <body><div class="card">
+  <h1>🏇 ParisPromax API</h1>
+  <p class="muted">Le serveur fonctionne. Ceci est l'API ; il n'y a pas de page publique ici.</p>
+  <a href="/admin">Back-office</a><a href="/health">État</a>
+  </div></body></html>`);
+});
+
 app.use('/auth', authRoutes);
 app.use('/me', meRoutes);
 app.use('/payments', paymentRoutes);

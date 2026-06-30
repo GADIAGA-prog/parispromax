@@ -1,10 +1,24 @@
 const express = require('express');
 const prisma = require('../db');
 const { requireAdmin } = require('../auth');
+const { ingestFromFile } = require('../jobs/ingest');
 
 const router = express.Router();
 
 router.use(requireAdmin);
+
+// POST /admin/api/ingest — load races from the bundled live_races.json into the
+// DB and compute predictions. One-click population from the back-office (no
+// shell needed). Live scraping stays a separate scheduled job.
+router.post('/api/ingest', async (_req, res) => {
+  try {
+    const count = await ingestFromFile();
+    res.json({ ok: true, count });
+  } catch (e) {
+    console.error('ingest endpoint error', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // JSON API: all payments (most recent first), with user phone joined.
 router.get('/api/payments', async (req, res) => {
@@ -109,6 +123,7 @@ const DASHBOARD_HTML = `<!doctype html>
   .s-pending{background:rgba(251,191,36,.15);color:var(--gold)}
   .s-failed{background:rgba(239,68,68,.15);color:var(--danger)}
   .filters{margin-bottom:12px}
+  .muted{color:var(--muted);font-size:13px;margin-left:8px}
   button,select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer}
 </style></head>
 <body>
@@ -124,6 +139,8 @@ const DASHBOARD_HTML = `<!doctype html>
       <option value="failed">Échoués</option>
     </select>
     <button onclick="load()">↻ Rafraîchir</button>
+    <button onclick="ingest()" style="background:#10b981;color:#06251c;font-weight:800">⬇ Ingérer les courses</button>
+    <span id="ingestMsg" class="muted"></span>
   </div>
   <table>
     <thead><tr><th>Date</th><th>Téléphone</th><th>Transaction</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead>
@@ -155,6 +172,16 @@ const DASHBOARD_HTML = `<!doctype html>
       '<td>'+(p.method||'—')+'</td>'+
       '<td><span class="badge s-'+p.status+'">'+p.status+'</span></td></tr>'
     ).join('') || '<tr><td colspan="6">Aucun paiement</td></tr>';
+  }
+  async function ingest(){
+    const msg = document.getElementById('ingestMsg');
+    msg.textContent = '⏳ Ingestion en cours…';
+    try {
+      const r = await fetch('/admin/api/ingest', { method: 'POST' });
+      const d = await r.json();
+      msg.textContent = d.ok ? ('✅ '+d.count+' courses ingérées') : ('❌ '+(d.error||'erreur'));
+    } catch(e){ msg.textContent = '❌ '+e.message; }
+    load();
   }
   load();
   setInterval(load, 15000);
