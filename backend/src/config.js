@@ -29,9 +29,12 @@ const config = {
   },
 };
 
-// Whether CinetPay is fully configured (real mode possible).
+// Whether CinetPay is configured for live payments. Only the API Key + Site ID
+// are required: we verify each transaction via CinetPay's server-side
+// /payment/check API (no HMAC secret needed). The Secret Key stays optional
+// (reserved for future webhook HMAC verification).
 config.cinetpay.configured = Boolean(
-  config.cinetpay.apiKey && config.cinetpay.siteId && config.cinetpay.secretKey
+  config.cinetpay.apiKey && config.cinetpay.siteId
 );
 
 module.exports = config;
