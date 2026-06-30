@@ -12,7 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import TrialBanner from '../components/TrialBanner';
 import LockCard from '../components/LockCard';
 import HorseCard from '../components/HorseCard';
-import { loadRaces, getSuccessRate } from '../services/dataService';
+import { loadRaces } from '../services/dataService';
+import api from '../services/api';
 import { analyzeRace, confidenceLabel } from '../services/aiEngine';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
@@ -34,7 +35,7 @@ function pickFeatured(tracks) {
 export default function QuintePlusScreen({ navigation }) {
   const { isLocked } = useAuth();
   const [featured, setFeatured] = useState(null);
-  const [rate, setRate] = useState(74);
+  const [rate, setRate] = useState(null); // real measured rate (null until data)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +46,12 @@ export default function QuintePlusScreen({ navigation }) {
         races: t.races.map((r) => analyzeRace(r)),
       }));
       setFeatured(pickFeatured(tracks));
-      setRate(getSuccessRate(data));
+      try {
+        const s = await api.successRate();
+        setRate(s.rate);
+      } catch (e) {
+        setRate(null);
+      }
       setLoading(false);
     })();
   }, []);
@@ -83,10 +89,12 @@ export default function QuintePlusScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Quinté+ du jour</Text>
-          <View style={styles.ratePill}>
-            <Ionicons name="trending-up" size={13} color="#06251c" />
-            <Text style={styles.ratePillText}>{rate}%</Text>
-          </View>
+          {rate != null && (
+            <View style={styles.ratePill}>
+              <Ionicons name="trending-up" size={13} color="#06251c" />
+              <Text style={styles.ratePillText}>{rate}%</Text>
+            </View>
+          )}
         </View>
 
         <TrialBanner />

@@ -2,19 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { loadRaces, getHistory, getSuccessRate } from '../services/dataService';
+import { loadRaces, getHistory } from '../services/dataService';
+import api from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 export default function HistoryScreen() {
   const [history, setHistory] = useState([]);
-  const [rate, setRate] = useState(74);
+  const [stat, setStat] = useState(null); // { rate, sampleSize } from backend
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const { data } = await loadRaces();
       setHistory(getHistory(data));
-      setRate(getSuccessRate(data));
+      try {
+        setStat(await api.successRate()); // real measured rate
+      } catch (e) {
+        setStat(null);
+      }
       setLoading(false);
     })();
   }, []);
@@ -33,10 +38,16 @@ export default function HistoryScreen() {
         <Text style={styles.title}>Historique des résultats</Text>
       </View>
 
-      {/* Success-rate banner */}
+      {/* Success-rate banner — REAL measured rate (honest: null until data) */}
       <View style={styles.rateBanner}>
         <Ionicons name="trending-up" size={20} color="#06251c" />
-        <Text style={styles.rateText}>Taux de réussite Quinté+ : {rate}%</Text>
+        {stat && stat.rate != null ? (
+          <Text style={styles.rateText}>
+            Taux de réussite IA : {stat.rate}% ({stat.sampleSize} courses)
+          </Text>
+        ) : (
+          <Text style={styles.rateText}>Taux de réussite : en cours de mesure</Text>
+        )}
       </View>
 
       <FlatList
