@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "source": "seed",
+    "generatedAt": "2026-06-30T06:00:00.000Z",
+    "successRateQuinte": 74,
+    "currency": "XOF"
+  },
+  "racetracks": [
+    {
+      "id": "vincennes",
+      "name": "Vincennes",
+      "discipline": "Trot Attelé",
+      "condition": "heavy",
+      "prizePool": 95000,
+      "country": "FR",
+      "races": [
+        {
+          "id": "vinc-r1",
+          "number": "R1",
+          "name": "Prix de Paris",
+          "time": "13:50",
+          "distance": "2700m",
+          "runners": 6,
+          "horses": [
+            { "number": 1, "name": "Eclair de Lune", "jockey": "JM Bazire", "trainer": "P. Levesque", "odds": 3.2, "formScore": 88, "chrono": 73.4, "winRate": 0.34, "jockeyRating": 92, "form": "1p 2p 1p" },
+            { "number": 2, "name": "Vent du Sahel", "jockey": "F. Nivard", "trainer": "S. Guarato", "odds": 5.5, "formScore": 79, "chrono": 73.9, "winRate": 0.26, "jockeyRating": 88, "form": "3p 1p 4p" },
+            { "number": 3, "name": "Roi Soleil", "jockey": "E. Raffin", "trainer": "JP Dubois", "odds": 8.0, "formScore": 72, "chrono": 73.1, "winRate": 0.21, "jockeyRating": 85, "form": "2p 5p 1p" },
+            { "number": 4, "name": "Tempête Noire", "jockey": "A. Abrivard", "trainer": "L. Groussard", "odds": 12.0, "formScore": 64, "chrono": 74.5, "winRate": 0.14, "jockeyRating": 80, "form": "6p 3p 2p" },
+            { "number": 5, "name": "Or de Bamako", "jockey": "M. Mottier", "trainer": "T. Duvaldestin", "odds": 6.5, "formScore": 75, "chrono": 73.6, "winRate": 0.23, "jockeyRating": 83, "form": "1p 4p 3p" },
+            { "number": 6, "name": "Diamant Brut", "jockey": "D. Locqueneux", "trainer": "F. Leblanc", "odds": 18.0, "formScore": 55, "chrono": 75.0, "winRate": 0.09, "jockeyRating": 76, "form": "8p 7p 5p" }
+          ]
+        },
+        {
+          "id": "vinc-r2",
+          "number": "R2",
+          "name": "Prix de l'Atlantique",
+          "time": "14:25",
+          "distance": "2100m",
+          "runners": 5,
+          "horses": [
+            { "number": 1, "name": "Fils du Vent", "jockey": "C. Martens", "trainer": "P. Belloche", "odds": 4.0, "formScore": 81, "chrono": 72.8, "winRate": 0.28, "jockeyRating": 86, "form": "1p 1p 3p" },
+            { "number": 2, "name": "Lion de Dakar", "jockey": "Y. Lebourgeois", "trainer": "JM Bazire", "odds": 7.5, "formScore": 70, "chrono": 73.3, "winRate": 0.19, "jockeyRating": 84, "form": "2p 4p 1p" },
+            { "number": 3, "name": "Étoile Filante", "jockey": "F. Nivard", "trainer": "S. Roger", "odds": 9.0, "formScore": 67, "chrono": 73.0, "winRate": 0.16, "jockeyRating": 82, "form": "5p 2p 2p" },
+            { "number": 4, "name": "Sultan d'Abidjan", "jockey": "A. Barrier", "trainer": "R. Westerink", "odds": 5.0, "formScore": 77, "chrono": 73.5, "winRate": 0.24, "jockeyRating": 85, "form": "1p 3p 4p" },
+            { "number": 5, "name": "Mistral Gagnant", "jockey": "G. Gelormini", "trainer": "F. Souloy", "odds": 11.0, "formScore": 60, "chrono": 74.1, "winRate": 0.12, "jockeyRating": 79, "form": "4p 6p 3p" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "longchamp",
+      "name": "ParisLongchamp",
+      "discipline": "Plat",
+      "condition": "dry",
+      "prizePool": 130000,
+      "country": "FR",
+      "races": [
+        {
+          "id": "long-r1",
+          "number": "R1",
+          "name": "Prix de l'Arc Préparatoire",
+          "time": "15:10",
+          "distance": "2400m",
+          "runners": 6,
+          "horses": [
+            { "number": 1, "name": "Sahara Express", "jockey": "C. Soumillon", "trainer": "A. Fabre", "odds": 2.8, "formScore": 90, "chrono": 0, "winRate": 0.38, "jockeyRating": 94, "form": "1p 1p 2p" },
+            { "number": 2, "name": "Prince d'Ivoire", "jockey": "M. Barzalona", "trainer": "JC Rouget", "odds": 6.0, "formScore": 74, "chrono": 0, "winRate": 0.22, "jockeyRating": 87, "form": "3p 2p 1p" },
+            { "number": 3, "name": "Reine de Saba", "jockey": "P. Bazire", "trainer": "F. Head", "odds": 4.5, "formScore": 80, "chrono": 0, "winRate": 0.27, "jockeyRating": 88, "form": "2p 1p 3p" },
+            { "number": 4, "name": "Tonnerre de Brest", "jockey": "A. Lemaitre", "trainer": "C. Laffon-Parias", "odds": 9.5, "formScore": 66, "chrono": 0, "winRate": 0.15, "jockeyRating": 81, "form": "4p 5p 2p" },
+            { "number": 5, "name": "Cheval de Feu", "jockey": "S. Pasquier", "trainer": "JC Rouget", "odds": 13.0, "formScore": 62, "chrono": 0, "winRate": 0.11, "jockeyRating": 80, "form": "6p 3p 4p" },
+            { "number": 6, "name": "Vol de Nuit", "jockey": "T. Bachelot", "trainer": "M. Delzangles", "odds": 16.0, "formScore": 58, "chrono": 0, "winRate": 0.1, "jockeyRating": 78, "form": "7p 6p 5p" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chantilly",
+      "name": "Chantilly",
+      "discipline": "Plat",
+      "condition": "soft",
+      "prizePool": 78000,
+      "country": "FR",
+      "races": [
+        {
+          "id": "chan-r1",
+          "number": "R1",
+          "name": "Prix du Jockey Club",
+          "time": "16:00",
+          "distance": "2100m",
+          "runners": 5,
+          "horses": [
+            { "number": 1, "name": "Aigle Royal", "jockey": "M. Guyon", "trainer": "A. Fabre", "odds": 3.5, "formScore": 85, "chrono": 0, "winRate": 0.31, "jockeyRating": 91, "form": "1p 2p 1p" },
+            { "number": 2, "name": "Perle d'Afrique", "jockey": "C. Demuro", "trainer": "F. Chappet", "odds": 5.0, "formScore": 76, "chrono": 0, "winRate": 0.24, "jockeyRating": 86, "form": "2p 1p 4p" },
+            { "number": 3, "name": "Baroudeur", "jockey": "A. Pouchin", "trainer": "S. Wattel", "odds": 8.5, "formScore": 68, "chrono": 0, "winRate": 0.17, "jockeyRating": 82, "form": "3p 4p 2p" },
+            { "number": 4, "name": "Comète", "jockey": "E. Hardouin", "trainer": "H. Pantall", "odds": 6.0, "formScore": 73, "chrono": 0, "winRate": 0.2, "jockeyRating": 84, "form": "1p 5p 3p" },
+            { "number": 5, "name": "Ouragan", "jockey": "T. Piccone", "trainer": "M. Boutin", "odds": 14.0, "formScore": 59, "chrono": 0, "winRate": 0.1, "jockeyRating": 77, "form": "6p 7p 4p" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deauville",
+      "name": "Deauville",
+      "discipline": "Trot Monté",
+      "condition": "dry",
+      "prizePool": 64000,
+      "country": "FR",
+      "races": [
+        {
+          "id": "deau-r1",
+          "number": "R1",
+          "name": "Prix de la Côte Fleurie",
+          "time": "17:05",
+          "distance": "2900m",
+          "runners": 5,
+          "horses": [
+            { "number": 1, "name": "Bourrasque", "jockey": "A. Abrivard", "trainer": "JM Bazire", "odds": 4.2, "formScore": 82, "chrono": 74.0, "winRate": 0.29, "jockeyRating": 89, "form": "1p 1p 4p" },
+            { "number": 2, "name": "Soleil Levant", "jockey": "M. Abrivard", "trainer": "S. Guarato", "odds": 6.0, "formScore": 74, "chrono": 73.7, "winRate": 0.22, "jockeyRating": 85, "form": "2p 3p 1p" },
+            { "number": 3, "name": "Pacha de Tunis", "jockey": "F. Lagadeuc", "trainer": "P. Vercruysse", "odds": 9.0, "formScore": 67, "chrono": 73.5, "winRate": 0.16, "jockeyRating": 81, "form": "4p 2p 5p" },
+            { "number": 4, "name": "Marquis de Sable", "jockey": "B. Rochard", "trainer": "F. Leblanc", "odds": 7.5, "formScore": 70, "chrono": 74.3, "winRate": 0.18, "jockeyRating": 83, "form": "3p 1p 6p" },
+            { "number": 5, "name": "Vagabond", "jockey": "E. Raffin", "trainer": "T. Duvaldestin", "odds": 12.0, "formScore": 61, "chrono": 74.6, "winRate": 0.12, "jockeyRating": 78, "form": "5p 6p 2p" }
+          ]
+        }
+      ]
+    }
+  ],
+  "history": [
+    { "id": "h1", "date": "2026-06-29", "track": "Vincennes", "race": "Quinté+ Prix d'Été", "winners": [4, 7, 1, 9, 3], "aiHit": true, "comment": "Combinaison IA validée — 4 chevaux sur 5 dans le bon ordre." },
+    { "id": "h2", "date": "2026-06-28", "track": "ParisLongchamp", "race": "Prix Maurice de Gheest", "winners": [2, 5, 8], "aiHit": true, "comment": "TOP PRONO IA gagnant à 4.5." },
+    { "id": "h3", "date": "2026-06-27", "track": "Chantilly", "race": "Prix de Diane", "winners": [6, 1, 3], "aiHit": false, "comment": "Favori IA 3ème — Value Bet non placé." },
+    { "id": "h4", "date": "2026-06-26", "track": "Deauville", "race": "Prix Rothschild", "winners": [3, 2, 7, 5], "aiHit": true, "comment": "Value Bet IA gagnant à 9.0 — gros rapport." },
+    { "id": "h5", "date": "2026-06-25", "track": "Vincennes", "race": "Quinté+ Prix de Cornulier", "winners": [1, 4, 2, 6, 8], "aiHit": true, "comment": "Record Chrono confirmé — TOP PRONO 1er." }
+  ]
+}
