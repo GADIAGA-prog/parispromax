@@ -1,0 +1,164 @@
+const express = require('express');
+const prisma = require('../db');
+const { requireAdmin } = require('../auth');
+
+const router = express.Router();
+
+router.use(requireAdmin);
+
+// JSON API: all payments (most recent first), with user phone joined.
+router.get('/api/payments', async (req, res) => {
+  const status = req.query.status;
+  const where = status ? { status } : {};
+  const payments = await prisma.payment.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: 500,
+    include: { user: { select: { phone: true } } },
+  });
+  res.json({ payments });
+});
+
+router.get('/api/stats', async (req, res) => {
+  const [total, success, pending, failed] = await Promise.all([
+    prisma.payment.count(),
+    prisma.payment.count({ where: { status: 'success' } }),
+    prisma.payment.count({ where: { status: 'pending' } }),
+    prisma.payment.count({ where: { status: 'failed' } }),
+  ]);
+  const revenueAgg = await prisma.payment.aggregate({
+    where: { status: 'success' },
+    _sum: { amount: true },
+  });
+  const users = await prisma.user.count();
+  const activeSubs = await prisma.subscription.count({
+    where: { status: 'active', plan: 'monthly', currentPeriodEnd: { gt: new Date() } },
+  });
+  res.json({
+    total,
+    success,
+    pending,
+    failed,
+    revenue: revenueAgg._sum.amount || 0,
+    users,
+    activeSubs,
+  });
+});
+
+// POST /admin/api/results  { externalId, winners: [4,7,1,...] }
+// Records the official arrival and computes whether our #1 AI pick placed.
+router.post('/api/results', express.json(), async (req, res) => {
+  const { externalId, winners } = req.body || {};
+  if (!externalId || !Array.isArray(winners) || !winners.length) {
+    return res.status(400).json({ error: 'externalId et winners[] requis' });
+  }
+  const race = await prisma.race.findUnique({
+    where: { externalId },
+    include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  });
+  if (!race) return res.status(404).json({ error: 'Course introuvable' });
+
+  let predicted = false;
+  if (race.predictions.length) {
+    let picks = [];
+    try {
+      picks = JSON.parse(race.predictions[0].topPicks);
+    } catch {
+      picks = [];
+    }
+    const topPick = picks[0];
+    // Hit = our #1 pick is among the placed (winners) runners.
+    predicted = topPick ? winners.includes(topPick.number) : false;
+  }
+
+  const result = await prisma.result.upsert({
+    where: { raceId: race.id },
+    update: { winners: JSON.stringify(winners), predicted },
+    create: { raceId: race.id, winners: JSON.stringify(winners), predicted },
+  });
+  res.json({ ok: true, predicted, resultId: result.id });
+});
+
+// HTML dashboard.
+router.get('/', async (_req, res) => {
+  res.type('html').send(DASHBOARD_HTML);
+});
+
+const DASHBOARD_HTML = `<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ParisPromax — Back-office</title>
+<style>
+  :root{--bg:#0f172a;--surface:#111c33;--border:#1e293b;--text:#f8fafc;--muted:#94a3b8;--accent:#10b981;--gold:#fbbf24;--danger:#ef4444}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
+  header{background:#064e3b;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+  header h1{font-size:18px;margin:0}
+  .wrap{padding:24px;max-width:1100px;margin:0 auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .card .label{color:var(--muted);font-size:12px;text-transform:uppercase}
+  .card .value{font-size:24px;font-weight:800;margin-top:6px}
+  .accent{color:var(--accent)} .gold{color:var(--gold)} .danger{color:var(--danger)}
+  table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
+  th{color:var(--muted);text-transform:uppercase;font-size:11px}
+  .badge{padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700}
+  .s-success{background:rgba(16,185,129,.15);color:var(--accent)}
+  .s-pending{background:rgba(251,191,36,.15);color:var(--gold)}
+  .s-failed{background:rgba(239,68,68,.15);color:var(--danger)}
+  .filters{margin-bottom:12px}
+  button,select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer}
+</style></head>
+<body>
+<header><h1>🏇 ParisPromax — Back-office paiements</h1><span id="now" style="color:#9fe3c8"></span></header>
+<div class="wrap">
+  <div class="cards" id="stats"></div>
+  <div class="filters">
+    <label>Filtrer : </label>
+    <select id="statusFilter" onchange="load()">
+      <option value="">Tous</option>
+      <option value="success">Réussis</option>
+      <option value="pending">En attente</option>
+      <option value="failed">Échoués</option>
+    </select>
+    <button onclick="load()">↻ Rafraîchir</button>
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Téléphone</th><th>Transaction</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="6">Chargement…</td></tr></tbody>
+  </table>
+</div>
+<script>
+  document.getElementById('now').textContent = new Date().toLocaleString('fr-FR');
+  function fmt(n){return Number(n).toLocaleString('fr-FR')}
+  async function load(){
+    const s = document.getElementById('statusFilter').value;
+    const [stats, pay] = await Promise.all([
+      fetch('/admin/api/stats').then(r=>r.json()),
+      fetch('/admin/api/payments'+(s?('?status='+s):'')).then(r=>r.json())
+    ]);
+    document.getElementById('stats').innerHTML = [
+      ['Revenu (XOF)', fmt(stats.revenue), 'accent'],
+      ['Paiements réussis', stats.success, 'accent'],
+      ['En attente', stats.pending, 'gold'],
+      ['Échoués', stats.failed, 'danger'],
+      ['Abonnés actifs', stats.activeSubs, ''],
+      ['Utilisateurs', stats.users, ''],
+    ].map(([l,v,c])=>'<div class="card"><div class="label">'+l+'</div><div class="value '+c+'">'+v+'</div></div>').join('');
+    document.getElementById('rows').innerHTML = (pay.payments||[]).map(p=>
+      '<tr><td>'+new Date(p.createdAt).toLocaleString('fr-FR')+'</td>'+
+      '<td>'+(p.user?p.user.phone:'—')+'</td>'+
+      '<td><code>'+p.transactionId+'</code></td>'+
+      '<td>'+fmt(p.amount)+' '+p.currency+'</td>'+
+      '<td>'+(p.method||'—')+'</td>'+
+      '<td><span class="badge s-'+p.status+'">'+p.status+'</span></td></tr>'
+    ).join('') || '<tr><td colspan="6">Aucun paiement</td></tr>';
+  }
+  load();
+  setInterval(load, 15000);
+</script>
+</body></html>`;
+
+module.exports = router;

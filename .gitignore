@@ -33,6 +33,18 @@ yarn-error.*
 # local env files
 .env*.local
 
+# backend
+backend/node_modules/
+backend/.env
+backend/dev.db
+backend/dev.db-journal
+backend/prisma/dev.db*
+backend/prisma/schema.production.prisma
+backend/test-e2e.js
+
+# verification artifacts
+dist-verify/
+
 # typescript
 *.tsbuildinfo
 

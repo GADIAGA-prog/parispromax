@@ -1,0 +1,55 @@
+# Render Blueprint for the ParisPromax backend.
+# Deploy: push this repo to GitHub, then in Render -> "New +" -> "Blueprint",
+# pick the repo. Render creates the Postgres DB + the web service automatically.
+# After the first deploy, set PUBLIC_BASE_URL to the service URL and add your
+# real CinetPay keys in the dashboard (they are marked sync:false = set manually).
+
+databases:
+  - name: parispromax-db
+    plan: free
+    databaseName: parispromax
+    user: parispromax
+
+services:
+  - type: web
+    name: parispromax-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build:prod
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: parispromax-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: "4000"
+      - key: OTP_DEV_MODE
+        value: "true"
+      - key: OTP_TTL_MINUTES
+        value: "5"
+      - key: CINETPAY_MODE
+        value: sandbox
+      - key: CINETPAY_BASE_URL
+        value: https://api-checkout.cinetpay.com/v2
+      - key: SUB_PRICE_XOF
+        value: "5000"
+      - key: SUB_PERIOD_DAYS
+        value: "30"
+      - key: ADMIN_USER
+        value: admin
+      # The following are set manually in the Render dashboard (secrets / post-deploy):
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: CINETPAY_API_KEY
+        sync: false
+      - key: CINETPAY_SITE_ID
+        sync: false
+      - key: CINETPAY_SECRET_KEY
+        sync: false

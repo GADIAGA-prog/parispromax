@@ -1,0 +1,33 @@
+{
+  "name": "parispromax-backend",
+  "version": "1.0.0",
+  "description": "ParisPromax backend — API, paiements CinetPay, back-office",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "ingest": "node src/jobs/ingest.js",
+    "scrape": "node ../src/backend-scraper/scraper.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "gen:prod-schema": "node scripts/gen-prod-schema.js",
+    "build:prod": "node scripts/gen-prod-schema.js && prisma generate --schema=prisma/schema.production.prisma && prisma db push --schema=prisma/schema.production.prisma --skip-generate"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "axios": "^1.18.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "prisma": "^6.19.3"
+  },
+  "devDependencies": {}
+}

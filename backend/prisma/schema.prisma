@@ -1,0 +1,103 @@
+// PARISPROMAX backend — Prisma schema.
+// Dev uses SQLite (zero-config). For production switch `provider` to
+// "postgresql" or "mysql" and update DATABASE_URL in .env (JSON columns can
+// then become native Json instead of stringified text).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  phone         String         @unique
+  trialStartedAt DateTime?
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+  payments      Payment[]
+}
+
+// One-time codes for phone login (OTP).
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  plan             String   @default("monthly")
+  status           String   @default("inactive") // active | inactive | expired
+  currentPeriodEnd DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  provider      String   @default("cinetpay")
+  transactionId String   @unique // our generated id sent to the PSP
+  providerRef   String?  // id returned by the PSP
+  amount        Int
+  currency      String   @default("XOF")
+  method        String?  // card | orange-money | wave | mtn | moov
+  status        String   @default("pending") // pending | success | failed | cancelled
+  description   String?
+  rawPayload    String?  // JSON string of the provider payload
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ---- Racing data + predictions (real success-rate tracking) ---------------
+
+model Race {
+  id          String       @id @default(cuid())
+  externalId  String       @unique // e.g. geny course id "c1663633"
+  track       String
+  name        String
+  date        String       // YYYY-MM-DD
+  discipline  String?
+  condition   String?
+  distance    String?
+  raw         String?      // JSON string of full race + horses
+  createdAt   DateTime     @default(now())
+  predictions Prediction[]
+  result      Result?
+}
+
+model Prediction {
+  id        String   @id @default(cuid())
+  raceId    String
+  race      Race     @relation(fields: [raceId], references: [id])
+  topPicks  String   // JSON string: [{number,name,aiScore,rank}]
+  createdAt DateTime @default(now())
+
+  @@index([raceId])
+}
+
+model Result {
+  id         String   @id @default(cuid())
+  raceId     String   @unique
+  race       Race     @relation(fields: [raceId], references: [id])
+  winners    String   // JSON string: [4,7,1,9,3]
+  predicted  Boolean  @default(false) // did our top pick land in the placed runners?
+  createdAt  DateTime @default(now())
+}
