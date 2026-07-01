@@ -61,10 +61,10 @@ function musiqueToFormScore(musique) {
   if (!musique) return null;
   const tokens = musique.match(/(\d+|[A-Za-z])/g) || [];
   const placings = [];
-  for (let i = 0; i < tokens.length && placings.length < 5; i++) {
+  for (let i = 0; i < tokens.length && placings.length < 6; i++) {
     const t = tokens[i];
     if (/^\d+$/.test(t)) placings.push(parseInt(t, 10));
-    else if (/^[DTAR]$/i.test(t)) placings.push(99);
+    else if (/^[DTAR]$/i.test(t)) placings.push(99); // Disqualifié/Tombé/Arrêté/Rétrogradé
   }
   if (!placings.length) return null;
   const valueOf = (p) => {
@@ -76,7 +76,16 @@ function musiqueToFormScore(musique) {
     if (p >= 6 && p < 99) return 32;
     return 12;
   };
-  return Math.round(placings.reduce((s, p) => s + valueOf(p), 0) / placings.length);
+  // Recency-weighted: the most recent run (first token) counts the most.
+  const weights = [1, 0.85, 0.7, 0.55, 0.42, 0.3];
+  let s = 0;
+  let sw = 0;
+  placings.forEach((p, i) => {
+    const w = weights[i] || 0.2;
+    s += valueOf(p) * w;
+    sw += w;
+  });
+  return Math.round(s / sw);
 }
 
 function mapCondition(text) {
@@ -123,6 +132,7 @@ async function fetchCourse(course) {
       jockey: cells[4] || '',
       trainer: cells[5] || '',
       form: cells[6] || '',
+      gains: parseInt((cells[7] || '').replace(/\D/g, ''), 10) || null,
       odds: null,
       formScore: musiqueToFormScore(cells[6] || ''),
       chrono: 0,

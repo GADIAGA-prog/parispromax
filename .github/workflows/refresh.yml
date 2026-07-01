@@ -1,27 +1,26 @@
-name: Refresh races & results
+name: Scrape races (full refresh)
 
-# Automatically refreshes the ParisPromax backend twice a day:
-#   - scrapes the day's races (geny.com)
-#   - auto-detects results (arrivals) for finished races -> real success rate
+# Full refresh: scrape the day's programme (geny.com) + detect results.
+# Runs a few times a day so odds published closer to post time get folded into
+# the AI predictions (re-ranking). Frequent RESULTS detection is a separate,
+# lighter workflow (results.yml).
 #
-# Setup: add a repo secret named CRON_TOKEN (Settings -> Secrets and variables
-# -> Actions) with the SAME value as the backend's CRON_TOKEN env var on Render.
+# Setup: repo secret CRON_TOKEN = the backend's CRON_TOKEN env var (Render).
 
 on:
   schedule:
-    - cron: '30 6 * * *'   # 06:30 UTC — morning: scrape the day's programme
-    - cron: '0 20 * * *'   # 20:00 UTC — evening: detect results
-  workflow_dispatch: {}     # allow manual runs from the Actions tab
+    - cron: '30 6 * * *'    # 06:30 UTC — morning programme
+    - cron: '0 11 * * *'    # 11:00 UTC — midday (odds start publishing)
+    - cron: '30 15 * * *'   # 15:30 UTC — afternoon (fresh odds)
+  workflow_dispatch: {}
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger backend refresh
+      - name: Trigger full refresh
         run: |
-          echo "Calling /cron/refresh…"
           curl -fsS -X POST \
             "https://parispromax-backend.onrender.com/cron/refresh?token=${{ secrets.CRON_TOKEN }}" \
-            --max-time 300
+            --max-time 60
           echo ""
-          echo "Done."

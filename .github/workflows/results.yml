@@ -1,0 +1,27 @@
+name: Detect results (frequent)
+
+# Lightweight, frequent polling so race ARRIVALS appear shortly after each race
+# finishes (users don't wait until the evening). Only detects results; no scrape.
+#
+# NOTE: GitHub scheduled workflows can be delayed several minutes and may be
+# throttled. For tighter/more reliable polling, point an external scheduler
+# (e.g. cron-job.org, every 10-15 min) at:
+#   POST https://parispromax-backend.onrender.com/cron/results?token=<CRON_TOKEN>
+#
+# Setup: repo secret CRON_TOKEN = the backend's CRON_TOKEN env var (Render).
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'   # every 20 minutes
+  workflow_dispatch: {}
+
+jobs:
+  results:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger results detection
+        run: |
+          curl -fsS -X POST \
+            "https://parispromax-backend.onrender.com/cron/results?token=${{ secrets.CRON_TOKEN }}" \
+            --max-time 60
+          echo ""

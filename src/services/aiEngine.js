@@ -1,18 +1,12 @@
 // ---------------------------------------------------------------------------
-// PARISPROMAX — AI prediction engine
+// PARISPROMAX — AI prediction engine (app). Mirrors backend src/services/aiEngine.
 //
-// Lightweight, fully on-device heuristic "AI" that scores each runner and
-// assigns visual badges. No network / no heavy ML — designed to run instantly
-// on low-end Android hardware and offline.
-//
-// Each horse is expected to expose (all optional, sane defaults applied):
-//   number      : bib number
-//   name        : string
-//   odds        : decimal odds / cote (e.g. 4.5)  — lower = more favored
-//   formScore   : 0..100 recent-form rating
-//   chrono      : reduction kilométrique in seconds (lower = faster). Trot/plat.
-//   winRate     : 0..1 historical win ratio
-//   jockeyRating: 0..100
+// Race-level scoring blending the real signals from the source:
+//   - recent form (musique -> formScore, recency-weighted upstream)
+//   - class (career earnings "gains", normalized within the race)
+//   - market confidence (odds, when published)
+//   - jockey rating (when available)
+// Weights adapt to whether odds are published.
 // ---------------------------------------------------------------------------
 
 export const BADGES = {
@@ -21,111 +15,99 @@ export const BADGES = {
   CHRONO: { key: 'CHRONO', label: '⏱️ RECORD CHRONO', color: '#38bdf8' },
 };
 
-// Normalize odds into an implied-probability-ish 0..100 strength (lower odds -> higher).
-function oddsStrength(odds) {
-  if (!odds || odds <= 1) return 50;
-  // implied prob = 1/odds; map ~[0.02..0.9] to 0..100
-  const implied = 1 / odds;
-  return Math.max(0, Math.min(100, implied * 110));
-}
-
-// Core blended AI score for a single horse (0..100).
-export function computeAIScore(horse) {
-  const form = clamp(num(horse.formScore, 50), 0, 100);
-  const market = oddsStrength(num(horse.odds, 6));
-  const win = clamp(num(horse.winRate, 0.15) * 100, 0, 100);
-  const jockey = clamp(num(horse.jockeyRating, 60), 0, 100);
-
-  // Weighted blend tuned to favor recent form + market confidence.
-  const score = form * 0.4 + market * 0.3 + win * 0.18 + jockey * 0.12;
-  return Math.round(score * 10) / 10;
-}
-
-// "Value" = strong AI score that the market under-rates (decent odds).
-function computeValueIndex(horse, aiScore) {
-  const odds = num(horse.odds, 6);
-  // High AI score combined with non-favorite odds (>= 4.0) signals value.
-  return aiScore * Math.log10(Math.max(1.1, odds));
-}
-
-// Analyze a whole race: returns a NEW race object whose horses are annotated
-// with { aiScore, rank, valueIndex, badges:[] } and sorted by aiScore desc.
-export function analyzeRace(race) {
-  if (!race || !Array.isArray(race.horses)) {
-    return { ...race, horses: [] };
-  }
-
-  // 1. Score every horse.
-  const scored = race.horses.map((h) => {
-    const aiScore = computeAIScore(h);
-    return {
-      ...h,
-      aiScore,
-      valueIndex: computeValueIndex(h, aiScore),
-    };
-  });
-
-  // 2. Reference values for badge thresholds.
-  const sortedByScore = [...scored].sort((a, b) => b.aiScore - a.aiScore);
-  const topHorse = sortedByScore[0];
-
-  const bestChrono = scored
-    .filter((h) => num(h.chrono, 0) > 0)
-    .reduce((min, h) => Math.min(min, h.chrono), Infinity);
-
-  const bestValue = [...scored].sort((a, b) => b.valueIndex - a.valueIndex)[0];
-
-  // 3. Assign badges and ranks.
-  const annotated = sortedByScore.map((h, idx) => {
-    const badges = [];
-
-    // TOP PRONO: best AI score of the race.
-    if (topHorse && h.number === topHorse.number) {
-      badges.push(BADGES.TOP);
-    }
-
-    // VALUE BET: best value index, but only if it's a genuine outsider
-    // (not the same as the top favorite) and odds are interesting.
-    if (
-      bestValue &&
-      h.number === bestValue.number &&
-      num(h.odds, 0) >= 4 &&
-      (!topHorse || h.number !== topHorse.number)
-    ) {
-      badges.push(BADGES.VALUE);
-    }
-
-    // RECORD CHRONO: fastest reduction of the race.
-    if (num(h.chrono, 0) > 0 && h.chrono === bestChrono) {
-      badges.push(BADGES.CHRONO);
-    }
-
-    return { ...h, rank: idx + 1, badges };
-  });
-
-  return { ...race, horses: annotated };
-}
-
-// Convenience: top-N picks of a race (already analyzed or raw).
-export function getTopPicks(race, n = 3) {
-  const analyzed = race.horses?.[0]?.aiScore != null ? race : analyzeRace(race);
-  return analyzed.horses.slice(0, n);
-}
-
-// Confidence label for a pick, used in UI.
-export function confidenceLabel(aiScore) {
-  if (aiScore >= 75) return 'Confiance élevée';
-  if (aiScore >= 60) return 'Confiance moyenne';
-  return 'À surveiller';
-}
-
-// --- tiny helpers ----------------------------------------------------------
 function num(v, fallback) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
+}
+function oddsStrength(odds) {
+  if (!odds || odds <= 1) return null;
+  return clamp((1 / odds) * 110, 0, 100);
+}
+
+// Score a single horse given precomputed race context.
+function scoreHorse(h, ctx) {
+  const form = clamp(num(h.formScore, 45), 0, 100);
+  const classScore = ctx.maxG > 0 ? ((num(h.gains, 0) - ctx.minG) / ctx.range) * 100 : 50;
+  const jockey = clamp(num(h.jockeyRating, 60), 0, 100);
+  const market = oddsStrength(h.odds);
+
+  let score;
+  if (ctx.anyOdds && market != null) {
+    score = form * 0.34 + market * 0.3 + classScore * 0.21 + jockey * 0.15;
+  } else {
+    score = form * 0.5 + classScore * 0.35 + jockey * 0.15;
+  }
+  return Math.round(score * 10) / 10;
+}
+
+export function computeAIScore(horse) {
+  return scoreHorse(horse, { maxG: 0, minG: 0, range: 1, anyOdds: num(horse.odds, 0) > 1 });
+}
+
+// Value index: reward strong AI score at generous odds (an underrated runner).
+function computeValueIndex(aiScore, odds) {
+  const o = num(odds, 0);
+  if (o < 2) return 0;
+  return aiScore * Math.log10(Math.max(1.1, o));
+}
+
+// Analyze a whole race -> new race with annotated, ranked horses + badges.
+export function analyzeRace(race) {
+  if (!race || !Array.isArray(race.horses) || !race.horses.length) {
+    return { ...race, horses: [] };
+  }
+
+  const gains = race.horses.map((h) => num(h.gains, 0));
+  const ctx = {
+    maxG: Math.max(...gains, 0),
+    minG: Math.min(...gains),
+    anyOdds: race.horses.some((h) => num(h.odds, 0) > 1),
+  };
+  ctx.range = ctx.maxG - ctx.minG || 1;
+
+  const scored = race.horses.map((h) => {
+    const aiScore = scoreHorse(h, ctx);
+    return { ...h, aiScore, valueIndex: computeValueIndex(aiScore, h.odds) };
+  });
+
+  const sortedByScore = [...scored].sort((a, b) => b.aiScore - a.aiScore);
+  const topHorse = sortedByScore[0];
+  const bestChrono = scored
+    .filter((h) => num(h.chrono, 0) > 0)
+    .reduce((min, h) => Math.min(min, h.chrono), Infinity);
+  const bestValue = [...scored].sort((a, b) => b.valueIndex - a.valueIndex)[0];
+
+  const annotated = sortedByScore.map((h, idx) => {
+    const badges = [];
+    if (topHorse && h.number === topHorse.number) badges.push(BADGES.TOP);
+    if (
+      bestValue &&
+      bestValue.valueIndex > 0 &&
+      h.number === bestValue.number &&
+      num(h.odds, 0) >= 4 &&
+      (!topHorse || h.number !== topHorse.number)
+    ) {
+      badges.push(BADGES.VALUE);
+    }
+    if (num(h.chrono, 0) > 0 && h.chrono === bestChrono) badges.push(BADGES.CHRONO);
+    return { ...h, rank: idx + 1, badges };
+  });
+
+  return { ...race, horses: annotated };
+}
+
+export function getTopPicks(race, n = 3) {
+  const analyzed = race.horses?.[0]?.aiScore != null ? race : analyzeRace(race);
+  return analyzed.horses.slice(0, n);
+}
+
+export function confidenceLabel(aiScore) {
+  if (aiScore >= 72) return 'Confiance élevée';
+  if (aiScore >= 58) return 'Confiance moyenne';
+  return 'À surveiller';
 }
 
 export default { analyzeRace, computeAIScore, getTopPicks, confidenceLabel, BADGES };

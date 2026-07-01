@@ -59,4 +59,19 @@ router.post('/refresh', checkToken, (req, res) => {
   runRefresh().finally(() => { running = false; });
 });
 
+// POST /cron/results — LIGHT & FREQUENT: only detect results (arrivals) for
+// today + yesterday. Meant to be polled every ~15-20 min so results appear
+// shortly after each race finishes (no waiting until the evening).
+let runningResults = false;
+router.post('/results', checkToken, (req, res) => {
+  if (runningResults) return res.status(200).json({ ok: true, alreadyRunning: true });
+  runningResults = true;
+  res.status(202).json({ ok: true, started: true });
+  const today = new Date().toISOString().slice(0, 10);
+  detectResults({ dates: [today, isoDaysAgo(1)] })
+    .then((r) => console.log('[cron/results]', r))
+    .catch((e) => console.error('[cron/results] error:', e.message))
+    .finally(() => { runningResults = false; });
+});
+
 module.exports = router;
