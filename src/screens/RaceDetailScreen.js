@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +6,8 @@ import HorseCard from '../components/HorseCard';
 import LockCard from '../components/LockCard';
 import TrialBanner from '../components/TrialBanner';
 import Disclaimer from '../components/Disclaimer';
-import { analyzeRace, BADGES } from '../services/aiEngine';
+import { BADGES } from '../services/aiEngine';
+import { usePrediction } from '../hooks/usePrediction';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT, TRACK_CONDITIONS } from '../theme/colors';
 
@@ -14,17 +15,15 @@ export default function RaceDetailScreen({ route, navigation }) {
   const { trackName, condition, race } = route.params;
   const { isLocked } = useAuth();
 
-  // Ensure analysis (HomeScreen already analyzed, but be defensive).
-  const analyzed = useMemo(
-    () => (race.horses?.[0]?.aiScore != null ? race : analyzeRace(race)),
-    [race]
-  );
+  // Subscribers get the trained backend model; everyone falls back to local.
+  const { race: analyzed, fromBackend } = usePrediction(race, !isLocked);
 
-  const top3 = analyzed.horses.slice(0, 3);
-  const valueBet = analyzed.horses.find((h) =>
+  const horses = Array.isArray(analyzed?.horses) ? analyzed.horses : [];
+  const top3 = horses.slice(0, 3);
+  const valueBet = horses.find((h) =>
     h.badges?.some((b) => b.key === BADGES.VALUE.key)
   );
-  const chronoHorse = analyzed.horses.find((h) =>
+  const chronoHorse = horses.find((h) =>
     h.badges?.some((b) => b.key === BADGES.CHRONO.key)
   );
 
@@ -56,13 +55,18 @@ export default function RaceDetailScreen({ route, navigation }) {
           label="Pronostics IA verrouillés"
         >
           <View style={styles.aiBox}>
-            <Text style={styles.aiHeading}>🏆 Top 3 du jour</Text>
+            <Text style={styles.aiHeading}>
+              🏆 Top 3 du jour{fromBackend ? '  ·  IA avancée' : ''}
+            </Text>
             {top3.map((h, i) => (
               <View key={h.number} style={styles.topRow}>
                 <Text style={styles.topRank}>{i + 1}.</Text>
                 <Text style={styles.topName}>
                   n°{h.number} {h.name}
                 </Text>
+                {h.probaGagnant != null ? (
+                  <Text style={styles.topProba}>{Math.round(h.probaGagnant * 100)}%</Text>
+                ) : null}
                 <Text style={styles.topScore}>{Math.round(h.aiScore)}/100</Text>
               </View>
             ))}
@@ -89,8 +93,8 @@ export default function RaceDetailScreen({ route, navigation }) {
         <Disclaimer />
 
         {/* Full field */}
-        <Text style={styles.sectionTitle}>Partants ({analyzed.horses.length})</Text>
-        {analyzed.horses.map((h) => (
+        <Text style={styles.sectionTitle}>Partants ({horses.length})</Text>
+        {horses.map((h) => (
           <HorseCard key={h.number} horse={h} showAI={!isLocked} />
         ))}
 
@@ -145,6 +149,7 @@ const styles = StyleSheet.create({
   },
   topRank: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.lg, width: 24 },
   topName: { color: COLORS.white, fontWeight: '700', fontSize: FONT.md, flex: 1 },
+  topProba: { color: COLORS.gold, fontWeight: '800', fontSize: FONT.sm, marginRight: SPACING.sm },
   topScore: { color: COLORS.accent, fontWeight: '900', fontSize: FONT.md },
   divider: {
     height: 1,

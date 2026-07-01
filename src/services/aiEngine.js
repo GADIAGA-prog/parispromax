@@ -115,17 +115,11 @@ function computeValueIndex(aiScore, odds) {
   return aiScore * Math.log10(Math.max(1.1, o));
 }
 
-export function analyzeRace(race) {
-  if (!race || !Array.isArray(race.horses) || !race.horses.length) {
-    return { ...race, horses: [] };
-  }
-  const ctx = buildContext(race.horses);
-
-  const scored = race.horses.map((h) => {
-    const aiScore = scoreHorse(h, ctx);
-    return { ...h, aiScore, valueIndex: computeValueIndex(aiScore, h.odds) };
-  });
-
+// Rank + badge a set of horses that ALREADY carry `aiScore` (+ valueIndex).
+// Shared by analyzeRace (local scoring) and applyBackendPredictions (server
+// scoring) so both produce an identically-shaped, consistently-badged race.
+function annotateRace(race) {
+  const scored = race.horses;
   const sortedByScore = [...scored].sort((a, b) => b.aiScore - a.aiScore);
   const topHorse = sortedByScore[0];
   const bestChrono = scored
@@ -152,6 +146,49 @@ export function analyzeRace(race) {
   return { ...race, horses: annotated };
 }
 
+export function analyzeRace(race) {
+  if (!race || !Array.isArray(race.horses) || !race.horses.length) {
+    return { ...race, horses: [] };
+  }
+  const ctx = buildContext(race.horses);
+  const scored = race.horses.map((h) => {
+    const aiScore = scoreHorse(h, ctx);
+    return { ...h, aiScore, valueIndex: computeValueIndex(aiScore, h.odds) };
+  });
+  return annotateRace({ ...race, horses: scored });
+}
+
+// Overlay the backend's predictions (the trained LightGBM/CatBoost ranker, or
+// the server aiEngine) onto a race, then re-rank + re-badge. `picks` is the
+// backend `topPicks` array: [{ number, aiScore, rank, probaGagnant?, probaPodium? }].
+// Any runner missing from `picks` keeps its local score, so the screen never
+// breaks if the server returns a partial field.
+export function applyBackendPredictions(race, picks) {
+  if (!race || !Array.isArray(race.horses) || !race.horses.length) return race;
+  if (!Array.isArray(picks) || !picks.length) return race;
+
+  const byNumber = new Map();
+  picks.forEach((p) => {
+    if (p && p.number != null) byNumber.set(p.number, p);
+  });
+
+  const merged = race.horses.map((h) => {
+    const p = byNumber.get(h.number);
+    if (!p) return h;
+    const aiScore = num(p.aiScore, h.aiScore);
+    return {
+      ...h,
+      aiScore,
+      probaGagnant: num(p.probaGagnant, h.probaGagnant),
+      probaPodium: num(p.probaPodium, h.probaPodium),
+      valueIndex: computeValueIndex(aiScore, h.odds),
+      source: 'backend',
+    };
+  });
+
+  return annotateRace({ ...race, horses: merged });
+}
+
 export function getTopPicks(race, n = 3) {
   const analyzed = race.horses?.[0]?.aiScore != null ? race : analyzeRace(race);
   return analyzed.horses.slice(0, n);
@@ -163,4 +200,11 @@ export function confidenceLabel(aiScore) {
   return 'À surveiller';
 }
 
-export default { analyzeRace, computeAIScore, getTopPicks, confidenceLabel, BADGES };
+export default {
+  analyzeRace,
+  applyBackendPredictions,
+  computeAIScore,
+  getTopPicks,
+  confidenceLabel,
+  BADGES,
+};

@@ -16,14 +16,17 @@ import Disclaimer from '../components/Disclaimer';
 import { loadRaces } from '../services/dataService';
 import api from '../services/api';
 import { analyzeRace, confidenceLabel } from '../services/aiEngine';
+import { usePrediction } from '../hooks/usePrediction';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 // Picks the day's "featured" race = track with the biggest prize pool.
+// Only considers races that actually have runners (avoids an empty combo).
 function pickFeatured(tracks) {
   let best = null;
   for (const t of tracks) {
     for (const r of t.races) {
+      if (!r.horses || !r.horses.length) continue;
       const score = (t.prizePool || 0) + (r.horses?.length || 0);
       if (!best || score > best.score) {
         best = { track: t, race: r, score };
@@ -57,9 +60,12 @@ export default function QuintePlusScreen({ navigation }) {
     })();
   }, []);
 
+  // Upgrade the featured race with the backend model for subscribers.
+  const { race: heroRace } = usePrediction(featured?.race, !isLocked && !!featured);
+
   const top5 = useMemo(
-    () => (featured ? featured.race.horses.slice(0, 5) : []),
-    [featured]
+    () => (heroRace?.horses ? heroRace.horses.slice(0, 5) : []),
+    [heroRace]
   );
 
   const avgScore = useMemo(() => {

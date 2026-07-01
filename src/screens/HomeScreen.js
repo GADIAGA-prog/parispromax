@@ -110,6 +110,14 @@ export default function HomeScreen({ navigation }) {
             tintColor={COLORS.accent}
           />
         }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Ionicons name="calendar-outline" size={40} color={COLORS.textFaint} />
+            <Text style={styles.emptyText}>
+              Aucune course disponible pour le moment. Tirez pour actualiser.
+            </Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -140,5 +148,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   offlineText: { color: COLORS.gold, fontSize: FONT.sm - 1, fontWeight: '600' },
-  list: { padding: SPACING.md, paddingBottom: SPACING.xxl },
+  list: { padding: SPACING.md, paddingBottom: SPACING.xxl, flexGrow: 1 },
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: SPACING.xxl,
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+  },
+  emptyText: { color: COLORS.textMuted, textAlign: 'center', fontSize: FONT.sm, lineHeight: 20 },
 });
