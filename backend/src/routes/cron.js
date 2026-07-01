@@ -21,13 +21,10 @@ function checkToken(req, res, next) {
   next();
 }
 
-// POST /cron/refresh — scheduled job entry point:
-//   1. scrape today's programme (clean replace)
-//   2. auto-detect results for today + yesterday
-router.post('/refresh', checkToken, async (req, res) => {
+// The actual heavy work: scrape today's programme (clean replace) + auto-detect
+// results for today + yesterday. Runs in the background (can take minutes).
+async function runRefresh() {
   const today = new Date().toISOString().slice(0, 10);
-  const result = { date: today, scraped: 0, hippodromes: 0, results: null };
-
   try {
     const payload = await scrapeProgramme(today, { maxReunions: 8, maxCourses: 4 });
     if (payload.racetracks.length) {
@@ -38,20 +35,28 @@ router.post('/refresh', checkToken, async (req, res) => {
         await prisma.result.deleteMany({ where: { raceId: { in: ids } } });
         await prisma.race.deleteMany({ where: { id: { in: ids } } });
       }
-      result.scraped = await ingestData(payload);
-      result.hippodromes = payload.racetracks.length;
+      const scraped = await ingestData(payload);
+      console.log(`[cron] scraped ${scraped} races (${payload.racetracks.length} tracks) for ${today}`);
     }
   } catch (e) {
-    result.scrapeError = e.message;
+    console.error('[cron] scrape error:', e.message);
   }
-
   try {
-    result.results = await detectResults({ dates: [today, isoDaysAgo(1)] });
+    const r = await detectResults({ dates: [today, isoDaysAgo(1)] });
+    console.log('[cron] results:', r);
   } catch (e) {
-    result.resultsError = e.message;
+    console.error('[cron] results error:', e.message);
   }
+}
 
-  res.json({ ok: true, ...result });
+// POST /cron/refresh — responds immediately (202) and runs the job in the
+// background, so the caller (GitHub Actions) never times out.
+let running = false;
+router.post('/refresh', checkToken, (req, res) => {
+  if (running) return res.status(200).json({ ok: true, alreadyRunning: true });
+  running = true;
+  res.status(202).json({ ok: true, started: true });
+  runRefresh().finally(() => { running = false; });
 });
 
 module.exports = router;
