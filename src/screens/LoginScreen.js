@@ -43,8 +43,14 @@ export default function LoginScreen() {
 
   const selected = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0];
 
-  // Full international number (E.164) = dial code + local digits (no leading 0).
-  const fullPhone = () => selected.dial + phone.replace(/\D/g, '').replace(/^0+/, '');
+  // Build a clean E.164 number, tolerant of any way the user typed it: with or
+  // without the country code, a leading "+", "00", or national "0".
+  const fullPhone = () => {
+    const cc = selected.dial.replace('+', ''); // "226"
+    let d = phone.replace(/\D/g, '').replace(/^00/, '').replace(/^0+/, '');
+    while (d.startsWith(cc) && d.length - cc.length >= 8) d = d.slice(cc.length);
+    return `+${cc}${d}`;
+  };
 
   const onRequest = async () => {
     const local = phone.replace(/\D/g, '').replace(/^0+/, '');

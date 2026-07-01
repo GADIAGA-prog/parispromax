@@ -36,18 +36,21 @@ const DIAL_CODES = {
   sn: '221', ne: '227', gn: '224', ml: '223',
 };
 
-// Best-effort normalisation of a local phone into E.164 using the account
-// country, so FedaPay's strict (live) phone validation accepts it.
-//   "07 12 34 56" (bf) -> "+22671234556"   "+22670000000" -> unchanged
+// Best-effort normalisation of any input into a valid E.164 number using the
+// account country, so FedaPay's strict (live) phone validation accepts it.
+// Handles every common user format:
+//   "07 12 34 56" | "70123456" | "22670123456" | "+22670123456" | "0022670..."
+//   and even a DUPLICATED country code ("+22622670...") -> "+22670123456".
 // Returns null if we cannot form a plausible number.
 function normalizePhone(raw, country) {
-  let d = String(raw || '').replace(/[^\d+]/g, '');
-  if (!d) return null;
-  if (d.startsWith('+')) return d.length >= 11 ? d : null; // already E.164
-  d = d.replace(/^0+/, ''); // drop national trunk leading zeros
   const cc = DIAL_CODES[country];
+  let d = String(raw || '').replace(/\D/g, ''); // digits only (drops any '+')
+  if (!d) return null;
+  d = d.replace(/^00/, ''); // international "00" prefix
+  d = d.replace(/^0+/, ''); // national trunk leading zero(s)
   if (!cc) return d.length >= 8 ? `+${d}` : null;
-  if (d.startsWith(cc)) d = d.slice(cc.length); // strip a duplicated country code
+  // Strip one or more leading (possibly duplicated) country codes.
+  while (d.startsWith(cc) && d.length - cc.length >= 8) d = d.slice(cc.length);
   if (d.length < 8) return null; // too short to be a real mobile number
   return `+${cc}${d}`;
 }

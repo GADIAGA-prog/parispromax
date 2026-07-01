@@ -59,7 +59,9 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.avatar}>
             <Ionicons name="person" size={28} color={COLORS.accent} />
           </View>
-          <Text style={styles.phone}>{phone ? `+${phone}` : 'Invité'}</Text>
+          <Text style={styles.phone}>
+            {phone ? (phone.startsWith('+') ? phone : `+${phone}`) : 'Invité'}
+          </Text>
           <View
             style={[
               styles.statusPill,
