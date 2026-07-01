@@ -42,9 +42,9 @@ services:
       - key: PAYMENT_PROVIDER
         value: fedapay
       - key: FEDAPAY_MODE
-        value: sandbox
+        value: live
       - key: FEDAPAY_COUNTRY
-        value: bj
+        value: bf
       - key: FEDAPAY_SECRET_KEY
         sync: false
       - key: FEDAPAY_PUBLIC_KEY
