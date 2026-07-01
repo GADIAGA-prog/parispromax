@@ -73,6 +73,7 @@ export const api = {
 
   // Races
   races: (date) => request(`/races${date ? `?date=${date}` : ''}`),
+  raceHistory: () => request('/races/history'),
   raceDetail: (externalId) => request(`/races/${externalId}`),
   prediction: (externalId) => request(`/races/${externalId}/prediction`, { auth: true }),
 

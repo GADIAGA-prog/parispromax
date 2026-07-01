@@ -92,6 +92,35 @@ router.get('/full', async (req, res) => {
   });
 });
 
+// GET /races/history — finished races with our AI prediction + the actual
+// arrival + whether our #1 pick placed (top 3). Public. Drives the app's
+// History screen so users compare pronostic vs résultat.
+router.get('/history', async (req, res) => {
+  const results = await prisma.result.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 60,
+    include: {
+      race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } } },
+    },
+  });
+
+  const history = results.map((r) => {
+    const winners = parse(r.winners, []);
+    const picks = parse(r.race.predictions[0]?.topPicks, []);
+    return {
+      id: r.id,
+      track: r.race.track,
+      race: r.race.name,
+      date: r.race.date,
+      winners, // finishing order [num, num, ...]
+      topPicks: picks, // [{ number, name, aiScore, rank }]
+      aiHit: r.predicted, // our #1 pick finished in the top 3
+    };
+  });
+
+  res.json({ history });
+});
+
 // GET /races/:externalId — race detail with runners (public, no AI scores).
 router.get('/:externalId', async (req, res) => {
   const race = await prisma.race.findUnique({ where: { externalId: req.params.externalId } });
