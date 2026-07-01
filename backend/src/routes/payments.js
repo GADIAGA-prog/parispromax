@@ -186,9 +186,16 @@ router.get('/return', (req, res) => {
   );
 });
 
-// --- MOCK checkout (only used when CinetPay keys are not configured) -------
-// A tiny page that lets you simulate a successful or failed payment.
-router.get('/mock/:txn', (req, res) => {
+// --- MOCK checkout (only when no provider is configured, and NEVER in prod) --
+// A tiny page that lets you simulate a successful or failed payment. Guarded by
+// config.allowMock so it can never be used to grant free access in production.
+const config = require('../config');
+function mockGuard(req, res, next) {
+  if (!config.allowMock) return res.status(404).send('Not found');
+  next();
+}
+
+router.get('/mock/:txn', mockGuard, (req, res) => {
   const { txn } = req.params;
   res.send(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Paiement (mock)</title></head>
   <body style="background:#0f172a;color:#f8fafc;font-family:sans-serif;text-align:center;padding:40px">
@@ -203,7 +210,7 @@ router.get('/mock/:txn', (req, res) => {
   </body></html>`);
 });
 
-router.post('/mock/:txn/complete', express.urlencoded({ extended: true }), async (req, res) => {
+router.post('/mock/:txn/complete', mockGuard, express.urlencoded({ extended: true }), async (req, res) => {
   const { txn } = req.params;
   const result = req.body.result;
   if (result === 'success') {

@@ -52,6 +52,9 @@ async function initiatePayment({ transactionId, amount, currency, description, c
   const returnUrl = `${config.publicBaseUrl}/payments/return`;
 
   if (!isConfigured()) {
+    if (!config.allowMock) {
+      throw new Error('FedaPay non configuré (paiement indisponible en production)');
+    }
     return {
       mode: 'mock',
       paymentUrl: `${config.publicBaseUrl}/payments/mock/${transactionId}`,

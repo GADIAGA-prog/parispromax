@@ -23,6 +23,9 @@ async function initiatePayment({
   const returnUrl = `${config.publicBaseUrl}/payments/return`;
 
   if (!isConfigured()) {
+    if (!config.allowMock) {
+      throw new Error('CinetPay non configuré (paiement indisponible en production)');
+    }
     // MOCK mode — our own hosted page simulates the PSP checkout.
     return {
       mode: 'mock',

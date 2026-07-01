@@ -24,6 +24,8 @@ services:
         fromDatabase:
           name: parispromax-db
           property: connectionString
+      - key: NODE_ENV
+        value: production
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
