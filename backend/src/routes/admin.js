@@ -62,37 +62,49 @@ router.get('/api/payments', async (req, res) => {
 });
 
 router.get('/api/stats', async (req, res) => {
-  const [total, success, pending, failed] = await Promise.all([
-    prisma.payment.count(),
-    prisma.payment.count({ where: { status: 'success' } }),
-    prisma.payment.count({ where: { status: 'pending' } }),
-    prisma.payment.count({ where: { status: 'failed' } }),
-  ]);
-  const revenueAgg = await prisma.payment.aggregate({
-    where: { status: 'success' },
-    _sum: { amount: true },
-  });
-  const users = await prisma.user.count();
-  const activeSubs = await prisma.subscription.count({
-    where: { status: 'active', plan: 'monthly', currentPeriodEnd: { gt: new Date() } },
-  });
-  res.json({
-    total,
-    success,
-    pending,
-    failed,
-    revenue: revenueAgg._sum.amount || 0,
-    users,
-    activeSubs,
-  });
+  try {
+    const [total, success, pending, failed] = await Promise.all([
+      prisma.payment.count(),
+      prisma.payment.count({ where: { status: 'success' } }),
+      prisma.payment.count({ where: { status: 'pending' } }),
+      prisma.payment.count({ where: { status: 'failed' } }),
+    ]);
+    const revenueAgg = await prisma.payment.aggregate({
+      where: { status: 'success' },
+      _sum: { amount: true },
+    });
+    const users = await prisma.user.count();
+    const activeSubs = await prisma.subscription.count({
+      where: { status: 'active', currentPeriodEnd: { gt: new Date() } },
+    });
+    res.json({
+      total,
+      success,
+      pending,
+      failed,
+      revenue: revenueAgg._sum.amount || 0,
+      users,
+      activeSubs,
+    });
+  } catch (e) {
+    console.error('admin stats error', e);
+    res.status(500).json({ error: 'Erreur lors du calcul des statistiques' });
+  }
 });
 
 // POST /admin/api/results  { externalId, winners: [4,7,1,...] }
 // Records the official arrival and computes whether our #1 AI pick placed.
 router.post('/api/results', express.json(), async (req, res) => {
-  const { externalId, winners } = req.body || {};
+  const { externalId } = req.body || {};
+  let { winners } = req.body || {};
   if (!externalId || !Array.isArray(winners) || !winners.length) {
     return res.status(400).json({ error: 'externalId et winners[] requis' });
+  }
+  // Sanitise the arrival: valid runner numbers (1-30), no duplicates, capped.
+  winners = winners.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n >= 1 && n <= 30);
+  winners = [...new Set(winners)].slice(0, 30);
+  if (winners.length < 3) {
+    return res.status(400).json({ error: 'winners[] doit contenir au moins 3 numéros valides (1-30)' });
   }
   const race = await prisma.race.findUnique({
     where: { externalId },
@@ -129,9 +141,13 @@ router.post('/api/non-partants', express.json(), async (req, res) => {
   if (!externalId || !Array.isArray(nonPartants)) {
     return res.status(400).json({ error: 'externalId et nonPartants[] requis' });
   }
-  const nums = nonPartants
-    .map((n) => Number(n))
-    .filter((n) => Number.isFinite(n));
+  const nums = [
+    ...new Set(
+      nonPartants
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n >= 1 && n <= 30)
+    ),
+  ].slice(0, 30);
   try {
     await prisma.race.update({
       where: { externalId },

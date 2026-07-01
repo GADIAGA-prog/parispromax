@@ -100,7 +100,7 @@ router.post('/cinetpay/webhook', async (req, res) => {
     // Always 200 so the PSP stops retrying.
     res.status(200).send('OK');
   } catch (e) {
-    console.error('webhook error', e.message);
+    console.error('webhook error', e);
     res.status(200).send('OK');
   }
 });
@@ -152,9 +152,12 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 // GET /payments/status/:txn (auth) — poll a single payment's status.
+// Ownership-checked: a user may only read their OWN payment (prevents IDOR).
 router.get('/status/:txn', requireAuth, async (req, res) => {
   const payment = await prisma.payment.findUnique({ where: { transactionId: req.params.txn } });
-  if (!payment) return res.status(404).json({ error: 'Introuvable' });
+  if (!payment || payment.userId !== req.userId) {
+    return res.status(404).json({ error: 'Introuvable' });
+  }
   res.json({ status: payment.status, transactionId: payment.transactionId });
 });
 

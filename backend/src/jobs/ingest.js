@@ -10,14 +10,25 @@
 const fs = require('fs');
 const path = require('path');
 const prisma = require('../db');
-const { topPicks } = require('../services/aiEngine');
+const { rankRunners } = require('../services/aiEngine');
 const { computeRatings, ratingForHorse } = require('./ratings');
 
 const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.json');
 
 async function ingestFromFile(file = RACES_FILE) {
-  const raw = fs.readFileSync(file, 'utf8');
-  return ingestData(JSON.parse(raw));
+  let raw;
+  try {
+    raw = fs.readFileSync(file, 'utf8');
+  } catch (e) {
+    throw new Error(`Fichier de courses introuvable (${file}): ${e.message}`);
+  }
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    throw new Error(`Fichier de courses illisible/corrompu (${file}): ${e.message}`);
+  }
+  return ingestData(data);
 }
 
 // Ingest a payload object (tracks + races) into the DB with predictions.
@@ -36,7 +47,9 @@ async function ingestData(data) {
       (race.horses || []).forEach((h) => {
         h.jockeyRating = ratingForHorse(h, ratings);
       });
-      const picks = topPicks(race, 5);
+      // Store the FULL ranked field (not just the top 5) so paying users get a
+      // real AI score for every runner. The LTR daemon also pushes full fields.
+      const picks = rankRunners(race);
 
       const saved = await prisma.race.upsert({
         where: { externalId },

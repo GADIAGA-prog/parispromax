@@ -14,14 +14,16 @@ const mlRoutes = require('./routes/ml');
 
 const app = express();
 
-// CORS: allow configured origins; mobile apps send no Origin so always allowed.
+// CORS: mobile apps send no Origin so are always allowed. When CORS_ORIGINS is
+// set, only those browser origins are allowed (real enforcement). When it is
+// left empty (dev), all origins are allowed for convenience.
 app.use(
   cors({
     origin: (origin, cb) => {
       if (!origin || config.corsOrigins.length === 0 || config.corsOrigins.includes(origin)) {
         return cb(null, true);
       }
-      return cb(null, true); // permissive in this phase; tighten for prod
+      return cb(new Error('Origine non autorisée par CORS'));
     },
   })
 );

@@ -56,7 +56,9 @@ router.post('/refresh', checkToken, (req, res) => {
   if (running) return res.status(200).json({ ok: true, alreadyRunning: true });
   running = true;
   res.status(202).json({ ok: true, started: true });
-  runRefresh().finally(() => { running = false; });
+  runRefresh()
+    .catch((e) => console.error('[cron/refresh] unhandled error:', e))
+    .finally(() => { running = false; });
 });
 
 // POST /cron/results — LIGHT & FREQUENT: only detect results (arrivals) for
