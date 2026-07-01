@@ -51,7 +51,13 @@ router.get('/', async (req, res) => {
 // GET /races/full — complete dataset (tracks -> races -> horses) in the app's
 // schema, so the mobile app can render + compute AI locally. Public.
 router.get('/full', async (req, res) => {
-  const date = req.query.date;
+  let date = req.query.date;
+  // No date specified -> use the most recent race date available (so a fresh
+  // live scrape supersedes older/demo data instead of mixing with it).
+  if (!date) {
+    const latest = await prisma.race.findFirst({ orderBy: { date: 'desc' }, select: { date: true } });
+    date = latest?.date;
+  }
   const where = date ? { date } : {};
   const races = await prisma.race.findMany({ where, orderBy: { createdAt: 'desc' }, take: 300 });
 
