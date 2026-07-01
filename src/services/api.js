@@ -65,8 +65,8 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
 export const api = {
   // Auth
   requestOtp: (phone) => request('/auth/request-otp', { method: 'POST', body: { phone } }),
-  verifyOtp: (phone, code) =>
-    request('/auth/verify-otp', { method: 'POST', body: { phone, code } }),
+  verifyOtp: (phone, code, country) =>
+    request('/auth/verify-otp', { method: 'POST', body: { phone, code, country } }),
 
   // Profile / access
   me: () => request('/me', { auth: true }),

@@ -12,7 +12,7 @@ router.get('/', requireAuth, async (req, res) => {
   const access = await getAccess(req.userId);
 
   res.json({
-    user: { id: user.id, phone: user.phone },
+    user: { id: user.id, phone: user.phone, country: user.country },
     access: {
       hasAccess: access.hasAccess,
       hasPaid: access.hasPaid,

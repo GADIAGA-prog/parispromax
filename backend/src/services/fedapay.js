@@ -60,14 +60,18 @@ function normalizePhone(raw, country) {
 // the hosted checkout instead).
 function buildCustomer(customer) {
   if (!customer || !customer.phone) return undefined;
-  const number = normalizePhone(customer.phone, config.fedapay.country);
+  // Prefer the user's own country (chosen at signup); fall back to the account
+  // default. This is what makes the correct country's Mobile Money operators
+  // (e.g. Orange/Moov Burkina) appear on the FedaPay checkout page.
+  const country = DIAL_CODES[customer.country] ? customer.country : config.fedapay.country;
+  const number = normalizePhone(customer.phone, country);
   if (!number) return undefined;
   const digits = number.replace(/\D/g, '');
   return {
     firstname: customer.firstname || 'Client',
     lastname: customer.lastname || `PPM-${digits.slice(-4)}`,
     email: customer.email || `ppm-${digits}@parispromax.app`,
-    phone_number: { number, country: config.fedapay.country },
+    phone_number: { number, country },
   };
 }
 

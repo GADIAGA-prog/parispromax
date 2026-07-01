@@ -10,6 +10,13 @@ function normalizePhone(raw) {
   return String(raw || '').replace(/[^\d+]/g, '');
 }
 
+// FedaPay-supported countries (ISO2). Used to validate the signup country.
+const SUPPORTED_COUNTRIES = new Set(['bf', 'bj', 'ci', 'tg', 'sn', 'ne', 'gn', 'ml']);
+function normalizeCountry(raw) {
+  const c = String(raw || '').trim().toLowerCase();
+  return SUPPORTED_COUNTRIES.has(c) ? c : null;
+}
+
 function genCode() {
   return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
 }
@@ -72,16 +79,20 @@ router.post('/verify-otp', async (req, res) => {
 
   await prisma.otpCode.update({ where: { id: otp.id }, data: { consumed: true } });
 
+  const country = normalizeCountry(req.body.country);
   let user = await prisma.user.findUnique({ where: { phone } });
   let isNew = false;
   if (!user) {
     isNew = true;
     // No free trial: new users have no access until they subscribe.
-    user = await prisma.user.create({ data: { phone } });
+    user = await prisma.user.create({ data: { phone, country } });
+  } else if (country && user.country !== country) {
+    // Keep the country up to date (e.g. user picked it on a later login).
+    user = await prisma.user.update({ where: { id: user.id }, data: { country } });
   }
 
   const token = signToken(user);
-  res.json({ token, user: { id: user.id, phone: user.phone, isNew } });
+  res.json({ token, user: { id: user.id, phone: user.phone, country: user.country, isNew } });
 });
 
 module.exports = router;

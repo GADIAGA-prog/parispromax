@@ -15,6 +15,7 @@ datasource db {
 model User {
   id            String         @id @default(cuid())
   phone         String         @unique
+  country       String?        // ISO2 (bf, ci, sn, tg, bj, ne, gn, ml) for payments
   trialStartedAt DateTime?
   createdAt     DateTime       @default(now())
   subscriptions Subscription[]

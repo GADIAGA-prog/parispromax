@@ -8,32 +8,54 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
+// FedaPay-supported countries (Mobile Money). The chosen country drives which
+// operators appear on the payment page (e.g. Orange/Moov Burkina).
+const COUNTRIES = [
+  { code: 'bf', name: 'Burkina Faso', dial: '+226', flag: '🇧🇫' },
+  { code: 'ci', name: "Côte d'Ivoire", dial: '+225', flag: '🇨🇮' },
+  { code: 'sn', name: 'Sénégal', dial: '+221', flag: '🇸🇳' },
+  { code: 'tg', name: 'Togo', dial: '+228', flag: '🇹🇬' },
+  { code: 'bj', name: 'Bénin', dial: '+229', flag: '🇧🇯' },
+  { code: 'ne', name: 'Niger', dial: '+227', flag: '🇳🇪' },
+  { code: 'ml', name: 'Mali', dial: '+223', flag: '🇲🇱' },
+  { code: 'gn', name: 'Guinée', dial: '+224', flag: '🇬🇳' },
+];
+
 // Two-step phone OTP login against the backend.
 export default function LoginScreen() {
   const { requestOtp, verifyOtp } = useAuth();
   const [step, setStep] = useState('phone'); // 'phone' | 'code'
+  const [countryCode, setCountryCode] = useState('bf');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const selected = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0];
+
+  // Full international number (E.164) = dial code + local digits (no leading 0).
+  const fullPhone = () => selected.dial + phone.replace(/\D/g, '').replace(/^0+/, '');
+
   const onRequest = async () => {
-    const digits = phone.replace(/\D/g, '');
-    if (digits.length < 8) {
+    const local = phone.replace(/\D/g, '').replace(/^0+/, '');
+    if (local.length < 8) {
       setError('Entrez un numéro de téléphone valide.');
       return;
     }
     setError('');
     setBusy(true);
     try {
-      const res = await requestOtp(phone);
+      const res = await requestOtp(fullPhone());
       setDevCode(res.devCode || null);
       setStep('code');
     } catch (e) {
@@ -51,7 +73,7 @@ export default function LoginScreen() {
     setError('');
     setBusy(true);
     try {
-      await verifyOtp(phone, code.trim());
+      await verifyOtp(fullPhone(), code.trim(), countryCode);
       // On success the navigator switches automatically.
     } catch (e) {
       setError(e.message === 'Code invalide ou expiré' ? 'Code invalide ou expiré.' : 'Échec de la vérification.');
@@ -77,17 +99,29 @@ export default function LoginScreen() {
         <View style={styles.card}>
           {step === 'phone' ? (
             <>
-              <Text style={styles.label}>Numéro de téléphone</Text>
+              <Text style={styles.label}>Pays</Text>
+              <Pressable
+                style={styles.countrySelect}
+                onPress={() => setPickerOpen(true)}
+                disabled={busy}
+              >
+                <Text style={styles.countryText}>
+                  {selected.flag}  {selected.name} ({selected.dial})
+                </Text>
+                <Ionicons name="chevron-down" size={18} color={COLORS.textMuted} />
+              </Pressable>
+
+              <Text style={[styles.label, { marginTop: SPACING.md }]}>Numéro de téléphone</Text>
               <View style={styles.inputRow}>
-                <Ionicons name="call" size={18} color={COLORS.textMuted} />
+                <Text style={styles.dialPrefix}>{selected.dial}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex : 07 00 00 00 00"
+                  placeholder="70 00 00 00"
                   placeholderTextColor={COLORS.textFaint}
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={setPhone}
-                  maxLength={20}
+                  maxLength={15}
                   editable={!busy}
                 />
               </View>
@@ -146,6 +180,36 @@ export default function LoginScreen() {
         </View>
 
         <Text style={styles.footer}>Optimisé pour les connexions lentes 🌍 · Mode hors-ligne intégré</Text>
+
+        <Modal
+          visible={pickerOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPickerOpen(false)}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Choisissez votre pays</Text>
+              <ScrollView>
+                {COUNTRIES.map((c) => (
+                  <Pressable
+                    key={c.code}
+                    style={[styles.countryRow, c.code === countryCode && styles.countryRowActive]}
+                    onPress={() => {
+                      setCountryCode(c.code);
+                      setPickerOpen(false);
+                    }}
+                  >
+                    <Text style={styles.countryRowText}>
+                      {c.flag}  {c.name}
+                    </Text>
+                    <Text style={styles.countryRowDial}>{c.dial}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </Pressable>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -166,11 +230,35 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.sm, fontWeight: '600' },
+  countrySelect: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  countryText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '600' },
+  dialPrefix: { color: COLORS.textMuted, fontSize: FONT.lg, fontWeight: '700' },
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
     backgroundColor: COLORS.background, borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md, borderWidth: 1, borderColor: COLORS.border,
   },
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center', padding: SPACING.xl,
+  },
+  modalCard: {
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
+    maxHeight: '70%', borderWidth: 1, borderColor: COLORS.border,
+  },
+  modalTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', marginBottom: SPACING.md },
+  countryRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.md,
+  },
+  countryRowActive: { backgroundColor: COLORS.primary },
+  countryRowText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '600' },
+  countryRowDial: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700' },
   input: { flex: 1, color: COLORS.text, fontSize: FONT.lg, paddingVertical: SPACING.md, letterSpacing: 2 },
   error: { color: COLORS.danger, marginTop: SPACING.sm, fontSize: FONT.sm },
   devHint: { color: COLORS.gold, marginTop: SPACING.sm, fontSize: FONT.sm, fontWeight: '700' },

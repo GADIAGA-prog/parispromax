@@ -43,7 +43,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
       amount,
       currency: 'XOF',
       description: payment.description,
-      customer: { id: req.userId, phone: user?.phone },
+      customer: { id: req.userId, phone: user?.phone, country: user?.country },
       channels: req.body.channels || 'ALL',
     });
 

@@ -86,9 +86,9 @@ export function AuthProvider({ children }) {
 
   // Step 2: verify the OTP -> store token, load access.
   const verifyOtp = useCallback(
-    async (phoneNumber, code) => {
+    async (phoneNumber, code, country) => {
       const clean = String(phoneNumber || '').replace(/[^\d+]/g, '');
-      const res = await api.verifyOtp(clean, code);
+      const res = await api.verifyOtp(clean, code, country);
       await setToken(res.token);
       setPhone(res.user.phone);
       await AsyncStorage.setItem(PHONE_KEY, res.user.phone);
