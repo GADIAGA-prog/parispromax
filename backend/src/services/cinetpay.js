@@ -56,9 +56,10 @@ async function initiatePayment({
   return { mode: 'live', paymentUrl: data.data.payment_url, notifyUrl, returnUrl };
 }
 
-// Verify a transaction's real status with CinetPay.
-// Returns { status: 'success'|'failed'|'pending', method, raw }.
-async function verifyPayment(transactionId) {
+// Verify a transaction's real status with CinetPay, given our Payment record
+// (uses payment.transactionId). Uniform signature across providers.
+// Returns { status: 'success'|'failed'|'pending'|'mock', method, raw }.
+async function verifyPayment(payment) {
   if (!isConfigured()) {
     // In mock mode the webhook/mock page sets status directly in the DB,
     // so verification is a no-op signalling "trust the stored status".
@@ -68,7 +69,7 @@ async function verifyPayment(transactionId) {
   const payload = {
     apikey: config.cinetpay.apiKey,
     site_id: config.cinetpay.siteId,
-    transaction_id: transactionId,
+    transaction_id: payment && payment.transactionId,
   };
   const { data } = await axios.post(`${config.cinetpay.baseUrl}/payment/check`, payload, {
     timeout: 15000,

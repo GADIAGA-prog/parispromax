@@ -11,12 +11,24 @@ const config = {
     apiKey: process.env.SMS_API_KEY || '',
     sender: process.env.SMS_SENDER || 'ParisPromax',
   },
+  // Active payment provider: 'fedapay' (default) | 'cinetpay'. When the chosen
+  // provider has no keys, payments fall back to a local MOCK checkout.
+  payments: {
+    provider: (process.env.PAYMENT_PROVIDER || 'fedapay').toLowerCase(),
+  },
   cinetpay: {
     apiKey: process.env.CINETPAY_API_KEY || '',
     siteId: process.env.CINETPAY_SITE_ID || '',
     secretKey: process.env.CINETPAY_SECRET_KEY || '',
     mode: process.env.CINETPAY_MODE || 'sandbox',
     baseUrl: process.env.CINETPAY_BASE_URL || 'https://api-checkout.cinetpay.com/v2',
+  },
+  fedapay: {
+    secretKey: process.env.FEDAPAY_SECRET_KEY || '', // sk_sandbox_... / sk_live_...
+    publicKey: process.env.FEDAPAY_PUBLIC_KEY || '',
+    webhookSecret: process.env.FEDAPAY_WEBHOOK_SECRET || '',
+    mode: (process.env.FEDAPAY_MODE || 'sandbox').toLowerCase(), // sandbox | live
+    country: (process.env.FEDAPAY_COUNTRY || 'bj').toLowerCase(), // ISO2 for phone
   },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
   cronToken: process.env.CRON_TOKEN || '',
@@ -40,5 +52,12 @@ const config = {
 config.cinetpay.configured = Boolean(
   config.cinetpay.apiKey && config.cinetpay.siteId
 );
+
+// FedaPay base URL derived from mode; configured = a secret key is present.
+config.fedapay.baseUrl =
+  config.fedapay.mode === 'live'
+    ? 'https://api.fedapay.com'
+    : 'https://sandbox-api.fedapay.com';
+config.fedapay.configured = Boolean(config.fedapay.secretKey);
 
 module.exports = config;

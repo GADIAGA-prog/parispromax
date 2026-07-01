@@ -31,14 +31,18 @@ app.use(
 // NOTE: payment webhook needs the raw-ish body but we use JSON/urlencoded per route.
 app.use(express.json());
 
-app.get('/health', (_req, res) =>
+app.get('/health', (_req, res) => {
+  const provider = config.payments.provider;
+  const configured =
+    provider === 'cinetpay' ? config.cinetpay.configured : config.fedapay.configured;
   res.json({
     ok: true,
     service: 'parispromax-backend',
-    cinetpay: config.cinetpay.configured ? 'configured' : 'mock',
+    paymentProvider: provider,
+    payments: configured ? 'configured' : 'mock',
     time: new Date().toISOString(),
-  })
-);
+  });
+});
 
 // Friendly landing page so the root URL isn't a bare "Not found".
 app.get('/', (_req, res) => {
@@ -79,6 +83,8 @@ app.use((err, req, res, next) => {
 app.listen(config.port, () => {
   console.log(`\n🏇 ParisPromax backend on http://localhost:${config.port}`);
   console.log(`   Admin:    http://localhost:${config.port}/admin`);
-  console.log(`   CinetPay: ${config.cinetpay.configured ? 'LIVE/keys set' : 'MOCK mode (no keys)'}`);
+  const payConfigured =
+    config.payments.provider === 'cinetpay' ? config.cinetpay.configured : config.fedapay.configured;
+  console.log(`   Payments: ${config.payments.provider} — ${payConfigured ? 'LIVE/keys set' : 'MOCK mode (no keys)'}`);
   console.log(`   OTP:      ${config.otpDevMode ? 'DEV (codes returned in API)' : 'SMS provider'}\n`);
 });
