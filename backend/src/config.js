@@ -1,14 +1,18 @@
 require('dotenv').config();
 
 const isProd = process.env.NODE_ENV === 'production';
+// Dev is detected by a SQLite database (file:...); production uses Postgres/MySQL.
+// This does NOT rely on NODE_ENV being set (Render blueprints may not apply it).
+const isSqliteDev = String(process.env.DATABASE_URL || '').startsWith('file:');
 
 const config = {
   port: Number(process.env.PORT) || 4000,
   isProd,
   // The local MOCK checkout (free "simulate success") must NEVER be reachable in
   // production, otherwise anyone could grant themselves a subscription. It is on
-  // only outside production, or if explicitly forced via ALLOW_MOCK_PAYMENTS.
-  allowMock: !isProd || String(process.env.ALLOW_MOCK_PAYMENTS || '') === 'true',
+  // ONLY with a SQLite dev DB, or if explicitly forced via ALLOW_MOCK_PAYMENTS.
+  allowMock:
+    String(process.env.ALLOW_MOCK_PAYMENTS || '') === 'true' || (isSqliteDev && !isProd),
   corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
   otpTtlMinutes: Number(process.env.OTP_TTL_MINUTES) || 5,
