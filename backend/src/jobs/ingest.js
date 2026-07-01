@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const prisma = require('../db');
 const { topPicks } = require('../services/aiEngine');
+const { computeRatings, ratingForHorse } = require('./ratings');
 
 const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.json');
 
@@ -23,10 +24,18 @@ async function ingestFromFile(file = RACES_FILE) {
 async function ingestData(data) {
   const date = data?.meta?.date || new Date().toISOString().slice(0, 10);
 
+  // Real jockey/trainer ratings from accumulated results (empty early on).
+  const ratings = await computeRatings();
+
   let raceCount = 0;
   for (const track of data.racetracks || []) {
     for (const race of track.races || []) {
       const externalId = race.id || `${track.id}-${race.number}`;
+      // Enrich each horse with a real jockey/trainer performance rating so the
+      // AI scoring (which weights jockeyRating) reflects who's riding/training.
+      (race.horses || []).forEach((h) => {
+        h.jockeyRating = ratingForHorse(h, ratings);
+      });
       const picks = topPicks(race, 5);
 
       const saved = await prisma.race.upsert({
