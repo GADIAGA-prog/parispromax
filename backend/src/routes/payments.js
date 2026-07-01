@@ -66,16 +66,8 @@ router.post('/initiate', requireAuth, async (req, res) => {
       plan: plan.id,
     });
   } catch (e) {
-    const pdata = e.response?.data;
-    console.error('initiate error', pdata || e.message);
-    // TEMP diagnostic: expose the provider's (non-secret) error so we can debug
-    // the live config. Remove once payments are confirmed working.
-    res.status(500).json({
-      error: "Échec de l'initialisation du paiement",
-      providerStatus: e.response?.status || null,
-      providerError:
-        typeof pdata === 'object' ? pdata : pdata ? String(pdata).slice(0, 300) : e.message,
-    });
+    console.error('initiate error', e.response?.data || e.message);
+    res.status(500).json({ error: "Échec de l'initialisation du paiement" });
   }
 });
 
