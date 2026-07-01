@@ -48,6 +48,44 @@ router.get('/', async (req, res) => {
   res.json({ racetracks: Object.values(byTrack) });
 });
 
+// GET /races/full — complete dataset (tracks -> races -> horses) in the app's
+// schema, so the mobile app can render + compute AI locally. Public.
+router.get('/full', async (req, res) => {
+  const date = req.query.date;
+  const where = date ? { date } : {};
+  const races = await prisma.race.findMany({ where, orderBy: { createdAt: 'desc' }, take: 300 });
+
+  const byTrack = {};
+  for (const r of races) {
+    const full = parse(r.raw, {});
+    if (!byTrack[r.track]) {
+      byTrack[r.track] = {
+        id: r.track.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: r.track,
+        condition: r.condition,
+        discipline: r.discipline,
+        prizePool: full.prizePool || null,
+        races: [],
+      };
+    }
+    byTrack[r.track].races.push({
+      id: r.externalId,
+      number: full.number || '',
+      name: r.name,
+      distance: r.distance,
+      time: full.time || '',
+      condition: r.condition,
+      runners: (full.horses || []).length,
+      horses: full.horses || [],
+    });
+  }
+
+  res.json({
+    meta: { source: 'backend', date: date || null },
+    racetracks: Object.values(byTrack),
+  });
+});
+
 // GET /races/:externalId — race detail with runners (public, no AI scores).
 router.get('/:externalId', async (req, res) => {
   const race = await prisma.race.findUnique({ where: { externalId: req.params.externalId } });

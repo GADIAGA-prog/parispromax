@@ -1,7 +1,8 @@
 const express = require('express');
 const prisma = require('../db');
 const { requireAdmin } = require('../auth');
-const { ingestFromFile } = require('../jobs/ingest');
+const { ingestFromFile, ingestData } = require('../jobs/ingest');
+const { scrapeProgramme } = require('../jobs/scrape');
 
 const router = express.Router();
 
@@ -16,6 +17,24 @@ router.post('/api/ingest', async (_req, res) => {
     res.json({ ok: true, count });
   } catch (e) {
     console.error('ingest endpoint error', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /admin/api/scrape?date=YYYY-MM-DD — scrape geny LIVE then ingest.
+router.post('/api/scrape', async (req, res) => {
+  try {
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')
+      ? req.query.date
+      : new Date().toISOString().slice(0, 10);
+    const payload = await scrapeProgramme(date, { maxReunions: 8, maxCourses: 4 });
+    if (!payload.racetracks.length) {
+      return res.status(502).json({ error: 'Aucune donnée récupérée (geny indisponible ou rate-limit).' });
+    }
+    const count = await ingestData(payload);
+    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count });
+  } catch (e) {
+    console.error('scrape endpoint error', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -139,7 +158,8 @@ const DASHBOARD_HTML = `<!doctype html>
       <option value="failed">Échoués</option>
     </select>
     <button onclick="load()">↻ Rafraîchir</button>
-    <button onclick="ingest()" style="background:#10b981;color:#06251c;font-weight:800">⬇ Ingérer les courses</button>
+    <button onclick="scrape()" style="background:#10b981;color:#06251c;font-weight:800">🏇 Scraper les courses du jour</button>
+    <button onclick="ingest()">⬇ Charger la démo</button>
     <span id="ingestMsg" class="muted"></span>
   </div>
   <table>
@@ -175,11 +195,21 @@ const DASHBOARD_HTML = `<!doctype html>
   }
   async function ingest(){
     const msg = document.getElementById('ingestMsg');
-    msg.textContent = '⏳ Ingestion en cours…';
+    msg.textContent = '⏳ Ingestion démo…';
     try {
       const r = await fetch('/admin/api/ingest', { method: 'POST' });
       const d = await r.json();
-      msg.textContent = d.ok ? ('✅ '+d.count+' courses ingérées') : ('❌ '+(d.error||'erreur'));
+      msg.textContent = d.ok ? ('✅ '+d.count+' courses (démo) ingérées') : ('❌ '+(d.error||'erreur'));
+    } catch(e){ msg.textContent = '❌ '+e.message; }
+    load();
+  }
+  async function scrape(){
+    const msg = document.getElementById('ingestMsg');
+    msg.textContent = '⏳ Scraping des vraies courses du jour… (peut prendre 1-2 min)';
+    try {
+      const r = await fetch('/admin/api/scrape', { method: 'POST' });
+      const d = await r.json();
+      msg.textContent = d.ok ? ('✅ '+d.count+' vraies courses ('+d.hippodromes+' hippodromes) le '+d.date) : ('❌ '+(d.error||'erreur'));
     } catch(e){ msg.textContent = '❌ '+e.message; }
     load();
   }

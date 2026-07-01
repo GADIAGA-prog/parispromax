@@ -16,7 +16,11 @@ const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.jso
 
 async function ingestFromFile(file = RACES_FILE) {
   const raw = fs.readFileSync(file, 'utf8');
-  const data = JSON.parse(raw);
+  return ingestData(JSON.parse(raw));
+}
+
+// Ingest a payload object (tracks + races) into the DB with predictions.
+async function ingestData(data) {
   const date = data?.meta?.date || new Date().toISOString().slice(0, 10);
 
   let raceCount = 0;
@@ -67,4 +71,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { ingestFromFile, RACES_FILE };
+module.exports = { ingestFromFile, ingestData, RACES_FILE };

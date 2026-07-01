@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import seedData from './live_races.json';
+import { API_URL } from './api';
 
 // ---------------------------------------------------------------------------
 // PARISPROMAX — Data service with OFFLINE-FIRST strategy.
@@ -14,9 +15,9 @@ import seedData from './live_races.json';
 // ---------------------------------------------------------------------------
 
 const CACHE_KEY = '@ppm_races_cache';
-const REMOTE_URL =
-  process.env.EXPO_PUBLIC_RACES_URL || ''; // set to your hosted scraper output
-const FETCH_TIMEOUT_MS = 6000;
+// Live races come from the hosted backend (/races/full). Overridable via env.
+const REMOTE_URL = process.env.EXPO_PUBLIC_RACES_URL || `${API_URL}/races/full`;
+const FETCH_TIMEOUT_MS = 8000;
 
 function withTimeout(promise, ms) {
   return Promise.race([
