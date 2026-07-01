@@ -79,6 +79,7 @@ model Race {
   condition   String?
   distance    String?
   raw         String?      // JSON string of full race + horses
+  nonPartants String?      // JSON array of scratched runner numbers, e.g. "[3,7]"
   createdAt   DateTime     @default(now())
   predictions Prediction[]
   result      Result?

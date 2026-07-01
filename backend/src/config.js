@@ -20,6 +20,9 @@ const config = {
   },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
   cronToken: process.env.CRON_TOKEN || '',
+  // Bearer token the Python ML daemon uses to push predictions / read NP.
+  // Falls back to CRON_TOKEN so a single secret can cover both integrations.
+  mlToken: process.env.ML_PUSH_TOKEN || process.env.CRON_TOKEN || '',
   subscription: {
     priceXOF: Number(process.env.SUB_PRICE_XOF) || 5000,
     periodDays: Number(process.env.SUB_PERIOD_DAYS) || 30,

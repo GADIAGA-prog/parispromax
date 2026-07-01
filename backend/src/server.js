@@ -10,6 +10,7 @@ const raceRoutes = require('./routes/races');
 const cronRoutes = require('./routes/cron');
 const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
+const mlRoutes = require('./routes/ml');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/races', raceRoutes);
 app.use('/cron', cronRoutes);
 app.use('/stats', statsRoutes);
 app.use('/admin', adminRoutes);
+app.use('/ml', mlRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path }));
 

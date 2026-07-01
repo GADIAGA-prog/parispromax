@@ -1,0 +1,11 @@
+# PARISPROMAX — ML pipeline (Learning-to-Rank turf)
+# Python 3.10+ recommended.
+pandas>=2.1
+numpy>=1.26
+scikit-learn>=1.4
+lightgbm>=4.3
+catboost>=1.2          # optional alternative ranker (QueryRMSE)
+joblib>=1.3
+schedule>=1.2          # 10-minute automation loop
+requests>=2.31         # fetch fresh data from the Node backend
+python-dateutil>=2.9

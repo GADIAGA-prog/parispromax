@@ -121,6 +121,28 @@ router.post('/api/results', express.json(), async (req, res) => {
   res.json({ ok: true, predicted, resultId: result.id });
 });
 
+// POST /admin/api/non-partants  { externalId, nonPartants: [3,7] }
+// Declare the scratched runners for a race so the ML daemon drops + renormalises
+// them on its next 10-min cycle. Pass an empty array to clear.
+router.post('/api/non-partants', express.json(), async (req, res) => {
+  const { externalId, nonPartants } = req.body || {};
+  if (!externalId || !Array.isArray(nonPartants)) {
+    return res.status(400).json({ error: 'externalId et nonPartants[] requis' });
+  }
+  const nums = nonPartants
+    .map((n) => Number(n))
+    .filter((n) => Number.isFinite(n));
+  try {
+    await prisma.race.update({
+      where: { externalId },
+      data: { nonPartants: JSON.stringify(nums) },
+    });
+  } catch {
+    return res.status(404).json({ error: 'Course introuvable' });
+  }
+  res.json({ ok: true, externalId, nonPartants: nums });
+});
+
 // HTML dashboard.
 router.get('/', async (_req, res) => {
   res.type('html').send(DASHBOARD_HTML);

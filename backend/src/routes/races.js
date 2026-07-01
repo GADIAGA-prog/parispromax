@@ -121,6 +121,19 @@ router.get('/history', async (req, res) => {
   res.json({ history });
 });
 
+// GET /races/:externalId/non-partants — live scratchings for a race, consumed
+// by the Python ML daemon before it re-scores the field. Public (read-only).
+// Returns { race_id, non_partants: [numbers] }.
+router.get('/:externalId/non-partants', async (req, res) => {
+  const race = await prisma.race.findUnique({
+    where: { externalId: req.params.externalId },
+    select: { nonPartants: true },
+  });
+  if (!race) return res.status(404).json({ error: 'Course introuvable' });
+  const np = race.nonPartants ? parse(race.nonPartants, []) : [];
+  res.json({ race_id: req.params.externalId, non_partants: Array.isArray(np) ? np : [] });
+});
+
 // GET /races/:externalId — race detail with runners (public, no AI scores).
 router.get('/:externalId', async (req, res) => {
   const race = await prisma.race.findUnique({ where: { externalId: req.params.externalId } });

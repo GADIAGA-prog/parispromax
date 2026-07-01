@@ -1,0 +1,7 @@
+artifacts/
+data/
+*.joblib
+predictions.json
+__pycache__/
+*.pyc
+.mlvenv/
