@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import TrialBanner from '../components/TrialBanner';
 import LockCard from '../components/LockCard';
 import HorseCard from '../components/HorseCard';
+import Disclaimer from '../components/Disclaimer';
 import { loadRaces } from '../services/dataService';
 import api from '../services/api';
 import { analyzeRace, confidenceLabel } from '../services/aiEngine';
@@ -126,6 +127,8 @@ export default function QuintePlusScreen({ navigation }) {
             </Text>
           </View>
         </LockCard>
+
+        <Disclaimer />
 
         {/* Detail of the 5 picks */}
         <Text style={styles.sectionTitle}>Le détail des 5 bases</Text>

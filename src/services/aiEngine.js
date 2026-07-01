@@ -1,12 +1,14 @@
 // ---------------------------------------------------------------------------
 // PARISPROMAX — AI prediction engine (app). Mirrors backend src/services/aiEngine.
 //
-// Race-level scoring blending the real signals from the source:
-//   - recent form (musique -> formScore, recency-weighted upstream)
-//   - class (career earnings "gains", normalized within the race)
-//   - market confidence (odds, when published)
-//   - jockey rating (when available)
-// Weights adapt to whether odds are published.
+// Richer, race-level scoring blending multiple real signals:
+//   - form        : recency-weighted recent placings (musique)
+//   - consistency : how often the horse finishes in the top 3 (regularity)
+//   - recentWin   : bonus if it won/placed last time out
+//   - class       : career earnings (gains), log-scaled & normalized in the race
+//   - connections : jockey/trainer rating (from real historical results)
+//   - market      : odds, when published (collective intelligence — heavy)
+// Weights adapt to whether odds are available.
 // ---------------------------------------------------------------------------
 
 export const BADGES = {
@@ -27,46 +29,97 @@ function oddsStrength(odds) {
   return clamp((1 / odds) * 110, 0, 100);
 }
 
-// Score a single horse given precomputed race context.
+// Parse a "musique" (e.g. "1a2aDa3a") into recent placings (most recent first).
+function parseMusique(m) {
+  const tokens = (m || '').match(/\d+|[A-Za-z]/g) || [];
+  const placings = [];
+  for (const t of tokens) {
+    if (placings.length >= 6) break;
+    if (/^\d+$/.test(t)) placings.push(parseInt(t, 10));
+    else if (/^[DTAR]$/i.test(t)) placings.push(99); // Disq./Tombé/Arrêté/Rétro
+  }
+  return placings;
+}
+
+function placeValue(p) {
+  if (p === 1) return 100;
+  if (p === 2) return 85;
+  if (p === 3) return 72;
+  if (p === 4) return 58;
+  if (p === 5) return 48;
+  if (p >= 6 && p < 99) return 32;
+  return 12;
+}
+
+// Returns { form, consistency, recentWin } from a musique, or null placings.
+function formMetrics(h) {
+  const placings = parseMusique(h.form);
+  if (!placings.length) {
+    // Fall back to any precomputed formScore from the scraper.
+    const f = num(h.formScore, 45);
+    return { form: clamp(f, 0, 100), consistency: 45, recentWin: 0 };
+  }
+  const weights = [1, 0.85, 0.7, 0.55, 0.42, 0.3];
+  let s = 0;
+  let sw = 0;
+  placings.forEach((p, i) => {
+    const w = weights[i] || 0.2;
+    s += placeValue(p) * w;
+    sw += w;
+  });
+  const form = Math.round(s / sw);
+
+  const runs = placings.length;
+  const top3 = placings.filter((p) => p >= 1 && p <= 3).length;
+  const bad = placings.filter((p) => p >= 99).length;
+  const consistency = clamp((top3 / runs) * 100 - (bad / runs) * 30, 0, 100);
+
+  const recentWin = placings[0] === 1 ? 6 : placings[0] === 2 || placings[0] === 3 ? 2 : 0;
+  return { form, consistency, recentWin };
+}
+
+function buildContext(horses) {
+  const logGains = horses.map((h) => Math.log10(Math.max(1, num(h.gains, 0)) + 1));
+  return {
+    maxLG: Math.max(...logGains, 0),
+    minLG: Math.min(...logGains, 0),
+    anyOdds: horses.some((h) => num(h.odds, 0) > 1),
+  };
+}
+
 function scoreHorse(h, ctx) {
-  const form = clamp(num(h.formScore, 45), 0, 100);
-  const classScore = ctx.maxG > 0 ? ((num(h.gains, 0) - ctx.minG) / ctx.range) * 100 : 50;
-  const jockey = clamp(num(h.jockeyRating, 60), 0, 100);
+  const { form, consistency, recentWin } = formMetrics(h);
+  const lg = Math.log10(Math.max(1, num(h.gains, 0)) + 1);
+  const range = ctx.maxLG - ctx.minLG || 1;
+  const classScore = ctx.maxLG > 0 ? clamp(((lg - ctx.minLG) / range) * 100, 0, 100) : 50;
+  const connections = clamp(num(h.jockeyRating, 60), 0, 100);
   const market = oddsStrength(h.odds);
 
-  let score;
+  let base;
   if (ctx.anyOdds && market != null) {
-    score = form * 0.34 + market * 0.3 + classScore * 0.21 + jockey * 0.15;
+    base =
+      form * 0.3 + market * 0.28 + consistency * 0.14 + classScore * 0.16 + connections * 0.12;
   } else {
-    score = form * 0.5 + classScore * 0.35 + jockey * 0.15;
+    base = form * 0.4 + consistency * 0.2 + classScore * 0.22 + connections * 0.18;
   }
-  return Math.round(score * 10) / 10;
+  return Math.round(clamp(base + recentWin, 0, 100) * 10) / 10;
 }
 
 export function computeAIScore(horse) {
-  return scoreHorse(horse, { maxG: 0, minG: 0, range: 1, anyOdds: num(horse.odds, 0) > 1 });
+  return scoreHorse(horse, buildContext([horse]));
 }
 
-// Value index: reward strong AI score at generous odds (an underrated runner).
 function computeValueIndex(aiScore, odds) {
   const o = num(odds, 0);
   if (o < 2) return 0;
   return aiScore * Math.log10(Math.max(1.1, o));
 }
 
-// Analyze a whole race -> new race with annotated, ranked horses + badges.
 export function analyzeRace(race) {
   if (!race || !Array.isArray(race.horses) || !race.horses.length) {
     return { ...race, horses: [] };
   }
-
-  const gains = race.horses.map((h) => num(h.gains, 0));
-  const ctx = {
-    maxG: Math.max(...gains, 0),
-    minG: Math.min(...gains),
-    anyOdds: race.horses.some((h) => num(h.odds, 0) > 1),
-  };
-  ctx.range = ctx.maxG - ctx.minG || 1;
+  const ctx = buildContext(race.horses);
 
   const scored = race.horses.map((h) => {
     const aiScore = scoreHorse(h, ctx);

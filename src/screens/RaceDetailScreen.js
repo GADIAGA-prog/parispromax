@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import HorseCard from '../components/HorseCard';
 import LockCard from '../components/LockCard';
 import TrialBanner from '../components/TrialBanner';
+import Disclaimer from '../components/Disclaimer';
 import { analyzeRace, BADGES } from '../services/aiEngine';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT, TRACK_CONDITIONS } from '../theme/colors';
@@ -84,6 +85,8 @@ export default function RaceDetailScreen({ route, navigation }) {
             </View>
           </View>
         </LockCard>
+
+        <Disclaimer />
 
         {/* Full field */}
         <Text style={styles.sectionTitle}>Partants ({analyzed.horses.length})</Text>
