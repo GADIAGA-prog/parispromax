@@ -165,6 +165,31 @@ async function fetchOdds(course) {
   }
 }
 
+// Fetch a finished race's arrival order (finishing positions -> horse numbers).
+// Returns an array like [4, 6, 1, 8, 2] or null if the race isn't run yet.
+async function fetchResult(courseId) {
+  try {
+    const { data } = await getWithRetry(`${BASE}/arrivee-et-rapports-pmu?id_course=${courseId}`);
+    const $ = cheerio.load(data);
+    const posToNum = new Map();
+    $('table tr').each((_, tr) => {
+      const cells = $(tr).find('td').map((j, td) => $(td).text().trim()).get();
+      if (cells.length < 2) return;
+      const pos = parseInt(cells[0], 10);
+      const num = parseInt(cells[1], 10);
+      if (Number.isFinite(pos) && Number.isFinite(num) && pos >= 1 && pos <= 30 && num >= 1 && num <= 30) {
+        if (!posToNum.has(pos)) posToNum.set(pos, num);
+      }
+    });
+    // Read contiguous finishing order starting at position 1.
+    const winners = [];
+    for (let p = 1; posToNum.has(p); p++) winners.push(posToNum.get(p));
+    return winners.length >= 3 ? winners : null;
+  } catch {
+    return null;
+  }
+}
+
 // Main entry — returns a payload object in the app schema.
 async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
   const byHippo = await fetchProgramme(date);
@@ -207,4 +232,4 @@ async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
   };
 }
 
-module.exports = { scrapeProgramme };
+module.exports = { scrapeProgramme, fetchResult };

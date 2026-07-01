@@ -1,0 +1,62 @@
+/* eslint-disable no-console */
+const prisma = require('../db');
+const { fetchResult } = require('./scrape');
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Auto-detect race results (arrivals) for races that don't have one yet, and
+// record whether our #1 AI pick placed in the top 3 (drives the real success
+// rate). `dates` optionally limits to specific YYYY-MM-DD strings.
+async function detectResults({ dates } = {}) {
+  const where = { result: { is: null } };
+  if (dates && dates.length) where.date = { in: dates };
+
+  const races = await prisma.race.findMany({
+    where,
+    include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  });
+
+  let recorded = 0;
+  let checked = 0;
+  for (const race of races) {
+    const m = race.externalId.match(/c(\d+)/); // geny numeric course id
+    if (!m) continue; // demo races have no numeric id
+    checked++;
+
+    const winners = await fetchResult(m[1]);
+    await sleep(1200); // politeness
+    if (!winners || winners.length < 3) continue; // not run yet
+
+    let predicted = false;
+    if (race.predictions.length) {
+      let picks = [];
+      try {
+        picks = JSON.parse(race.predictions[0].topPicks);
+      } catch {
+        picks = [];
+      }
+      const top = picks[0];
+      // Hit = our #1 AI pick finished in the top 3 (placé).
+      predicted = top ? winners.slice(0, 3).includes(top.number) : false;
+    }
+
+    await prisma.result.create({
+      data: { raceId: race.id, winners: JSON.stringify(winners), predicted },
+    });
+    recorded++;
+  }
+
+  console.log(`[results] checked ${checked}, recorded ${recorded}`);
+  return { checked, recorded };
+}
+
+if (require.main === module) {
+  detectResults()
+    .then(() => prisma.$disconnect())
+    .catch((e) => {
+      console.error('[results] error', e);
+      process.exitCode = 1;
+    });
+}
+
+module.exports = { detectResults };

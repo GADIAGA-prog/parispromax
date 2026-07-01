@@ -1,0 +1,27 @@
+name: Refresh races & results
+
+# Automatically refreshes the ParisPromax backend twice a day:
+#   - scrapes the day's races (geny.com)
+#   - auto-detects results (arrivals) for finished races -> real success rate
+#
+# Setup: add a repo secret named CRON_TOKEN (Settings -> Secrets and variables
+# -> Actions) with the SAME value as the backend's CRON_TOKEN env var on Render.
+
+on:
+  schedule:
+    - cron: '30 6 * * *'   # 06:30 UTC — morning: scrape the day's programme
+    - cron: '0 20 * * *'   # 20:00 UTC — evening: detect results
+  workflow_dispatch: {}     # allow manual runs from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger backend refresh
+        run: |
+          echo "Calling /cron/refresh…"
+          curl -fsS -X POST \
+            "https://parispromax-backend.onrender.com/cron/refresh?token=${{ secrets.CRON_TOKEN }}" \
+            --max-time 300
+          echo ""
+          echo "Done."

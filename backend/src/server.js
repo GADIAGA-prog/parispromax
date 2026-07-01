@@ -7,6 +7,7 @@ const meRoutes = require('./routes/me');
 const paymentRoutes = require('./routes/payments');
 const planRoutes = require('./routes/plans');
 const raceRoutes = require('./routes/races');
+const cronRoutes = require('./routes/cron');
 const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
 
@@ -59,6 +60,7 @@ app.use('/me', meRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/plans', planRoutes);
 app.use('/races', raceRoutes);
+app.use('/cron', cronRoutes);
 app.use('/stats', statsRoutes);
 app.use('/admin', adminRoutes);
 

@@ -53,3 +53,5 @@ services:
         sync: false
       - key: CINETPAY_SECRET_KEY
         sync: false
+      - key: CRON_TOKEN
+        generateValue: true

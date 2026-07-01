@@ -19,6 +19,7 @@ const config = {
     baseUrl: process.env.CINETPAY_BASE_URL || 'https://api-checkout.cinetpay.com/v2',
   },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
+  cronToken: process.env.CRON_TOKEN || '',
   subscription: {
     priceXOF: Number(process.env.SUB_PRICE_XOF) || 5000,
     periodDays: Number(process.env.SUB_PERIOD_DAYS) || 30,

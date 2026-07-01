@@ -109,8 +109,8 @@ router.post('/api/results', express.json(), async (req, res) => {
       picks = [];
     }
     const topPick = picks[0];
-    // Hit = our #1 pick is among the placed (winners) runners.
-    predicted = topPick ? winners.includes(topPick.number) : false;
+    // Hit = our #1 pick finished in the top 3 (placé).
+    predicted = topPick ? winners.slice(0, 3).includes(topPick.number) : false;
   }
 
   const result = await prisma.result.upsert({
