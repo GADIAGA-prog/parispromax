@@ -31,8 +31,17 @@ router.post('/api/scrape', async (req, res) => {
     if (!payload.racetracks.length) {
       return res.status(502).json({ error: 'Aucune donnée récupérée (geny indisponible ou rate-limit).' });
     }
+    // Clean replace: drop this date's existing races (+ their predictions/results)
+    // so demo/stale data doesn't mix with the fresh scrape.
+    const old = await prisma.race.findMany({ where: { date }, select: { id: true } });
+    const ids = old.map((r) => r.id);
+    if (ids.length) {
+      await prisma.prediction.deleteMany({ where: { raceId: { in: ids } } });
+      await prisma.result.deleteMany({ where: { raceId: { in: ids } } });
+      await prisma.race.deleteMany({ where: { id: { in: ids } } });
+    }
     const count = await ingestData(payload);
-    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count });
+    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count, replaced: ids.length });
   } catch (e) {
     console.error('scrape endpoint error', e.message);
     res.status(500).json({ error: e.message });
