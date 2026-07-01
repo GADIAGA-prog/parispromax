@@ -16,13 +16,12 @@ import { PLANS, fmtXOF } from '../services/plans';
 import api from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
-const GATEWAYS = [
-  { id: 'card', name: 'Carte bancaire', color: '#64748b', icon: 'card' },
-  { id: 'orange-money', name: 'Orange Money', color: '#ff7900', icon: 'phone-portrait' },
-  { id: 'mtn', name: 'MTN MoMo', color: '#ffcc00', icon: 'phone-portrait' },
-  { id: 'wave', name: 'Wave', color: '#1dc3f2', icon: 'water' },
-  { id: 'moov', name: 'Moov Money', color: '#0066b3', icon: 'phone-portrait' },
-];
+// The actual Mobile Money operators shown depend on the user's country and are
+// presented on the secure FedaPay page after tapping "Payer".
+const COUNTRY_NAMES = {
+  bf: 'Burkina Faso', ci: "Côte d'Ivoire", sn: 'Sénégal', tg: 'Togo',
+  bj: 'Bénin', ne: 'Niger', ml: 'Mali', gn: 'Guinée',
+};
 
 const PERKS = [
   'Top 3 pronostics IA sur toutes les courses',
@@ -33,12 +32,12 @@ const PERKS = [
 ];
 
 export default function PaywallScreen({ navigation }) {
-  const { refreshAccess } = useAuth();
+  const { refreshAccess, country } = useAuth();
   const [planId, setPlanId] = useState('monthly');
-  const [gateway, setGateway] = useState(GATEWAYS[1].id);
   const [processing, setProcessing] = useState(false);
 
   const plan = PLANS.find((p) => p.id === planId);
+  const countryName = COUNTRY_NAMES[country] || 'votre pays';
 
   const pollStatus = async (txn, tries = 6) => {
     for (let i = 0; i < tries; i++) {
@@ -57,7 +56,7 @@ export default function PaywallScreen({ navigation }) {
   const onPay = async () => {
     setProcessing(true);
     try {
-      const init = await api.initiatePayment(planId, gateway);
+      const init = await api.initiatePayment(planId);
       await WebBrowser.openBrowserAsync(init.paymentUrl);
       const status = await pollStatus(init.transactionId);
       if (status === 'success') {
@@ -128,20 +127,14 @@ export default function PaywallScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Payment method */}
-        <Text style={styles.sectionTitle}>Moyen de paiement</Text>
-        {GATEWAYS.map((g) => {
-          const active = gateway === g.id;
-          return (
-            <Pressable key={g.id} style={[styles.gateway, active && styles.gatewayActive]} onPress={() => setGateway(g.id)}>
-              <View style={[styles.gwIcon, { backgroundColor: g.color }]}>
-                <Ionicons name={g.icon} size={16} color="#0f172a" />
-              </View>
-              <Text style={styles.gwName}>{g.name}</Text>
-              <Ionicons name={active ? 'radio-button-on' : 'radio-button-off'} size={18} color={active ? COLORS.accent : COLORS.textFaint} />
-            </Pressable>
-          );
-        })}
+        {/* Payment info — the operators appear on the FedaPay page by country */}
+        <View style={styles.payInfo}>
+          <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
+          <Text style={styles.payInfoText}>
+            Après « Payer », choisissez votre Mobile Money ({countryName}) sur la
+            page sécurisée FedaPay.
+          </Text>
+        </View>
 
         <Pressable style={[styles.payBtn, processing && { opacity: 0.7 }]} onPress={onPay} disabled={processing}>
           {processing ? (
@@ -154,7 +147,7 @@ export default function PaywallScreen({ navigation }) {
           )}
         </Pressable>
 
-        <Text style={styles.secure}>🔒 Paiement sécurisé via CinetPay (carte & mobile money)</Text>
+        <Text style={styles.secure}>🔒 Paiement sécurisé via FedaPay · Mobile Money</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -188,6 +181,12 @@ const styles = StyleSheet.create({
   perkRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingVertical: 4 },
   perkText: { color: COLORS.text, fontSize: FONT.sm, flex: 1 },
   sectionTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', marginBottom: SPACING.sm },
+  payInfo: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.md,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  payInfoText: { color: COLORS.textMuted, fontSize: FONT.sm, flex: 1, lineHeight: 18 },
   gateway: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1.5, borderColor: COLORS.border,

@@ -31,6 +31,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [phone, setPhone] = useState(null);
+  const [country, setCountry] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [access, setAccess] = useState(defaultAccess);
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,7 @@ export function AuthProvider({ children }) {
       setAccess(a);
       setIsLoggedIn(true);
       if (data.user?.phone) setPhone(data.user.phone);
+      if (data.user?.country) setCountry(data.user.country);
       await AsyncStorage.setItem(ACCESS_CACHE, JSON.stringify(a));
       return a;
     } catch (e) {
@@ -91,6 +93,7 @@ export function AuthProvider({ children }) {
       const res = await api.verifyOtp(clean, code, country);
       await setToken(res.token);
       setPhone(res.user.phone);
+      if (res.user.country) setCountry(res.user.country);
       await AsyncStorage.setItem(PHONE_KEY, res.user.phone);
       setIsLoggedIn(true);
       await refreshAccess();
@@ -110,6 +113,7 @@ export function AuthProvider({ children }) {
     () => ({
       // identity
       phone,
+      country,
       isLoggedIn,
       loading,
       // access
@@ -124,7 +128,7 @@ export function AuthProvider({ children }) {
       refreshAccess,
       logout: doLogout,
     }),
-    [phone, isLoggedIn, loading, access, requestOtp, verifyOtp, refreshAccess, doLogout]
+    [phone, country, isLoggedIn, loading, access, requestOtp, verifyOtp, refreshAccess, doLogout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
