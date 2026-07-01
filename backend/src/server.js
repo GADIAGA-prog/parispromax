@@ -35,10 +35,12 @@ app.get('/health', (_req, res) => {
   const provider = config.payments.provider;
   const configured =
     provider === 'cinetpay' ? config.cinetpay.configured : config.fedapay.configured;
+  const mode = provider === 'cinetpay' ? config.cinetpay.mode : config.fedapay.mode;
   res.json({
     ok: true,
     service: 'parispromax-backend',
     paymentProvider: provider,
+    paymentMode: mode, // sandbox | live (non-secret, for diagnostics)
     payments: configured ? 'configured' : 'mock',
     time: new Date().toISOString(),
   });
