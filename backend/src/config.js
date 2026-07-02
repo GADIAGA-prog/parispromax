@@ -47,6 +47,13 @@ const config = {
     mode: (process.env.FEDAPAY_MODE || 'sandbox').toLowerCase(), // sandbox | live
     country: (process.env.FEDAPAY_COUNTRY || 'bj').toLowerCase(), // ISO2 for phone
   },
+  paydunya: {
+    masterKey: process.env.PAYDUNYA_MASTER_KEY || '',
+    privateKey: process.env.PAYDUNYA_PRIVATE_KEY || '', // test_private_.../live_private_...
+    publicKey: process.env.PAYDUNYA_PUBLIC_KEY || '',
+    token: process.env.PAYDUNYA_TOKEN || '',
+    mode: (process.env.PAYDUNYA_MODE || 'test').toLowerCase(), // test | live
+  },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
   cronToken: process.env.CRON_TOKEN || '',
   // Bearer token the Python ML daemon uses to push predictions / read NP.
@@ -76,5 +83,14 @@ config.fedapay.baseUrl =
     ? 'https://api.fedapay.com'
     : 'https://sandbox-api.fedapay.com';
 config.fedapay.configured = Boolean(config.fedapay.secretKey);
+
+// PayDunya base URL derived from mode; configured = master+private+token present.
+config.paydunya.baseUrl =
+  config.paydunya.mode === 'live'
+    ? 'https://app.paydunya.com/api/v1'
+    : 'https://app.paydunya.com/sandbox-api/v1';
+config.paydunya.configured = Boolean(
+  config.paydunya.masterKey && config.paydunya.privateKey && config.paydunya.token
+);
 
 module.exports = config;

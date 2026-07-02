@@ -4,6 +4,7 @@ const config = require('../config');
 const { requireAuth } = require('../auth');
 const cinetpay = require('../services/cinetpay');
 const fedapay = require('../services/fedapay');
+const paydunya = require('../services/paydunya');
 const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
 const { activateSubscription } = require('../services/subscription');
 const { getPlan } = require('../plans');
@@ -125,7 +126,7 @@ async function finalizeSuccess(transactionId, opts) {
 // Returns the (possibly updated) payment. Safe no-op in mock mode.
 async function reconcile(payment) {
   if (!payment || payment.status !== 'pending') return payment;
-  const provider = payment.provider === 'cinetpay' ? cinetpay : fedapay;
+  const provider = getProvider(payment.provider); // resolves by stored provider name
   if (!provider.isConfigured()) return payment; // mock: trust stored status
   try {
     const verify = await provider.verifyPayment(payment);
@@ -189,6 +190,31 @@ router.post('/fedapay/webhook', async (req, res) => {
     res.status(200).send('OK'); // always 200 so FedaPay stops retrying
   } catch (e) {
     console.error('fedapay webhook error', e);
+    res.status(200).send('OK');
+  }
+});
+
+// POST /payments/paydunya/webhook  (public — PayDunya IPN, form-urlencoded)
+// PayDunya posts data[invoice][token] + data[status]; we look up by token and
+// re-verify against the PayDunya API before trusting it.
+router.post('/paydunya/webhook', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const d = req.body?.data || {};
+    const token = d.invoice?.token || d.token;
+    if (token) {
+      const payment = await prisma.payment.findFirst({ where: { providerRef: String(token) } });
+      if (payment) {
+        const verify = await paydunya.verifyPayment(payment);
+        if (verify.status === 'success') {
+          await finalizePaymentSuccess(payment, { method: verify.method, raw: verify.raw });
+        } else if (verify.status === 'failed') {
+          await markFailed(payment, verify.raw || req.body);
+        }
+      }
+    }
+    res.status(200).send('OK'); // always 200 so PayDunya stops retrying
+  } catch (e) {
+    console.error('paydunya webhook error', e);
     res.status(200).send('OK');
   }
 });

@@ -55,6 +55,17 @@ services:
         sync: false
       - key: FEDAPAY_WEBHOOK_SECRET
         sync: false
+      # PayDunya (test by default). Keys are set manually in the dashboard.
+      - key: PAYDUNYA_MODE
+        value: test
+      - key: PAYDUNYA_MASTER_KEY
+        sync: false
+      - key: PAYDUNYA_PRIVATE_KEY
+        sync: false
+      - key: PAYDUNYA_PUBLIC_KEY
+        sync: false
+      - key: PAYDUNYA_TOKEN
+        sync: false
       - key: SUB_PRICE_XOF
         value: "5000"
       - key: SUB_PERIOD_DAYS

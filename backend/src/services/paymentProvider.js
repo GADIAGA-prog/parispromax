@@ -1,6 +1,7 @@
 const config = require('../config');
 const cinetpay = require('./cinetpay');
 const fedapay = require('./fedapay');
+const paydunya = require('./paydunya');
 
 // Registry of supported payment providers. Both expose the same interface:
 //   initiatePayment({ transactionId, amount, currency, description, customer })
@@ -10,6 +11,7 @@ const fedapay = require('./fedapay');
 const REGISTRY = {
   fedapay: { impl: fedapay, label: 'FedaPay' },
   cinetpay: { impl: cinetpay, label: 'CinetPay' },
+  paydunya: { impl: paydunya, label: 'PayDunya' },
 };
 
 // Configured default (PAYMENT_PROVIDER env), falling back to fedapay.
