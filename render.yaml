@@ -41,6 +41,10 @@ services:
       # Payment provider (fedapay by default). FedaPay keys are set manually.
       - key: PAYMENT_PROVIDER
         value: fedapay
+      # Hide CinetPay while its API host (api-checkout.cinetpay.com) is down at
+      # the DNS level (NXDOMAIN). REMOVE this once CinetPay's API is restored.
+      - key: PAYMENT_DISABLED
+        value: cinetpay
       - key: FEDAPAY_MODE
         value: live
       - key: FEDAPAY_COUNTRY

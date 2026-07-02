@@ -27,11 +27,14 @@ router.post('/initiate', requireAuth, async (req, res) => {
     const plan = getPlan(req.body.planId);
     if (!plan) return res.status(400).json({ error: 'Plan invalide' });
 
-    // User may pick the payment provider; fall back to the configured default.
-    const provider = getProvider(req.body.provider || defaultName);
-    if (!provider.isConfigured() && !config.allowMock) {
-      return res.status(400).json({ error: 'Moyen de paiement indisponible' });
-    }
+    // Pick a usable provider: the requested one if available, else the default.
+    const avail = availableProviders();
+    const chosenId =
+      req.body.provider && avail.some((p) => p.id === req.body.provider)
+        ? req.body.provider
+        : avail.find((p) => p.id === defaultName)?.id || avail[0]?.id;
+    if (!chosenId) return res.status(400).json({ error: 'Aucun moyen de paiement disponible' });
+    const provider = getProvider(chosenId);
 
     const amount = plan.pricePromo;
     const transactionId = genTxnId();
@@ -79,15 +82,8 @@ router.post('/initiate', requireAuth, async (req, res) => {
       plan: plan.id,
     });
   } catch (e) {
-    const pdata = e.response?.data;
-    console.error('initiate error', pdata || e.message);
-    // TEMP diagnostic: expose the provider's (non-secret) error to debug live config.
-    res.status(500).json({
-      error: "Échec de l'initialisation du paiement",
-      providerStatus: e.response?.status || null,
-      providerError:
-        typeof pdata === 'object' ? pdata : pdata ? String(pdata).slice(0, 400) : e.message,
-    });
+    console.error('initiate error', e.response?.data || e.message);
+    res.status(500).json({ error: "Échec de l'initialisation du paiement" });
   }
 });
 

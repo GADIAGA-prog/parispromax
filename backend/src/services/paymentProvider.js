@@ -33,6 +33,7 @@ function getProvider(name) {
 // The app calls this to only show payment options that will actually work.
 function availableProviders() {
   return Object.entries(REGISTRY)
+    .filter(([id]) => !config.payments.disabled.includes(id)) // hidden via env
     .map(([id, { impl, label }]) => ({
       id,
       label,

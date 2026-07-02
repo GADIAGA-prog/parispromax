@@ -26,6 +26,12 @@ const config = {
   // provider has no keys, payments fall back to a local MOCK checkout.
   payments: {
     provider: (process.env.PAYMENT_PROVIDER || 'fedapay').toLowerCase(),
+    // Providers to hide even if configured (e.g. during a provider outage).
+    // Comma-separated ISO ids, e.g. PAYMENT_DISABLED=cinetpay
+    disabled: (process.env.PAYMENT_DISABLED || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
   },
   cinetpay: {
     apiKey: process.env.CINETPAY_API_KEY || '',
