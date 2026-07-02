@@ -1,13 +1,20 @@
 const express = require('express');
 const prisma = require('../db');
+const config = require('../config');
 const { requireAuth } = require('../auth');
 const cinetpay = require('../services/cinetpay');
 const fedapay = require('../services/fedapay');
-const psp = require('../services/paymentProvider'); // active provider (config)
+const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
 const { activateSubscription } = require('../services/subscription');
 const { getPlan } = require('../plans');
 
 const router = express.Router();
+
+// GET /payments/providers — the payment options the app should offer (only the
+// ones actually usable right now). Public.
+router.get('/providers', (_req, res) => {
+  res.json({ providers: availableProviders(), default: defaultName });
+});
 
 function genTxnId() {
   return `PPM-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -20,6 +27,12 @@ router.post('/initiate', requireAuth, async (req, res) => {
     const plan = getPlan(req.body.planId);
     if (!plan) return res.status(400).json({ error: 'Plan invalide' });
 
+    // User may pick the payment provider; fall back to the configured default.
+    const provider = getProvider(req.body.provider || defaultName);
+    if (!provider.isConfigured() && !config.allowMock) {
+      return res.status(400).json({ error: 'Moyen de paiement indisponible' });
+    }
+
     const amount = plan.pricePromo;
     const transactionId = genTxnId();
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
@@ -27,7 +40,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
     const payment = await prisma.payment.create({
       data: {
         userId: req.userId,
-        provider: psp.name,
+        provider: provider.name,
         transactionId,
         amount,
         currency: 'XOF',
@@ -38,7 +51,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
       },
     });
 
-    const init = await psp.initiatePayment({
+    const init = await provider.initiatePayment({
       transactionId,
       amount,
       currency: 'XOF',
@@ -60,7 +73,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
       transactionId,
       paymentUrl: init.paymentUrl,
       mode: init.mode,
-      provider: psp.name,
+      provider: provider.name,
       amount,
       currency: 'XOF',
       plan: plan.id,
@@ -189,7 +202,6 @@ router.get('/return', (req, res) => {
 // --- MOCK checkout (only when no provider is configured, and NEVER in prod) --
 // A tiny page that lets you simulate a successful or failed payment. Guarded by
 // config.allowMock so it can never be used to grant free access in production.
-const config = require('../config');
 function mockGuard(req, res, next) {
   if (!config.allowMock) return res.status(404).send('Not found');
   next();

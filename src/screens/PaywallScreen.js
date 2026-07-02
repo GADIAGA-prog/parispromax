@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -34,10 +34,32 @@ const PERKS = [
 export default function PaywallScreen({ navigation }) {
   const { refreshAccess, country } = useAuth();
   const [planId, setPlanId] = useState('monthly');
+  const [providers, setProviders] = useState([]);
+  const [providerId, setProviderId] = useState(null);
   const [processing, setProcessing] = useState(false);
 
   const plan = PLANS.find((p) => p.id === planId);
   const countryName = COUNTRY_NAMES[country] || 'votre pays';
+  const providerLabel = providers.find((p) => p.id === providerId)?.label || 'notre partenaire';
+
+  // Load the payment providers actually available (FedaPay / CinetPay).
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .paymentProviders()
+      .then((d) => {
+        if (cancelled) return;
+        const list = d.providers || [];
+        setProviders(list);
+        setProviderId(d.default && list.some((p) => p.id === d.default)
+          ? d.default
+          : list[0]?.id || null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const pollStatus = async (txn, tries = 6) => {
     for (let i = 0; i < tries; i++) {
@@ -56,7 +78,7 @@ export default function PaywallScreen({ navigation }) {
   const onPay = async () => {
     setProcessing(true);
     try {
-      const init = await api.initiatePayment(planId);
+      const init = await api.initiatePayment(planId, providerId);
       await WebBrowser.openBrowserAsync(init.paymentUrl);
       const status = await pollStatus(init.transactionId);
       if (status === 'success') {
@@ -127,12 +149,40 @@ export default function PaywallScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Payment info — the operators appear on the FedaPay page by country */}
+        {/* Provider choice — only when more than one is available */}
+        {providers.length > 1 && (
+          <>
+            <Text style={styles.sectionTitle}>Prestataire de paiement</Text>
+            {providers.map((pr) => {
+              const active = pr.id === providerId;
+              return (
+                <Pressable
+                  key={pr.id}
+                  style={[styles.provider, active && styles.providerActive]}
+                  onPress={() => setProviderId(pr.id)}
+                >
+                  <Ionicons name="wallet" size={20} color={active ? COLORS.accent : COLORS.textFaint} />
+                  <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+                    <Text style={styles.providerName}>{pr.label}</Text>
+                    <Text style={styles.providerSub}>Mobile Money & cartes</Text>
+                  </View>
+                  <Ionicons
+                    name={active ? 'radio-button-on' : 'radio-button-off'}
+                    size={20}
+                    color={active ? COLORS.accent : COLORS.textFaint}
+                  />
+                </Pressable>
+              );
+            })}
+          </>
+        )}
+
+        {/* Payment info — the operators appear on the provider page by country */}
         <View style={styles.payInfo}>
           <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
           <Text style={styles.payInfoText}>
             Après « Payer », choisissez votre Mobile Money ({countryName}) sur la
-            page sécurisée FedaPay.
+            page sécurisée {providerLabel}.
           </Text>
         </View>
 
@@ -187,6 +237,14 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   payInfoText: { color: COLORS.textMuted, fontSize: FONT.sm, flex: 1, lineHeight: 18 },
+  provider: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
+    borderWidth: 1.5, borderColor: COLORS.border,
+  },
+  providerActive: { borderColor: COLORS.accent },
+  providerName: { color: COLORS.text, fontWeight: '800', fontSize: FONT.md },
+  providerSub: { color: COLORS.textFaint, fontSize: FONT.sm - 1, marginTop: 2 },
   gateway: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1.5, borderColor: COLORS.border,

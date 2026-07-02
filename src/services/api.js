@@ -81,8 +81,9 @@ export const api = {
   plans: () => request('/plans'),
 
   // Payments
-  initiatePayment: (planId, method) =>
-    request('/payments/initiate', { method: 'POST', auth: true, body: { planId, method } }),
+  paymentProviders: () => request('/payments/providers'),
+  initiatePayment: (planId, provider) =>
+    request('/payments/initiate', { method: 'POST', auth: true, body: { planId, provider } }),
   paymentStatus: (txn) => request(`/payments/status/${txn}`, { auth: true }),
   myPayments: () => request('/payments/me', { auth: true }),
 
