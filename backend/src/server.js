@@ -42,13 +42,6 @@ app.get('/health', (_req, res) => {
     paymentProvider: provider,
     paymentMode: mode, // sandbox | live (non-secret, for diagnostics)
     payments: configured ? 'configured' : 'mock',
-    // TEMP diagnostic: which provider keys are present (booleans, no secrets).
-    keys: {
-      cinetpayApiKey: Boolean(config.cinetpay.apiKey),
-      cinetpayApiPassword: Boolean(config.cinetpay.apiPassword),
-      cinetpayMode: config.cinetpay.mode,
-      paymentDisabled: config.payments.disabled,
-    },
     time: new Date().toISOString(),
   });
 });
