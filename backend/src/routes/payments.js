@@ -84,7 +84,15 @@ router.post('/initiate', requireAuth, async (req, res) => {
     });
   } catch (e) {
     console.error('initiate error', e.response?.data || e.message);
-    res.status(500).json({ error: "Échec de l'initialisation du paiement" });
+    const body = { error: "Échec de l'initialisation du paiement" };
+    // Provider error detail, gated behind the admin/cron token (safe in prod).
+    if (req.query.diag && config.cronToken && req.query.diag === config.cronToken) {
+      const pdata = e.response?.data;
+      body.providerStatus = e.response?.status || null;
+      body.providerError =
+        typeof pdata === 'object' ? pdata : pdata ? String(pdata).slice(0, 500) : e.message;
+    }
+    res.status(500).json(body);
   }
 });
 
