@@ -83,8 +83,14 @@ router.post('/initiate', requireAuth, async (req, res) => {
       plan: plan.id,
     });
   } catch (e) {
-    console.error('initiate error', e.response?.data || e.message);
-    res.status(500).json({ error: "Échec de l'initialisation du paiement" });
+    const pdata = e.response?.data;
+    console.error('initiate error', pdata || e.message);
+    res.status(500).json({
+      error: "Échec de l'initialisation du paiement",
+      providerStatus: e.response?.status || null,
+      providerError:
+        typeof pdata === 'object' ? pdata : pdata ? String(pdata).slice(0, 500) : e.message,
+    });
   }
 });
 
