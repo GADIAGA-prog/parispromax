@@ -143,12 +143,16 @@ async function reconcile(payment) {
   return payment;
 }
 
-// POST /payments/cinetpay/webhook  (public — called by CinetPay)
-// We re-verify the transaction with CinetPay before trusting it.
-router.post('/cinetpay/webhook', async (req, res) => {
+// POST /payments/cinetpay/webhook  (public — CinetPay notify_url)
+// We re-verify the transaction with CinetPay before trusting it. Accepts both
+// the new API (merchant_transaction_id) and legacy (cpm_trans_id) field names,
+// JSON or form-encoded.
+router.post('/cinetpay/webhook', express.urlencoded({ extended: true }), async (req, res) => {
+  const b = req.body || {};
   const transactionId =
-    req.body.cpm_trans_id || req.body.transaction_id || req.query.transaction_id;
-  if (!transactionId) return res.status(400).send('missing transaction id');
+    b.merchant_transaction_id || b.cpm_trans_id || b.transaction_id ||
+    b.data?.merchant_transaction_id || req.query.transaction_id;
+  if (!transactionId) return res.status(200).send('OK'); // nothing to reconcile
 
   try {
     const payment = await prisma.payment.findUnique({ where: { transactionId } });

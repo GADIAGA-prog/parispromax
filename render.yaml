@@ -34,17 +34,9 @@ services:
         value: "true"
       - key: OTP_TTL_MINUTES
         value: "5"
-      - key: CINETPAY_MODE
-        value: sandbox
-      - key: CINETPAY_BASE_URL
-        value: https://api-checkout.cinetpay.com/v2
       # Payment provider (fedapay by default). FedaPay keys are set manually.
       - key: PAYMENT_PROVIDER
         value: fedapay
-      # Hide CinetPay while its API host (api-checkout.cinetpay.com) is down at
-      # the DNS level (NXDOMAIN). REMOVE this once CinetPay's API is restored.
-      - key: PAYMENT_DISABLED
-        value: cinetpay
       - key: FEDAPAY_MODE
         value: live
       - key: FEDAPAY_COUNTRY
@@ -77,11 +69,10 @@ services:
         sync: false
       - key: PUBLIC_BASE_URL
         sync: false
+      # CinetPay new API: API key (sk_test_/sk_live_) + API password.
       - key: CINETPAY_API_KEY
         sync: false
-      - key: CINETPAY_SITE_ID
-        sync: false
-      - key: CINETPAY_SECRET_KEY
+      - key: CINETPAY_API_PASSWORD
         sync: false
       - key: CRON_TOKEN
         generateValue: true

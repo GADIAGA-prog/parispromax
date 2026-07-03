@@ -34,11 +34,10 @@ const config = {
       .filter(Boolean),
   },
   cinetpay: {
+    // New CinetPay API (panel.cinetpay.net / api.cinetpay.net). The key prefix
+    // (sk_test_ / sk_live_) selects the environment; no site_id needed.
     apiKey: process.env.CINETPAY_API_KEY || '',
-    siteId: process.env.CINETPAY_SITE_ID || '',
-    secretKey: process.env.CINETPAY_SECRET_KEY || '',
-    mode: process.env.CINETPAY_MODE || 'sandbox',
-    baseUrl: process.env.CINETPAY_BASE_URL || 'https://api-checkout.cinetpay.com/v2',
+    apiPassword: process.env.CINETPAY_API_PASSWORD || '',
   },
   fedapay: {
     secretKey: process.env.FEDAPAY_SECRET_KEY || '', // sk_sandbox_... / sk_live_...
@@ -73,9 +72,9 @@ const config = {
 // are required: we verify each transaction via CinetPay's server-side
 // /payment/check API (no HMAC secret needed). The Secret Key stays optional
 // (reserved for future webhook HMAC verification).
-config.cinetpay.configured = Boolean(
-  config.cinetpay.apiKey && config.cinetpay.siteId
-);
+// Environment is derived from the key prefix; configured = key + password.
+config.cinetpay.mode = config.cinetpay.apiKey.startsWith('sk_live_') ? 'live' : 'test';
+config.cinetpay.configured = Boolean(config.cinetpay.apiKey && config.cinetpay.apiPassword);
 
 // FedaPay base URL derived from mode; configured = a secret key is present.
 config.fedapay.baseUrl =

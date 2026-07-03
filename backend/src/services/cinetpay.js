@@ -1,24 +1,42 @@
 const axios = require('axios');
 const config = require('../config');
 
-// CinetPay API v2 client.
-// Docs: https://docs.cinetpay.com/api/1.0-en/checkout/initialisation
+// CinetPay NEW API (panel.cinetpay.net / api.cinetpay.net).
+// Docs: your dashboard -> Ressources -> Documentation API.
 //
-// When CinetPay keys are NOT configured, we fall back to a local MOCK mode so
-// the full flow (initiate -> pay -> webhook -> activate) can be tested without
-// a merchant account. Swap in the real keys in .env to go live.
+// Auth is two-step:
+//   1. POST /v1/oauth/login { api_key, api_password } -> access token
+//   2. Use `Authorization: Bearer <token>` for /v1/payment (create) and the
+//      status/verify endpoint.
+// The api_key prefix (sk_test_ / sk_live_) selects sandbox vs production.
+//
+// Falls back to a local MOCK checkout when no keys are configured.
 
 const isConfigured = () => config.cinetpay.configured;
+// New CinetPay API base is a fixed host (env can't break the /v1 path).
+const base = () => 'https://api.cinetpay.net/v1';
 
-// Initiate a payment. Returns { paymentUrl, mode }.
-async function initiatePayment({
-  transactionId,
-  amount,
-  currency,
-  description,
-  customer,
-  channels = 'ALL', // ALL | MOBILE_MONEY | CREDIT_CARD
-}) {
+// Obtain an OAuth access token (short-lived; fetched per operation for safety).
+async function login() {
+  const { data } = await axios.post(
+    `${base()}/oauth/login`,
+    { api_key: config.cinetpay.apiKey, api_password: config.cinetpay.apiPassword },
+    { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
+  );
+  const token =
+    data?.data?.access_token || data?.data?.token || data?.access_token || data?.token;
+  if (!token) {
+    throw new Error(`CinetPay: authentification échouée (${data?.status || data?.description || 'token manquant'})`);
+  }
+  return token;
+}
+
+function authHeaders(token) {
+  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
+
+// Initiate a payment. Returns { mode, paymentUrl, providerRef, notifyUrl, returnUrl }.
+async function initiatePayment({ transactionId, amount, currency, description, customer }) {
   const notifyUrl = `${config.publicBaseUrl}/payments/cinetpay/webhook`;
   const returnUrl = `${config.publicBaseUrl}/payments/return`;
 
@@ -26,68 +44,83 @@ async function initiatePayment({
     if (!config.allowMock) {
       throw new Error('CinetPay non configuré (paiement indisponible en production)');
     }
-    // MOCK mode — our own hosted page simulates the PSP checkout.
     return {
       mode: 'mock',
       paymentUrl: `${config.publicBaseUrl}/payments/mock/${transactionId}`,
+      providerRef: null,
       notifyUrl,
       returnUrl,
     };
   }
 
-  const payload = {
-    apikey: config.cinetpay.apiKey,
-    site_id: config.cinetpay.siteId,
-    transaction_id: transactionId,
-    amount,
-    currency,
+  const token = await login();
+  const body = {
+    merchant_transaction_id: transactionId,
+    amount: Math.round(Number(amount)),
+    currency: currency || 'XOF',
     description: description || 'Abonnement ParisPromax',
-    notify_url: notifyUrl,
     return_url: returnUrl,
-    channels,
-    customer_id: customer?.id || undefined,
-    customer_name: customer?.name || undefined,
+    notify_url: notifyUrl,
+    customer_name: customer?.name || 'Client ParisPromax',
     customer_phone_number: customer?.phone || undefined,
+    channel: 'ALL', // ALL | MOBILE_MONEY | CREDIT_CARD
   };
 
-  const { data } = await axios.post(`${config.cinetpay.baseUrl}/payment`, payload, {
-    timeout: 15000,
-  });
-  if (data.code !== '201' || !data.data?.payment_url) {
-    throw new Error(`CinetPay init failed: ${data.message || data.code}`);
-  }
-  return { mode: 'live', paymentUrl: data.data.payment_url, notifyUrl, returnUrl };
-}
-
-// Verify a transaction's real status with CinetPay, given our Payment record
-// (uses payment.transactionId). Uniform signature across providers.
-// Returns { status: 'success'|'failed'|'pending'|'mock', method, raw }.
-async function verifyPayment(payment) {
-  if (!isConfigured()) {
-    // In mock mode the webhook/mock page sets status directly in the DB,
-    // so verification is a no-op signalling "trust the stored status".
-    return { status: 'mock', method: null, raw: null };
-  }
-
-  const payload = {
-    apikey: config.cinetpay.apiKey,
-    site_id: config.cinetpay.siteId,
-    transaction_id: payment && payment.transactionId,
-  };
-  const { data } = await axios.post(`${config.cinetpay.baseUrl}/payment/check`, payload, {
+  const { data } = await axios.post(`${base()}/payment`, body, {
+    headers: authHeaders(token),
     timeout: 15000,
   });
 
-  const apiStatus = data?.data?.status; // ACCEPTED | REFUSED | PENDING ...
-  let status = 'pending';
-  if (apiStatus === 'ACCEPTED') status = 'success';
-  else if (apiStatus === 'REFUSED') status = 'failed';
+  const d = data?.data || data;
+  const paymentUrl = d?.payment_url || d?.payment_link || d?.url;
+  const ref = d?.payment_token || d?.transaction_id || transactionId;
+  if (!paymentUrl) {
+    throw new Error(`CinetPay: création du paiement échouée (${data?.status || data?.description || data?.code})`);
+  }
 
   return {
-    status,
-    method: data?.data?.payment_method || null,
-    raw: data,
+    mode: config.cinetpay.mode,
+    paymentUrl,
+    providerRef: String(ref),
+    notifyUrl,
+    returnUrl,
   };
 }
 
-module.exports = { initiatePayment, verifyPayment, isConfigured };
+// Map CinetPay status -> our internal status.
+function mapStatus(status) {
+  switch (String(status || '').toUpperCase()) {
+    case 'ACCEPTED':
+    case 'COMPLETED':
+    case 'SUCCESS':
+    case 'SUCCESSFUL':
+    case 'PAID':
+      return 'success';
+    case 'REFUSED':
+    case 'FAILED':
+    case 'CANCELED':
+    case 'CANCELLED':
+    case 'EXPIRED':
+      return 'failed';
+    default:
+      return 'pending';
+  }
+}
+
+// Verify a payment's real status. Uses our merchant_transaction_id.
+// Returns { status: 'success'|'failed'|'pending'|'mock', method, raw }.
+async function verifyPayment(payment) {
+  if (!isConfigured()) return { status: 'mock', method: null, raw: null };
+  const txn = payment && payment.transactionId;
+  if (!txn) return { status: 'pending', method: null, raw: null };
+
+  const token = await login();
+  const { data } = await axios.get(`${base()}/payment/${encodeURIComponent(txn)}`, {
+    headers: authHeaders(token),
+    timeout: 15000,
+  });
+  const d = data?.data || data;
+  return { status: mapStatus(d?.status || d?.payment_status), method: d?.payment_method || null, raw: data };
+}
+
+module.exports = { initiatePayment, verifyPayment, isConfigured, mapStatus, login };
