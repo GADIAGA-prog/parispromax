@@ -72,10 +72,13 @@ async function initiatePayment({ transactionId, amount, currency, description, c
   });
 
   const d = data?.data || data;
-  const paymentUrl = d?.payment_url || d?.payment_link || d?.url;
-  const ref = d?.payment_token || d?.transaction_id || transactionId;
+  const paymentUrl =
+    d?.payment_url || d?.payment_link || d?.url || d?.checkout_url || d?.link ||
+    data?.payment_url;
+  const ref = d?.payment_token || d?.token || d?.transaction_id || transactionId;
   if (!paymentUrl) {
-    throw new Error(`CinetPay: création du paiement échouée (${data?.status || data?.description || data?.code})`);
+    // TEMP: include the raw response so we can map the URL field exactly.
+    throw new Error(`CinetPay: payment_url introuvable — ${JSON.stringify(data).slice(0, 450)}`);
   }
 
   return {
