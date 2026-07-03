@@ -79,8 +79,8 @@ async function initiatePayment({ transactionId, amount, currency, description, c
     data?.payment_url;
   const ref = d?.payment_token || d?.token || d?.transaction_id || transactionId;
   if (!paymentUrl) {
-    // TEMP: include the raw response so we can map the URL field exactly.
-    throw new Error(`CinetPay: payment_url introuvable — ${JSON.stringify(data).slice(0, 450)}`);
+    const det = data?.details;
+    throw new Error(`CinetPay: URL de paiement manquante (${det?.message || det?.status || data?.status || data?.code})`);
   }
 
   return {
