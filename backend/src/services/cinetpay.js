@@ -58,6 +58,7 @@ async function initiatePayment({ transactionId, amount, currency, description, c
     merchant_transaction_id: transactionId,
     amount: Math.round(Number(amount)),
     currency: currency || 'XOF',
+    designation: description || 'Abonnement ParisPromax',
     description: description || 'Abonnement ParisPromax',
     success_url: returnUrl,
     failed_url: returnUrl,
