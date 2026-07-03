@@ -1,10 +1,14 @@
-// Centralized theme for PARISPROMAX — Dark / Emerald Green
+// Centralized theme for PARISPROMAX — Dark / Blue brand (logo) + Emerald accent.
 // Optimized for readability on low-cost Android devices.
 
 export const COLORS = {
-  primary: '#064e3b', // Emerald 900 — headers, primary surfaces
+  primary: '#0b2547', // Deep blue — headers, primary surfaces (matches the logo)
   background: '#0f172a', // Slate 900 — app background
-  accent: '#10b981', // Emerald 500 — AI / highlights / CTAs
+  accent: '#10b981', // Emerald 500 — AI / highlights / CTAs (logo's green arrow)
+
+  // Brand blue (from the logo) — logo backdrops, brand accents.
+  brand: '#2563eb', // Blue 600
+  brandDark: '#0b2547',
 
   // Supporting palette derived from the two base tones
   surface: '#111c33', // Slightly lighter than background — cards

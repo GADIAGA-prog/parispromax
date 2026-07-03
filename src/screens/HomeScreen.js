@@ -6,6 +6,7 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -64,7 +65,11 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.title}>Programme du jour</Text>
             <Text style={styles.subtitle}>Hippodromes · Courses PMU</Text>
           </View>
-          <Ionicons name="sparkles" size={26} color={COLORS.accent} />
+          <Image
+            source={require('../../assets/logo-emblem.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.list}>
           <TrackCardSkeleton />
@@ -136,6 +141,7 @@ const styles = StyleSheet.create({
   },
   title: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900' },
   subtitle: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
+  headerLogo: { width: 40, height: 40 },
   offline: {
     flexDirection: 'row',
     alignItems: 'center',

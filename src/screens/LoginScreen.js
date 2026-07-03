@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -95,9 +96,11 @@ export default function LoginScreen() {
         style={styles.container}
       >
         <View style={styles.logoWrap}>
-          <View style={styles.logo}>
-            <Ionicons name="trophy" size={40} color={COLORS.accent} />
-          </View>
+          <Image
+            source={require('../../assets/logo-emblem.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.brand}>PARISPROMAX</Text>
           <Text style={styles.tagline}>Pronostics IA · Courses PMU · Quinté+</Text>
         </View>
@@ -226,8 +229,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: SPACING.xl, justifyContent: 'center' },
   logoWrap: { alignItems: 'center', marginBottom: SPACING.xxl },
   logo: {
-    width: 84, height: 84, borderRadius: 24, backgroundColor: COLORS.primary,
-    alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md,
+    width: 116, height: 116, marginBottom: SPACING.md,
   },
   brand: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900', letterSpacing: 1 },
   tagline: { color: COLORS.accent, fontSize: FONT.sm, marginTop: 4, fontWeight: '600' },
