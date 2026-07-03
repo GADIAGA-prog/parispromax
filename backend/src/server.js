@@ -31,6 +31,21 @@ app.use(
 // NOTE: payment webhook needs the raw-ish body but we use JSON/urlencoded per route.
 app.use(express.json());
 
+// TEMP: report the server's public egress IP (the IP a PSP like CinetPay sees).
+app.get('/whoami', async (_req, res) => {
+  try {
+    const axios = require('axios');
+    const results = {};
+    for (let i = 0; i < 4; i++) {
+      const { data } = await axios.get('https://api.ipify.org?format=json', { timeout: 8000 });
+      results[data.ip] = (results[data.ip] || 0) + 1;
+    }
+    res.json({ egressIps: results });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/health', (_req, res) => {
   const provider = config.payments.provider;
   const configured =
