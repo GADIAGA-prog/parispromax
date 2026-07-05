@@ -155,8 +155,26 @@ router.get('/:externalId', async (req, res) => {
   });
 });
 
+// Map the LTR microservice output to the app's `topPicks` shape (unchanged
+// contract: number/name/aiScore/rank + proba* — so the app needs no change).
+function ltrToTopPicks(preds) {
+  return (preds || [])
+    .slice()
+    .sort((a, b) => (a.rang_predit || 999) - (b.rang_predit || 999))
+    .map((p) => ({
+      number: p.number,
+      name: p.name,
+      aiScore: Math.round((Number(p.proba_win) || 0) * 1000) / 10,
+      rank: p.rang_predit,
+      probaGagnant: Number(p.proba_win) || 0,
+      probaPodium: Number(p.proba_podium) || 0,
+      valueBet: !!p.value_bet,
+    }));
+}
+
 // GET /races/:externalId/prediction — AI top picks. GATED: requires an active
-// subscription or trial.
+// subscription or trial. Serves the trained LTR model when the IA microservice
+// is enabled (IA_URL), and falls back to the stored JS-engine predictions.
 router.get('/:externalId/prediction', requireAuth, async (req, res) => {
   const access = await getAccess(req.userId);
   if (!access.hasAccess) {
@@ -166,10 +184,26 @@ router.get('/:externalId/prediction', requireAuth, async (req, res) => {
     where: { externalId: req.params.externalId },
     include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
-  if (!race || !race.predictions.length) {
+  if (!race) return res.status(404).json({ error: 'Pronostic indisponible' });
+
+  // Prefer the trained LTR model (guarded: only when the IA service is wired).
+  if (process.env.IA_URL) {
+    try {
+      const { getPredictions } = require('../services/iaClient');
+      const ia = await getPredictions(req.params.externalId);
+      if (ia && Array.isArray(ia.predictions) && ia.predictions.length) {
+        return res.json({ raceId: race.externalId, source: 'ltr', topPicks: ltrToTopPicks(ia.predictions) });
+      }
+    } catch (e) {
+      console.error('[prediction] IA fallback ->', e.message);
+    }
+  }
+
+  // Fallback — stored JS-engine predictions.
+  if (!race.predictions.length) {
     return res.status(404).json({ error: 'Pronostic indisponible' });
   }
-  res.json({ raceId: race.externalId, topPicks: parse(race.predictions[0].topPicks, []) });
+  res.json({ raceId: race.externalId, source: 'js', topPicks: parse(race.predictions[0].topPicks, []) });
 });
 
 module.exports = router;

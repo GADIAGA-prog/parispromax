@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,10 +6,23 @@ import HorseCard from '../components/HorseCard';
 import LockCard from '../components/LockCard';
 import TrialBanner from '../components/TrialBanner';
 import Disclaimer from '../components/Disclaimer';
-import { BADGES } from '../services/aiEngine';
+import { BADGES, applyBackendPredictions } from '../services/aiEngine';
 import { usePrediction } from '../hooks/usePrediction';
+import { useLiveRace } from '../hooks/useLiveRace';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT, TRACK_CONDITIONS } from '../theme/colors';
+
+// Maps the live LTR payload -> the backend-picks shape aiEngine understands.
+function livePicks(preds) {
+  return (preds || []).map((p) => ({
+    number: p.number,
+    name: p.name,
+    aiScore: Math.round((p.proba_win || 0) * 1000) / 10,
+    rank: p.rang_predit,
+    probaGagnant: p.proba_win,
+    probaPodium: p.proba_podium,
+  }));
+}
 
 export default function RaceDetailScreen({ route, navigation }) {
   const { trackName, condition, race } = route.params;
@@ -17,8 +30,17 @@ export default function RaceDetailScreen({ route, navigation }) {
 
   // Subscribers get the trained backend model; everyone falls back to local.
   const { race: analyzed, fromBackend } = usePrediction(race, !isLocked);
+  // M3 — live push (odds + fresh IA predictions) without manual refresh.
+  const { predictions: live } = useLiveRace(!isLocked ? race?.id : null);
 
-  const horses = Array.isArray(analyzed?.horses) ? analyzed.horses : [];
+  // Overlay live predictions when they arrive; otherwise keep the fetched analysis.
+  const shown = useMemo(
+    () => (live && live.length ? applyBackendPredictions(analyzed, livePicks(live)) : analyzed),
+    [analyzed, live]
+  );
+  const isSmart = fromBackend || (live && live.length > 0);
+
+  const horses = Array.isArray(shown?.horses) ? shown.horses : [];
   const top3 = horses.slice(0, 3);
   const valueBet = horses.find((h) =>
     h.badges?.some((b) => b.key === BADGES.VALUE.key)
@@ -56,7 +78,7 @@ export default function RaceDetailScreen({ route, navigation }) {
         >
           <View style={styles.aiBox}>
             <Text style={styles.aiHeading}>
-              🏆 Top 3 du jour{fromBackend ? '  ·  IA avancée' : ''}
+              🏆 Top 3 du jour{isSmart ? '  ·  IA avancée' : ''}
             </Text>
             {top3.map((h, i) => (
               <View key={h.number} style={styles.topRow}>
