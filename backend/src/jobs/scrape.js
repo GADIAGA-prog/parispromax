@@ -5,6 +5,8 @@
 
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { findRunnersTable, cell } = require('../scraper/columnMapper');
+const { parseMusique, formScoreFromParsed } = require('../scraper/musique');
 
 const BASE = 'https://www.geny.com';
 const REQUEST_DELAY_MS = 1500;
@@ -57,35 +59,27 @@ function parseCourseUrl(href) {
   };
 }
 
-function musiqueToFormScore(musique) {
-  if (!musique) return null;
-  const tokens = musique.match(/(\d+|[A-Za-z])/g) || [];
-  const placings = [];
-  for (let i = 0; i < tokens.length && placings.length < 6; i++) {
-    const t = tokens[i];
-    if (/^\d+$/.test(t)) placings.push(parseInt(t, 10));
-    else if (/^[DTAR]$/i.test(t)) placings.push(99); // Disqualifié/Tombé/Arrêté/Rétrogradé
-  }
-  if (!placings.length) return null;
-  const valueOf = (p) => {
-    if (p === 1) return 100;
-    if (p === 2) return 86;
-    if (p === 3) return 72;
-    if (p === 4) return 58;
-    if (p === 5) return 48;
-    if (p >= 6 && p < 99) return 32;
-    return 12;
-  };
-  // Recency-weighted: the most recent run (first token) counts the most.
-  const weights = [1, 0.85, 0.7, 0.55, 0.42, 0.3];
-  let s = 0;
-  let sw = 0;
-  placings.forEach((p, i) => {
-    const w = weights[i] || 0.2;
-    s += valueOf(p) * w;
-    sw += w;
-  });
-  return Math.round(s / sw);
+// "5,3" / "18.4" / "12" -> 5.3 / 18.4 / 12 (cote décimale valide sinon null).
+function parseCote(raw) {
+  const m = String(raw || '').replace(',', '.').match(/(\d{1,3}(?:\.\d)?)/);
+  const v = m ? parseFloat(m[1]) : null;
+  return v != null && v >= 1 && v < 1000 ? v : null;
+}
+
+// Réduction kilométrique trot "1'14"5" -> secondes (approx, tenths ignorés).
+function parseChrono(raw) {
+  const c = String(raw || '');
+  const m = c.match(/(\d)\s*['’]\s*(\d{1,2})/);
+  if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  const f = parseFloat(c.replace(',', '.'));
+  return Number.isFinite(f) && f > 0 ? f : 0;
+}
+
+// Déferrage (trot) : colonne dédiée ou suffixe "D4/DA/DP" collé au nom.
+function detectDeferrage(name, deferrageCell) {
+  const src = `${deferrageCell || ''} ${name || ''}`.toLowerCase().replace(/\s+/g, '');
+  const m = src.match(/(d4|dpp|dpa|dp|da)/);
+  return m ? m[1].toUpperCase() : null;
 }
 
 function mapCondition(text) {
@@ -118,34 +112,66 @@ async function fetchCourse(course) {
   const raceName = ($('.nomCourse').first().text().trim() || course.prix).replace(/\s+/g, ' ');
   const infoCourse = $('.infoCourse, .conditionCourse').first().text().trim();
   const distMatch = infoCourse.match(/(\d{3,4})\s?m/);
+
+  // M1 — détecte dynamiquement la table de partants + la position de chaque
+  // colonne (jockey/musique/cote…) au lieu d'index fixes fragiles.
+  const found = findRunnersTable($);
   const horses = [];
-  $('table tr').each((_, tr) => {
-    const cells = $(tr).find('td').map((j, td) => $(td).text().trim().replace(/\s+/g, ' ')).get();
-    if (cells.length < 6) return;
-    const number = parseInt(cells[0], 10);
-    if (!Number.isFinite(number)) return;
-    const name = cells[1];
-    if (!name) return;
-    horses.push({
-      number,
-      name,
-      jockey: cells[4] || '',
-      trainer: cells[5] || '',
-      form: cells[6] || '',
-      gains: parseInt((cells[7] || '').replace(/\D/g, ''), 10) || null,
-      odds: null,
-      formScore: musiqueToFormScore(cells[6] || ''),
-      chrono: 0,
-      winRate: null,
-      jockeyRating: null,
-    });
+  if (found) {
+    const { table, map } = found;
+    $(table)
+      .find('tr')
+      .each((_, tr) => {
+        const cells = $(tr)
+          .find('td')
+          .map((j, td) => $(td).text().trim().replace(/\s+/g, ' '))
+          .get();
+        if (!cells.length) return; // ligne d'en-tête (th) ou vide
+        const number = parseInt(cell(cells, map, 'number'), 10);
+        const name = cell(cells, map, 'name');
+        if (!Number.isFinite(number) || !name) return;
+
+        const musiqueRaw = cell(cells, map, 'musique');
+        const musiqueParsed = parseMusique(musiqueRaw);
+        const coteFloat = parseCote(cell(cells, map, 'cote'));
+
+        horses.push({
+          number,
+          name,
+          jockey: cell(cells, map, 'jockey') || '',
+          trainer: cell(cells, map, 'trainer') || '',
+          // Rétro-compat avec l'existant (aiEngine, ingest) :
+          form: musiqueRaw || '',
+          formScore: formScoreFromParsed(musiqueParsed),
+          odds: coteFloat, // complété par /cotes/ dans scrapeProgramme
+          chrono: parseChrono(cell(cells, map, 'chrono')),
+          winRate: musiqueParsed.taux_top3_recent,
+          jockeyRating: null,
+          gains: parseInt(cell(cells, map, 'gains').replace(/\D/g, ''), 10) || null,
+          // Nouveaux champs structurés (M1) :
+          coteFloat,
+          musiqueRaw: musiqueRaw || '',
+          musiqueParsed,
+          deferrage: detectDeferrage(name, cell(cells, map, 'deferrage')),
+        });
+      });
+  }
+
+  // Discipline dominante déduite des musiques (trot attelé/monté vs plat/obstacle).
+  const specCount = {};
+  horses.forEach((h) => {
+    const s = h.musiqueParsed && h.musiqueParsed.specialite_predominante;
+    if (s) specCount[s] = (specCount[s] || 0) + 1;
   });
+  const discipline = Object.keys(specCount).sort((a, b) => specCount[b] - specCount[a])[0] || null;
+
   return {
     id: `c${course.id}`,
     number: '',
     name: raceName,
     time: '',
     distance: distMatch ? `${distMatch[1]}m` : '',
+    discipline,
     condition: mapCondition(infoCourse),
     runners: horses.length,
     horses,
@@ -215,7 +241,13 @@ async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
         const race = await fetchCourse(course);
         await sleep(REQUEST_DELAY_MS);
         const odds = await fetchOdds(course);
-        race.horses.forEach((h) => { if (odds[h.number] != null) h.odds = odds[h.number]; });
+        race.horses.forEach((h) => {
+          // La page /cotes/ donne la cote live la plus fraîche : elle prime.
+          if (odds[h.number] != null) {
+            h.odds = odds[h.number];
+            h.coteFloat = odds[h.number];
+          }
+        });
         race.number = `C${i + 1}`;
         if (race.horses.length) races.push(race);
         await sleep(REQUEST_DELAY_MS);

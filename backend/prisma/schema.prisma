@@ -79,11 +79,56 @@ model Race {
   discipline  String?
   condition   String?
   distance    String?
-  raw         String?      // JSON string of full race + horses
+  raw         String?      // JSON string of full race + horses (legacy/compat)
   nonPartants String?      // JSON array of scratched runner numbers, e.g. "[3,7]"
   createdAt   DateTime     @default(now())
   predictions Prediction[]
   result      Result?
+  runners     Runner[]     // M1 — normalised per-horse rows (feeds the LTR model)
+}
+
+// M1 — One normalised row per horse per race. Critical fields are OPTIONAL with
+// intelligent defaults so a partial scrape never blocks ingestion; the LTR
+// pipeline (M2) queries these rows grouped by `raceId` (= the ranking group).
+// NOTE: `musiqueParsed` uses the native Json type -> requires PostgreSQL
+// (the production datasource; dev should also run Postgres via the M3 compose).
+model Runner {
+  id            String   @id @default(cuid())
+  raceId        String
+  race          Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  number        Int
+  name          String
+  jockeyName    String?
+  trainerName   String?
+  coteFloat     Float?                 // market odds (optional)
+  coteOpen      Float?                 // opening odds (odds-trend feature)
+  gains         Int?     @default(0)
+  chrono        Float?                 // trot reduction (seconds), optional
+  deferrage     String?                // D4 | DA | DP ... (trot)
+  musiqueRaw    String?
+  musiqueParsed Json?                  // { derniere_performance, taux_top3_recent, specialite_predominante, changement_annee }
+  jockeyRating  Float    @default(50)  // imputation default until ActorStat resolves
+  trainerRating Float    @default(50)
+  finishPos     Int?                   // official arrival rank (LTR label)
+  createdAt     DateTime @default(now())
+
+  @@unique([raceId, number])
+  @@index([raceId])
+}
+
+// M1 — Rolling jockey/trainer performance, used to IMPUTE a rating when a
+// runner's actor is unknown/missing (Bayesian-shrunk toward a neutral 50).
+model ActorStat {
+  id        String   @id @default(cuid())
+  kind      String   // 'jockey' | 'trainer'
+  name      String
+  runs      Int      @default(0)
+  top3      Int      @default(0)
+  rating    Float    @default(50) // 0-100
+  updatedAt DateTime @updatedAt
+
+  @@unique([kind, name])
+  @@index([kind])
 }
 
 model Prediction {
