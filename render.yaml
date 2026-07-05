@@ -76,3 +76,40 @@ services:
         sync: false
       - key: CRON_TOKEN
         generateValue: true
+      # --- MODULE 3 : temps réel + LTR ---
+      # Redis (file/cache/websocket). Active socket.io + worker dès qu'il est défini.
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: parispromax-redis
+          property: connectionString
+      # URL du micro-service IA. À DÉFINIR (sync:false) une fois l'IA + le modèle
+      # en ligne : https://parispromax-ia.onrender.com  -> bascule les pronostics
+      # sur le vrai LTR (repli JS automatique si absent/injoignable).
+      - key: IA_URL
+        sync: false
+
+  # Micro-service d'inférence IA (FastAPI + CatBoost), image Docker depuis ./ml.
+  - type: web
+    name: parispromax-ia
+    runtime: docker
+    plan: free
+    rootDir: ml
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PPM_MODEL_PATH
+        value: /app/model/model.cbm
+      - key: DATABASE_URL
+        fromDatabase:
+          name: parispromax-db
+          property: connectionString
+
+# Redis managé (file d'attente + cache prédictions + pub WebSocket).
+# Si Render refuse `type: redis`, créez un "Key Value" dans le dashboard et
+# renseignez REDIS_URL (Internal URL) à la main sur les 2 services.
+  - type: redis
+    name: parispromax-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru

@@ -6,6 +6,5 @@ __pycache__/
 *.pyc
 .mlvenv/
 
-# Module 2 — trained model artifacts
-model/
-*.cbm
+# Note: the trained model (model/model.cbm) IS committed so the Render IA image
+# embeds it. Retrain locally then `git add -f ml/model/model.cbm`.

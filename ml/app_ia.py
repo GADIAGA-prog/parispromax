@@ -75,6 +75,9 @@ def health():
 def predict(req: PredictRequest):
     if not req.runners:
         raise HTTPException(status_code=400, detail="runners vide")
+    # Modèle pas encore entraîné -> 503 : le backend retombe proprement sur le JS.
+    if not os.path.exists(MODEL_PATH):
+        raise HTTPException(status_code=503, detail="modèle non entraîné")
 
     model = _load_model()
 
