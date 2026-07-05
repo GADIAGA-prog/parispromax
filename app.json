@@ -40,6 +40,12 @@
         }
       ],
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bd874cb8-c838-471d-ae56-4ec920fb6db4"
+      }
+    },
+    "owner": "gadiaga"
   }
 }
