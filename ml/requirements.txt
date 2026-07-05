@@ -3,9 +3,19 @@
 pandas>=2.1
 numpy>=1.26
 scikit-learn>=1.4
-lightgbm>=4.3
-catboost>=1.2          # optional alternative ranker (QueryRMSE)
+
+# Learning-to-Rank
+catboost>=1.2          # YetiRank ranker (Module 2)
+lightgbm>=4.3          # alternative ranker
+
+# Inference microservice (Module 2)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# Data access / infra (Modules 2 & 3)
+psycopg2-binary>=2.9   # PostgreSQL export
+redis>=5.0             # queue + cache (Module 3)
 joblib>=1.3
-schedule>=1.2          # 10-minute automation loop
-requests>=2.31         # fetch fresh data from the Node backend
+requests>=2.31
 python-dateutil>=2.9

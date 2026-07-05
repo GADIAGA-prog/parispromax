@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const prisma = require('../db');
 const { rankRunners } = require('../services/aiEngine');
-const { computeRatings, ratingForHorse } = require('./ratings');
+const { computeRatings, ratingForHorse, ratingFrom, syncActorStats } = require('./ratings');
 
 const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.json');
 
@@ -37,6 +37,7 @@ async function ingestData(data) {
 
   // Real jockey/trainer ratings from accumulated results (empty early on).
   const ratings = await computeRatings();
+  await syncActorStats(ratings); // M1/M2 — persist ActorStat for imputation + LTR
 
   let raceCount = 0;
   for (const track of data.racetracks || []) {
@@ -77,6 +78,29 @@ async function ingestData(data) {
       await prisma.prediction.create({
         data: { raceId: saved.id, topPicks: JSON.stringify(picks) },
       });
+
+      // M1/M2 — persist one normalised Runner row per horse (feeds the LTR model).
+      // Critical fields stay optional; ratings are imputed to 50 when unknown.
+      await prisma.runner.deleteMany({ where: { raceId: saved.id } });
+      const runners = (race.horses || [])
+        .filter((h) => Number.isFinite(Number(h.number)) && h.name)
+        .map((h) => ({
+          raceId: saved.id,
+          number: Number(h.number),
+          name: String(h.name).trim(),
+          jockeyName: h.jockey || null,
+          trainerName: h.trainer || null,
+          coteFloat: h.coteFloat ?? h.odds ?? null,
+          coteOpen: h.coteOpen ?? null,
+          gains: Number.isFinite(Number(h.gains)) ? Number(h.gains) : 0,
+          chrono: h.chrono ? Number(h.chrono) : null,
+          deferrage: h.deferrage || null,
+          musiqueRaw: h.musiqueRaw || h.form || null,
+          musiqueParsed: h.musiqueParsed ?? null,
+          jockeyRating: ratingFrom(ratings.jockey.get(h.jockey)) || 50,
+          trainerRating: ratingFrom(ratings.trainer.get(h.trainer)) || 50,
+        }));
+      if (runners.length) await prisma.runner.createMany({ data: runners });
       raceCount++;
     }
   }

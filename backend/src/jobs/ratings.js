@@ -59,4 +59,21 @@ function ratingForHorse(h, maps) {
   return Math.round(jr * 0.6 + tr * 0.4);
 }
 
-module.exports = { computeRatings, ratingForHorse, ratingFrom };
+// M1/M2 bridge — persist the computed jockey/trainer stats into ActorStat so the
+// Python LTR pipeline and the imputation layer can read them from the DB.
+async function syncActorStats(maps) {
+  const prisma = require('../db');
+  for (const kind of ['jockey', 'trainer']) {
+    for (const [name, stat] of maps[kind]) {
+      if (!name || String(name).trim().length < 2) continue;
+      const rating = ratingFrom(stat);
+      await prisma.actorStat.upsert({
+        where: { kind_name: { kind, name } },
+        update: { runs: stat.runs, top3: stat.top3, rating },
+        create: { kind, name, runs: stat.runs, top3: stat.top3, rating },
+      });
+    }
+  }
+}
+
+module.exports = { computeRatings, ratingForHorse, ratingFrom, syncActorStats };

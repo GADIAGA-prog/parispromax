@@ -5,3 +5,7 @@ predictions.json
 __pycache__/
 *.pyc
 .mlvenv/
+
+# Module 2 — trained model artifacts
+model/
+*.cbm
