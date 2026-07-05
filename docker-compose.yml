@@ -1,0 +1,68 @@
+# MODULE 3 — Architecture de services ParisPromax.
+#   backend (Node/Express + socket.io)  <-- API + WebSocket temps réel
+#   ia      (Python/FastAPI + CatBoost)  <-- micro-service d'inférence LTR
+#   redis                                <-- file d'attente + cache prédictions
+#   postgres                             <-- persistance (Prisma)
+#
+# Lancer :  docker compose up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: parispromax
+      POSTGRES_PASSWORD: parispromax
+      POSTGRES_DB: parispromax
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U parispromax']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ia:
+    build: ./ml
+    command: uvicorn app_ia:app --host 0.0.0.0 --port 8100
+    environment:
+      DATABASE_URL: postgresql://parispromax:parispromax@postgres:5432/parispromax
+      PPM_MODEL_PATH: /app/model/model.cbm
+    volumes:
+      - ./ml:/app
+      - iamodel:/app/model
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports:
+      - '8100:8100'
+
+  backend:
+    build: ./backend
+    command: npm run start
+    environment:
+      DATABASE_URL: postgresql://parispromax:parispromax@postgres:5432/parispromax
+      REDIS_URL: redis://redis:6379
+      IA_URL: http://ia:8100
+      PORT: '4000'
+      NODE_ENV: production
+      PAYMENT_PROVIDER: fedapay
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      ia: { condition: service_started }
+    ports:
+      - '4000:4000'
+
+volumes:
+  pgdata:
+  redisdata:
+  iamodel:

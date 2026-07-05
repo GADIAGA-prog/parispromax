@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const config = require('./config');
 
@@ -82,11 +83,26 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur serveur' });
 });
 
-app.listen(config.port, () => {
+// M3 — serveur HTTP (permet d'attacher socket.io). Le temps réel + le worker IA
+// ne s'activent QUE si REDIS_URL est configuré (la prod actuelle reste intacte).
+const server = http.createServer(app);
+let realtimeOn = false;
+if (process.env.REDIS_URL) {
+  try {
+    require('./services/realtime').initRealtime(server);
+    require('./services/queue').startPredictionWorker();
+    realtimeOn = true;
+  } catch (e) {
+    console.error('[realtime] init failed (deps installées ?):', e.message);
+  }
+}
+
+server.listen(config.port, () => {
   console.log(`\n🏇 ParisPromax backend on http://localhost:${config.port}`);
   console.log(`   Admin:    http://localhost:${config.port}/admin`);
   const payConfigured =
     config.payments.provider === 'cinetpay' ? config.cinetpay.configured : config.fedapay.configured;
   console.log(`   Payments: ${config.payments.provider} — ${payConfigured ? 'LIVE/keys set' : 'MOCK mode (no keys)'}`);
-  console.log(`   OTP:      ${config.otpDevMode ? 'DEV (codes returned in API)' : 'SMS provider'}\n`);
+  console.log(`   OTP:      ${config.otpDevMode ? 'DEV (codes returned in API)' : 'SMS provider'}`);
+  console.log(`   Realtime: ${realtimeOn ? 'socket.io + IA worker ON' : 'off (no REDIS_URL)'}\n`);
 });
