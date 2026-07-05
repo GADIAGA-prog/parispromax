@@ -1,0 +1,49 @@
+name: Train LTR model
+
+# Ré-entraîne le modèle Learning-to-Rank et le committe (l'image Docker de l'IA
+# l'embarque au prochain déploiement). Ne committe QUE si le modèle a changé
+# (train_ltr.py s'auto-annule s'il n'y a pas assez de courses terminées).
+#
+# Prérequis : secret repo DATABASE_URL = URL EXTERNE de la base Postgres Render
+# (Render -> parispromax-db -> External Connection String).
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # chaque lundi 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r ml/requirements.txt
+
+      - name: Train (auto-skip si trop peu de données)
+        working-directory: ml
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PPM_MIN_COURSES: '150'
+        run: python train_ltr.py --out model/model.cbm
+
+      - name: Commit model if updated
+        run: |
+          if [ -n "$(git status --porcelain ml/model/model.cbm)" ]; then
+            git config user.name "ltr-trainer"
+            git config user.email "actions@users.noreply.github.com"
+            git add -f ml/model/model.cbm
+            git commit -m "chore: retrain LTR model [skip ci]"
+            git push
+            echo "✅ Nouveau modèle committé -> l'IA le récupérera au redéploiement."
+          else
+            echo "ℹ️ Pas de mise à jour du modèle (données insuffisantes ou identiques)."
+          fi
