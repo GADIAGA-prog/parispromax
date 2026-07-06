@@ -32,7 +32,7 @@ jobs:
         working-directory: ml
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PPM_MIN_COURSES: '150'
+          PPM_MIN_COURSES: '100'
         run: python train_ltr.py --out model/model.cbm
 
       - name: Commit model if updated

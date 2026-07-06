@@ -46,7 +46,7 @@ def train(df, out_path="model/model.cbm"):
 
     # Garde-fou : ne pas livrer un modèle entraîné sur trop peu de données
     # (il serait pire que l'heuristique JS). Seuil ajustable via PPM_MIN_COURSES.
-    min_courses = int(os.environ.get("PPM_MIN_COURSES", "150"))
+    min_courses = int(os.environ.get("PPM_MIN_COURSES", "100"))
     if n_courses < min_courses:
         print(f"[train] {n_courses} < seuil {min_courses} -> entraînement ignoré (modèle conservé).")
         raise SystemExit(0)

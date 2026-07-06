@@ -18,7 +18,7 @@ router.get('/success-rate', async (_req, res) => {
 // (= le jeu d'entraînement du LTR). Public. Sert à surveiller quand le modèle
 // pourra être entraîné (seuil = 150).
 router.get('/ltr-readiness', async (_req, res) => {
-  const threshold = Number(process.env.PPM_MIN_COURSES || 150);
+  const threshold = Number(process.env.PPM_MIN_COURSES || 100);
   const [finishedTotal, withRunners, ready] = await Promise.all([
     prisma.result.count(),
     prisma.race.count({ where: { runners: { some: {} } } }),
