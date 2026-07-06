@@ -159,6 +159,19 @@ router.post('/api/non-partants', express.json(), async (req, res) => {
   res.json({ ok: true, externalId, nonPartants: nums });
 });
 
+// POST /admin/api/backfill-runners — reconstruit les Runner des courses passées
+// terminées (données historiques) pour alimenter le jeu d'entraînement LTR.
+router.post('/api/backfill-runners', async (_req, res) => {
+  try {
+    const { backfillRunners } = require('../jobs/ingest');
+    const r = await backfillRunners();
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    console.error('backfill error', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // HTML dashboard.
 router.get('/', async (_req, res) => {
   res.type('html').send(DASHBOARD_HTML);

@@ -108,6 +108,59 @@ async function ingestData(data) {
   return raceCount;
 }
 
+// Backfill — reconstruit les lignes Runner pour les courses TERMINÉES qui n'en
+// ont pas encore (données historiques piégées dans Race.raw). Parse la musique
+// avec le nouveau parseur ; calcule finishPos depuis l'arrivée. Idempotent
+// (n'agit que sur les courses sans Runner).
+async function backfillRunners() {
+  const { parseMusique } = require('../scraper/musique');
+  const races = await prisma.race.findMany({
+    where: { result: { isNot: null }, runners: { none: {} } },
+    include: { result: true },
+  });
+  let created = 0;
+  for (const race of races) {
+    let raw;
+    try {
+      raw = JSON.parse(race.raw);
+    } catch {
+      continue;
+    }
+    let winners = [];
+    try {
+      winners = JSON.parse(race.result.winners);
+    } catch {
+      winners = [];
+    }
+    const posByNum = new Map(winners.map((n, i) => [Number(n), i + 1]));
+    const runners = (raw.horses || [])
+      .filter((h) => Number.isFinite(Number(h.number)) && h.name)
+      .map((h) => ({
+        raceId: race.id,
+        number: Number(h.number),
+        name: String(h.name).trim(),
+        jockeyName: h.jockey || null,
+        trainerName: h.trainer || null,
+        coteFloat: h.coteFloat ?? h.odds ?? null,
+        coteOpen: null,
+        gains: Number.isFinite(Number(h.gains)) ? Number(h.gains) : 0,
+        chrono: h.chrono ? Number(h.chrono) : null,
+        deferrage: h.deferrage || null,
+        musiqueRaw: h.musiqueRaw || h.form || null,
+        musiqueParsed: h.musiqueParsed ?? parseMusique(h.form || ''),
+        jockeyRating: h.jockeyRating || 50,
+        trainerRating: 50,
+        finishPos: posByNum.get(Number(h.number)) ?? null,
+      }));
+    if (runners.length) {
+      await prisma.runner.createMany({ data: runners });
+      created += runners.length;
+    }
+  }
+  console.log(`[backfill] ${races.length} courses -> ${created} Runner créés.`);
+  return { races: races.length, runners: created };
+}
+
 if (require.main === module) {
   ingestFromFile()
     .then(() => prisma.$disconnect())
@@ -117,4 +170,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { ingestFromFile, ingestData, RACES_FILE };
+module.exports = { ingestFromFile, ingestData, backfillRunners, RACES_FILE };
