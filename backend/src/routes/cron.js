@@ -76,4 +76,17 @@ router.post('/results', checkToken, (req, res) => {
     .finally(() => { runningResults = false; });
 });
 
+// POST /cron/backfill — reconstruit les Runner des courses passées terminées
+// (alimente le jeu LTR). Idempotent. Protégé par le CRON_TOKEN.
+router.post('/backfill', checkToken, async (_req, res) => {
+  try {
+    const { backfillRunners } = require('../jobs/ingest');
+    const r = await backfillRunners();
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    console.error('[cron/backfill] error', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
