@@ -119,46 +119,54 @@ async function backfillRunners() {
     include: { result: true },
   });
   let created = 0;
+  let skipped = 0;
   for (const race of races) {
-    let raw;
     try {
-      raw = JSON.parse(race.raw);
-    } catch {
-      continue;
-    }
-    let winners = [];
-    try {
-      winners = JSON.parse(race.result.winners);
-    } catch {
-      winners = [];
-    }
-    const posByNum = new Map(winners.map((n, i) => [Number(n), i + 1]));
-    const runners = (raw.horses || [])
-      .filter((h) => Number.isFinite(Number(h.number)) && h.name)
-      .map((h) => ({
-        raceId: race.id,
-        number: Number(h.number),
-        name: String(h.name).trim(),
-        jockeyName: h.jockey || null,
-        trainerName: h.trainer || null,
-        coteFloat: h.coteFloat ?? h.odds ?? null,
-        coteOpen: null,
-        gains: Number.isFinite(Number(h.gains)) ? Number(h.gains) : 0,
-        chrono: h.chrono ? Number(h.chrono) : null,
-        deferrage: h.deferrage || null,
-        musiqueRaw: h.musiqueRaw || h.form || null,
-        musiqueParsed: h.musiqueParsed ?? parseMusique(h.form || ''),
-        jockeyRating: h.jockeyRating || 50,
-        trainerRating: 50,
-        finishPos: posByNum.get(Number(h.number)) ?? null,
-      }));
-    if (runners.length) {
-      await prisma.runner.createMany({ data: runners });
-      created += runners.length;
+      const raw = JSON.parse(race.raw);
+      let winners = [];
+      try {
+        winners = JSON.parse(race.result.winners);
+      } catch {
+        winners = [];
+      }
+      const posByNum = new Map(winners.map((n, i) => [Number(n), i + 1]));
+      // Dédoublonnage par numéro (les vieux scrapes contenaient des doublons).
+      const seen = new Set();
+      const runners = (raw.horses || [])
+        .filter((h) => {
+          const n = Number(h.number);
+          if (!Number.isFinite(n) || !h.name || seen.has(n)) return false;
+          seen.add(n);
+          return true;
+        })
+        .map((h) => ({
+          raceId: race.id,
+          number: Number(h.number),
+          name: String(h.name).trim(),
+          jockeyName: h.jockey || null,
+          trainerName: h.trainer || null,
+          coteFloat: h.coteFloat ?? h.odds ?? null,
+          coteOpen: null,
+          gains: Number.isFinite(Number(h.gains)) ? Number(h.gains) : 0,
+          chrono: h.chrono ? Number(h.chrono) : null,
+          deferrage: h.deferrage || null,
+          musiqueRaw: h.musiqueRaw || h.form || null,
+          musiqueParsed: h.musiqueParsed ?? parseMusique(h.form || ''),
+          jockeyRating: h.jockeyRating || 50,
+          trainerRating: 50,
+          finishPos: posByNum.get(Number(h.number)) ?? null,
+        }));
+      if (runners.length) {
+        await prisma.runner.createMany({ data: runners });
+        created += runners.length;
+      }
+    } catch (e) {
+      skipped++;
+      console.warn(`[backfill] course ${race.externalId} ignorée: ${e.message}`);
     }
   }
-  console.log(`[backfill] ${races.length} courses -> ${created} Runner créés.`);
-  return { races: races.length, runners: created };
+  console.log(`[backfill] ${races.length} courses -> ${created} Runner créés (${skipped} ignorées).`);
+  return { races: races.length, runners: created, skipped };
 }
 
 if (require.main === module) {
