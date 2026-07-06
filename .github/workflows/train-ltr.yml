@@ -9,7 +9,7 @@ name: Train LTR model
 
 on:
   schedule:
-    - cron: '0 3 * * 1' # chaque lundi 03:00 UTC
+    - cron: '0 3 * * *' # chaque jour 03:00 UTC (log la progression + entraîne dès 150)
   workflow_dispatch: {}
 
 permissions:
