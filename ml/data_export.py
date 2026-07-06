@@ -70,13 +70,23 @@ def _finalize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def load_training_frame(database_url: str | None = None) -> pd.DataFrame:
-    """Charge le jeu d'entraînement depuis PostgreSQL (DATABASE_URL)."""
+    """Charge le jeu d'entraînement depuis PostgreSQL (DATABASE_URL).
+
+    Utilise un curseur psycopg2 (et non pd.read_sql sur une connexion brute) pour
+    éviter le warning pandas 3.0 et rester compatible dans le temps.
+    """
     import psycopg2
 
     url = database_url or os.environ["DATABASE_URL"]
-    with psycopg2.connect(url) as conn:
-        df = pd.read_sql(SQL_TRAIN, conn)
-    return _finalize(df)
+    conn = psycopg2.connect(url)
+    try:
+        cur = conn.cursor()
+        cur.execute(SQL_TRAIN)
+        cols = [d[0] for d in cur.description]
+        rows = cur.fetchall()
+    finally:
+        conn.close()
+    return _finalize(pd.DataFrame(rows, columns=cols))
 
 
 def load_from_json(path: str) -> pd.DataFrame:
