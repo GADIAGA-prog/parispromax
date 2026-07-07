@@ -165,8 +165,31 @@ async function backfillRunners() {
       console.warn(`[backfill] course ${race.externalId} ignorée: ${e.message}`);
     }
   }
-  console.log(`[backfill] ${races.length} courses -> ${created} Runner créés (${skipped} ignorées).`);
-  return { races: races.length, runners: created, skipped };
+  // Passe de réparation : courses terminées dont les Runner existent déjà mais
+  // sans finishPos (ingérées avant que detectResults ne pose les labels LTR).
+  const { stampFinishPositions } = require('./results');
+  const unlabeled = await prisma.race.findMany({
+    where: { result: { isNot: null }, runners: { some: { finishPos: null } } },
+    include: { result: true },
+    take: 2000,
+  });
+  let stamped = 0;
+  for (const race of unlabeled) {
+    try {
+      const winners = JSON.parse(race.result.winners);
+      if (Array.isArray(winners) && winners.length) {
+        await stampFinishPositions(race.id, winners);
+        stamped++;
+      }
+    } catch {
+      /* winners illisible -> on passe */
+    }
+  }
+
+  console.log(
+    `[backfill] ${races.length} courses -> ${created} Runner créés (${skipped} ignorées, ${stamped} courses re-labellisées).`
+  );
+  return { races: races.length, runners: created, skipped, stamped };
 }
 
 if (require.main === module) {

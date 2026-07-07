@@ -10,10 +10,11 @@ const config = require('../config');
 const router = express.Router();
 
 // Bearer-token guard. The daemon sends `Authorization: Bearer <PPM_PUSH_TOKEN>`.
+const { safeEqual } = require('../security');
 function requireMlToken(req, res, next) {
   const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!config.mlToken || token !== config.mlToken) {
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!config.mlToken || !safeEqual(token, config.mlToken)) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   next();

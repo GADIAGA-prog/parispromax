@@ -135,22 +135,36 @@ router.get('/:externalId/non-partants', async (req, res) => {
 });
 
 // GET /races/:externalId — race detail with runners (public, no AI scores).
+// Exposes the full public data we hold on each runner so the app can display
+// rich cards (trainer, career earnings, unshod status, odds trend…).
 router.get('/:externalId', async (req, res) => {
   const race = await prisma.race.findUnique({ where: { externalId: req.params.externalId } });
   if (!race) return res.status(404).json({ error: 'Course introuvable' });
   const full = parse(race.raw, {});
+  const nonPartants = race.nonPartants ? parse(race.nonPartants, []) : [];
   res.json({
     id: race.externalId,
     track: race.track,
     name: race.name,
+    date: race.date,
+    time: full.time || '',
+    discipline: race.discipline,
     condition: race.condition,
     distance: race.distance,
+    prizePool: full.prizePool || null,
+    nonPartants: Array.isArray(nonPartants) ? nonPartants : [],
     horses: (full.horses || []).map((h) => ({
       number: h.number,
       name: h.name,
       jockey: h.jockey,
-      odds: h.odds,
+      trainer: h.trainer || null,
+      odds: h.odds ?? null,
+      coteOpen: h.coteOpen ?? null,
       form: h.form,
+      gains: Number.isFinite(Number(h.gains)) ? Number(h.gains) : null,
+      chrono: h.chrono ?? null,
+      deferrage: h.deferrage || null,
+      nonPartant: Array.isArray(nonPartants) && nonPartants.includes(Number(h.number)),
     })),
   });
 });

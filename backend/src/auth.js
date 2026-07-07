@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const config = require('./config');
+const { safeEqual } = require('./security');
 
 // Sign a JWT for a user.
 function signToken(user) {
@@ -23,13 +24,22 @@ function requireAuth(req, res, next) {
   }
 }
 
-// Basic-auth middleware for the admin back-office.
+// Basic-auth middleware for the admin back-office. Disabled entirely when no
+// real ADMIN_PASSWORD is configured on a production DB (default admin/admin
+// would otherwise expose payments + phone numbers). Constant-time compares.
 function requireAdmin(req, res, next) {
+  if (!config.admin.enabled) {
+    return res.status(404).send('Not found');
+  }
   const header = req.headers.authorization || '';
   if (header.startsWith('Basic ')) {
     const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
-    const [user, pass] = decoded.split(':');
-    if (user === config.admin.user && pass === config.admin.password) {
+    const idx = decoded.indexOf(':');
+    const user = idx >= 0 ? decoded.slice(0, idx) : decoded;
+    const pass = idx >= 0 ? decoded.slice(idx + 1) : '';
+    const userOk = safeEqual(user, config.admin.user);
+    const passOk = safeEqual(pass, config.admin.password);
+    if (userOk && passOk) {
       return next();
     }
   }

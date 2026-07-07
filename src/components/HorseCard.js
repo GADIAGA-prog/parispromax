@@ -40,6 +40,13 @@ export default function HorseCard({ horse, showAI = true }) {
             {horse.jockey ? `🏇 ${horse.jockey}` : ''}
             {horse.form ? `   ·   ${horse.form}` : ''}
           </Text>
+          {(horse.trainer || horse.gains > 0) && (
+            <Text style={styles.meta} numberOfLines={1}>
+              {horse.trainer ? `👤 ${horse.trainer}` : ''}
+              {horse.trainer && horse.gains > 0 ? '   ·   ' : ''}
+              {horse.gains > 0 ? `💰 ${Number(horse.gains).toLocaleString('fr-FR')}` : ''}
+            </Text>
+          )}
           {showAI && <AIBadgeRow badges={horse.badges} />}
         </View>
 
@@ -57,7 +64,11 @@ export default function HorseCard({ horse, showAI = true }) {
       </View>
 
       {showAI && horse.aiScore != null && (
-        <Text style={styles.confidence}>IA : {confidenceLabel(horse.aiScore)}</Text>
+        <Text style={styles.confidence}>
+          IA : {confidenceLabel(horse.aiScore)}
+          {horse.probaGagnant != null ? `   ·   Gagnant ${Math.round(horse.probaGagnant * 100)}%` : ''}
+          {horse.probaPodium != null ? `   ·   Podium ${Math.round(horse.probaPodium * 100)}%` : ''}
+        </Text>
       )}
     </View>
   );

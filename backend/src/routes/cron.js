@@ -13,9 +13,10 @@ function isoDaysAgo(n) {
 }
 
 // Token guard (query ?token= or header x-cron-token). Requires CRON_TOKEN set.
+const { safeEqual } = require('../security');
 function checkToken(req, res, next) {
-  const token = req.query.token || req.headers['x-cron-token'];
-  if (!config.cronToken || token !== config.cronToken) {
+  const token = String(req.query.token || req.headers['x-cron-token'] || '');
+  if (!config.cronToken || !safeEqual(token, config.cronToken)) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   next();

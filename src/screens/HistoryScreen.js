@@ -62,7 +62,7 @@ export default function HistoryScreen() {
 
       <FlatList
         data={history}
-        keyExtractor={(h) => h.id}
+        keyExtractor={(h, i) => (h.id != null ? String(h.id) : String(i))}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />

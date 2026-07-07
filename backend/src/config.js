@@ -4,6 +4,9 @@ const isProd = process.env.NODE_ENV === 'production';
 // Dev is detected by a SQLite database (file:...); production uses Postgres/MySQL.
 // This does NOT rely on NODE_ENV being set (Render blueprints may not apply it).
 const isSqliteDev = String(process.env.DATABASE_URL || '').startsWith('file:');
+// "Prod-like" = anything that is not the local SQLite dev DB. Security defaults
+// below must be SAFE in this mode even when NODE_ENV is missing.
+const isProdLike = isProd || !isSqliteDev;
 
 const config = {
   port: Number(process.env.PORT) || 4000,
@@ -16,7 +19,13 @@ const config = {
   corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
   otpTtlMinutes: Number(process.env.OTP_TTL_MINUTES) || 5,
-  otpDevMode: String(process.env.OTP_DEV_MODE || 'true') === 'true',
+  // OTP dev mode returns the code in the API response (no SMS). It MUST never
+  // default to on outside the local SQLite dev DB, otherwise anyone could log
+  // in as any phone number. Explicit OTP_DEV_MODE=true still wins (staging).
+  otpDevMode:
+    process.env.OTP_DEV_MODE != null
+      ? String(process.env.OTP_DEV_MODE) === 'true'
+      : !isProdLike,
   sms: {
     provider: process.env.SMS_PROVIDER || '',
     apiKey: process.env.SMS_API_KEY || '',
@@ -53,6 +62,21 @@ const config = {
     token: process.env.PAYDUNYA_TOKEN || '',
     mode: (process.env.PAYDUNYA_MODE || 'test').toLowerCase(), // test | live
   },
+  ligdicash: {
+    // Agrégateur mobile money (Orange Money, Moov Money…) — Burkina/UEMOA.
+    // Deux clés depuis le projet API LigdiCash : Apikey + Token (Bearer).
+    apiKey: process.env.LIGDICASH_API_KEY || '',
+    token: process.env.LIGDICASH_TOKEN || '',
+    mode: (process.env.LIGDICASH_MODE || 'test').toLowerCase(), // test | live
+  },
+  feexpay: {
+    // Agrégateur mobile money + carte (Bénin/UEMOA). Depuis le dashboard
+    // FeexPay : le Shop ID + le Token (Bearer, les tokens live commencent par
+    // fp_). Même base URL pour test/live ; l'environnement suit le token.
+    shopId: process.env.FEEXPAY_SHOP_ID || '',
+    token: process.env.FEEXPAY_TOKEN || '',
+    mode: (process.env.FEEXPAY_MODE || 'SANDBOX').toUpperCase(), // SANDBOX | LIVE
+  },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
   cronToken: process.env.CRON_TOKEN || '',
   // Bearer token the Python ML daemon uses to push predictions / read NP.
@@ -65,7 +89,13 @@ const config = {
   admin: {
     user: process.env.ADMIN_USER || 'admin',
     password: process.env.ADMIN_PASSWORD || 'admin',
+    // The back-office (payments, phone numbers, scrape triggers) must never be
+    // reachable with the default admin/admin pair outside the local dev DB.
+    enabled: !isProdLike || Boolean(process.env.ADMIN_PASSWORD),
   },
+  // Bearer token the IA microservice requires (mirrors PPM_IA_TOKEN on the
+  // Python side). Optional: when unset, iaClient sends no Authorization header.
+  iaToken: process.env.IA_TOKEN || '',
 };
 
 // Whether CinetPay is configured for live payments. Only the API Key + Site ID
@@ -91,5 +121,37 @@ config.paydunya.baseUrl =
 config.paydunya.configured = Boolean(
   config.paydunya.masterKey && config.paydunya.privateKey && config.paydunya.token
 );
+
+// LigdiCash base URL derived from mode; configured = Apikey + Token present.
+config.ligdicash.baseUrl =
+  config.ligdicash.mode === 'live'
+    ? 'https://app.ligdicash.com/pay/v01'
+    : 'https://test.ligdicash.com/pay/v01';
+config.ligdicash.configured = Boolean(config.ligdicash.apiKey && config.ligdicash.token);
+
+// FeexPay : base URL unique (l'environnement suit le token) ; configured =
+// Shop ID + Token présents.
+config.feexpay.baseUrl = 'https://api.feexpay.me/api';
+config.feexpay.configured = Boolean(config.feexpay.shopId && config.feexpay.token);
+
+// ---- Boot-time security checks (fail fast on unsafe production setups) ------
+if (isProdLike) {
+  if (!process.env.JWT_SECRET) {
+    // A guessable secret lets anyone forge tokens for any account.
+    throw new Error(
+      '[config] JWT_SECRET est obligatoire hors dev (DATABASE_URL non-SQLite). Définissez-le puis redémarrez.'
+    );
+  }
+  if (config.otpDevMode) {
+    console.warn(
+      '[config] ⚠️ OTP_DEV_MODE=true avec une base de production : les codes OTP sont renvoyés par l’API. À réserver au staging.'
+    );
+  }
+  if (!config.admin.enabled) {
+    console.warn(
+      '[config] ⚠️ ADMIN_PASSWORD non défini : le back-office /admin est DÉSACTIVÉ (identifiants par défaut refusés).'
+    );
+  }
+}
 
 module.exports = config;

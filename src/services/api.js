@@ -86,6 +86,15 @@ export const api = {
     request('/payments/initiate', { method: 'POST', auth: true, body: { planId, provider } }),
   paymentStatus: (txn) => request(`/payments/status/${txn}`, { auth: true }),
   myPayments: () => request('/payments/me', { auth: true }),
+  // FeexPay — mobile money (paiement direct : confirmation sur le téléphone).
+  feexpayOperators: (country) =>
+    request(`/payments/feexpay/operators?country=${encodeURIComponent(country || '')}`),
+  feexpayMobile: ({ planId, phone, network, country }) =>
+    request('/payments/feexpay/mobile', {
+      method: 'POST',
+      auth: true,
+      body: { planId, phone, network, country },
+    }),
 
   // Stats
   successRate: () => request('/stats/success-rate'),

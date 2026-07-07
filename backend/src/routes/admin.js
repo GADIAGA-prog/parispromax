@@ -130,6 +130,9 @@ router.post('/api/results', express.json(), async (req, res) => {
     update: { winners: JSON.stringify(winners), predicted },
     create: { raceId: race.id, winners: JSON.stringify(winners), predicted },
   });
+  // Stamp the LTR training labels on the Runner rows too.
+  const { stampFinishPositions } = require('../jobs/results');
+  await stampFinishPositions(race.id, winners);
   res.json({ ok: true, predicted, resultId: result.id });
 });
 

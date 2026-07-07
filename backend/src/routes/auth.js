@@ -3,6 +3,7 @@ const prisma = require('../db');
 const config = require('../config');
 const { signToken } = require('../auth');
 const { sendSms } = require('../services/sms');
+const { sha256, genOtpCode, rateLimit } = require('../security');
 
 const router = express.Router();
 
@@ -17,20 +18,24 @@ function normalizeCountry(raw) {
   return SUPPORTED_COUNTRIES.has(c) ? c : null;
 }
 
-function genCode() {
-  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
-}
-
 // Anti-abuse limits on OTP generation (per phone number).
 const OTP_MAX_PER_WINDOW = 5;             // max codes...
 const OTP_WINDOW_MS = 15 * 60 * 1000;     // ...per 15-minute sliding window
 const OTP_MIN_INTERVAL_MS = 30 * 1000;    // min delay between two requests
+const OTP_MAX_ATTEMPTS = 5;               // failed guesses before the code dies
+
+// Per-IP rate limits (second layer on top of the per-phone limits, so one IP
+// can't spray many phone numbers).
+const ipLimitRequest = rateLimit({ windowMs: 10 * 60 * 1000, max: 30 });
+const ipLimitVerify = rateLimit({ windowMs: 10 * 60 * 1000, max: 30 });
 
 // POST /auth/request-otp  { phone }
-// Generates an OTP, stores it, "sends" it (dev: returned + logged).
-router.post('/request-otp', async (req, res) => {
+// Generates an OTP, stores it HASHED, "sends" it (dev: returned + logged).
+router.post('/request-otp', ipLimitRequest, async (req, res) => {
   const phone = normalizePhone(req.body.phone);
-  if (phone.length < 8) return res.status(400).json({ error: 'Numéro invalide' });
+  if (phone.length < 8 || phone.length > 16) {
+    return res.status(400).json({ error: 'Numéro invalide' });
+  }
 
   // Rate-limit: block bursts (spam/enumeration/SMS-cost abuse).
   const since = new Date(Date.now() - OTP_WINDOW_MS);
@@ -46,10 +51,16 @@ router.post('/request-otp', async (req, res) => {
     return res.status(429).json({ error: 'Veuillez patienter avant de redemander un code.' });
   }
 
-  const code = genCode();
+  const code = genOtpCode();
   const expiresAt = new Date(Date.now() + config.otpTtlMinutes * 60 * 1000);
 
-  await prisma.otpCode.create({ data: { phone, code, expiresAt } });
+  // Invalidate previous pending codes for this phone (one active code at a
+  // time — a fresh request supersedes older codes).
+  await prisma.otpCode.updateMany({
+    where: { phone, consumed: false },
+    data: { consumed: true },
+  });
+  await prisma.otpCode.create({ data: { phone, code: sha256(code), expiresAt } });
   const sms = await sendSms(phone, `Votre code ParisPromax : ${code} (valable ${config.otpTtlMinutes} min)`);
 
   // In production (a real SMS provider is configured) a delivery failure must
@@ -66,16 +77,35 @@ router.post('/request-otp', async (req, res) => {
 
 // POST /auth/verify-otp  { phone, code }
 // Verifies the code, creates the user if new, returns a JWT + profile.
-router.post('/verify-otp', async (req, res) => {
+// Brute-force hardened: the active code dies after OTP_MAX_ATTEMPTS bad guesses.
+router.post('/verify-otp', ipLimitVerify, async (req, res) => {
   const phone = normalizePhone(req.body.phone);
   const code = String(req.body.code || '').trim();
-  if (!phone || !code) return res.status(400).json({ error: 'Champs manquants' });
+  if (!phone || !/^\d{4,8}$/.test(code)) {
+    return res.status(400).json({ error: 'Champs manquants' });
+  }
 
+  // Latest ACTIVE code for this phone (fetched by phone, not by code, so we
+  // can count failed attempts against it).
   const otp = await prisma.otpCode.findFirst({
-    where: { phone, code, consumed: false, expiresAt: { gt: new Date() } },
+    where: { phone, consumed: false, expiresAt: { gt: new Date() } },
     orderBy: { createdAt: 'desc' },
   });
-  if (!otp) return res.status(400).json({ error: 'Code invalide ou expiré' });
+  if (!otp || otp.attempts >= OTP_MAX_ATTEMPTS) {
+    return res.status(400).json({ error: 'Code invalide ou expiré' });
+  }
+
+  if (otp.code !== sha256(code)) {
+    const updated = await prisma.otpCode.update({
+      where: { id: otp.id },
+      data: { attempts: { increment: 1 } },
+    });
+    if (updated.attempts >= OTP_MAX_ATTEMPTS) {
+      await prisma.otpCode.update({ where: { id: otp.id }, data: { consumed: true } });
+      return res.status(400).json({ error: 'Trop de tentatives. Demandez un nouveau code.' });
+    }
+    return res.status(400).json({ error: 'Code invalide ou expiré' });
+  }
 
   await prisma.otpCode.update({ where: { id: otp.id }, data: { consumed: true } });
 

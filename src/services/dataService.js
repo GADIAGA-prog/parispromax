@@ -85,8 +85,10 @@ export async function ensureSeedCached() {
   }
 }
 
+// Real measured rate only — return null when unknown so the UI never shows a
+// fabricated success percentage.
 export function getSuccessRate(data) {
-  return data?.meta?.successRateQuinte ?? 74;
+  return data?.meta?.successRateQuinte ?? null;
 }
 
 export function getHistory(data) {

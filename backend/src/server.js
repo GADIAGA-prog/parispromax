@@ -15,6 +15,21 @@ const mlRoutes = require('./routes/ml');
 
 const app = express();
 
+// Behind Render's proxy: makes req.ip the real client IP (rate limiting).
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
+// Minimal security headers (helmet-lite, no extra dependency).
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  res.set('Referrer-Policy', 'no-referrer');
+  if (config.isProd) {
+    res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
 // CORS: mobile apps send no Origin so are always allowed. When CORS_ORIGINS is
 // set, only those browser origins are allowed (real enforcement). When it is
 // left empty (dev), all origins are allowed for convenience.
@@ -30,7 +45,7 @@ app.use(
 );
 
 // NOTE: payment webhook needs the raw-ish body but we use JSON/urlencoded per route.
-app.use(express.json());
+app.use(express.json({ limit: '200kb' }));
 
 app.get('/health', (_req, res) => {
   const provider = config.payments.provider;

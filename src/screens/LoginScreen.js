@@ -162,7 +162,7 @@ export default function LoginScreen() {
                   editable={!busy}
                 />
               </View>
-              {!!devCode && (
+              {__DEV__ && !!devCode && (
                 <Text style={styles.devHint}>Code de test : {devCode}</Text>
               )}
               {!!error && <Text style={styles.error}>{error}</Text>}

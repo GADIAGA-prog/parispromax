@@ -30,8 +30,10 @@ services:
         generateValue: true
       - key: PORT
         value: "4000"
+      # NE JAMAIS mettre "true" en production : l'API renverrait le code OTP
+      # dans la réponse, permettant de se connecter avec n'importe quel numéro.
       - key: OTP_DEV_MODE
-        value: "true"
+        value: "false"
       - key: OTP_TTL_MINUTES
         value: "5"
       # Payment provider (fedapay by default). FedaPay keys are set manually.
@@ -57,6 +59,18 @@ services:
       - key: PAYDUNYA_PUBLIC_KEY
         sync: false
       - key: PAYDUNYA_TOKEN
+        sync: false
+      - key: LIGDICASH_MODE
+        value: test
+      - key: LIGDICASH_API_KEY
+        sync: false
+      - key: LIGDICASH_TOKEN
+        sync: false
+      - key: FEEXPAY_MODE
+        value: SANDBOX
+      - key: FEEXPAY_SHOP_ID
+        sync: false
+      - key: FEEXPAY_TOKEN
         sync: false
       - key: SUB_PRICE_XOF
         value: "5000"
@@ -88,6 +102,10 @@ services:
       # sur le vrai LTR (repli JS automatique si absent/injoignable).
       - key: IA_URL
         sync: false
+      # Jeton Bearer exigé par le micro-service IA (doit être IDENTIQUE à
+      # PPM_IA_TOKEN sur parispromax-ia). À définir manuellement sur les 2.
+      - key: IA_TOKEN
+        sync: false
 
   # Micro-service d'inférence IA (FastAPI + CatBoost), image Docker depuis ./ml.
   - type: web
@@ -104,6 +122,10 @@ services:
         fromDatabase:
           name: parispromax-db
           property: connectionString
+      # Jeton Bearer exigé sur /predict (même valeur que IA_TOKEN côté backend).
+      # Tant qu'il n'est pas défini, /predict reste ouvert (compat) — à définir.
+      - key: PPM_IA_TOKEN
+        sync: false
 
 # Redis managé (file d'attente + cache prédictions + pub WebSocket).
 # Si Render refuse `type: redis`, créez un "Key Value" dans le dashboard et

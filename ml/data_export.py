@@ -20,6 +20,7 @@ import pandas as pd
 SQL_TRAIN = """
 SELECT
   r."externalId"        AS course_id,
+  r.date                AS race_date,
   r.discipline          AS discipline,
   r.distance            AS distance_raw,
   ru.number             AS number,
@@ -65,7 +66,14 @@ def _finalize(df: pd.DataFrame) -> pd.DataFrame:
     df["musique"] = df["musique"].map(
         lambda v: v if isinstance(v, dict) else (json.loads(v) if isinstance(v, str) else None)
     )
-    # Trie par course pour des groupes contigus (exigence CatBoost group_id).
+    # Trie CHRONOLOGIQUEMENT (date de course puis id) pour des groupes contigus
+    # (exigence CatBoost group_id) ET un split temporel honnête : l'ordre
+    # d'apparition des courses = ordre du temps, donc "le passé entraîne, le
+    # futur valide" est vrai. L'ancien tri par course_id seul mélangeait les
+    # dates (ids alphanumériques), faussant la validation.
+    if "race_date" in df.columns:
+        df["race_date"] = df["race_date"].fillna("").astype(str)
+        return df.sort_values(["race_date", "course_id"], kind="mergesort").reset_index(drop=True)
     return df.sort_values("course_id", kind="mergesort").reset_index(drop=True)
 
 

@@ -77,6 +77,25 @@ def train(df, out_path="model/model.cbm"):
     )
     model.fit(train_pool, eval_set=valid_pool, use_best_model=bool(valid_pool))
 
+    # Qualité mesurée sur la validation TEMPORELLE (le futur du jeu de données).
+    # Journalisée à chaque entraînement ; PPM_MIN_NDCG (optionnel) refuse de
+    # remplacer le modèle si le score chute en dessous du seuil.
+    ndcg = None
+    if valid_pool is not None:
+        try:
+            best = model.get_best_score() or {}
+            ndcg = best.get("validation", {}).get("NDCG:top=3;type=Base")
+            if ndcg is None:
+                vals = list(best.get("validation", {}).values())
+                ndcg = vals[0] if vals else None
+        except Exception:  # noqa: BLE001
+            ndcg = None
+        print(f"[train] NDCG@3 (validation temporelle) = {ndcg}")
+        min_ndcg = float(os.environ.get("PPM_MIN_NDCG", "0"))
+        if ndcg is not None and min_ndcg > 0 and ndcg < min_ndcg:
+            print(f"[train] NDCG {ndcg:.4f} < seuil {min_ndcg} -> modèle NON remplacé.")
+            raise SystemExit(0)
+
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     model.save_model(out_path)
     print(f"[train] modèle sauvegardé -> {out_path}")

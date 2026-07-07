@@ -84,9 +84,14 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     cote_open = _col(out, "cote_open")
     out["odds_trend"] = ((cote - cote_open) / cote_open.replace(0, np.nan)).fillna(0.0).clip(-1.0, 3.0)
 
-    out["is_unshod"] = (
-        out.get("deferrage").notna().astype(int) if "deferrage" in out.columns else 0
-    )
+    # Déferré = un vrai code de déferrage (D4, DA, DP, D2…), pas juste un champ
+    # non nul (les scrapes peuvent stocker '' ou un tiret).
+    if "deferrage" in out.columns:
+        out["is_unshod"] = (
+            out["deferrage"].astype(str).str.strip().str.upper().str.match(r"^D").fillna(False).astype(int)
+        )
+    else:
+        out["is_unshod"] = 0
 
     # Imputation par la MÉDIANE de la course (repli médiane globale puis défaut).
     IMPUTE = {

@@ -7,6 +7,7 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,15 +33,20 @@ const PERKS = [
 ];
 
 export default function PaywallScreen({ navigation }) {
-  const { refreshAccess, country } = useAuth();
+  const { refreshAccess, country, phone } = useAuth();
   const [planId, setPlanId] = useState('monthly');
   const [providers, setProviders] = useState([]);
   const [providerId, setProviderId] = useState(null);
   const [processing, setProcessing] = useState(false);
+  // FeexPay mobile money — saisie in-app (opérateur + numéro).
+  const [operators, setOperators] = useState([]);
+  const [network, setNetwork] = useState(null);
+  const [mmPhone, setMmPhone] = useState('');
 
   const plan = PLANS.find((p) => p.id === planId);
   const countryName = COUNTRY_NAMES[country] || 'votre pays';
   const providerLabel = providers.find((p) => p.id === providerId)?.label || 'notre partenaire';
+  const isFeex = providerId === 'feexpay';
 
   // Load the payment providers actually available (FedaPay / CinetPay).
   useEffect(() => {
@@ -60,6 +66,26 @@ export default function PaywallScreen({ navigation }) {
       cancelled = true;
     };
   }, []);
+
+  // When FeexPay is selected, load the mobile-money operators for the user's
+  // country and prefill the phone with the account number.
+  useEffect(() => {
+    if (!isFeex) return;
+    let cancelled = false;
+    setMmPhone((v) => v || String(phone || '').replace(/[^\d+]/g, ''));
+    api
+      .feexpayOperators(country)
+      .then((d) => {
+        if (cancelled) return;
+        const ops = d.operators || [];
+        setOperators(ops);
+        setNetwork((n) => (ops.includes(n) ? n : ops[0] || null));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isFeex, country, phone]);
 
   const pollStatus = async (txn, tries = 6) => {
     for (let i = 0; i < tries; i++) {
@@ -93,6 +119,45 @@ export default function PaywallScreen({ navigation }) {
       }
     } catch (e) {
       Alert.alert('Erreur', "Impossible de démarrer le paiement. Vérifiez votre connexion.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // FeexPay mobile money — paiement DIRECT : FeexPay pousse une demande de
+  // confirmation sur le téléphone. Pas de page à ouvrir ; on suit par polling.
+  const onPayFeexMobile = async () => {
+    if (!network) return Alert.alert('Opérateur requis', 'Choisissez votre opérateur Mobile Money.');
+    const num = String(mmPhone || '').replace(/[^\d+]/g, '');
+    if (num.replace(/\D/g, '').length < 8) {
+      return Alert.alert('Numéro invalide', 'Entrez le numéro de votre compte Mobile Money.');
+    }
+    setProcessing(true);
+    try {
+      const res = await api.feexpayMobile({ planId, phone: num, network, country });
+      if (res.status === 'success') {
+        await refreshAccess();
+        return Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
+          { text: 'Super !', onPress: () => navigation.goBack() },
+        ]);
+      }
+      Alert.alert(
+        'Confirmez sur votre téléphone 📲',
+        `Une demande de paiement ${network} a été envoyée au ${num}. Validez-la avec votre code Mobile Money, puis patientez ici.`
+      );
+      const status = await pollStatus(res.transactionId, 24); // ~60 s
+      if (status === 'success') {
+        await refreshAccess();
+        Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
+          { text: 'Super !', onPress: () => navigation.goBack() },
+        ]);
+      } else if (status === 'pending') {
+        Alert.alert('Paiement en attente', "Si vous avez validé, votre accès s'activera sous peu (rafraîchissez le profil).");
+      } else {
+        Alert.alert('Paiement non abouti', 'Le paiement a échoué, expiré ou a été refusé. Réessayez.');
+      }
+    } catch (e) {
+      Alert.alert('Erreur', "Impossible de lancer le paiement Mobile Money. Vérifiez le numéro et réessayez.");
     } finally {
       setProcessing(false);
     }
@@ -177,27 +242,85 @@ export default function PaywallScreen({ navigation }) {
           </>
         )}
 
-        {/* Payment info — the operators appear on the provider page by country */}
-        <View style={styles.payInfo}>
-          <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
-          <Text style={styles.payInfoText}>
-            Après « Payer », choisissez votre Mobile Money ({countryName}) sur la
-            page sécurisée {providerLabel}.
-          </Text>
-        </View>
+        {isFeex ? (
+          /* FeexPay — saisie Mobile Money DANS l'app (paiement direct) */
+          <>
+            <Text style={styles.sectionTitle}>Votre Mobile Money ({countryName})</Text>
+            <View style={styles.opRow}>
+              {operators.map((op) => {
+                const active = op === network;
+                return (
+                  <Pressable
+                    key={op}
+                    style={[styles.opChip, active && styles.opChipActive]}
+                    onPress={() => setNetwork(op)}
+                  >
+                    <Text style={[styles.opChipText, active && styles.opChipTextActive]}>{op}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <TextInput
+              style={styles.phoneInput}
+              value={mmPhone}
+              onChangeText={setMmPhone}
+              placeholder="Numéro Mobile Money"
+              placeholderTextColor={COLORS.textFaint}
+              keyboardType="phone-pad"
+            />
+            <View style={styles.payInfo}>
+              <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
+              <Text style={styles.payInfoText}>
+                Une demande de paiement sera envoyée sur votre téléphone.
+                Validez-la avec votre code Mobile Money.
+              </Text>
+            </View>
 
-        <Pressable style={[styles.payBtn, processing && { opacity: 0.7 }]} onPress={onPay} disabled={processing}>
-          {processing ? (
-            <ActivityIndicator color="#06251c" />
-          ) : (
-            <>
-              <Ionicons name="lock-open" size={18} color="#06251c" />
-              <Text style={styles.payText}>Payer {plan ? fmtXOF(plan.pricePromo) : ''}</Text>
-            </>
-          )}
-        </Pressable>
+            <Pressable
+              style={[styles.payBtn, processing && { opacity: 0.7 }]}
+              onPress={onPayFeexMobile}
+              disabled={processing}
+            >
+              {processing ? (
+                <ActivityIndicator color="#06251c" />
+              ) : (
+                <>
+                  <Ionicons name="phone-portrait" size={18} color="#06251c" />
+                  <Text style={styles.payText}>Payer {plan ? fmtXOF(plan.pricePromo) : ''}</Text>
+                </>
+              )}
+            </Pressable>
 
-        <Text style={styles.secure}>🔒 Paiement sécurisé via FedaPay · Mobile Money</Text>
+            <Pressable onPress={onPay} disabled={processing} style={styles.cardLink}>
+              <Ionicons name="card" size={16} color={COLORS.textMuted} />
+              <Text style={styles.cardLinkText}>Ou payer par carte bancaire</Text>
+            </Pressable>
+          </>
+        ) : (
+          /* Providers à page hébergée (FedaPay / CinetPay / PayDunya / LigdiCash) */
+          <>
+            <View style={styles.payInfo}>
+              <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
+              <Text style={styles.payInfoText}>
+                Après « Payer », choisissez votre Mobile Money ({countryName}) sur la
+                page sécurisée {providerLabel}.
+              </Text>
+            </View>
+
+            <Pressable style={[styles.payBtn, processing && { opacity: 0.7 }]} onPress={onPay} disabled={processing}>
+              {processing ? (
+                <ActivityIndicator color="#06251c" />
+              ) : (
+                <>
+                  <Ionicons name="lock-open" size={18} color="#06251c" />
+                  <Text style={styles.payText}>Payer {plan ? fmtXOF(plan.pricePromo) : ''}</Text>
+                </>
+              )}
+            </Pressable>
+          </>
+        )}
+
+        <Text style={styles.secure}>🔒 Paiement sécurisé · Mobile Money & cartes</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -258,4 +381,22 @@ const styles = StyleSheet.create({
   },
   payText: { color: '#06251c', fontWeight: '900', fontSize: FONT.lg },
   secure: { color: COLORS.textFaint, fontSize: FONT.sm, textAlign: 'center', marginTop: SPACING.md },
+  opRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
+  opChip: {
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md,
+    borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface,
+  },
+  opChipActive: { borderColor: COLORS.accent, backgroundColor: COLORS.surface },
+  opChipText: { color: COLORS.textMuted, fontWeight: '800', fontSize: FONT.sm },
+  opChipTextActive: { color: COLORS.accent },
+  phoneInput: {
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, color: COLORS.text, fontSize: FONT.md,
+    marginBottom: SPACING.sm,
+  },
+  cardLink: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
+    paddingVertical: SPACING.md, marginTop: SPACING.xs,
+  },
+  cardLinkText: { color: COLORS.textMuted, fontSize: FONT.sm, textDecorationLine: 'underline' },
 });

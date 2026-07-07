@@ -21,6 +21,7 @@ function livePicks(preds) {
     rank: p.rang_predit,
     probaGagnant: p.proba_win,
     probaPodium: p.proba_podium,
+    valueBet: p.value_bet,
   }));
 }
 
@@ -83,12 +84,18 @@ export default function RaceDetailScreen({ route, navigation }) {
             {top3.map((h, i) => (
               <View key={h.number} style={styles.topRow}>
                 <Text style={styles.topRank}>{i + 1}.</Text>
-                <Text style={styles.topName}>
-                  n°{h.number} {h.name}
-                </Text>
-                {h.probaGagnant != null ? (
-                  <Text style={styles.topProba}>{Math.round(h.probaGagnant * 100)}%</Text>
-                ) : null}
+                <View style={styles.topNameBox}>
+                  <Text style={styles.topName}>
+                    n°{h.number} {h.name}
+                  </Text>
+                  {h.probaGagnant != null || h.probaPodium != null ? (
+                    <Text style={styles.topProbaDetail}>
+                      {h.probaGagnant != null ? `Gagnant ${Math.round(h.probaGagnant * 100)}%` : ''}
+                      {h.probaGagnant != null && h.probaPodium != null ? '  ·  ' : ''}
+                      {h.probaPodium != null ? `Podium ${Math.round(h.probaPodium * 100)}%` : ''}
+                    </Text>
+                  ) : null}
+                </View>
                 <Text style={styles.topScore}>{Math.round(h.aiScore)}/100</Text>
               </View>
             ))}
@@ -170,8 +177,9 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   topRank: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.lg, width: 24 },
-  topName: { color: COLORS.white, fontWeight: '700', fontSize: FONT.md, flex: 1 },
-  topProba: { color: COLORS.gold, fontWeight: '800', fontSize: FONT.sm, marginRight: SPACING.sm },
+  topNameBox: { flex: 1 },
+  topName: { color: COLORS.white, fontWeight: '700', fontSize: FONT.md },
+  topProbaDetail: { color: COLORS.gold, fontWeight: '700', fontSize: FONT.sm - 1, marginTop: 1 },
   topScore: { color: COLORS.accent, fontWeight: '900', fontSize: FONT.md },
   divider: {
     height: 1,

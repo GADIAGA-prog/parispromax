@@ -5,11 +5,19 @@ const { requireAuth } = require('../auth');
 const cinetpay = require('../services/cinetpay');
 const fedapay = require('../services/fedapay');
 const paydunya = require('../services/paydunya');
+const ligdicash = require('../services/ligdicash');
+const feexpay = require('../services/feexpay');
 const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
 const { activateSubscription } = require('../services/subscription');
 const { getPlan } = require('../plans');
+const { safeEqual } = require('../security');
 
 const router = express.Router();
+
+// Diagnostic detail on provider errors, only for callers holding the cron token.
+function diagAllowed(req) {
+  return Boolean(req.query.diag && config.cronToken && safeEqual(String(req.query.diag), config.cronToken));
+}
 
 // GET /payments/providers — the payment options the app should offer (only the
 // ones actually usable right now). Public.
@@ -86,7 +94,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
     console.error('initiate error', e.response?.data || e.message);
     const body = { error: "Échec de l'initialisation du paiement" };
     // Provider error detail, gated behind the admin/cron token (safe in prod).
-    if (req.query.diag && config.cronToken && req.query.diag === config.cronToken) {
+    if (diagAllowed(req)) {
       const pdata = e.response?.data;
       body.providerStatus = e.response?.status || null;
       body.providerError =
@@ -96,24 +104,27 @@ router.post('/initiate', requireAuth, async (req, res) => {
   }
 });
 
-// Mark a payment successful + activate subscription (idempotent).
+// Mark a payment successful + activate subscription (idempotent). The
+// updateMany with a status filter is the atomic guard: when a webhook and the
+// status poller race, only ONE caller flips pending -> success, so the
+// subscription can never be activated (and extended) twice for one payment.
 async function finalizePaymentSuccess(payment, { method, raw } = {}) {
   if (!payment) return null;
   if (payment.status === 'success') return payment; // idempotent
 
-  const updated = await prisma.payment.update({
-    where: { id: payment.id },
+  const flipped = await prisma.payment.updateMany({
+    where: { id: payment.id, status: { not: 'success' } },
     data: {
       status: 'success',
       method: method || payment.method,
       rawPayload: raw ? JSON.stringify(raw) : payment.rawPayload,
     },
   });
-  if (payment.userId) {
+  if (flipped.count === 1 && payment.userId) {
     const plan = getPlan(payment.plan) || { days: 30, id: payment.plan };
     await activateSubscription(payment.userId, plan.days, plan.id);
   }
-  return updated;
+  return prisma.payment.findUnique({ where: { id: payment.id } });
 }
 
 async function markFailed(payment, raw) {
@@ -227,6 +238,149 @@ router.post('/paydunya/webhook', express.urlencoded({ extended: true }), async (
     res.status(200).send('OK'); // always 200 so PayDunya stops retrying
   } catch (e) {
     console.error('paydunya webhook error', e);
+    res.status(200).send('OK');
+  }
+});
+
+// POST /payments/ligdicash/webhook  (public — LigdiCash callback_url)
+// LigdiCash renvoie le token de la facture (+ custom_data/external_id). On
+// retrouve le paiement par token (providerRef), sinon par notre external_id
+// (transactionId), puis on RE-VÉRIFIE le statut via l'API avant d'y croire.
+router.post('/ligdicash/webhook', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const b = req.body || {};
+    const token = b.token || b.invoiceToken || b.invoice_token || b.data?.token || req.query.token;
+    const externalId =
+      b.external_id || b.custom_data?.transaction_id || b.data?.external_id || req.query.external_id;
+
+    let payment = null;
+    if (token) payment = await prisma.payment.findFirst({ where: { providerRef: String(token) } });
+    if (!payment && externalId) {
+      payment = await prisma.payment.findUnique({ where: { transactionId: String(externalId) } });
+    }
+
+    if (payment) {
+      const verify = await ligdicash.verifyPayment(payment);
+      if (verify.status === 'success') {
+        await finalizePaymentSuccess(payment, { method: verify.method, raw: verify.raw });
+      } else if (verify.status === 'failed') {
+        await markFailed(payment, verify.raw || req.body);
+      }
+    }
+    res.status(200).send('OK'); // toujours 200 pour que LigdiCash arrête de réessayer
+  } catch (e) {
+    console.error('ligdicash webhook error', e);
+    res.status(200).send('OK');
+  }
+});
+
+// GET /payments/feexpay/operators?country=bf — opérateurs mobile money que
+// FeexPay supporte pour un pays (ISO2). Public — alimente le sélecteur de l'app.
+router.get('/feexpay/operators', (req, res) => {
+  const country = String(req.query.country || '').toLowerCase();
+  res.json({ country, operators: feexpay.operatorsForCountry(country) });
+});
+
+// POST /payments/feexpay/mobile  (auth)  { planId, phone, network, country? }
+// Mobile money DIRECT (sans redirection) : FeexPay pousse une confirmation sur
+// le téléphone du client. On crée un Payment en attente, on déclenche
+// requesttopay, on stocke la référence FeexPay, et l'app suit ensuite via
+// /payments/status/:txn (polling + re-vérification serveur).
+router.post('/feexpay/mobile', requireAuth, async (req, res) => {
+  try {
+    if (!feexpay.isConfigured()) return res.status(400).json({ error: 'FeexPay non disponible' });
+    const plan = getPlan(req.body.planId);
+    if (!plan) return res.status(400).json({ error: 'Plan invalide' });
+    const phone = String(req.body.phone || '').trim();
+    const network = String(req.body.network || '').trim();
+    if (!phone || !network) return res.status(400).json({ error: 'Numéro et opérateur requis' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    const country = String(req.body.country || user?.country || 'bf').toLowerCase();
+    const amount = plan.pricePromo;
+    const transactionId = genTxnId();
+
+    const payment = await prisma.payment.create({
+      data: {
+        userId: req.userId,
+        provider: 'feexpay',
+        transactionId,
+        amount,
+        currency: 'XOF',
+        plan: plan.id,
+        method: `mobile:${network.toUpperCase()}`,
+        status: 'pending',
+        description: `Abonnement ParisPromax — ${plan.label}`,
+      },
+    });
+
+    const result = await feexpay.requestMobilePayment({
+      transactionId,
+      amount,
+      description: payment.description,
+      phone,
+      network,
+      country,
+      customer: { id: req.userId, phone: user?.phone, country },
+    });
+
+    await prisma.payment.update({ where: { id: payment.id }, data: { providerRef: result.reference } });
+
+    // FeexPay peut déjà renvoyer un statut terminal (sandbox -> SUCCESSFUL direct).
+    if (result.status === 'success') {
+      await finalizePaymentSuccess(payment, { method: payment.method, raw: result.raw });
+    } else if (result.status === 'failed') {
+      await markFailed(payment, result.raw);
+    }
+
+    res.json({
+      transactionId,
+      reference: result.reference,
+      status: result.status,
+      provider: 'feexpay',
+      amount,
+      currency: 'XOF',
+      plan: plan.id,
+    });
+  } catch (e) {
+    console.error('feexpay mobile error', e.response?.data || e.message);
+    const body = { error: 'Échec du paiement mobile money' };
+    if (diagAllowed(req)) {
+      const pdata = e.response?.data;
+      body.providerStatus = e.response?.status || null;
+      body.providerError =
+        typeof pdata === 'object' ? pdata : pdata ? String(pdata).slice(0, 500) : e.message;
+    }
+    res.status(500).json(body);
+  }
+});
+
+// POST /payments/feexpay/webhook  (public — FeexPay callback)
+// On retrouve le paiement par référence (providerRef) ou par notre customId
+// (transactionId, renvoyé dans callback_info), puis on RE-VÉRIFIE avant d'y croire.
+router.post('/feexpay/webhook', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const reference = b.reference || b.transref || b.transaction_id || b.data?.reference;
+    const customId = b.customId || b.callback_info?.transaction_id || b.data?.customId;
+
+    let payment = null;
+    if (reference) payment = await prisma.payment.findFirst({ where: { providerRef: String(reference) } });
+    if (!payment && customId) {
+      payment = await prisma.payment.findUnique({ where: { transactionId: String(customId) } });
+    }
+
+    if (payment) {
+      const verify = await feexpay.verifyPayment(payment);
+      if (verify.status === 'success') {
+        await finalizePaymentSuccess(payment, { method: verify.method, raw: verify.raw });
+      } else if (verify.status === 'failed') {
+        await markFailed(payment, verify.raw || req.body);
+      }
+    }
+    res.status(200).send('OK'); // toujours 200
+  } catch (e) {
+    console.error('feexpay webhook error', e);
     res.status(200).send('OK');
   }
 });

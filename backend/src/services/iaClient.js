@@ -11,6 +11,8 @@ const IORedis = require('ioredis');
 const prisma = require('../db');
 
 const IA_URL = process.env.IA_URL || 'http://localhost:8100';
+// Jeton Bearer exigé par l'IA quand PPM_IA_TOKEN y est défini (même valeur).
+const IA_TOKEN = process.env.IA_TOKEN || '';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const CACHE_TTL = Number(process.env.PPM_PRED_TTL || 60); // secondes
 
@@ -61,7 +63,8 @@ async function getPredictions(externalId, { force = false } = {}) {
   const payload = await buildPayload(race);
   if (!payload.runners.length) return { race_id: externalId, predictions: [] };
 
-  const { data } = await axios.post(`${IA_URL}/predict`, payload, { timeout: 10000 });
+  const headers = IA_TOKEN ? { Authorization: `Bearer ${IA_TOKEN}` } : {};
+  const { data } = await axios.post(`${IA_URL}/predict`, payload, { timeout: 10000, headers });
   try {
     await redis.set(key, JSON.stringify(data), 'EX', CACHE_TTL);
   } catch (e) {

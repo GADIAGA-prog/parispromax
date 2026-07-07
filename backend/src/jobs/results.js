@@ -4,6 +4,18 @@ const { fetchResult } = require('./scrape');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Stamp the official finishing position onto each Runner row — this is the
+// LTR training label. Without it, freshly scraped races never enter the
+// training set (only backfilled ones did).
+async function stampFinishPositions(raceId, winners) {
+  for (let i = 0; i < winners.length; i++) {
+    await prisma.runner.updateMany({
+      where: { raceId, number: Number(winners[i]) },
+      data: { finishPos: i + 1 },
+    });
+  }
+}
+
 // Auto-detect race results (arrivals) for races that don't have one yet, and
 // record whether our #1 AI pick placed in the top 3 (drives the real success
 // rate). `dates` optionally limits to specific YYYY-MM-DD strings.
@@ -43,6 +55,7 @@ async function detectResults({ dates } = {}) {
     await prisma.result.create({
       data: { raceId: race.id, winners: JSON.stringify(winners), predicted },
     });
+    await stampFinishPositions(race.id, winners);
     recorded++;
   }
 
@@ -59,4 +72,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { detectResults };
+module.exports = { detectResults, stampFinishPositions };

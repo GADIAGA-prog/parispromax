@@ -22,11 +22,14 @@ model User {
   payments      Payment[]
 }
 
-// One-time codes for phone login (OTP).
+// One-time codes for phone login (OTP). `code` stores a SHA-256 hash of the
+// 6-digit code (never plaintext at rest); `attempts` counts failed guesses so
+// a code can be brute-force-locked after a few tries.
 model OtpCode {
   id        String   @id @default(cuid())
   phone     String
   code      String
+  attempts  Int      @default(0)
   expiresAt DateTime
   consumed  Boolean  @default(false)
   createdAt DateTime @default(now())
