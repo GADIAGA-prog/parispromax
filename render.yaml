@@ -109,6 +109,9 @@ services:
         sync: false
       - key: LIGDICASH_TOKEN
         sync: false
+      # FeexPay API v2 : dashboard app-v2.feexpay.me -> Développeurs.
+      # FEEXPAY_SHOP_ID = onglet "Identifiant" ; FEEXPAY_TOKEN = "Clé privée".
+      # Webhook à déclarer : <PUBLIC_BASE_URL>/payments/feexpay/webhook
       - key: FEEXPAY_MODE
         value: LIVE
       - key: FEEXPAY_SHOP_ID

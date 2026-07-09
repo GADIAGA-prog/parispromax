@@ -1,10 +1,11 @@
 const axios = require('axios');
 const config = require('../config');
 
-// FeexPay HTTP API — agrégateur mobile money + carte (Bénin/UEMOA).
-// Réf. faisant autorité : SDK officiels FeexPay (feexpay-sdk-php,
-// @feexpay/react-sdk v1.5.8). Base : https://api.feexpay.me/api.
-// Auth : en-tête `Authorization: Bearer <token>` (+ shop id dans le corps).
+// FeexPay HTTP API **v2** — agrégateur mobile money + carte (Bénin/UEMOA).
+// Réf. faisant autorité : SDK officiel `react-sdk-feexpay` v1.0.4 (v2), qui
+// appelle https://api-v2.feexpay.me/api. Le dashboard v2 (app-v2.feexpay.me
+// -> Développeurs) fournit l'« Identifiant » (shop) + la « Clé privée » (token).
+// Auth : en-tête `Authorization: Bearer <token>` (+ `shop` dans le corps).
 //
 // ⚠️ FeexPay n'est PAS un PSP à page hébergée comme FedaPay/PayDunya :
 //   * Mobile money = paiement DIRECT (requesttopay) : on fournit numéro +
@@ -87,6 +88,11 @@ function fallbackEmail(customer) {
 // Déclenche une demande de paiement mobile money. Retourne
 // { reference, status } (status: 'pending'|'success'|'failed'). La confirmation
 // se fait sur le téléphone du client ; l'app suit ensuite via verifyPayment.
+// Nom de pays FeexPay (BURKINA_FASO…) attendu par l'API v2.
+function countryName(iso2) {
+  return COUNTRY_NAME[String(iso2 || '').toLowerCase()] || 'BURKINA_FASO';
+}
+
 async function requestMobilePayment({ transactionId, amount, description, phone, network, country, customer }) {
   if (!isConfigured()) {
     throw new Error('FeexPay non configuré');
@@ -95,20 +101,23 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
   // MTN rejette les caractères spéciaux dans la description.
   const desc = String(description || 'Abonnement ParisPromax').replace(/[^a-zA-Z0-9 ]/g, '');
 
+  // Corps exigé par l'API v2 (cf. SDK react-sdk-feexpay) : `amount` en STRING,
+  // `country` en toutes lettres, `custom_id` (et non `customId`), pas de
+  // `token` dans le corps (il est dans l'en-tête Authorization).
   const body = {
     phoneNumber: normalizePhone(phone),
-    amount: Math.round(Number(amount)),
+    country: countryName(country),
+    amount: String(Math.round(Number(amount))),
     reseau,
-    description: desc,
-    customId: transactionId, // renvoyé pour réconciliation
     shop: config.feexpay.shopId,
-    token: config.feexpay.token,
-    payment_interface: 'API',
-    callback_info: { transaction_id: transactionId, user_id: customer?.id || null },
-    currency: 'XOF',
     first_name: customer?.firstName || 'Client',
     email: fallbackEmail(customer),
+    custom_id: transactionId, // renvoyé pour réconciliation
     otp: '',
+    callback_info: { transaction_id: transactionId, user_id: customer?.id || null },
+    description: desc,
+    currency: 'XOF',
+    payment_interface: 'API',
   };
 
   const { data } = await axios.post(
@@ -125,8 +134,10 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
 }
 
 // --- CARTE (redirect) — interface provider standard ---------------------------
-// initiatePayment renvoie { mode, paymentUrl, providerRef, notifyUrl, returnUrl }
-// via le flux carte (initcard). Le mobile money passe par requestMobilePayment.
+// ⚠️ FeexPay v2 : « Les paiements par cartes sont momentanément indisponibles »
+// (message du SDK officiel). Le flux carte v1 (initcard) n'existe plus. On
+// conserve l'interface provider pour le mock de dev, et on échoue explicitement
+// en production : l'app ne doit proposer QUE le mobile money.
 async function initiatePayment({ transactionId, amount, currency, description, customer }) {
   const notifyUrl = `${config.publicBaseUrl}/payments/feexpay/webhook`;
   const returnUrl = `${config.publicBaseUrl}/payments/return`;
@@ -146,36 +157,9 @@ async function initiatePayment({ transactionId, amount, currency, description, c
   if (currency && String(currency).toLowerCase() !== 'xof') {
     throw new Error('FeexPay ne supporte que la devise XOF');
   }
-
-  const body = {
-    phone: normalizePhone(customer?.phone),
-    amount: Math.round(Number(amount)),
-    shop: config.feexpay.shopId,
-    first_name: customer?.firstName || 'Client',
-    last_name: customer?.lastName || 'ParisPromax',
-    email: fallbackEmail(customer),
-    type_card: 'VISA', // la page hébergée accepte VISA/MASTERCARD
-    currency: 'XOF',
-  };
-
-  const { data } = await axios.post(
-    `${config.feexpay.baseUrl}/transactions/public/initcard`,
-    body,
-    { headers: headers(), timeout: 20000 }
+  throw new Error(
+    'FeexPay: paiement par carte momentanément indisponible — utilisez le Mobile Money'
   );
-
-  const url = data.url;
-  const ref = data.transref || data.reference;
-  if (!url || !/^https?:\/\//.test(String(url))) {
-    throw new Error(`FeexPay: URL carte absente (${data.message || data.status || 'réponse inattendue'})`);
-  }
-  return {
-    mode: config.feexpay.mode === 'LIVE' ? 'live' : 'test',
-    paymentUrl: url,
-    providerRef: ref ? String(ref) : null,
-    notifyUrl,
-    returnUrl,
-  };
 }
 
 // Mappe un statut FeexPay -> notre statut interne.
@@ -203,8 +187,9 @@ async function verifyPayment(payment) {
   const ref = payment && payment.providerRef;
   if (!ref) return { status: 'pending', method: null, raw: null };
 
+  // API v2 : GET /transactions/public/single/status/{reference} (Bearer).
   const { data } = await axios.get(
-    `${config.feexpay.baseUrl}/transactions/getrequesttopay/integration/${encodeURIComponent(ref)}`,
+    `${config.feexpay.baseUrl}/transactions/public/single/status/${encodeURIComponent(ref)}`,
     { headers: headers(), timeout: 15000 }
   );
 

@@ -294,10 +294,7 @@ export default function PaywallScreen({ navigation }) {
               )}
             </Pressable>
 
-            <Pressable onPress={onPay} disabled={processing} style={styles.cardLink}>
-              <Ionicons name="card" size={16} color={COLORS.textMuted} />
-              <Text style={styles.cardLinkText}>Ou payer par carte bancaire</Text>
-            </Pressable>
+            {/* Carte bancaire momentanément indisponible chez FeexPay (v2). */}
           </>
         ) : (
           /* Providers à page hébergée (FedaPay / CinetPay / PayDunya / LigdiCash) */

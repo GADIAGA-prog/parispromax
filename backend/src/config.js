@@ -138,17 +138,11 @@ config.ligdicash.configured = Boolean(config.ligdicash.apiKey && config.ligdicas
 
 // FeexPay : base URL unique (l'environnement suit le token) ; configured =
 // Shop ID + Token présents.
-config.feexpay.baseUrl = 'https://api.feexpay.me/api';
+// API v2 (dashboard app-v2.feexpay.me -> Développeurs : Identifiant + Clé privée).
+// L'ancienne api.feexpay.me rejette les identifiants v2 ("Le format de l'id est
+// invalide"). L'environnement (test/live) suit la clé privée utilisée.
+config.feexpay.baseUrl = process.env.FEEXPAY_BASE_URL || 'https://api-v2.feexpay.me/api';
 config.feexpay.configured = Boolean(config.feexpay.shopId && config.feexpay.token);
-// Un Shop ID FeexPay est un ObjectId de 24 caractères hexadécimaux. Un mauvais
-// copier-coller (code boutique, nom…) ferait échouer TOUS les paiements avec
-// « Le format de l'id est invalide » — autant le dire dès le démarrage.
-if (config.feexpay.configured && !/^[0-9a-f]{24}$/i.test(config.feexpay.shopId)) {
-  console.warn(
-    `[config] ⚠️ FEEXPAY_SHOP_ID "${config.feexpay.shopId}" n'a pas le format attendu ` +
-      '(24 caractères hexadécimaux). Vérifiez-le dans le dashboard FeexPay (Ma boutique -> ID).'
-  );
-}
 
 // ---- Boot-time security checks (fail fast on unsafe production setups) ------
 if (isProdLike) {
