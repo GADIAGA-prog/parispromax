@@ -366,10 +366,21 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
       plan: plan.id,
     });
   } catch (e) {
-    console.error('feexpay mobile error', e.response?.data || e.message);
+    const pdata = e.response?.data;
+    console.error(
+      'feexpay mobile error',
+      e.response?.status || '',
+      typeof pdata === 'object' ? JSON.stringify(pdata) : pdata || e.message
+    );
     const body = { error: 'Échec du paiement mobile money' };
+    // Motif court renvoyé à l'app : c'est un message de validation du PSP
+    // (numéro invalide, opérateur indisponible…), jamais un secret. Sans lui,
+    // l'utilisateur — et le support — sont aveugles.
+    const reason =
+      (pdata && (pdata.message || pdata.error || pdata.detail)) ||
+      (typeof pdata === 'string' ? pdata : null);
+    if (reason) body.reason = String(reason).slice(0, 200);
     if (diagAllowed(req)) {
-      const pdata = e.response?.data;
       body.providerStatus = e.response?.status || null;
       body.providerError =
         typeof pdata === 'object' ? pdata : pdata ? String(pdata).slice(0, 500) : e.message;

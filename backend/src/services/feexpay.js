@@ -67,8 +67,18 @@ function mapReseau(iso2, network) {
   return (RESEAU[country] && RESEAU[country][net]) || net.toLowerCase();
 }
 
-// Normalise un numéro : on retire tout sauf les chiffres, et un éventuel préfixe
-// pays dupliqué (ex. "226226..." -> "226..."), comme le fait le SDK.
+// Indicatif téléphonique par pays (ISO2) — nécessaire pour envoyer un numéro
+// AU FORMAT INTERNATIONAL à FeexPay. Un numéro local ("70112233") n'atteint
+// aucun opérateur : la demande de confirmation n'arrive jamais sur le mobile.
+const DIAL_CODE = { bj: '229', ci: '225', bf: '226', cg: '242', sn: '221', tg: '228' };
+
+// Longueur du numéro NATIONAL (sans indicatif). Indispensable : en Côte
+// d'Ivoire et au Bénin, les numéros commencent par 0 (ex. "0102030405") et ce
+// zéro fait partie du numéro — le retirer casserait l'appel.
+const NATIONAL_LEN = { bj: 10, ci: 10, bf: 8, cg: 9, sn: 9, tg: 8 };
+
+// Normalise un numéro : chiffres seulement + suppression d'un préfixe pays
+// dupliqué (ex. "226226..." -> "226...") comme le fait le SDK officiel.
 function normalizePhone(raw) {
   let s = String(raw || '').replace(/\D/g, '');
   if (s.length >= 8) {
@@ -76,6 +86,27 @@ function normalizePhone(raw) {
     if (s.startsWith(p + p)) s = s.slice(p.length);
   }
   return s;
+}
+
+// Numéro au format international attendu par FeexPay : <indicatif><numéro>,
+// sans "+". Tolère toutes les saisies : "70112233", "+22670112233",
+// "0022670112233", "0102030405" (CI). Sans pays connu, numéro nettoyé tel quel.
+function toInternational(raw, iso2) {
+  const cc = String(iso2 || '').toLowerCase();
+  const dial = DIAL_CODE[cc];
+  const len = NATIONAL_LEN[cc];
+  let s = String(raw || '').replace(/\D/g, '').replace(/^00/, '');
+  if (!dial) return normalizePhone(s);
+
+  // Déjà à l'international (indicatif + bonne longueur nationale).
+  if (s.startsWith(dial) && s.length === dial.length + len) return s;
+  // Numéro national exact (le 0 initial de CI/BJ est CONSERVÉ).
+  if (s.length === len) return `${dial}${s}`;
+  // Ancien format avec préfixe interurbain "0" en trop (ex. BF "070112233").
+  if (s.length === len + 1 && s.startsWith('0')) return `${dial}${s.slice(1)}`;
+  // Cas restants : on déduplique un éventuel indicatif répété, puis on préfixe.
+  s = normalizePhone(s);
+  return s.startsWith(dial) ? s : `${dial}${s}`;
 }
 
 // Email/nom de repli : nos utilisateurs s'inscrivent au téléphone (pas d'email).
@@ -105,7 +136,7 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
   // `country` en toutes lettres, `custom_id` (et non `customId`), pas de
   // `token` dans le corps (il est dans l'en-tête Authorization).
   const body = {
-    phoneNumber: normalizePhone(phone),
+    phoneNumber: toInternational(phone, country),
     country: countryName(country),
     amount: String(Math.round(Number(amount))),
     reseau,
@@ -219,5 +250,6 @@ module.exports = {
   mapStatus,
   operatorsForCountry,
   mapReseau,
+  toInternational,
   NETWORKS_BY_COUNTRY,
 };

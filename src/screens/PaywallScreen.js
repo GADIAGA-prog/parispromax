@@ -160,7 +160,15 @@ export default function PaywallScreen({ navigation }) {
         Alert.alert('Paiement non abouti', 'Le paiement a échoué, expiré ou a été refusé. Réessayez.');
       }
     } catch (e) {
-      Alert.alert('Erreur', "Impossible de lancer le paiement Mobile Money. Vérifiez le numéro et réessayez.");
+      // `reason` = message de validation renvoyé par FeexPay (numéro invalide,
+      // opérateur indisponible…). Bien plus utile qu'un message générique.
+      const reason = e.data?.reason;
+      Alert.alert(
+        'Paiement impossible',
+        reason
+          ? `${reason}\n\nVérifiez votre numéro et votre opérateur, puis réessayez.`
+          : "Impossible de lancer le paiement Mobile Money. Vérifiez le numéro et réessayez."
+      );
     } finally {
       setProcessing(false);
     }
