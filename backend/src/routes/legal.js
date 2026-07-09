@@ -38,8 +38,8 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
 
 <h2>Données collectées</h2>
 <ul>
-  <li><strong>Numéro de téléphone</strong> — utilisé comme identifiant de compte et
-      pour l'envoi du code de connexion (OTP) par SMS.</li>
+  <li><strong>Numéro de téléphone</strong> — utilisé comme identifiant de compte
+      (connexion par mot de passe ; aucun SMS ni email n'est envoyé).</li>
   <li><strong>Pays</strong> — pour proposer les moyens de paiement adaptés.</li>
   <li><strong>Historique de paiements</strong> — montant, formule, statut et référence
       de transaction, pour la gestion de votre abonnement et nos obligations comptables.</li>
@@ -49,7 +49,8 @@ publicitaire. L'application n'affiche pas de publicité.</p>
 
 <h2>Utilisation</h2>
 <ul>
-  <li>Connexion sécurisée par code SMS à usage unique (codes stockés hachés).</li>
+  <li>Connexion sécurisée par mot de passe (stocké haché, jamais en clair) ;
+      récupération de compte par code de récupération personnel.</li>
   <li>Activation et suivi de votre abonnement.</li>
   <li>Aucune vente ni partage de vos données à des tiers à des fins commerciales.</li>
 </ul>

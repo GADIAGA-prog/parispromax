@@ -38,6 +38,10 @@ async function runRefresh() {
       }
       const scraped = await ingestData(payload);
       console.log(`[cron] scraped ${scraped} races (${payload.racetracks.length} tracks) for ${today}`);
+      // Course PMU du jour par pays — désignée automatiquement (heuristique
+      // course événement), sans écraser une désignation manuelle.
+      const { autoAssignNationalPicks } = require('../jobs/ingest');
+      await autoAssignNationalPicks(payload);
     }
   } catch (e) {
     console.error('[cron] scrape error:', e.message);

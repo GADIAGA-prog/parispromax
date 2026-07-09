@@ -15,34 +15,40 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
-// FedaPay-supported countries (Mobile Money). The chosen country drives which
-// operators appear on the payment page (e.g. Orange/Moov Burkina).
+// Pays supportés par FeexPay (Mobile Money) — seuls pays d'inscription.
+// Le pays choisi détermine les opérateurs proposés au paiement (Orange/Moov BF…).
 const COUNTRIES = [
   { code: 'bf', name: 'Burkina Faso', dial: '+226', flag: '🇧🇫' },
   { code: 'ci', name: "Côte d'Ivoire", dial: '+225', flag: '🇨🇮' },
   { code: 'sn', name: 'Sénégal', dial: '+221', flag: '🇸🇳' },
   { code: 'tg', name: 'Togo', dial: '+228', flag: '🇹🇬' },
   { code: 'bj', name: 'Bénin', dial: '+229', flag: '🇧🇯' },
-  { code: 'ne', name: 'Niger', dial: '+227', flag: '🇳🇪' },
-  { code: 'ml', name: 'Mali', dial: '+223', flag: '🇲🇱' },
-  { code: 'gn', name: 'Guinée', dial: '+224', flag: '🇬🇳' },
+  { code: 'cg', name: 'Congo-Brazzaville', dial: '+242', flag: '🇨🇬' },
 ];
 
-// Two-step phone OTP login against the backend.
+// Connexion par numéro + MOT DE PASSE (aucun SMS ni email). Le reset de mot de
+// passe est autonome : un CODE DE RÉCUPÉRATION est remis à l'inscription.
 export default function LoginScreen() {
-  const { requestOtp, verifyOtp } = useAuth();
-  const [step, setStep] = useState('phone'); // 'phone' | 'code'
+  const { login, adoptSession } = useAuth();
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
   const [countryCode, setCountryCode] = useState('bf');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [devCode, setDevCode] = useState(null);
+  const [password, setPassword] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // Après register/reset : { code, session } — on affiche le code de
+  // récupération et on n'adopte la session qu'une fois le code noté.
+  const [recovery, setRecovery] = useState(null);
 
   const selected = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0];
+  const isRegister = mode === 'register';
+  const isReset = mode === 'reset';
 
   // Build a clean E.164 number, tolerant of any way the user typed it: with or
   // without the country code, a leading "+", "00", or national "0".
@@ -53,40 +59,53 @@ export default function LoginScreen() {
     return `+${cc}${d}`;
   };
 
-  const onRequest = async () => {
+  const onSubmit = async () => {
     const local = phone.replace(/\D/g, '').replace(/^0+/, '');
     if (local.length < 8) {
       setError('Entrez un numéro de téléphone valide.');
       return;
     }
-    setError('');
-    setBusy(true);
-    try {
-      const res = await requestOtp(fullPhone());
-      setDevCode(res.devCode || null);
-      setStep('code');
-    } catch (e) {
-      setError("Impossible d'envoyer le code. Vérifiez votre connexion.");
-    } finally {
-      setBusy(false);
+    if (isReset && resetCode.replace(/[^a-zA-Z0-9]/g, '').length < 8) {
+      setError('Entrez votre code de récupération (8 caractères).');
+      return;
     }
-  };
-
-  const onVerify = async () => {
-    if (code.trim().length < 4) {
-      setError('Entrez le code reçu par SMS.');
+    if (password.length < 6) {
+      setError('Mot de passe : 6 caractères minimum.');
       return;
     }
     setError('');
     setBusy(true);
     try {
-      await verifyOtp(fullPhone(), code.trim(), countryCode);
-      // On success the navigator switches automatically.
+      if (isRegister) {
+        const res = await api.register(fullPhone(), password, countryCode);
+        setRecovery({ code: res.recoveryCode, session: res });
+      } else if (isReset) {
+        const res = await api.resetPassword(fullPhone(), resetCode, password);
+        setRecovery({ code: res.recoveryCode, session: res });
+      } else {
+        await login(fullPhone(), password, countryCode);
+        // On success the navigator switches automatically.
+      }
     } catch (e) {
-      setError(e.message === 'Code invalide ou expiré' ? 'Code invalide ou expiré.' : 'Échec de la vérification.');
+      if (e.status === 409) {
+        setError('Ce numéro a déjà un compte. Passez sur « Connexion ».');
+      } else if (e.status === 401) {
+        setError(isReset ? 'Numéro ou code de récupération incorrect.' : 'Numéro ou mot de passe incorrect.');
+      } else if (e.status === 429) {
+        setError('Trop de tentatives. Réessayez dans quelques minutes.');
+      } else {
+        setError(e.message && e.status ? e.message : 'Échec. Vérifiez votre connexion internet.');
+      }
     } finally {
       setBusy(false);
     }
+  };
+
+  // L'utilisateur a noté son code -> on adopte la session (navigation bascule).
+  const onRecoveryNoted = async () => {
+    const session = recovery?.session;
+    setRecovery(null);
+    if (session) await adoptSession(session);
   };
 
   return (
@@ -106,80 +125,128 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.card}>
-          {step === 'phone' ? (
-            <>
-              <Text style={styles.label}>Pays</Text>
-              <Pressable
-                style={styles.countrySelect}
-                onPress={() => setPickerOpen(true)}
-                disabled={busy}
-              >
-                <Text style={styles.countryText}>
-                  {selected.flag}  {selected.name} ({selected.dial})
-                </Text>
-                <Ionicons name="chevron-down" size={18} color={COLORS.textMuted} />
-              </Pressable>
-
-              <Text style={[styles.label, { marginTop: SPACING.md }]}>Numéro de téléphone</Text>
-              <View style={styles.inputRow}>
-                <Text style={styles.dialPrefix}>{selected.dial}</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="70 00 00 00"
-                  placeholderTextColor={COLORS.textFaint}
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                  maxLength={15}
-                  editable={!busy}
-                />
-              </View>
-              {!!error && <Text style={styles.error}>{error}</Text>}
-              <Pressable style={[styles.button, busy && styles.busy]} onPress={onRequest} disabled={busy}>
-                {busy ? (
-                  <ActivityIndicator color="#06251c" />
-                ) : (
-                  <>
-                    <Text style={styles.buttonText}>Recevoir mon code</Text>
-                    <Ionicons name="arrow-forward" size={18} color="#06251c" />
-                  </>
-                )}
-              </Pressable>
-            </>
+          {/* Onglets Connexion / Créer un compte (le reset a son propre titre) */}
+          {isReset ? (
+            <Text style={styles.resetTitle}>🔑 Réinitialiser le mot de passe</Text>
           ) : (
+            <View style={styles.tabs}>
+              {[
+                { key: 'login', label: 'Connexion' },
+                { key: 'register', label: 'Créer un compte' },
+              ].map((t) => (
+                <Pressable
+                  key={t.key}
+                  style={[styles.tab, mode === t.key && styles.tabActive]}
+                  onPress={() => { setMode(t.key); setError(''); }}
+                  disabled={busy}
+                >
+                  <Text style={[styles.tabText, mode === t.key && styles.tabTextActive]}>{t.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          <Text style={styles.label}>Pays</Text>
+          <Pressable
+            style={styles.countrySelect}
+            onPress={() => setPickerOpen(true)}
+            disabled={busy}
+          >
+            <Text style={styles.countryText}>
+              {selected.flag}  {selected.name} ({selected.dial})
+            </Text>
+            <Ionicons name="chevron-down" size={18} color={COLORS.textMuted} />
+          </Pressable>
+
+          <Text style={[styles.label, { marginTop: SPACING.md }]}>Numéro de téléphone</Text>
+          <View style={styles.inputRow}>
+            <Text style={styles.dialPrefix}>{selected.dial}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="70 00 00 00"
+              placeholderTextColor={COLORS.textFaint}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+              maxLength={15}
+              editable={!busy}
+            />
+          </View>
+
+          {isReset && (
             <>
-              <Text style={styles.label}>Code reçu par SMS (au {phone})</Text>
+              <Text style={[styles.label, { marginTop: SPACING.md }]}>
+                Code de récupération (remis à l'inscription)
+              </Text>
               <View style={styles.inputRow}>
-                <Ionicons name="keypad" size={18} color={COLORS.textMuted} />
+                <Ionicons name="key" size={18} color={COLORS.textMuted} />
                 <TextInput
-                  style={styles.input}
-                  placeholder="Code à 6 chiffres"
+                  style={[styles.input, { letterSpacing: 2 }]}
+                  placeholder="XXXX-XXXX"
                   placeholderTextColor={COLORS.textFaint}
-                  keyboardType="number-pad"
-                  value={code}
-                  onChangeText={setCode}
-                  maxLength={6}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  value={resetCode}
+                  onChangeText={setResetCode}
+                  maxLength={9}
                   editable={!busy}
                 />
               </View>
-              {__DEV__ && !!devCode && (
-                <Text style={styles.devHint}>Code de test : {devCode}</Text>
-              )}
-              {!!error && <Text style={styles.error}>{error}</Text>}
-              <Pressable style={[styles.button, busy && styles.busy]} onPress={onVerify} disabled={busy}>
-                {busy ? (
-                  <ActivityIndicator color="#06251c" />
-                ) : (
-                  <>
-                    <Text style={styles.buttonText}>Valider & démarrer</Text>
-                    <Ionicons name="checkmark" size={18} color="#06251c" />
-                  </>
-                )}
-              </Pressable>
-              <Pressable onPress={() => { setStep('phone'); setError(''); setCode(''); }} hitSlop={10}>
-                <Text style={styles.changeNumber}>← Changer de numéro</Text>
-              </Pressable>
             </>
+          )}
+
+          <Text style={[styles.label, { marginTop: SPACING.md }]}>
+            {isRegister
+              ? 'Choisissez un mot de passe (6 caractères min.)'
+              : isReset
+                ? 'Nouveau mot de passe (6 caractères min.)'
+                : 'Mot de passe'}
+          </Text>
+          <View style={styles.inputRow}>
+            <Ionicons name="lock-closed" size={18} color={COLORS.textMuted} />
+            <TextInput
+              style={[styles.input, { letterSpacing: 1 }]}
+              placeholder="Mot de passe"
+              placeholderTextColor={COLORS.textFaint}
+              secureTextEntry={!showPwd}
+              autoCapitalize="none"
+              value={password}
+              onChangeText={setPassword}
+              maxLength={72}
+              editable={!busy}
+            />
+            <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={10}>
+              <Ionicons name={showPwd ? 'eye-off' : 'eye'} size={18} color={COLORS.textMuted} />
+            </Pressable>
+          </View>
+
+          {!!error && <Text style={styles.error}>{error}</Text>}
+          <Pressable style={[styles.button, busy && styles.busy]} onPress={onSubmit} disabled={busy}>
+            {busy ? (
+              <ActivityIndicator color="#06251c" />
+            ) : (
+              <>
+                <Text style={styles.buttonText}>
+                  {isRegister ? 'Créer mon compte' : isReset ? 'Réinitialiser & me connecter' : 'Se connecter'}
+                </Text>
+                <Ionicons
+                  name={isRegister ? 'person-add' : isReset ? 'key' : 'arrow-forward'}
+                  size={18}
+                  color="#06251c"
+                />
+              </>
+            )}
+          </Pressable>
+
+          {mode === 'login' && (
+            <Pressable onPress={() => { setMode('reset'); setError(''); }} hitSlop={8}>
+              <Text style={styles.forgotHint}>Mot de passe oublié ? Utiliser mon code de récupération</Text>
+            </Pressable>
+          )}
+          {isReset && (
+            <Pressable onPress={() => { setMode('login'); setError(''); }} hitSlop={8}>
+              <Text style={styles.forgotHint}>← Retour à la connexion</Text>
+            </Pressable>
           )}
 
           <View style={styles.trialNote}>
@@ -189,6 +256,28 @@ export default function LoginScreen() {
         </View>
 
         <Text style={styles.footer}>Optimisé pour les connexions lentes 🌍 · Mode hors-ligne intégré</Text>
+
+        {/* Code de récupération — affiché UNE fois ; la session n'est adoptée
+            qu'après confirmation, sinon l'écran disparaîtrait trop tôt. */}
+        <Modal visible={!!recovery} transparent animationType="fade" onRequestClose={() => {}}>
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>🔑 Votre code de récupération</Text>
+              <Text style={styles.recoveryCode} selectable>
+                {recovery?.code}
+              </Text>
+              <Text style={styles.recoveryText}>
+                Notez ce code et gardez-le précieusement (photo, papier…).{'\n\n'}
+                C'est le SEUL moyen de récupérer votre compte si vous oubliez
+                votre mot de passe — nous n'envoyons ni SMS ni email.
+              </Text>
+              <Pressable style={styles.button} onPress={onRecoveryNoted}>
+                <Ionicons name="checkmark" size={18} color="#06251c" />
+                <Text style={styles.buttonText}>J'ai noté mon code</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
 
         <Modal
           visible={pickerOpen}
@@ -238,6 +327,27 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.sm, fontWeight: '600' },
+  tabs: {
+    flexDirection: 'row', backgroundColor: COLORS.background, borderRadius: RADIUS.md,
+    padding: 4, marginBottom: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
+  },
+  tab: { flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.sm, alignItems: 'center' },
+  tabActive: { backgroundColor: COLORS.accent },
+  tabText: { color: COLORS.textMuted, fontWeight: '800', fontSize: FONT.sm },
+  tabTextActive: { color: '#06251c' },
+  forgotHint: {
+    color: COLORS.accent, textAlign: 'center', marginTop: SPACING.md,
+    fontSize: FONT.sm, textDecorationLine: 'underline',
+  },
+  resetTitle: {
+    color: COLORS.text, fontSize: FONT.lg, fontWeight: '900',
+    textAlign: 'center', marginBottom: SPACING.lg,
+  },
+  recoveryCode: {
+    color: COLORS.gold, fontSize: 30, fontWeight: '900', letterSpacing: 3,
+    textAlign: 'center', marginVertical: SPACING.md,
+  },
+  recoveryText: { color: COLORS.textMuted, fontSize: FONT.sm, lineHeight: 20 },
   countrySelect: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: COLORS.background, borderRadius: RADIUS.md,

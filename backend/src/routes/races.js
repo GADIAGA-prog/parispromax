@@ -42,6 +42,9 @@ router.get('/', async (req, res) => {
       name: r.name,
       distance: r.distance,
       time: full.time || '',
+      prize: full.prize ?? null,
+      type: full.type || r.discipline || null,
+      autostart: Boolean(full.autostart),
       runners: (full.horses || []).length,
     });
   }
@@ -80,6 +83,9 @@ router.get('/full', async (req, res) => {
       name: r.name,
       distance: r.distance,
       time: full.time || '',
+      prize: full.prize ?? null,
+      type: full.type || r.discipline || null,
+      autostart: Boolean(full.autostart),
       condition: r.condition,
       runners: (full.horses || []).length,
       horses: full.horses || [],
@@ -89,6 +95,50 @@ router.get('/full', async (req, res) => {
   res.json({
     meta: { source: 'backend', date: date || null },
     racetracks: Object.values(byTrack),
+  });
+});
+
+// GET /races/national?country=bf&date=YYYY-MM-DD — LA course support des paris
+// PMU du pays (Quarté LONAB au Burkina, LONACI en CI…), désignée chaque jour
+// depuis le back-office, + le journal hippique national à télécharger. Public.
+router.get('/national', async (req, res) => {
+  const country = String(req.query.country || '').trim().toLowerCase();
+  if (!country) return res.status(400).json({ error: 'country requis' });
+  let date = req.query.date;
+  if (!date) {
+    const latest = await prisma.race.findFirst({ orderBy: { date: 'desc' }, select: { date: true } });
+    date = latest?.date || new Date().toISOString().slice(0, 10);
+  }
+
+  const pick = await prisma.nationalPick.findUnique({
+    where: { date_country: { date, country } },
+  });
+  if (!pick) return res.json({ country, date, pick: null });
+
+  const race = await prisma.race.findUnique({ where: { externalId: pick.externalId } });
+  const full = race ? parse(race.raw, {}) : {};
+  res.json({
+    country,
+    date,
+    pick: {
+      betType: pick.betType || 'Course du jour',
+      journalUrl: pick.journalUrl || null,
+      race: race
+        ? {
+            id: race.externalId,
+            track: race.track,
+            name: race.name,
+            number: full.number || '',
+            time: full.time || '',
+            prize: full.prize ?? null,
+            type: full.type || race.discipline || null,
+            autostart: Boolean(full.autostart),
+            distance: race.distance,
+            discipline: race.discipline,
+            runners: (full.horses || []).length,
+          }
+        : null,
+    },
   });
 });
 
@@ -149,8 +199,11 @@ router.get('/:externalId', async (req, res) => {
     date: race.date,
     time: full.time || '',
     discipline: race.discipline,
+    type: full.type || race.discipline || null, // Trot Attelé / Plat / Obstacle…
+    autostart: Boolean(full.autostart),
     condition: race.condition,
     distance: race.distance,
+    prize: full.prize ?? null, // allocation de la course (euros)
     prizePool: full.prizePool || null,
     nonPartants: Array.isArray(nonPartants) ? nonPartants : [],
     horses: (full.horses || []).map((h) => ({
@@ -186,6 +239,37 @@ function ltrToTopPicks(preds) {
     }));
 }
 
+// Trois lectures du pronostic à partir des picks classés :
+//   favoris (2-3 les plus probables) / top5 (base Quinté) / outsiders
+//   (cote >= 8, écartés des favoris, meilleur potentiel podium).
+function groupPicks(picks) {
+  const sorted = (picks || []).slice().sort((a, b) => (a.rank || 999) - (b.rank || 999));
+  const top5 = sorted.slice(0, 5);
+  let favoris = sorted.slice(0, 2);
+  const third = sorted[2];
+  if (third && (third.probaGagnant == null || third.probaGagnant >= 0.15)) {
+    favoris = sorted.slice(0, 3);
+  }
+  const favNums = new Set(favoris.map((p) => p.number));
+  const outsiders = sorted
+    .filter((p) => (Number(p.odds) >= 8 || (p.odds == null && (p.rank || 0) > 5)))
+    .filter((p) => !favNums.has(p.number))
+    .filter((p) => p.probaPodium == null || p.probaPodium >= 0.1)
+    .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || (b.aiScore || 0) - (a.aiScore || 0))
+    .slice(0, 3);
+
+  // LE TOCARD : la très grosse cote (>= 15) que le modèle juge la moins folle —
+  // le cheval "surprise" à glisser en fin de combinaison.
+  const top5Nums = new Set(top5.map((p) => p.number));
+  const tocard =
+    sorted
+      .filter((p) => Number(p.odds) >= 15 && !top5Nums.has(p.number))
+      .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || (b.aiScore || 0) - (a.aiScore || 0))[0] ||
+    null;
+
+  return { favoris, top5, outsiders, tocard };
+}
+
 // GET /races/:externalId/prediction — AI top picks. GATED: requires an active
 // subscription or trial. Serves the trained LTR model when the IA microservice
 // is enabled (IA_URL), and falls back to the stored JS-engine predictions.
@@ -206,7 +290,8 @@ router.get('/:externalId/prediction', requireAuth, async (req, res) => {
       const { getPredictions } = require('../services/iaClient');
       const ia = await getPredictions(req.params.externalId);
       if (ia && Array.isArray(ia.predictions) && ia.predictions.length) {
-        return res.json({ raceId: race.externalId, source: 'ltr', topPicks: ltrToTopPicks(ia.predictions) });
+        const picks = ltrToTopPicks(ia.predictions);
+        return res.json({ raceId: race.externalId, source: 'ltr', topPicks: picks, groups: groupPicks(picks) });
       }
     } catch (e) {
       console.error('[prediction] IA fallback ->', e.message);
@@ -217,7 +302,8 @@ router.get('/:externalId/prediction', requireAuth, async (req, res) => {
   if (!race.predictions.length) {
     return res.status(404).json({ error: 'Pronostic indisponible' });
   }
-  res.json({ raceId: race.externalId, source: 'js', topPicks: parse(race.predictions[0].topPicks, []) });
+  const picks = parse(race.predictions[0].topPicks, []);
+  res.json({ raceId: race.externalId, source: 'js', topPicks: picks, groups: groupPicks(picks) });
 });
 
 module.exports = router;

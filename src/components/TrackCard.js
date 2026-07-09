@@ -45,9 +45,12 @@ export default function TrackCard({ track, onRacePress }) {
             <Text style={styles.raceName} numberOfLines={1}>
               {race.name}
             </Text>
-            <Text style={styles.raceMeta}>
-              {race.time ? `${race.time}` : ''} · {race.distance || ''} ·{' '}
+            <Text style={styles.raceMeta} numberOfLines={1}>
+              {race.time ? `🕐 ${race.time} · ` : ''}
+              {race.type ? `${race.type} · ` : ''}
+              {race.distance ? `${race.distance} · ` : ''}
               {race.runners || race.horses?.length} partants
+              {race.prize ? ` · ${Number(race.prize).toLocaleString('fr-FR')} €` : ''}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />

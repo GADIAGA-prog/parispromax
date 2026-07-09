@@ -113,6 +113,28 @@ async function fetchCourse(course) {
   const infoCourse = $('.infoCourse, .conditionCourse').first().text().trim();
   const distMatch = infoCourse.match(/(\d{3,4})\s?m/);
 
+  // Heure de départ ("Départ à 20h15" / "20 h 15") — cherchée dans le bloc info
+  // puis, à défaut, dans l'en-tête de page.
+  const headText = `${infoCourse} ${$('.nomCourse').parent().text()}`.replace(/\s+/g, ' ');
+  const timeMatch = headText.match(/(?:d[ée]part[^0-9]{0,12})?(\d{1,2})\s*h\s*(\d{2})/i);
+  const time = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : '';
+
+  // Allocation ("68.000 €", "68 000 Euros") -> montant entier en euros.
+  const prizeMatch = headText.match(/([\d]{2,3}(?:[\s.,]\d{3})+|\d{4,7})\s*(?:€|euros?)/i);
+  const prize = prizeMatch ? parseInt(prizeMatch[1].replace(/\D/g, ''), 10) : null;
+
+  // Type de course (Attelé / Monté / Plat / Haies / Steeple / Cross) + départ
+  // autostart, lus dans le descriptif de la course.
+  const lowInfo = headText.toLowerCase();
+  let type = null;
+  if (/attel/.test(lowInfo)) type = 'Trot Attelé';
+  else if (/mont[ée]/.test(lowInfo)) type = 'Trot Monté';
+  else if (/steeple/.test(lowInfo)) type = 'Obstacle — Steeple';
+  else if (/haies/.test(lowInfo)) type = 'Obstacle — Haies';
+  else if (/cross/.test(lowInfo)) type = 'Cross';
+  else if (/plat/.test(lowInfo)) type = 'Plat';
+  const autostart = /autostart/i.test(headText);
+
   // M1 — détecte dynamiquement la table de partants + la position de chaque
   // colonne (jockey/musique/cote…) au lieu d'index fixes fragiles.
   const found = findRunnersTable($);
@@ -157,19 +179,24 @@ async function fetchCourse(course) {
       });
   }
 
-  // Discipline dominante déduite des musiques (trot attelé/monté vs plat/obstacle).
+  // Discipline dominante déduite des musiques (trot attelé/monté vs plat/obstacle)
+  // — repli quand le descriptif ne donne pas le type.
   const specCount = {};
   horses.forEach((h) => {
     const s = h.musiqueParsed && h.musiqueParsed.specialite_predominante;
     if (s) specCount[s] = (specCount[s] || 0) + 1;
   });
   const discipline = Object.keys(specCount).sort((a, b) => specCount[b] - specCount[a])[0] || null;
+  const TYPE_FROM_SPEC = { attele: 'Trot Attelé', monte: 'Trot Monté', plat: 'Plat', obstacle: 'Obstacle' };
 
   return {
     id: `c${course.id}`,
     number: '',
     name: raceName,
-    time: '',
+    time,
+    prize, // allocation en euros (null si non trouvée)
+    type: type || TYPE_FROM_SPEC[discipline] || null,
+    autostart,
     distance: distMatch ? `${distMatch[1]}m` : '',
     discipline,
     condition: mapCondition(infoCourse),

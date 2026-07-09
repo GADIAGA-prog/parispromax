@@ -79,18 +79,9 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Step 1: request an OTP for a phone number. Returns { devCode? }.
-  const requestOtp = useCallback(async (phoneNumber) => {
-    const clean = String(phoneNumber || '').replace(/[^\d+]/g, '');
-    const res = await api.requestOtp(clean);
-    return res; // { ok, ttlMinutes, devCode? }
-  }, []);
-
-  // Step 2: verify the OTP -> store token, load access.
-  const verifyOtp = useCallback(
-    async (phoneNumber, code, country) => {
-      const clean = String(phoneNumber || '').replace(/[^\d+]/g, '');
-      const res = await api.verifyOtp(clean, code, country);
+  // Finalise une authentification réussie (register OU login).
+  const completeAuth = useCallback(
+    async (res) => {
       await setToken(res.token);
       setPhone(res.user.phone);
       if (res.user.country) setCountry(res.user.country);
@@ -101,6 +92,20 @@ export function AuthProvider({ children }) {
     },
     [refreshAccess]
   );
+
+  // Connexion : numéro + mot de passe.
+  const login = useCallback(
+    async (phoneNumber, password, country) => {
+      const clean = String(phoneNumber || '').replace(/[^\d+]/g, '');
+      return completeAuth(await api.login(clean, password, country));
+    },
+    [completeAuth]
+  );
+
+  // Adopte une session déjà obtenue (register / reset-password) : l'écran de
+  // login affiche d'abord le code de récupération, PUIS adopte la session
+  // (sinon la navigation bascule avant que l'utilisateur ait noté son code).
+  const adoptSession = useCallback((res) => completeAuth(res), [completeAuth]);
 
   const doLogout = useCallback(async () => {
     await clearToken();
@@ -123,12 +128,12 @@ export function AuthProvider({ children }) {
       plan: access.plan,
       paidUntil: access.paidUntil,
       // actions
-      requestOtp,
-      verifyOtp,
+      login,
+      adoptSession,
       refreshAccess,
       logout: doLogout,
     }),
-    [phone, country, isLoggedIn, loading, access, requestOtp, verifyOtp, refreshAccess, doLogout]
+    [phone, country, isLoggedIn, loading, access, login, adoptSession, refreshAccess, doLogout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -7,22 +7,31 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 import TrialBanner from '../components/TrialBanner';
 import TrackCard from '../components/TrackCard';
 import TrackCardSkeleton from '../components/Skeleton';
 import { loadRaces } from '../services/dataService';
 import { analyzeRace } from '../services/aiEngine';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import { COLORS, SPACING, FONT, RADIUS } from '../theme/colors';
 
+const FLAGS = { bf: '🇧🇫', ci: '🇨🇮', sn: '🇸🇳', tg: '🇹🇬', bj: '🇧🇯', cg: '🇨🇬' };
+
 export default function HomeScreen({ navigation }) {
+  const { country } = useAuth();
   const [tracks, setTracks] = useState([]);
   const [source, setSource] = useState(null);
   const [offline, setOffline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Course PMU du jour du pays de l'abonné (Quarté LONAB au Burkina…).
+  const [national, setNational] = useState(null);
 
   const fetchData = useCallback(async () => {
     const { data, source: src, offline: off } = await loadRaces();
@@ -34,7 +43,13 @@ export default function HomeScreen({ navigation }) {
     setTracks(analyzed);
     setSource(src);
     setOffline(off);
-  }, []);
+    try {
+      const n = country ? await api.nationalRace(country) : null;
+      setNational(n?.pick || null);
+    } catch (e) {
+      setNational(null); // hors-ligne : pas de bannière
+    }
+  }, [country]);
 
   useEffect(() => {
     (async () => {
@@ -56,6 +71,18 @@ export default function HomeScreen({ navigation }) {
       race,
     });
   };
+
+  // Ouvre la course nationale (retrouvée dans le programme chargé).
+  const openNationalRace = () => {
+    const target = national?.race;
+    if (!target) return;
+    for (const t of tracks) {
+      const race = (t.races || []).find((r) => r.id === target.id);
+      if (race) return onRacePress(t, race);
+    }
+  };
+
+  const fcfa = (eur) => `${Math.round((eur * 655.957) / 1000) * 1000}`.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
   if (loading) {
     return (
@@ -91,6 +118,35 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       <TrialBanner />
+
+      {/* Course PMU du jour du pays (ex. Quarté LONAB -> Enghien C8) */}
+      {national?.race && (
+        <Pressable style={styles.national} onPress={openNationalRace}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.nationalTitle}>
+              {FLAGS[country] || '🏇'} {national.betType || 'Course du jour'} — {national.race.track}{' '}
+              {national.race.number}
+            </Text>
+            <Text style={styles.nationalSub} numberOfLines={1}>
+              {national.race.name}
+              {national.race.time ? ` · ${national.race.time}` : ''}
+              {national.race.prize ? ` · ${fcfa(national.race.prize)} F CFA` : ''}
+            </Text>
+          </View>
+          {national.journalUrl ? (
+            <Pressable
+              style={styles.journalBtn}
+              onPress={() => WebBrowser.openBrowserAsync(national.journalUrl)}
+              hitSlop={8}
+            >
+              <Ionicons name="newspaper" size={14} color="#06251c" />
+              <Text style={styles.journalText}>Journal</Text>
+            </Pressable>
+          ) : (
+            <Ionicons name="chevron-forward" size={18} color={COLORS.gold} />
+          )}
+        </Pressable>
+      )}
 
       {offline && (
         <View style={styles.offline}>
@@ -154,6 +210,30 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   offlineText: { color: COLORS.gold, fontSize: FONT.sm - 1, fontWeight: '600' },
+  national: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: 'rgba(251,191,36,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.45)',
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+  },
+  nationalTitle: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.md },
+  nationalSub: { color: COLORS.textMuted, fontSize: FONT.sm - 1, marginTop: 2 },
+  journalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.gold,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+  },
+  journalText: { color: '#06251c', fontWeight: '900', fontSize: FONT.sm - 1 },
   list: { padding: SPACING.md, paddingBottom: SPACING.xxl, flexGrow: 1 },
   empty: {
     alignItems: 'center',

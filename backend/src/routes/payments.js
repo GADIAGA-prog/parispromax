@@ -288,7 +288,9 @@ router.get('/feexpay/operators', (req, res) => {
 // /payments/status/:txn (polling + re-vérification serveur).
 router.post('/feexpay/mobile', requireAuth, async (req, res) => {
   try {
-    if (!feexpay.isConfigured()) return res.status(400).json({ error: 'FeexPay non disponible' });
+    if (!feexpay.isConfigured() && !config.allowMock) {
+      return res.status(400).json({ error: 'FeexPay non disponible' });
+    }
     const plan = getPlan(req.body.planId);
     if (!plan) return res.status(400).json({ error: 'Plan invalide' });
     const phone = String(req.body.phone || '').trim();
@@ -313,6 +315,27 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
         description: `Abonnement ParisPromax — ${plan.label}`,
       },
     });
+
+    // MOCK (dev uniquement) : simule la confirmation Mobile Money après ~8 s,
+    // pour tester tout le parcours (demande -> polling -> activation) sans
+    // clés FeexPay. Jamais actif en production (config.allowMock).
+    if (!feexpay.isConfigured()) {
+      setTimeout(() => {
+        finalizeSuccess(transactionId, { method: payment.method, raw: { mock: true } }).catch((e) =>
+          console.error('mock feexpay finalize error', e)
+        );
+      }, 8000);
+      return res.json({
+        transactionId,
+        reference: `MOCK-${transactionId}`,
+        status: 'pending',
+        mode: 'mock',
+        provider: 'feexpay',
+        amount,
+        currency: 'XOF',
+        plan: plan.id,
+      });
+    }
 
     const result = await feexpay.requestMobilePayment({
       transactionId,

@@ -21,7 +21,7 @@ import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 // presented on the secure FedaPay page after tapping "Payer".
 const COUNTRY_NAMES = {
   bf: 'Burkina Faso', ci: "Côte d'Ivoire", sn: 'Sénégal', tg: 'Togo',
-  bj: 'Bénin', ne: 'Niger', ml: 'Mali', gn: 'Guinée',
+  bj: 'Bénin', cg: 'Congo-Brazzaville',
 };
 
 const PERKS = [
@@ -143,8 +143,10 @@ export default function PaywallScreen({ navigation }) {
         ]);
       }
       Alert.alert(
-        'Confirmez sur votre téléphone 📲',
-        `Une demande de paiement ${network} a été envoyée au ${num}. Validez-la avec votre code Mobile Money, puis patientez ici.`
+        res.mode === 'mock' ? '🧪 MODE TEST — paiement simulé' : 'Confirmez sur votre téléphone 📲',
+        res.mode === 'mock'
+          ? 'Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes.'
+          : `Une demande de paiement ${network} a été envoyée au ${num}. Validez-la avec votre code Mobile Money, puis patientez ici.`
       );
       const status = await pollStatus(res.transactionId, 24); // ~60 s
       if (status === 'success') {

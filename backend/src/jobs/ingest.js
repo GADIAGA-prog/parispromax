@@ -58,7 +58,7 @@ async function ingestData(data) {
           track: track.name,
           name: race.name,
           date,
-          discipline: track.discipline || null,
+          discipline: race.type || race.discipline || track.discipline || null,
           condition: track.condition || race.condition || null,
           distance: race.distance || null,
           raw: JSON.stringify({ track: track.name, ...race }),
@@ -68,7 +68,7 @@ async function ingestData(data) {
           track: track.name,
           name: race.name,
           date,
-          discipline: track.discipline || null,
+          discipline: race.type || race.discipline || track.discipline || null,
           condition: track.condition || race.condition || null,
           distance: race.distance || null,
           raw: JSON.stringify({ track: track.name, ...race }),
@@ -106,6 +106,56 @@ async function ingestData(data) {
   }
   console.log(`[ingest] ${raceCount} courses ingérées pour ${date}.`);
   return raceCount;
+}
+
+// --- Course PMU du jour par pays (AUTOMATIQUE) -------------------------------
+// Les loteries nationales (LONAB, LONACI…) prennent comme support de leurs
+// paris la "course événement" française du jour. Heuristique : la course à la
+// plus grosse allocation (à défaut, celle avec le plus de partants — les
+// Quarté/Quinté se courent sur de gros champs). Tourne après chaque scrape ;
+// ne remplace JAMAIS une désignation manuelle faite dans le back-office.
+const PICK_COUNTRIES = ['bf', 'ci', 'sn', 'tg', 'bj', 'cg'];
+
+function detectEventRace(data) {
+  let best = null;
+  let bestKey = [-1, -1];
+  for (const track of data.racetracks || []) {
+    for (const race of track.races || []) {
+      const runners = (race.horses || []).length;
+      if (!race.id || runners < 10) continue; // trop petit champ pour un Quarté
+      const key = [Number(race.prize) || 0, runners];
+      if (key[0] > bestKey[0] || (key[0] === bestKey[0] && key[1] > bestKey[1])) {
+        bestKey = key;
+        best = race;
+      }
+    }
+  }
+  return best;
+}
+
+async function autoAssignNationalPicks(data) {
+  const date = data?.meta?.date || new Date().toISOString().slice(0, 10);
+  const event = detectEventRace(data);
+  if (!event) return { assigned: 0 };
+
+  let assigned = 0;
+  for (const country of PICK_COUNTRIES) {
+    // URL du journal du pays, configurable une fois pour toutes via env
+    // (ex. JOURNAL_URL_BF=https://www.lonab.bf/journal-hippique).
+    const journalUrl = process.env[`JOURNAL_URL_${country.toUpperCase()}`] || null;
+    const existing = await prisma.nationalPick.findUnique({
+      where: { date_country: { date, country } },
+    });
+    if (existing) continue; // désignation manuelle (ou déjà posée) -> intouchée
+    await prisma.nationalPick.create({
+      data: { date, country, externalId: event.id, betType: 'Course du jour', journalUrl },
+    });
+    assigned++;
+  }
+  if (assigned) {
+    console.log(`[picks] course événement ${event.id} assignée à ${assigned} pays pour ${date}.`);
+  }
+  return { assigned, eventRaceId: event.id };
 }
 
 // Backfill — reconstruit les lignes Runner pour les courses TERMINÉES qui n'en
@@ -201,4 +251,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { ingestFromFile, ingestData, backfillRunners, RACES_FILE };
+module.exports = { ingestFromFile, ingestData, backfillRunners, autoAssignNationalPicks, RACES_FILE };

@@ -86,6 +86,34 @@ export default function ProfileScreen({ navigation }) {
 
         <Pressable
           style={styles.action}
+          onPress={() =>
+            Alert.alert(
+              'Code de récupération',
+              "Un NOUVEAU code va être généré (l'ancien ne marchera plus). Notez-le : c'est le seul moyen de récupérer votre compte en cas d'oubli du mot de passe. Continuer ?",
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Générer',
+                  onPress: async () => {
+                    try {
+                      const r = await api.newRecoveryCode();
+                      Alert.alert('🔑 Votre nouveau code', `${r.recoveryCode}\n\nNotez-le précieusement (photo, papier…).`);
+                    } catch (e) {
+                      Alert.alert('Erreur', 'Impossible de générer le code. Réessayez.');
+                    }
+                  },
+                },
+              ]
+            )
+          }
+        >
+          <Ionicons name="key" size={20} color={COLORS.gold} />
+          <Text style={styles.actionText}>Voir mon code de récupération</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+        </Pressable>
+
+        <Pressable
+          style={styles.action}
           onPress={async () => {
             const ok = await sendTestNotification();
             if (!ok) {

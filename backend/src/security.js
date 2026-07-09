@@ -20,6 +20,51 @@ function genOtpCode() {
   return String(crypto.randomInt(100000, 1000000));
 }
 
+// Code de récupération lisible (reset de mot de passe SANS SMS/email) :
+// 8 caractères sans ambiguïté (pas de 0/O/1/I/L), format XXXX-XXXX.
+const RECOVERY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function genRecoveryCode() {
+  let s = '';
+  for (let i = 0; i < 8; i++) {
+    s += RECOVERY_ALPHABET[crypto.randomInt(RECOVERY_ALPHABET.length)];
+    if (i === 3) s += '-';
+  }
+  return s;
+}
+
+// Normalise un code saisi par l'utilisateur (espaces/tirets/casse tolérés).
+function normalizeRecoveryCode(raw) {
+  const s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return s.length === 8 ? `${s.slice(0, 4)}-${s.slice(4)}` : null;
+}
+
+// --- Password hashing (scrypt, built-in — no extra dependency) ---------------
+const SCRYPT_N = 16384; // cost 2^14, ~50ms — fine for a login endpoint
+const SCRYPT_KEYLEN = 32;
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto
+    .scryptSync(String(password), salt, SCRYPT_KEYLEN, { N: SCRYPT_N, r: 8, p: 1 })
+    .toString('hex');
+  return `scrypt$${SCRYPT_N}$${salt}$${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  try {
+    const [algo, nStr, salt, hash] = String(stored || '').split('$');
+    if (algo !== 'scrypt' || !salt || !hash) return false;
+    const computed = crypto.scryptSync(String(password), salt, SCRYPT_KEYLEN, {
+      N: Number(nStr) || SCRYPT_N,
+      r: 8,
+      p: 1,
+    });
+    return crypto.timingSafeEqual(computed, Buffer.from(hash, 'hex'));
+  } catch {
+    return false;
+  }
+}
+
 // Minimal in-memory sliding-window rate limiter (single-instance deploys).
 // Usage: app.post('/x', rateLimit({ windowMs: 600000, max: 30 }), handler)
 function rateLimit({ windowMs, max, keyFn }) {
@@ -49,4 +94,13 @@ function rateLimit({ windowMs, max, keyFn }) {
   };
 }
 
-module.exports = { safeEqual, sha256, genOtpCode, rateLimit };
+module.exports = {
+  safeEqual,
+  sha256,
+  genOtpCode,
+  genRecoveryCode,
+  normalizeRecoveryCode,
+  hashPassword,
+  verifyPassword,
+  rateLimit,
+};

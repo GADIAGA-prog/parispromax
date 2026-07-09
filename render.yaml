@@ -38,7 +38,8 @@ services:
       # dans la réponse, permettant de se connecter avec n'importe quel numéro.
       - key: OTP_DEV_MODE
         value: "false"
-      # --- SMS (OBLIGATOIRE pour la connexion en prod) ---
+      # --- SMS (OPTIONNEL — la connexion est par mot de passe, sans SMS) ---
+      # À renseigner seulement si vous réactivez un jour l'OTP SMS :
       # SMS_PROVIDER=twilio (TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN) ou
       # SMS_PROVIDER=orange (ORANGE_CLIENT_ID + ORANGE_CLIENT_SECRET + ORANGE_SENDER).
       - key: SMS_PROVIDER
@@ -62,6 +63,25 @@ services:
       # dashboard Render. Orange Money BF et Moov BF passent déjà par FeexPay.
       - key: PAYMENT_PROVIDER
         value: feexpay
+      # Seul FeexPay est proposé aux clients ; les autres intégrations restent
+      # dans le code mais sont masquées (réactivables en retirant de la liste).
+      - key: PAYMENT_DISABLED
+        value: fedapay,cinetpay,paydunya,ligdicash
+      # URLs des journaux hippiques nationaux (bouton "Journal" de l'app).
+      # À renseigner UNE fois : la page du journal du jour de chaque loterie
+      # (ex. LONAB). Reprises automatiquement chaque jour par l'auto-pick.
+      - key: JOURNAL_URL_BF
+        sync: false
+      - key: JOURNAL_URL_CI
+        sync: false
+      - key: JOURNAL_URL_SN
+        sync: false
+      - key: JOURNAL_URL_TG
+        sync: false
+      - key: JOURNAL_URL_BJ
+        sync: false
+      - key: JOURNAL_URL_CG
+        sync: false
       - key: FEDAPAY_MODE
         value: live
       - key: FEDAPAY_COUNTRY

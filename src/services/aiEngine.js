@@ -262,6 +262,40 @@ export function getTopPicks(race, n = 3) {
   return analyzed.horses.slice(0, n);
 }
 
+// Regroupe un champ ANALYSÉ (trié par rang IA) en trois lectures du pronostic :
+//   favoris   — les 2-3 chevaux les plus probables au gagnant
+//   top5      — les 5 meilleurs du classement IA (base Quinté)
+//   outsiders — grosses cotes (>= 8) avec un vrai potentiel de podium
+export function groupPredictions(horses) {
+  const field = (horses || []).filter((h) => h && h.aiScore != null);
+  const sorted = [...field].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+  const top5 = sorted.slice(0, 5);
+
+  let favoris = sorted.slice(0, 2);
+  const third = sorted[2];
+  if (third && (third.probaGagnant == null || third.probaGagnant >= 0.15)) {
+    favoris = sorted.slice(0, 3);
+  }
+  const favNums = new Set(favoris.map((h) => h.number));
+
+  const outsiders = sorted
+    .filter((h) => (num(h.odds, 0) >= 8 || (h.odds == null && (h.rank || 0) > 5)))
+    .filter((h) => !favNums.has(h.number))
+    .filter((h) => h.probaPodium == null || h.probaPodium >= 0.1)
+    .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || b.aiScore - a.aiScore)
+    .slice(0, 3);
+
+  // LE TOCARD : la très grosse cote (>= 15) que le modèle juge la moins folle —
+  // le cheval "surprise" à glisser en fin de combinaison.
+  const top5Nums = new Set(top5.map((h) => h.number));
+  const tocard =
+    sorted
+      .filter((h) => num(h.odds, 0) >= 15 && !top5Nums.has(h.number))
+      .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || b.aiScore - a.aiScore)[0] || null;
+
+  return { favoris, top5, outsiders, tocard };
+}
+
 export function confidenceLabel(aiScore) {
   if (aiScore >= 72) return 'Confiance élevée';
   if (aiScore >= 58) return 'Confiance moyenne';
@@ -273,6 +307,7 @@ export default {
   applyBackendPredictions,
   computeAIScore,
   getTopPicks,
+  groupPredictions,
   confidenceLabel,
   BADGES,
 };

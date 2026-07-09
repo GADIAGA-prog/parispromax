@@ -63,7 +63,16 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
 
 // --- Endpoints -------------------------------------------------------------
 export const api = {
-  // Auth
+  // Auth (numéro + mot de passe — pas de SMS/email)
+  register: (phone, password, country) =>
+    request('/auth/register', { method: 'POST', body: { phone, password, country } }),
+  login: (phone, password, country) =>
+    request('/auth/login', { method: 'POST', body: { phone, password, country } }),
+  // Réinitialisation autonome : numéro + code de récupération -> nouveau mdp.
+  resetPassword: (phone, recoveryCode, newPassword) =>
+    request('/auth/reset-password', { method: 'POST', body: { phone, recoveryCode, newPassword } }),
+  newRecoveryCode: () => request('/me/recovery-code', { method: 'POST', auth: true }),
+  // Legacy OTP (conservé côté backend, plus utilisé par l'app)
   requestOtp: (phone) => request('/auth/request-otp', { method: 'POST', body: { phone } }),
   verifyOtp: (phone, code, country) =>
     request('/auth/verify-otp', { method: 'POST', body: { phone, code, country } }),
@@ -74,6 +83,8 @@ export const api = {
 
   // Races
   races: (date) => request(`/races${date ? `?date=${date}` : ''}`),
+  // Course PMU du jour du pays (Quarté LONAB…) + journal national.
+  nationalRace: (country) => request(`/races/national?country=${encodeURIComponent(country || '')}`),
   raceHistory: () => request('/races/history'),
   raceDetail: (externalId) => request(`/races/${externalId}`),
   prediction: (externalId) => request(`/races/${externalId}/prediction`, { auth: true }),

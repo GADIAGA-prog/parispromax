@@ -6,7 +6,7 @@ import HorseCard from '../components/HorseCard';
 import LockCard from '../components/LockCard';
 import TrialBanner from '../components/TrialBanner';
 import Disclaimer from '../components/Disclaimer';
-import { BADGES, applyBackendPredictions } from '../services/aiEngine';
+import { BADGES, applyBackendPredictions, groupPredictions } from '../services/aiEngine';
 import { usePrediction } from '../hooks/usePrediction';
 import { useLiveRace } from '../hooks/useLiveRace';
 import { useAuth } from '../context/AuthContext';
@@ -42,7 +42,8 @@ export default function RaceDetailScreen({ route, navigation }) {
   const isSmart = fromBackend || (live && live.length > 0);
 
   const horses = Array.isArray(shown?.horses) ? shown.horses : [];
-  const top3 = horses.slice(0, 3);
+  // Quatre lectures du pronostic : favoris / 5 meilleurs / outsiders / tocard.
+  const { favoris, top5, outsiders, tocard } = useMemo(() => groupPredictions(horses), [horses]);
   const valueBet = horses.find((h) =>
     h.badges?.some((b) => b.key === BADGES.VALUE.key)
   );
@@ -62,8 +63,22 @@ export default function RaceDetailScreen({ route, navigation }) {
         <View style={styles.head}>
           <Text style={styles.race}>{analyzed.name}</Text>
           <Text style={styles.sub}>
-            {trackName} · {analyzed.distance} · {analyzed.time}
+            {trackName} · {analyzed.distance}
+            {analyzed.time ? ` · 🕐 ${analyzed.time}` : ''}
           </Text>
+          {(analyzed.type || analyzed.autostart) ? (
+            <Text style={styles.raceType}>
+              🏇 {analyzed.type || 'Course'}
+              {analyzed.autostart ? ' · Autostart' : ''}
+              {analyzed.runners || horses.length ? ` · ${analyzed.runners || horses.length} partants` : ''}
+            </Text>
+          ) : null}
+          {analyzed.prize ? (
+            <Text style={styles.prize}>
+              💰 {Number(analyzed.prize).toLocaleString('fr-FR')} € (≈{' '}
+              {(Math.round((analyzed.prize * 655.957) / 1000) * 1000).toLocaleString('fr-FR')} F CFA)
+            </Text>
+          ) : null}
           <View style={[styles.cond, { backgroundColor: cond.color }]}>
             <Ionicons name={cond.icon} size={12} color="#0f172a" />
             <Text style={styles.condText}>Terrain {cond.label}</Text>
@@ -78,10 +93,11 @@ export default function RaceDetailScreen({ route, navigation }) {
           label="Pronostics IA verrouillés"
         >
           <View style={styles.aiBox}>
+            {/* ⭐ FAVORIS — les chevaux les plus probables au gagnant */}
             <Text style={styles.aiHeading}>
-              🏆 Top 3 du jour{isSmart ? '  ·  IA avancée' : ''}
+              ⭐ Favoris{isSmart ? '  ·  IA avancée' : ''}
             </Text>
-            {top3.map((h, i) => (
+            {favoris.map((h, i) => (
               <View key={h.number} style={styles.topRow}>
                 <Text style={styles.topRank}>{i + 1}.</Text>
                 <View style={styles.topNameBox}>
@@ -99,6 +115,55 @@ export default function RaceDetailScreen({ route, navigation }) {
                 <Text style={styles.topScore}>{Math.round(h.aiScore)}/100</Text>
               </View>
             ))}
+
+            <View style={styles.divider} />
+
+            {/* 🏆 LES 5 MEILLEURS — la base de jeu (Quinté) */}
+            <Text style={styles.groupTitle}>🏆 Les 5 meilleurs</Text>
+            <View style={styles.ballRow}>
+              {top5.map((h) => (
+                <View key={h.number} style={styles.ball}>
+                  <Text style={styles.ballText}>{h.number}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* 💎 OUTSIDERS — grosses cotes à potentiel de podium */}
+            <Text style={styles.groupTitle}>💎 Outsiders</Text>
+            {outsiders.length ? (
+              outsiders.map((h) => (
+                <View key={h.number} style={styles.outsiderRow}>
+                  <Text style={styles.outsiderName}>
+                    n°{h.number} {h.name}
+                  </Text>
+                  <Text style={styles.outsiderMeta}>
+                    {h.odds != null ? `cote ${h.odds}` : ''}
+                    {h.probaPodium != null ? `  ·  podium ${Math.round(h.probaPodium * 100)}%` : ''}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.outsiderMeta}>Aucun outsider fiable détecté sur cette course.</Text>
+            )}
+
+            {/* 🃏 LE TOCARD — la très grosse cote la moins folle (fin de combinaison) */}
+            {tocard ? (
+              <>
+                <Text style={styles.groupTitle}>🃏 Le Tocard</Text>
+                <View style={styles.outsiderRow}>
+                  <Text style={styles.outsiderName}>
+                    n°{tocard.number} {tocard.name}
+                  </Text>
+                  <Text style={styles.outsiderMeta}>
+                    {tocard.odds != null ? `cote ${tocard.odds}` : ''}
+                    {tocard.probaPodium != null
+                      ? `  ·  podium ${Math.round(tocard.probaPodium * 100)}%`
+                      : ''}
+                    {'  ·  à glisser en fin de combinaison'}
+                  </Text>
+                </View>
+              </>
+            ) : null}
 
             <View style={styles.divider} />
 
@@ -146,6 +211,8 @@ const styles = StyleSheet.create({
   },
   race: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900' },
   sub: { color: COLORS.textMuted, fontSize: FONT.md, marginTop: 2 },
+  raceType: { color: COLORS.accent, fontSize: FONT.sm, marginTop: 4, fontWeight: '700' },
+  prize: { color: COLORS.gold, fontSize: FONT.sm, marginTop: 4, fontWeight: '700' },
   cond: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -186,6 +253,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     marginVertical: SPACING.sm,
   },
+  groupTitle: {
+    color: COLORS.white, fontWeight: '900', fontSize: FONT.md,
+    marginTop: SPACING.sm, marginBottom: SPACING.sm,
+  },
+  ballRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm, flexWrap: 'wrap' },
+  ball: {
+    width: 38, height: 38, borderRadius: 19, backgroundColor: COLORS.gold,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  ballText: { color: '#06251c', fontWeight: '900', fontSize: FONT.md },
+  outsiderRow: { paddingVertical: 4 },
+  outsiderName: { color: COLORS.white, fontWeight: '700', fontSize: FONT.md },
+  outsiderMeta: { color: 'rgba(255,255,255,0.75)', fontSize: FONT.sm, marginTop: 1 },
   miniRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
   miniLabel: { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sm, fontWeight: '600' },
   miniValue: { color: COLORS.white, fontSize: FONT.sm, fontWeight: '700', flexShrink: 1, textAlign: 'right' },

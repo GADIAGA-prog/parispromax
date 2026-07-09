@@ -41,7 +41,10 @@ router.post('/api/scrape', async (req, res) => {
       await prisma.race.deleteMany({ where: { id: { in: ids } } });
     }
     const count = await ingestData(payload);
-    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count, replaced: ids.length });
+    // Auto-désignation de la course du jour par pays (sans écraser le manuel).
+    const { autoAssignNationalPicks } = require('../jobs/ingest');
+    const picks = await autoAssignNationalPicks(payload);
+    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count, replaced: ids.length, autoPicks: picks.assigned });
   } catch (e) {
     console.error('scrape endpoint error', e.message);
     res.status(500).json({ error: e.message });
@@ -162,6 +165,71 @@ router.post('/api/non-partants', express.json(), async (req, res) => {
   res.json({ ok: true, externalId, nonPartants: nums });
 });
 
+// --- Course PMU du jour par pays (Quarté LONAB, LONACI…) ---------------------
+const PICK_COUNTRIES = ['bf', 'ci', 'sn', 'tg', 'bj', 'cg'];
+
+// POST /admin/api/national-pick { country, externalId, date?, betType?, journalUrl? }
+router.post('/api/national-pick', express.json(), async (req, res) => {
+  const country = String(req.body.country || '').trim().toLowerCase();
+  const externalId = String(req.body.externalId || '').trim();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(req.body.date || '')
+    ? req.body.date
+    : new Date().toISOString().slice(0, 10);
+  if (!PICK_COUNTRIES.includes(country)) {
+    return res.status(400).json({ error: `country invalide (${PICK_COUNTRIES.join(', ')})` });
+  }
+  if (!externalId) return res.status(400).json({ error: 'externalId requis' });
+  const race = await prisma.race.findUnique({ where: { externalId } });
+  if (!race) return res.status(404).json({ error: 'Course introuvable' });
+
+  const journalUrl = String(req.body.journalUrl || '').trim();
+  if (journalUrl && !/^https?:\/\//.test(journalUrl)) {
+    return res.status(400).json({ error: 'journalUrl doit être une URL http(s)' });
+  }
+  const data = {
+    betType: String(req.body.betType || '').trim() || null,
+    journalUrl: journalUrl || null,
+    externalId,
+  };
+  const pick = await prisma.nationalPick.upsert({
+    where: { date_country: { date, country } },
+    update: data,
+    create: { date, country, ...data },
+  });
+  res.json({ ok: true, pick });
+});
+
+// GET /admin/api/national-picks?date=YYYY-MM-DD
+router.get('/api/national-picks', async (req, res) => {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')
+    ? req.query.date
+    : new Date().toISOString().slice(0, 10);
+  const picks = await prisma.nationalPick.findMany({ where: { date } });
+  res.json({ date, picks });
+});
+
+// POST /admin/api/reset-password  { phone, newPassword }
+// Support client : « mot de passe oublié » (pas de SMS/email dans l'app, donc
+// la réinitialisation passe par vous). Vérifiez l'identité de l'appelant
+// (ex. référence d'un paiement) avant de réinitialiser.
+router.post('/api/reset-password', express.json(), async (req, res) => {
+  const { hashPassword } = require('../security');
+  const phone = String(req.body.phone || '').replace(/[^\d+]/g, '');
+  const newPassword = req.body.newPassword;
+  if (!phone || typeof newPassword !== 'string' || newPassword.length < 6) {
+    return res.status(400).json({ error: 'phone et newPassword (6 car. min) requis' });
+  }
+  try {
+    await prisma.user.update({
+      where: { phone },
+      data: { passwordHash: hashPassword(newPassword) },
+    });
+  } catch {
+    return res.status(404).json({ error: 'Utilisateur introuvable' });
+  }
+  res.json({ ok: true, phone });
+});
+
 // POST /admin/api/backfill-runners — reconstruit les Runner des courses passées
 // terminées (données historiques) pour alimenter le jeu d'entraînement LTR.
 router.post('/api/backfill-runners', async (_req, res) => {
@@ -225,6 +293,21 @@ const DASHBOARD_HTML = `<!doctype html>
     <button onclick="ingest()">⬇ Charger la démo</button>
     <span id="ingestMsg" class="muted"></span>
   </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="label">🏇 Course PMU du jour par pays (Quarté LONAB, LONACI…)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
+      <select id="npCountry">
+        <option value="bf">🇧🇫 Burkina</option><option value="ci">🇨🇮 Côte d'Ivoire</option>
+        <option value="sn">🇸🇳 Sénégal</option><option value="tg">🇹🇬 Togo</option>
+        <option value="bj">🇧🇯 Bénin</option><option value="cg">🇨🇬 Congo</option>
+      </select>
+      <select id="npRace" style="max-width:340px"><option>Chargement des courses…</option></select>
+      <input id="npBet" placeholder="Pari (ex. Quarté)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:130px"/>
+      <input id="npJournal" placeholder="URL du journal (PDF)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:260px"/>
+      <button onclick="savePick()" style="background:#10b981;color:#06251c;font-weight:800">💾 Enregistrer</button>
+    </div>
+    <div id="npList" class="muted" style="margin-top:10px"></div>
+  </div>
   <table>
     <thead><tr><th>Date</th><th>Téléphone</th><th>Transaction</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead>
     <tbody id="rows"><tr><td colspan="6">Chargement…</td></tr></tbody>
@@ -276,7 +359,40 @@ const DASHBOARD_HTML = `<!doctype html>
     } catch(e){ msg.textContent = '❌ '+e.message; }
     load();
   }
+  const FLAGS = {bf:'🇧🇫',ci:'🇨🇮',sn:'🇸🇳',tg:'🇹🇬',bj:'🇧🇯',cg:'🇨🇬'};
+  async function loadPicks(){
+    try {
+      // Courses du jour pour le sélecteur.
+      const d = await fetch('/races').then(r=>r.json());
+      const sel = document.getElementById('npRace');
+      sel.innerHTML = '';
+      (d.racetracks||[]).forEach(t=>(t.races||[]).forEach(r=>{
+        const o = document.createElement('option');
+        o.value = r.id;
+        o.textContent = t.name+' '+(r.number||'')+' — '+r.name+(r.time?(' ('+r.time+')'):'');
+        sel.appendChild(o);
+      }));
+      // Picks déjà enregistrés.
+      const p = await fetch('/admin/api/national-picks').then(r=>r.json());
+      document.getElementById('npList').innerHTML = (p.picks||[]).length
+        ? p.picks.map(x=>(FLAGS[x.country]||x.country)+' '+x.country.toUpperCase()+' → <code>'+x.externalId+'</code> '+(x.betType||'')+(x.journalUrl?' · <a href="'+x.journalUrl+'" target="_blank" style="color:#10b981">journal</a>':'')).join('  ·  ')
+        : 'Aucune course désignée pour aujourd\\'hui.';
+    } catch(e) { /* silencieux */ }
+  }
+  async function savePick(){
+    const body = {
+      country: document.getElementById('npCountry').value,
+      externalId: document.getElementById('npRace').value,
+      betType: document.getElementById('npBet').value,
+      journalUrl: document.getElementById('npJournal').value,
+    };
+    const r = await fetch('/admin/api/national-pick', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    alert(d.ok ? '✅ Course du jour enregistrée' : ('❌ '+(d.error||'erreur')));
+    loadPicks();
+  }
   load();
+  loadPicks();
   setInterval(load, 15000);
 </script>
 </body></html>`;
