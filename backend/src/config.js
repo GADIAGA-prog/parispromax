@@ -83,6 +83,11 @@ const config = {
     shopId: process.env.FEEXPAY_SHOP_ID || '',
     token: process.env.FEEXPAY_TOKEN || '',
     mode: (process.env.FEEXPAY_MODE || 'SANDBOX').toUpperCase(), // SANDBOX | LIVE
+    // Secret partagé que FeexPay envoie dans l'en-tête du webhook
+    // (dashboard -> Webhooks -> Type d'en-tête: Bearer, Valeur: ce secret).
+    // Optionnel : quand il est vide, le webhook reste accepté sans en-tête
+    // (le statut est de toute façon re-vérifié via l'API avant activation).
+    webhookSecret: process.env.FEEXPAY_WEBHOOK_SECRET || '',
   },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
   cronToken: process.env.CRON_TOKEN || '',

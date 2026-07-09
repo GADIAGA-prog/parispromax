@@ -378,10 +378,25 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
   }
 });
 
+// Vérifie le secret partagé du webhook FeexPay quand il est configuré.
+// FeexPay envoie l'en-tête choisi dans son dashboard (Bearer <secret>).
+// Sans secret configuré -> pas de contrôle (le statut est re-vérifié via l'API).
+function feexpayWebhookAuthorized(req) {
+  const secret = config.feexpay.webhookSecret;
+  if (!secret) return true;
+  const header = String(req.headers.authorization || '');
+  const supplied = header.startsWith('Bearer ') ? header.slice(7) : header;
+  return safeEqual(supplied, secret);
+}
+
 // POST /payments/feexpay/webhook  (public — FeexPay callback)
 // On retrouve le paiement par référence (providerRef) ou par notre customId
 // (transactionId, renvoyé dans callback_info), puis on RE-VÉRIFIE avant d'y croire.
 router.post('/feexpay/webhook', async (req, res) => {
+  if (!feexpayWebhookAuthorized(req)) {
+    console.warn('[feexpay webhook] en-tête d’authentification invalide — ignoré');
+    return res.status(401).send('unauthorized');
+  }
   try {
     const b = req.body || {};
     const reference = b.reference || b.transref || b.transaction_id || b.data?.reference;
