@@ -70,6 +70,7 @@ export const api = {
 
   // Profile / access
   me: () => request('/me', { auth: true }),
+  deleteAccount: () => request('/me', { method: 'DELETE', auth: true }),
 
   // Races
   races: (date) => request(`/races${date ? `?date=${date}` : ''}`),

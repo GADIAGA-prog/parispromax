@@ -195,7 +195,9 @@ function mapStatus(status) {
 }
 
 // Vérifie le vrai statut d'une transaction (payment.providerRef = reference).
-// Endpoint public (pas d'auth). Fonctionne pour mobile money ET carte.
+// Fonctionne pour mobile money ET carte. Défense en profondeur : un statut
+// SUCCESSFUL ne suffit pas, le MONTANT (et la devise si renvoyée) doit
+// correspondre au paiement attendu — sinon on refuse d'activer l'abonnement.
 async function verifyPayment(payment) {
   if (!isConfigured()) return { status: 'mock', method: null, raw: null };
   const ref = payment && payment.providerRef;
@@ -203,9 +205,25 @@ async function verifyPayment(payment) {
 
   const { data } = await axios.get(
     `${config.feexpay.baseUrl}/transactions/getrequesttopay/integration/${encodeURIComponent(ref)}`,
-    { timeout: 15000 }
+    { headers: headers(), timeout: 15000 }
   );
-  return { status: mapStatus(data.status), method: payment.method || 'feexpay', raw: data };
+
+  let status = mapStatus(data.status);
+  if (status === 'success') {
+    const paidAmount = Number(data.amount);
+    if (Number.isFinite(paidAmount) && Math.round(paidAmount) !== Math.round(Number(payment.amount))) {
+      console.error(
+        `[feexpay] montant inattendu sur ${ref}: reçu ${paidAmount}, attendu ${payment.amount} -> refusé`
+      );
+      status = 'failed';
+    }
+    const cur = data.currency && String(data.currency).toUpperCase();
+    if (cur && cur !== 'XOF') {
+      console.error(`[feexpay] devise inattendue sur ${ref}: ${cur} -> refusé`);
+      status = 'failed';
+    }
+  }
+  return { status, method: payment.method || 'feexpay', raw: data };
 }
 
 module.exports = {

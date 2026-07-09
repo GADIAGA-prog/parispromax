@@ -127,6 +127,35 @@ export default function ProfileScreen({ navigation }) {
           <Text style={[styles.actionText, { color: COLORS.danger }]}>Se déconnecter</Text>
         </Pressable>
 
+        {/* Suppression de compte — exigence Google Play (apps avec compte). */}
+        <Pressable
+          style={styles.action}
+          onPress={() =>
+            Alert.alert(
+              'Supprimer mon compte',
+              'Cette action est définitive : votre compte, votre abonnement et vos données seront supprimés. Continuer ?',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Supprimer définitivement',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await api.deleteAccount();
+                      await logout();
+                    } catch (e) {
+                      Alert.alert('Erreur', "Suppression impossible pour le moment. Réessayez ou écrivez-nous.");
+                    }
+                  },
+                },
+              ]
+            )
+          }
+        >
+          <Ionicons name="trash-outline" size={20} color={COLORS.danger} />
+          <Text style={[styles.actionText, { color: COLORS.danger }]}>Supprimer mon compte</Text>
+        </Pressable>
+
         <Text style={styles.version}>ParisPromax v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>

@@ -12,6 +12,7 @@ const cronRoutes = require('./routes/cron');
 const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
 const mlRoutes = require('./routes/ml');
+const legalRoutes = require('./routes/legal');
 
 const app = express();
 
@@ -77,6 +78,9 @@ app.get('/', (_req, res) => {
   <h1>🏇 ParisPromax API</h1>
   <p class="muted">Le serveur fonctionne. Ceci est l'API ; il n'y a pas de page publique ici.</p>
   <a href="/admin">Back-office</a><a href="/health">État</a>
+  <p class="muted"><a href="/legal/privacy" style="background:none;color:#94a3b8;font-weight:400">Confidentialité</a> ·
+  <a href="/legal/terms" style="background:none;color:#94a3b8;font-weight:400">Conditions</a> ·
+  <a href="/legal/account-deletion" style="background:none;color:#94a3b8;font-weight:400">Suppression de compte</a></p>
   </div></body></html>`);
 });
 
@@ -89,6 +93,7 @@ app.use('/cron', cronRoutes);
 app.use('/stats', statsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/ml', mlRoutes);
+app.use('/legal', legalRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path }));
 

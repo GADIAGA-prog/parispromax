@@ -106,7 +106,8 @@ export default function PaywallScreen({ navigation }) {
     try {
       const init = await api.initiatePayment(planId, providerId);
       await WebBrowser.openBrowserAsync(init.paymentUrl);
-      const status = await pollStatus(init.transactionId);
+      // Le webhook peut mettre du temps ; on re-vérifie côté serveur ~60 s.
+      const status = await pollStatus(init.transactionId, 24);
       if (status === 'success') {
         await refreshAccess();
         Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [

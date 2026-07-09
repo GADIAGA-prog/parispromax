@@ -6,7 +6,9 @@
 
 databases:
   - name: parispromax-db
-    plan: free
+    # Payant : le Postgres gratuit de Render EXPIRE après ~30 jours (perte de
+    # données) — inutilisable en production. basic-256mb ≈ 6 $/mois.
+    plan: basic-256mb
     databaseName: parispromax
     user: parispromax
 
@@ -14,7 +16,9 @@ services:
   - type: web
     name: parispromax-backend
     runtime: node
-    plan: free
+    # Payant (≈ 7 $/mois) : le plan free endort le serveur après inactivité
+    # (premier login/paiement du matin ~30 s d'attente, webhooks retardés).
+    plan: starter
     rootDir: backend
     buildCommand: npm install && npm run build:prod
     startCommand: npm run start
@@ -34,11 +38,30 @@ services:
       # dans la réponse, permettant de se connecter avec n'importe quel numéro.
       - key: OTP_DEV_MODE
         value: "false"
+      # --- SMS (OBLIGATOIRE pour la connexion en prod) ---
+      # SMS_PROVIDER=twilio (TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN) ou
+      # SMS_PROVIDER=orange (ORANGE_CLIENT_ID + ORANGE_CLIENT_SECRET + ORANGE_SENDER).
+      - key: SMS_PROVIDER
+        sync: false
+      - key: SMS_SENDER
+        value: ParisPromax
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: ORANGE_CLIENT_ID
+        sync: false
+      - key: ORANGE_CLIENT_SECRET
+        sync: false
+      - key: ORANGE_SENDER
+        sync: false
       - key: OTP_TTL_MINUTES
         value: "5"
-      # Payment provider (fedapay by default). FedaPay keys are set manually.
+      # Provider de paiement ACTIF en production : FeexPay (compte marchand réel).
+      # Renseigner FEEXPAY_SHOP_ID + FEEXPAY_TOKEN (token live fp_...) dans le
+      # dashboard Render. Orange Money BF et Moov BF passent déjà par FeexPay.
       - key: PAYMENT_PROVIDER
-        value: fedapay
+        value: feexpay
       - key: FEDAPAY_MODE
         value: live
       - key: FEDAPAY_COUNTRY
@@ -67,7 +90,7 @@ services:
       - key: LIGDICASH_TOKEN
         sync: false
       - key: FEEXPAY_MODE
-        value: SANDBOX
+        value: LIVE
       - key: FEEXPAY_SHOP_ID
         sync: false
       - key: FEEXPAY_TOKEN
@@ -111,7 +134,8 @@ services:
   - type: web
     name: parispromax-ia
     runtime: docker
-    plan: free
+    # Payant (≈ 7 $/mois) : évite le cold start du modèle avant chaque course.
+    plan: starter
     rootDir: ml
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
@@ -132,6 +156,7 @@ services:
 # renseignez REDIS_URL (Internal URL) à la main sur les 2 services.
   - type: redis
     name: parispromax-redis
-    plan: free
+    # Payant (≈ 10 $/mois) : cache prédictions + temps réel persistants.
+    plan: starter
     ipAllowList: []
     maxmemoryPolicy: allkeys-lru

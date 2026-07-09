@@ -27,9 +27,16 @@ const config = {
       ? String(process.env.OTP_DEV_MODE) === 'true'
       : !isProdLike,
   sms: {
-    provider: process.env.SMS_PROVIDER || '',
+    provider: (process.env.SMS_PROVIDER || '').toLowerCase(), // '' | twilio | orange
     apiKey: process.env.SMS_API_KEY || '',
     sender: process.env.SMS_SENDER || 'ParisPromax',
+    // Twilio
+    twilioSid: process.env.TWILIO_ACCOUNT_SID || '',
+    twilioToken: process.env.TWILIO_AUTH_TOKEN || '',
+    // Orange SMS API (developer.orange.com — dispo Burkina Faso)
+    orangeClientId: process.env.ORANGE_CLIENT_ID || '',
+    orangeClientSecret: process.env.ORANGE_CLIENT_SECRET || '',
+    orangeSender: process.env.ORANGE_SENDER || '', // numéro dédié, ex. +226XXXXXXX
   },
   // Active payment provider: 'fedapay' (default) | 'cinetpay'. When the chosen
   // provider has no keys, payments fall back to a local MOCK checkout.

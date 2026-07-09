@@ -22,4 +22,22 @@ router.get('/', requireAuth, async (req, res) => {
   });
 });
 
+// DELETE /me — account deletion (Play Store requirement: any app with account
+// creation must let the user delete the account in-app). Personal data is
+// erased: subscriptions + OTP codes deleted, payments kept for accounting but
+// DETACHED from the user (userId -> null), then the user row is removed.
+router.delete('/', requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+  await prisma.$transaction([
+    prisma.subscription.deleteMany({ where: { userId: user.id } }),
+    prisma.payment.updateMany({ where: { userId: user.id }, data: { userId: null } }),
+    prisma.otpCode.deleteMany({ where: { phone: user.phone } }),
+    prisma.user.delete({ where: { id: user.id } }),
+  ]);
+
+  res.json({ ok: true, deleted: true });
+});
+
 module.exports = router;
