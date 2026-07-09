@@ -55,6 +55,12 @@ const RESEAU = {
   TOGO: { TOGOCOM: 'TOGOCOM TG', MOOV: 'MOOV TG' },
 };
 
+// Réseaux qui NE poussent PAS de confirmation sur le téléphone : FeexPay
+// renvoie une `payment_url` que l'utilisateur doit ouvrir pour finaliser
+// (page opérateur). Repris tel quel du SDK officiel (`iframeNetworks`).
+// C'est le cas des DEUX opérateurs du Burkina Faso.
+const REDIRECT_RESEAUX = new Set(['WAVE CI', 'ORANGE CI', 'MOOV BF', 'ORANGE BF']);
+
 // Liste des opérateurs disponibles pour un pays (ISO2), pour l'écran de choix.
 function operatorsForCountry(iso2) {
   return NETWORKS_BY_COUNTRY[String(iso2 || '').toLowerCase()] || ['MTN', 'MOOV'];
@@ -161,7 +167,16 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
   if (!reference) {
     throw new Error(`FeexPay: référence absente (${data.message || data.status || 'réponse inattendue'})`);
   }
-  return { reference: String(reference), status: mapStatus(data.status), raw: data };
+  // Réseaux à redirection (Orange/Moov BF, Orange/Wave CI) : sans ouvrir cette
+  // URL, aucune confirmation n'atteint le client et le paiement expire.
+  const paymentUrl = data.payment_url || null;
+  return {
+    reference: String(reference),
+    status: mapStatus(data.status),
+    paymentUrl,
+    requiresRedirect: Boolean(paymentUrl) || REDIRECT_RESEAUX.has(reseau),
+    raw: data,
+  };
 }
 
 // --- CARTE (redirect) — interface provider standard ---------------------------
@@ -226,10 +241,14 @@ async function verifyPayment(payment) {
 
   let status = mapStatus(data.status);
   if (status === 'success') {
+    // FeexPay prélève des frais (ex. 3,9 % Orange BF) : le montant renvoyé peut
+    // être le montant de base OU base+frais. On refuse donc uniquement un
+    // montant INFÉRIEUR à celui attendu (paiement partiel / transaction usurpée).
     const paidAmount = Number(data.amount);
-    if (Number.isFinite(paidAmount) && Math.round(paidAmount) !== Math.round(Number(payment.amount))) {
+    const expected = Math.round(Number(payment.amount));
+    if (Number.isFinite(paidAmount) && Math.round(paidAmount) < expected) {
       console.error(
-        `[feexpay] montant inattendu sur ${ref}: reçu ${paidAmount}, attendu ${payment.amount} -> refusé`
+        `[feexpay] montant insuffisant sur ${ref}: reçu ${paidAmount}, attendu >= ${expected} -> refusé`
       );
       status = 'failed';
     }

@@ -142,13 +142,26 @@ export default function PaywallScreen({ navigation }) {
           { text: 'Super !', onPress: () => navigation.goBack() },
         ]);
       }
-      Alert.alert(
-        res.mode === 'mock' ? '🧪 MODE TEST — paiement simulé' : 'Confirmez sur votre téléphone 📲',
-        res.mode === 'mock'
-          ? 'Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes.'
-          : `Une demande de paiement ${network} a été envoyée au ${num}. Validez-la avec votre code Mobile Money, puis patientez ici.`
-      );
-      const status = await pollStatus(res.transactionId, 24); // ~60 s
+
+      // Orange/Moov Burkina, Orange/Wave CI : aucune notification n'est poussée,
+      // le client valide sur la page de son opérateur.
+      if (res.paymentUrl) {
+        await WebBrowser.openBrowserAsync(res.paymentUrl);
+      } else if (res.requiresRedirect) {
+        Alert.alert(
+          'Paiement impossible',
+          `${network} nécessite une page de validation que FeexPay n'a pas fournie. Réessayez dans quelques instants.`
+        );
+        return;
+      } else {
+        Alert.alert(
+          res.mode === 'mock' ? '🧪 MODE TEST — paiement simulé' : 'Confirmez sur votre téléphone 📲',
+          res.mode === 'mock'
+            ? 'Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes.'
+            : `Une demande de paiement ${network} a été envoyée au ${num}. Validez-la avec votre code Mobile Money, puis patientez ici.`
+        );
+      }
+      const status = await pollStatus(res.transactionId, 48); // ~2 min
       if (status === 'success') {
         await refreshAccess();
         Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
