@@ -141,6 +141,15 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
   // Corps exigé par l'API v2 (cf. SDK react-sdk-feexpay) : `amount` en STRING,
   // `country` en toutes lettres, `custom_id` (et non `customId`), pas de
   // `token` dans le corps (il est dans l'en-tête Authorization).
+  // Domaine marchand transmis à FeexPay : il conditionne la génération de la
+  // `payment_url` des réseaux à redirection (Orange/Moov BF, Orange/Wave CI).
+  let merchantDomain = config.publicBaseUrl;
+  try {
+    merchantDomain = new URL(config.publicBaseUrl).origin;
+  } catch {
+    /* PUBLIC_BASE_URL mal formée -> on l'envoie telle quelle */
+  }
+
   const body = {
     phoneNumber: toInternational(phone, country),
     country: countryName(country),
@@ -154,7 +163,12 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
     callback_info: { transaction_id: transactionId, user_id: customer?.id || null },
     description: desc,
     currency: 'XOF',
-    payment_interface: 'API',
+    merchant_domain: merchantDomain,
+    merchant_ip: customer?.ip || '127.0.0.1',
+    // Le SDK officiel envoie "REACT" : c'est cette valeur qui déclenche la
+    // génération de la page de validation opérateur (payment_url). Avec "API",
+    // FeexPay renvoie une référence sans URL et la transaction expire.
+    payment_interface: 'REACT',
   };
 
   const { data } = await axios.post(
@@ -169,12 +183,21 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
   }
   // Réseaux à redirection (Orange/Moov BF, Orange/Wave CI) : sans ouvrir cette
   // URL, aucune confirmation n'atteint le client et le paiement expire.
-  const paymentUrl = data.payment_url || null;
+  const rawUrl = data.payment_url || data.paymentUrl || data.url || null;
+  const paymentUrl = rawUrl && /^https?:\/\//.test(String(rawUrl)) ? String(rawUrl) : null;
+  const needsRedirect = REDIRECT_RESEAUX.has(reseau);
+  if (needsRedirect && !paymentUrl) {
+    // Sans URL, l'utilisateur n'a aucun moyen de valider : on trace les champs
+    // renvoyés (jamais de secret) pour diagnostiquer côté FeexPay.
+    console.error(
+      `[feexpay] ${reseau}: payment_url absente (champs reçus: ${Object.keys(data || {}).join(', ')})`
+    );
+  }
   return {
     reference: String(reference),
     status: mapStatus(data.status),
     paymentUrl,
-    requiresRedirect: Boolean(paymentUrl) || REDIRECT_RESEAUX.has(reseau),
+    requiresRedirect: needsRedirect,
     raw: data,
   };
 }
