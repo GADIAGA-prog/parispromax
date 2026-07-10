@@ -55,12 +55,6 @@ const RESEAU = {
   TOGO: { TOGOCOM: 'TOGOCOM TG', MOOV: 'MOOV TG' },
 };
 
-// Réseaux qui NE poussent PAS de confirmation sur le téléphone : FeexPay
-// renvoie une `payment_url` que l'utilisateur doit ouvrir pour finaliser
-// (page opérateur). Repris tel quel du SDK officiel (`iframeNetworks`).
-// C'est le cas des DEUX opérateurs du Burkina Faso.
-const REDIRECT_RESEAUX = new Set(['WAVE CI', 'ORANGE CI', 'MOOV BF', 'ORANGE BF']);
-
 // Liste des opérateurs disponibles pour un pays (ISO2), pour l'écran de choix.
 function operatorsForCountry(iso2) {
   return NETWORKS_BY_COUNTRY[String(iso2 || '').toLowerCase()] || ['MTN', 'MOOV'];
@@ -181,23 +175,22 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
   if (!reference) {
     throw new Error(`FeexPay: référence absente (${data.message || data.status || 'réponse inattendue'})`);
   }
-  // Réseaux à redirection (Orange/Moov BF, Orange/Wave CI) : sans ouvrir cette
-  // URL, aucune confirmation n'atteint le client et le paiement expire.
+  // Certains réseaux renvoient une page de validation (`payment_url`) à ouvrir ;
+  // d'autres (Orange/Moov Burkina via l'API d'intégration) renvoient seulement
+  // un `message` d'instruction pour le client (ex. code USSD à composer).
   const rawUrl = data.payment_url || data.paymentUrl || data.url || null;
   const paymentUrl = rawUrl && /^https?:\/\//.test(String(rawUrl)) ? String(rawUrl) : null;
-  const needsRedirect = REDIRECT_RESEAUX.has(reseau);
-  if (needsRedirect && !paymentUrl) {
-    // Sans URL, l'utilisateur n'a aucun moyen de valider : on trace les champs
-    // renvoyés (jamais de secret) pour diagnostiquer côté FeexPay.
-    console.error(
-      `[feexpay] ${reseau}: payment_url absente (champs reçus: ${Object.keys(data || {}).join(', ')})`
-    );
-  }
+  const message = data.message ? String(data.message).slice(0, 300) : null;
+  console.log(
+    `[feexpay] ${reseau} -> ref=${reference} status=${data.status || '?'}` +
+      `${paymentUrl ? ' (page de validation)' : ''}${message ? ` message="${message}"` : ''}`
+  );
+
   return {
     reference: String(reference),
     status: mapStatus(data.status),
     paymentUrl,
-    requiresRedirect: needsRedirect,
+    providerMessage: message,
     raw: data,
   };
 }

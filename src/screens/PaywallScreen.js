@@ -24,6 +24,13 @@ const COUNTRY_NAMES = {
   bj: 'Bénin', cg: 'Congo-Brazzaville',
 };
 
+// Certains opérateurs ne poussent pas de notification : le client doit composer
+// un code USSD pour valider. Ces rappels complètent le message du prestataire.
+const USSD_HINTS = {
+  ORANGE: 'Sur Orange Money, composez *144*4*6*<montant># puis validez avec votre code secret.',
+  MOOV: 'Sur Moov Money, composez *555# puis validez le paiement en attente avec votre code secret.',
+};
+
 const PERKS = [
   'Top 3 pronostics IA sur toutes les courses',
   'Value Bets & Records Chrono illimités',
@@ -143,22 +150,26 @@ export default function PaywallScreen({ navigation }) {
         ]);
       }
 
-      // Orange/Moov Burkina, Orange/Wave CI : aucune notification n'est poussée,
-      // le client valide sur la page de son opérateur.
+      // Trois cas : page de validation à ouvrir (Wave CI…), instruction de
+      // l'opérateur (Orange/Moov BF : code USSD à composer), ou notification
+      // poussée sur le téléphone (MTN, Moov Bénin…).
       if (res.paymentUrl) {
         await WebBrowser.openBrowserAsync(res.paymentUrl);
-      } else if (res.requiresRedirect) {
+      } else if (res.mode === 'mock') {
         Alert.alert(
-          'Paiement impossible',
-          `${network} nécessite une page de validation que FeexPay n'a pas fournie. Réessayez dans quelques instants.`
+          '🧪 MODE TEST — paiement simulé',
+          "Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes."
         );
-        return;
       } else {
         Alert.alert(
-          res.mode === 'mock' ? '🧪 MODE TEST — paiement simulé' : 'Confirmez sur votre téléphone 📲',
-          res.mode === 'mock'
-            ? 'Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes.'
-            : `Une demande de paiement ${network} a été envoyée au ${num}. Validez-la avec votre code Mobile Money, puis patientez ici.`
+          'Validez votre paiement 📲',
+          [
+            res.providerMessage,
+            USSD_HINTS[network] || `Confirmez la demande ${network} reçue sur le ${num}.`,
+            'Revenez ensuite ici : votre abonnement s’activera automatiquement.',
+          ]
+            .filter(Boolean)
+            .join('\n\n')
         );
       }
       const status = await pollStatus(res.transactionId, 48); // ~2 min

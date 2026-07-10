@@ -360,10 +360,10 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
       transactionId,
       reference: result.reference,
       status: result.status,
-      // Orange/Moov BF, Orange/Wave CI : pas de push, l'app DOIT ouvrir cette
-      // page pour que le client valide son paiement.
+      // Selon l'opérateur : soit une page de validation à ouvrir (Wave CI…),
+      // soit un message d'instruction du PSP (Orange/Moov BF : code USSD).
       paymentUrl: result.paymentUrl || null,
-      requiresRedirect: Boolean(result.requiresRedirect),
+      providerMessage: result.providerMessage || null,
       provider: 'feexpay',
       amount,
       currency: 'XOF',
