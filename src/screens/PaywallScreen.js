@@ -24,13 +24,6 @@ const COUNTRY_NAMES = {
   bj: 'Bénin', cg: 'Congo-Brazzaville',
 };
 
-// Certains opérateurs ne poussent pas de notification : le client doit composer
-// un code USSD pour valider. Ces rappels complètent le message du prestataire.
-const USSD_HINTS = {
-  ORANGE: 'Sur Orange Money, composez *144*4*6*<montant># puis validez avec votre code secret.',
-  MOOV: 'Sur Moov Money, composez *555# puis validez le paiement en attente avec votre code secret.',
-};
-
 const PERKS = [
   'Top 3 pronostics IA sur toutes les courses',
   'Value Bets & Records Chrono illimités',
@@ -47,8 +40,10 @@ export default function PaywallScreen({ navigation }) {
   const [processing, setProcessing] = useState(false);
   // FeexPay mobile money — saisie in-app (opérateur + numéro).
   const [operators, setOperators] = useState([]);
+  const [otpNetworks, setOtpNetworks] = useState([]); // Orange SN, Coris BJ
   const [network, setNetwork] = useState(null);
   const [mmPhone, setMmPhone] = useState('');
+  const [otp, setOtp] = useState('');
 
   const plan = PLANS.find((p) => p.id === planId);
   const countryName = COUNTRY_NAMES[country] || 'votre pays';
@@ -86,6 +81,7 @@ export default function PaywallScreen({ navigation }) {
         if (cancelled) return;
         const ops = d.operators || [];
         setOperators(ops);
+        setOtpNetworks(d.otpRequired || []);
         setNetwork((n) => (ops.includes(n) ? n : ops[0] || null));
       })
       .catch(() => {});
@@ -134,15 +130,20 @@ export default function PaywallScreen({ navigation }) {
 
   // FeexPay mobile money — paiement DIRECT : FeexPay pousse une demande de
   // confirmation sur le téléphone. Pas de page à ouvrir ; on suit par polling.
+  const needsOtp = otpNetworks.includes(network);
+
   const onPayFeexMobile = async () => {
     if (!network) return Alert.alert('Opérateur requis', 'Choisissez votre opérateur Mobile Money.');
     const num = String(mmPhone || '').replace(/[^\d+]/g, '');
     if (num.replace(/\D/g, '').length < 8) {
       return Alert.alert('Numéro invalide', 'Entrez le numéro de votre compte Mobile Money.');
     }
+    if (needsOtp && otp.trim().length < 4) {
+      return Alert.alert('Code OTP requis', `${network} exige un code de validation. Obtenez-le sur votre téléphone puis saisissez-le.`);
+    }
     setProcessing(true);
     try {
-      const res = await api.feexpayMobile({ planId, phone: num, network, country });
+      const res = await api.feexpayMobile({ planId, phone: num, network, country, otp: otp.trim() });
       if (res.status === 'success') {
         await refreshAccess();
         return Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
@@ -161,11 +162,13 @@ export default function PaywallScreen({ navigation }) {
           "Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes."
         );
       } else {
+        // On n'invente AUCUNE instruction : seul le message du prestataire fait
+        // foi (un mauvais code USSD enverrait l'argent au mauvais endroit).
         Alert.alert(
           'Validez votre paiement 📲',
           [
             res.providerMessage,
-            USSD_HINTS[network] || `Confirmez la demande ${network} reçue sur le ${num}.`,
+            `Suivez les instructions reçues sur le ${num} pour confirmer le paiement ${network}.`,
             'Revenez ensuite ici : votre abonnement s’activera automatiquement.',
           ]
             .filter(Boolean)
@@ -303,6 +306,26 @@ export default function PaywallScreen({ navigation }) {
               placeholderTextColor={COLORS.textFaint}
               keyboardType="phone-pad"
             />
+            {/* Code OTP — exigé par certains opérateurs (Orange Sénégal, Coris). */}
+            {needsOtp && (
+              <>
+                <TextInput
+                  style={styles.phoneInput}
+                  value={otp}
+                  onChangeText={setOtp}
+                  placeholder="Code OTP de validation"
+                  placeholderTextColor={COLORS.textFaint}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                />
+                {network === 'ORANGE' && country === 'sn' && (
+                  <Text style={styles.otpHint}>
+                    Composez *144*391# sur votre téléphone pour recevoir votre code OTP.
+                  </Text>
+                )}
+              </>
+            )}
+
             <View style={styles.payInfo}>
               <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
               <Text style={styles.payInfoText}>
@@ -431,4 +454,5 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md, marginTop: SPACING.xs,
   },
   cardLinkText: { color: COLORS.textMuted, fontSize: FONT.sm, textDecorationLine: 'underline' },
+  otpHint: { color: COLORS.textMuted, fontSize: FONT.sm - 1, marginBottom: SPACING.sm },
 });

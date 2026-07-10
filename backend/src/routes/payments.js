@@ -276,9 +276,16 @@ router.post('/ligdicash/webhook', express.urlencoded({ extended: true }), async 
 
 // GET /payments/feexpay/operators?country=bf — opérateurs mobile money que
 // FeexPay supporte pour un pays (ISO2). Public — alimente le sélecteur de l'app.
+// `otpRequired` indique les opérateurs pour lesquels l'app doit demander un
+// code OTP au client (Orange Sénégal, Coris Bénin).
 router.get('/feexpay/operators', (req, res) => {
   const country = String(req.query.country || '').toLowerCase();
-  res.json({ country, operators: feexpay.operatorsForCountry(country) });
+  const operators = feexpay.operatorsForCountry(country);
+  res.json({
+    country,
+    operators,
+    otpRequired: operators.filter((op) => feexpay.requiresOtp(country, op)),
+  });
 });
 
 // POST /payments/feexpay/mobile  (auth)  { planId, phone, network, country? }
@@ -344,7 +351,8 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
       phone,
       network,
       country,
-      customer: { id: req.userId, phone: user?.phone, country },
+      otp: req.body.otp, // requis par Orange Sénégal / Coris Bénin uniquement
+      customer: { id: req.userId, phone: user?.phone, country, ip: req.ip },
     });
 
     await prisma.payment.update({ where: { id: payment.id }, data: { providerRef: result.reference } });

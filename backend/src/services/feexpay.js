@@ -124,7 +124,15 @@ function countryName(iso2) {
   return COUNTRY_NAME[String(iso2 || '').toLowerCase()] || 'BURKINA_FASO';
 }
 
-async function requestMobilePayment({ transactionId, amount, description, phone, network, country, customer }) {
+// Réseaux exigeant un code OTP saisi par le client (SDK officiel) :
+// Orange Sénégal (obtenu en composant *144*391#) et Coris Money Bénin.
+function requiresOtp(iso2, network) {
+  const c = String(iso2 || '').toLowerCase();
+  const n = String(network || '').toUpperCase();
+  return (c === 'sn' && n === 'ORANGE') || (c === 'bj' && n === 'CORIS');
+}
+
+async function requestMobilePayment({ transactionId, amount, description, phone, network, country, customer, otp }) {
   if (!isConfigured()) {
     throw new Error('FeexPay non configuré');
   }
@@ -153,7 +161,7 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
     first_name: customer?.firstName || 'Client',
     email: fallbackEmail(customer),
     custom_id: transactionId, // renvoyé pour réconciliation
-    otp: '',
+    otp: String(otp || ''),
     callback_info: { transaction_id: transactionId, user_id: customer?.id || null },
     description: desc,
     currency: 'XOF',
@@ -286,5 +294,6 @@ module.exports = {
   operatorsForCountry,
   mapReseau,
   toInternational,
+  requiresOtp,
   NETWORKS_BY_COUNTRY,
 };

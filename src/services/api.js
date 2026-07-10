@@ -101,11 +101,11 @@ export const api = {
   // FeexPay — mobile money (paiement direct : confirmation sur le téléphone).
   feexpayOperators: (country) =>
     request(`/payments/feexpay/operators?country=${encodeURIComponent(country || '')}`),
-  feexpayMobile: ({ planId, phone, network, country }) =>
+  feexpayMobile: ({ planId, phone, network, country, otp }) =>
     request('/payments/feexpay/mobile', {
       method: 'POST',
       auth: true,
-      body: { planId, phone, network, country },
+      body: { planId, phone, network, country, otp },
     }),
 
   // Stats
