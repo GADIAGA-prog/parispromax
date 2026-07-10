@@ -167,6 +167,16 @@ if (isProdLike) {
       '[config] ⚠️ ADMIN_PASSWORD non défini : le back-office /admin est DÉSACTIVÉ (identifiants par défaut refusés).'
     );
   }
+  if (!/^https:\/\//.test(config.publicBaseUrl)) {
+    // FeexPay reçoit cette URL comme `merchant_domain` et l'utilise pour
+    // générer la page de validation des opérateurs à redirection (Orange BF…).
+    // Une valeur localhost fait échouer les paiements en production.
+    console.warn(
+      `[config] ⚠️ PUBLIC_BASE_URL="${config.publicBaseUrl}" n'est pas une URL https publique. ` +
+        'Les webhooks et les paiements Orange/Moov BF risquent d’échouer. ' +
+        'Définissez PUBLIC_BASE_URL=https://<votre-service>.onrender.com'
+    );
+  }
 }
 
 module.exports = config;
