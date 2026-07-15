@@ -56,6 +56,9 @@ app.get('/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'parispromax-backend',
+    revision: process.env.RENDER_GIT_COMMIT
+      ? process.env.RENDER_GIT_COMMIT.slice(0, 7)
+      : null,
     paymentProvider: provider,
     paymentMode: mode, // sandbox | live (non-secret, for diagnostics)
     payments: configured ? 'configured' : 'mock',
