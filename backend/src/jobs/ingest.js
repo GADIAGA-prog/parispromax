@@ -139,6 +139,10 @@ function detectEventRace(data) {
   return best;
 }
 
+function shouldUpgradeAutomaticPick(existing, event) {
+  return Boolean(existing && existing.betType === 'Course du jour' && event && event.isQuinte);
+}
+
 async function autoAssignNationalPicks(data) {
   const date = data?.meta?.date || new Date().toISOString().slice(0, 10);
   const event = detectEventRace(data);
@@ -152,16 +156,22 @@ async function autoAssignNationalPicks(data) {
     const existing = await prisma.nationalPick.findUnique({
       where: { date_country: { date, country } },
     });
-    if (existing) continue; // désignation manuelle (ou déjà posée) -> intouchée
-    await prisma.nationalPick.create({
-      data: {
-        date,
-        country,
-        externalId: event.id,
-        betType: event.isQuinte ? 'Quinté+' : 'Course du jour',
-        journalUrl,
-      },
-    });
+    const data = {
+      externalId: event.id,
+      betType: event.isQuinte ? 'Quinté+' : 'Course du jour',
+      journalUrl: (existing && existing.journalUrl) || journalUrl,
+    };
+    if (existing) {
+      // Preserve manual Quarté/Tiercé/Quinté choices. Only upgrade the legacy
+      // automatic heuristic when PMU now identifies the real Quinté+.
+      if (!shouldUpgradeAutomaticPick(existing, event)) continue;
+      await prisma.nationalPick.update({
+        where: { date_country: { date, country } },
+        data,
+      });
+    } else {
+      await prisma.nationalPick.create({ data: { date, country, ...data } });
+    }
     assigned++;
   }
   if (assigned) {
@@ -269,5 +279,5 @@ module.exports = {
   backfillRunners,
   autoAssignNationalPicks,
   RACES_FILE,
-  _test: { detectEventRace },
+  _test: { detectEventRace, shouldUpgradeAutomaticPick },
 };
