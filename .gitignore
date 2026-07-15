@@ -45,6 +45,9 @@ backend/test-e2e.js
 # verification artifacts
 dist-verify/
 
+# local Android store/test artifacts (large generated binaries)
+builds/
+
 # typescript
 *.tsbuildinfo
 

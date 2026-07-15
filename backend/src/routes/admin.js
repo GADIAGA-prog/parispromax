@@ -47,6 +47,15 @@ router.post('/api/scrape', async (req, res) => {
     res.json({ ok: true, date, hippodromes: payload.racetracks.length, count, replaced: ids.length, autoPicks: picks.assigned });
   } catch (e) {
     console.error('scrape endpoint error', e.message);
+    if (e.code === 'UPSTREAM_RATE_LIMIT') {
+      const retryAfter = e.retryAfterSeconds || 60;
+      res.set('Retry-After', String(retryAfter));
+      return res.status(503).json({
+        error: 'Geny limite temporairement les requêtes. Les courses existantes ont été conservées. Réessayez dans quelques minutes.',
+        code: e.code,
+        retryAfter,
+      });
+    }
     res.status(500).json({ error: e.message });
   }
 });
@@ -289,7 +298,7 @@ const DASHBOARD_HTML = `<!doctype html>
       <option value="failed">Échoués</option>
     </select>
     <button onclick="load()">↻ Rafraîchir</button>
-    <button onclick="scrape()" style="background:#10b981;color:#06251c;font-weight:800">🏇 Scraper les courses du jour</button>
+    <button id="scrapeBtn" onclick="scrape()" style="background:#10b981;color:#06251c;font-weight:800">🏇 Scraper les courses du jour</button>
     <button onclick="ingest()">⬇ Charger la démo</button>
     <span id="ingestMsg" class="muted"></span>
   </div>
@@ -351,12 +360,16 @@ const DASHBOARD_HTML = `<!doctype html>
   }
   async function scrape(){
     const msg = document.getElementById('ingestMsg');
+    const btn = document.getElementById('scrapeBtn');
+    if (btn.disabled) return;
+    btn.disabled = true;
     msg.textContent = '⏳ Scraping des vraies courses du jour… (peut prendre 1-2 min)';
     try {
       const r = await fetch('/admin/api/scrape', { method: 'POST' });
       const d = await r.json();
       msg.textContent = d.ok ? ('✅ '+d.count+' vraies courses ('+d.hippodromes+' hippodromes) le '+d.date) : ('❌ '+(d.error||'erreur'));
     } catch(e){ msg.textContent = '❌ '+e.message; }
+    finally { btn.disabled = false; }
     load();
   }
   const FLAGS = {bf:'🇧🇫',ci:'🇨🇮',sn:'🇸🇳',tg:'🇹🇬',bj:'🇧🇯',cg:'🇨🇬'};

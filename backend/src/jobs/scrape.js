@@ -9,8 +9,11 @@ const { findRunnersTable, cell } = require('../scraper/columnMapper');
 const { parseMusique, formScoreFromParsed } = require('../scraper/musique');
 
 const BASE = 'https://www.geny.com';
-const REQUEST_DELAY_MS = 1500;
-const MAX_RETRIES = 4;
+const REQUEST_INTERVAL_MS = Math.max(1000, Number(process.env.SCRAPER_REQUEST_INTERVAL_MS) || 2500);
+const BASE_RETRY_DELAY_MS = Math.max(1000, Number(process.env.SCRAPER_RETRY_DELAY_MS) || 5000);
+const MAX_RETRY_DELAY_MS = 120000;
+const MAX_RETRY_BUDGET_MS = Math.max(30000, Number(process.env.SCRAPER_RETRY_BUDGET_MS) || 90000);
+const MAX_RETRIES = 5;
 
 const HTTP = axios.create({
   timeout: 15000,
@@ -22,20 +25,79 @@ const HTTP = axios.create({
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// All Geny traffic in this Node process shares one request slot. This prevents
+// the admin scrape and the results cron from bursting concurrently from the
+// same Render IP.
+let nextRequestAt = 0;
+
+async function waitForRequestSlot() {
+  const now = Date.now();
+  const scheduledAt = Math.max(now, nextRequestAt);
+  nextRequestAt = scheduledAt + REQUEST_INTERVAL_MS;
+  if (scheduledAt > now) await sleep(scheduledAt - now);
+}
+
+function parseRetryAfter(value, now = Date.now()) {
+  if (value == null || value === '') return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.ceil(seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.max(0, date - now) : null;
+}
+
+function retryDelay(error, attempt, random = Math.random) {
+  const header = error.response && error.response.headers && error.response.headers['retry-after'];
+  const requested = parseRetryAfter(header);
+  if (requested != null) return Math.min(requested, MAX_RETRY_DELAY_MS);
+  const exponential = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, attempt), MAX_RETRY_DELAY_MS);
+  return exponential + Math.floor(random() * Math.min(1000, exponential * 0.2));
+}
+
+function upstreamRateLimitError(error, delayMs) {
+  const wrapped = new Error('Geny limite temporairement les requêtes. Réessayez dans quelques minutes.');
+  wrapped.code = 'UPSTREAM_RATE_LIMIT';
+  wrapped.upstreamStatus = 429;
+  wrapped.retryAfterSeconds = Math.max(30, Math.ceil((delayMs || BASE_RETRY_DELAY_MS) / 1000));
+  wrapped.cause = error;
+  return wrapped;
+}
+
+function isRetryableNetworkError(error) {
+  const code = String(error && error.code || '').toUpperCase();
+  // Certificate/configuration failures will not heal with backoff. Retrying
+  // them only keeps the admin request open for more than a minute.
+  if (/CERT|TLS|SSL|SELF_SIGNED|UNABLE_TO_VERIFY/.test(code)) return false;
+  return true;
+}
+
 async function getWithRetry(url) {
   let lastErr;
+  let lastDelay = BASE_RETRY_DELAY_MS;
+  const startedAt = Date.now();
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
+      await waitForRequestSlot();
       return await HTTP.get(url);
     } catch (e) {
       lastErr = e;
       const status = e.response && e.response.status;
-      if (status === 429 || status >= 500 || !status) {
-        await sleep(REQUEST_DELAY_MS * Math.pow(2, attempt));
+      if (status === 429 || status >= 500 || (!status && isRetryableNetworkError(e))) {
+        if (attempt === MAX_RETRIES - 1) break;
+        lastDelay = retryDelay(e, attempt);
+        // Keep synchronous admin requests below the hosting proxy timeout. If
+        // Retry-After exceeds the remaining budget, report it to the caller
+        // instead of violating it or leaving the HTTP request open for minutes.
+        if (Date.now() - startedAt + lastDelay > MAX_RETRY_BUDGET_MS) break;
+        nextRequestAt = Math.max(nextRequestAt, Date.now() + lastDelay);
+        console.warn(`[scrape] ${status || 'network'} from Geny; retry ${attempt + 2}/${MAX_RETRIES} in ${Math.ceil(lastDelay / 1000)}s`);
+        await sleep(lastDelay);
         continue;
       }
       throw e;
     }
+  }
+  if (lastErr && lastErr.response && lastErr.response.status === 429) {
+    throw upstreamRateLimitError(lastErr, lastDelay);
   }
   throw lastErr;
 }
@@ -223,7 +285,8 @@ async function fetchOdds(course) {
       if (cote != null && cote >= 1 && cote < 1000) odds[num] = cote;
     });
     return odds;
-  } catch {
+  } catch (e) {
+    if (e.code === 'UPSTREAM_RATE_LIMIT') throw e;
     return {};
   }
 }
@@ -248,7 +311,8 @@ async function fetchResult(courseId) {
     const winners = [];
     for (let p = 1; posToNum.has(p); p++) winners.push(posToNum.get(p));
     return winners.length >= 3 ? winners : null;
-  } catch {
+  } catch (e) {
+    if (e.code === 'UPSTREAM_RATE_LIMIT') throw e;
     return null;
   }
 }
@@ -266,8 +330,11 @@ async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
       const course = slice[i];
       try {
         const race = await fetchCourse(course);
-        await sleep(REQUEST_DELAY_MS);
-        const odds = await fetchOdds(course);
+        // The runners page often already contains usable odds. Only request
+        // the dedicated odds page when none were parsed, cutting normal Geny
+        // traffic almost in half.
+        const hasOdds = race.horses.some((horse) => horse.odds != null);
+        const odds = hasOdds ? {} : await fetchOdds(course);
         race.horses.forEach((h) => {
           // La page /cotes/ donne la cote live la plus fraîche : elle prime.
           if (odds[h.number] != null) {
@@ -277,8 +344,10 @@ async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
         });
         race.number = `C${i + 1}`;
         if (race.horses.length) races.push(race);
-        await sleep(REQUEST_DELAY_MS);
       } catch (e) {
+        // Continuing with dozens of other pages after a 429 only extends the
+        // upstream ban. Abort this scrape and preserve the existing DB data.
+        if (e.code === 'UPSTREAM_RATE_LIMIT') throw e;
         console.warn(`[scrape] course ${course.id} failed:`, e.message);
       }
     }
@@ -301,4 +370,8 @@ async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
   };
 }
 
-module.exports = { scrapeProgramme, fetchResult };
+module.exports = {
+  scrapeProgramme,
+  fetchResult,
+  _test: { parseRetryAfter, retryDelay, isRetryableNetworkError },
+};
