@@ -86,6 +86,34 @@ router.post('/results', checkToken, (req, res) => {
 
 // POST /cron/backfill — reconstruit les Runner des courses passées terminées
 // (alimente le jeu LTR). Idempotent. Protégé par le CRON_TOKEN.
+// POST /cron/picks — reconcile the national daily pick from races already in
+// the database. Kept separate from the heavy refresh so schedulers can verify
+// this critical user-facing step after background ingestion has completed.
+router.post('/picks', checkToken, async (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const rows = await prisma.race.findMany({ where: { date: today } });
+    const races = rows.map((row) => {
+      try {
+        return { ...JSON.parse(row.raw), id: row.externalId };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    if (!races.length) return res.status(409).json({ error: 'no races available', date: today });
+
+    const { autoAssignNationalPicks } = require('../jobs/ingest');
+    const result = await autoAssignNationalPicks({
+      meta: { date: today },
+      racetracks: [{ id: 'stored', name: 'Courses du jour', races }],
+    });
+    res.json({ ok: true, date: today, races: races.length, ...result });
+  } catch (error) {
+    console.error('[cron/picks] error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/backfill', checkToken, async (_req, res) => {
   try {
     const { backfillRunners } = require('../jobs/ingest');
