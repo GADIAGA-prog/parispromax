@@ -31,6 +31,11 @@ async function runRefresh() {
     // PMU card rather than the smaller, interactive admin preview.
     const payload = await scrapeProgramme(today, { maxReunions: 20, maxCourses: 20 });
     if (payload.racetracks.length) {
+      // Assign the declared Quinte as soon as the complete PMU payload exists.
+      // This must not depend on the heavier prediction/Runner ingestion below.
+      const { autoAssignNationalPicks } = require('../jobs/ingest');
+      await autoAssignNationalPicks(payload);
+
       const old = await prisma.race.findMany({ where: { date: today }, select: { id: true } });
       const ids = old.map((r) => r.id);
       if (ids.length) {
@@ -40,10 +45,6 @@ async function runRefresh() {
       }
       const scraped = await ingestData(payload);
       console.log(`[cron] scraped ${scraped} races (${payload.racetracks.length} tracks) for ${today}`);
-      // Course PMU du jour par pays — désignée automatiquement (heuristique
-      // course événement), sans écraser une désignation manuelle.
-      const { autoAssignNationalPicks } = require('../jobs/ingest');
-      await autoAssignNationalPicks(payload);
     }
   } catch (e) {
     console.error('[cron] scrape error:', e.message);
