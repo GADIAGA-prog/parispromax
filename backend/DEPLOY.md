@@ -48,6 +48,11 @@ npm run ingest    # les charge en base + calcule les pronostics
 
 > Pour automatiser : ajoutez un **Render Cron Job** (ex. 2×/jour) qui exécute
 > `npm run scrape && npm run ingest`.
+>
+> Le dépôt fournit aussi `.github/workflows/refresh.yml`. Après configuration
+> du secret GitHub `CRON_TOKEN` avec la même valeur que sur Render, il actualise
+> automatiquement le programme à **06:00 UTC (06:00 au Burkina Faso)**, puis
+> rafraîchit les cotes à 11:00 et 15:30.
 
 ### 5. Vérifier
 - `https://<votre-url>/health` → `{ ok: true }`

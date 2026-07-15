@@ -41,6 +41,7 @@ test('PMU race excludes non-runners and keeps a stable external id', () => {
     specialite: 'TROT_ATTELE',
     typeDepart: 'AUTOSTART',
     distance: 2700,
+    paris: [{ typePari: 'SIMPLE_GAGNANT' }, { typePari: 'QUINTE_PLUS' }],
   }, [
     { numPmu: 1, nom: 'PARTANT', musique: '1a' },
     { numPmu: 2, nom: 'ABSENT', statut: 'NON_PARTANT', musique: '2a' },
@@ -49,7 +50,11 @@ test('PMU race excludes non-runners and keeps a stable external id', () => {
   assert.equal(race.id, 'pmu-2026-07-15-R1-C3');
   assert.equal(race.number, 'C3');
   assert.equal(race.distance, '2700m');
+  assert.equal(race.time, '14:30');
+  assert.equal(race.prize, 50000);
   assert.equal(race.autostart, true);
+  assert.equal(race.isQuinte, true);
+  assert.deepEqual(race.bets, ['SIMPLE_GAGNANT', 'QUINTE_PLUS']);
   assert.equal(race.runners, 1);
   assert.deepEqual(race.horses.map((horse) => horse.number), [1]);
 });

@@ -27,7 +27,9 @@ function checkToken(req, res, next) {
 async function runRefresh() {
   const today = new Date().toISOString().slice(0, 10);
   try {
-    const payload = await scrapeProgramme(today, { maxReunions: 10, maxCourses: 8 });
+    // The scheduled refresh runs in the background, so it can load the whole
+    // PMU card rather than the smaller, interactive admin preview.
+    const payload = await scrapeProgramme(today, { maxReunions: 20, maxCourses: 20 });
     if (payload.racetracks.length) {
       const old = await prisma.race.findMany({ where: { date: today }, select: { id: true } });
       const ids = old.map((r) => r.id);

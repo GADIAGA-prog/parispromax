@@ -118,13 +118,19 @@ const PICK_COUNTRIES = ['bf', 'ci', 'sn', 'tg', 'bj', 'cg'];
 
 function detectEventRace(data) {
   let best = null;
-  let bestKey = [-1, -1];
+  let bestKey = [-1, -1, -1];
   for (const track of data.racetracks || []) {
     for (const race of track.races || []) {
       const runners = (race.horses || []).length;
       if (!race.id || runners < 10) continue; // trop petit champ pour un Quarté
-      const key = [Number(race.prize) || 0, runners];
-      if (key[0] > bestKey[0] || (key[0] === bestKey[0] && key[1] > bestKey[1])) {
+      // An explicitly advertised PMU Quinte always wins. Prize money and
+      // runner count are tie-breakers and remain the fallback for old sources.
+      const key = [race.isQuinte ? 1 : 0, Number(race.prize) || 0, runners];
+      if (
+        key[0] > bestKey[0]
+        || (key[0] === bestKey[0] && key[1] > bestKey[1])
+        || (key[0] === bestKey[0] && key[1] === bestKey[1] && key[2] > bestKey[2])
+      ) {
         bestKey = key;
         best = race;
       }
@@ -148,7 +154,13 @@ async function autoAssignNationalPicks(data) {
     });
     if (existing) continue; // désignation manuelle (ou déjà posée) -> intouchée
     await prisma.nationalPick.create({
-      data: { date, country, externalId: event.id, betType: 'Course du jour', journalUrl },
+      data: {
+        date,
+        country,
+        externalId: event.id,
+        betType: event.isQuinte ? 'Quinté+' : 'Course du jour',
+        journalUrl,
+      },
     });
     assigned++;
   }
@@ -251,4 +263,11 @@ if (require.main === module) {
     });
 }
 
-module.exports = { ingestFromFile, ingestData, backfillRunners, autoAssignNationalPicks, RACES_FILE };
+module.exports = {
+  ingestFromFile,
+  ingestData,
+  backfillRunners,
+  autoAssignNationalPicks,
+  RACES_FILE,
+  _test: { detectEventRace },
+};

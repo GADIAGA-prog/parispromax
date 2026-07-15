@@ -87,6 +87,15 @@ function raceTime(timestamp) {
   }
 }
 
+function betLabel(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  return [value.typePari, value.libelle, value.libelleCourt, value.codePari]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+}
+
 function normalizeParticipant(raw) {
   const musiqueRaw = String(raw.musique || '');
   const musiqueParsed = parseMusique(musiqueRaw);
@@ -121,6 +130,9 @@ function normalizeRace(date, reunionNumber, raw, participants) {
     .map(normalizeParticipant)
     .filter((horse) => horse.number != null && horse.name);
   const specialite = String(raw.specialite || raw.discipline || '').replace(/_/g, ' ');
+  const bets = (Array.isArray(raw.paris) ? raw.paris : [])
+    .map(betLabel)
+    .filter(Boolean);
 
   return {
     id: `pmu-${date}-R${reunionNumber}-C${courseNumber}`,
@@ -128,6 +140,8 @@ function normalizeRace(date, reunionNumber, raw, participants) {
     name: String(raw.libelle || raw.libelleCourt || `Course ${courseNumber}`).trim(),
     time: raceTime(raw.heureDepart),
     prize: numeric(raw.montantPrix) || numeric(raw.montantTotalOffert) || null,
+    bets,
+    isQuinte: bets.some((bet) => /QUINT[EÉ]/i.test(bet)),
     type: specialite || null,
     autostart: /AUTOSTART/i.test(String(raw.typeDepart || '')),
     distance: raw.distance ? `${raw.distance}m` : '',
@@ -207,5 +221,5 @@ async function fetchPmuResult(date, reunionNumber, courseNumber) {
 module.exports = {
   scrapeProgrammePmu,
   fetchPmuResult,
-  _test: { formatDate, normalizeParticipant, normalizeRace, finishPosition, normalizeDeferrage },
+  _test: { formatDate, normalizeParticipant, normalizeRace, finishPosition, normalizeDeferrage, betLabel },
 };
