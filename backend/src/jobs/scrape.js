@@ -7,6 +7,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { findRunnersTable, cell } = require('../scraper/columnMapper');
 const { parseMusique, formScoreFromParsed } = require('../scraper/musique');
+const { scrapeProgrammePmu } = require('./scrapePmu');
 
 const BASE = 'https://www.geny.com';
 const REQUEST_INTERVAL_MS = Math.max(1000, Number(process.env.SCRAPER_REQUEST_INTERVAL_MS) || 2500);
@@ -318,7 +319,7 @@ async function fetchResult(courseId) {
 }
 
 // Main entry — returns a payload object in the app schema.
-async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
+async function scrapeProgrammeGeny(date, { maxReunions = 8, maxCourses = 4 } = {}) {
   const byHippo = await fetchProgramme(date);
   const racetracks = [];
   const hippos = [...byHippo.entries()].slice(0, maxReunions);
@@ -370,8 +371,28 @@ async function scrapeProgramme(date, { maxReunions = 8, maxCourses = 4 } = {}) {
   };
 }
 
+// PMU provides structured data without consuming Geny's heavily rate-limited
+// HTML pages. Keep Geny as a transparent fallback while the PMU endpoint,
+// which is public but undocumented, is validated on every scrape.
+async function scrapeProgramme(date, options = {}) {
+  const source = String(process.env.RACE_DATA_SOURCE || 'pmu').trim().toLowerCase();
+  if (source !== 'geny') {
+    try {
+      const payload = await scrapeProgrammePmu(date, options);
+      console.log(`[scrape] source PMU: ${payload.racetracks.length} reunion(s)`);
+      return payload;
+    } catch (error) {
+      console.warn(`[scrape] source PMU indisponible (${error.code || error.message})`);
+      if (source === 'pmu-only') throw error;
+      console.warn('[scrape] bascule automatique vers Geny');
+    }
+  }
+  return scrapeProgrammeGeny(date, options);
+}
+
 module.exports = {
   scrapeProgramme,
+  scrapeProgrammeGeny,
   fetchResult,
   _test: { parseRetryAfter, retryDelay, isRetryableNetworkError },
 };

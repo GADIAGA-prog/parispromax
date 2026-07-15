@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const prisma = require('../db');
 const { fetchResult } = require('./scrape');
+const { fetchPmuResult } = require('./scrapePmu');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -31,11 +32,15 @@ async function detectResults({ dates } = {}) {
   let recorded = 0;
   let checked = 0;
   for (const race of races) {
-    const m = race.externalId.match(/c(\d+)/); // geny numeric course id
-    if (!m) continue; // demo races have no numeric id
+    const externalId = String(race.externalId || '');
+    const pmu = externalId.match(/^pmu-(\d{4}-\d{2}-\d{2})-R(\d+)-C(\d+)$/i);
+    const geny = externalId.match(/^c(\d+)$/i);
+    if (!pmu && !geny) continue; // demo races have no supported source id
     checked++;
 
-    const winners = await fetchResult(m[1]);
+    const winners = pmu
+      ? await fetchPmuResult(pmu[1], Number(pmu[2]), Number(pmu[3]))
+      : await fetchResult(geny[1]);
     await sleep(1200); // politeness
     if (!winners || winners.length < 3) continue; // not run yet
 
