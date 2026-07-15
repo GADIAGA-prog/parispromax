@@ -35,8 +35,26 @@ test('allocation and runners remain the fallback without an explicit Quinte', ()
 
 test('only a legacy automatic pick can be upgraded to the explicit Quinte', () => {
   const quinte = race('pmu-quinte', { prize: 50000, runners: 15, isQuinte: true });
+  const currentIds = new Set(['pmu-quinte', 'manual-current']);
 
-  assert.equal(_test.shouldUpgradeAutomaticPick({ betType: 'Course du jour' }, quinte), true);
-  assert.equal(_test.shouldUpgradeAutomaticPick({ betType: 'Quarté' }, quinte), false);
-  assert.equal(_test.shouldUpgradeAutomaticPick({ betType: 'Course du jour' }, { isQuinte: false }), false);
+  assert.equal(
+    _test.shouldUpgradeAutomaticPick({ externalId: 'legacy', betType: 'Course du jour' }, quinte, currentIds),
+    true
+  );
+  assert.equal(
+    _test.shouldUpgradeAutomaticPick({ externalId: 'manual-current', betType: 'Quarté' }, quinte, currentIds),
+    false
+  );
+  assert.equal(
+    _test.shouldUpgradeAutomaticPick({ externalId: 'deleted-race', betType: 'Quarté' }, quinte, currentIds),
+    true
+  );
+  assert.equal(
+    _test.shouldUpgradeAutomaticPick(
+      { externalId: 'legacy', betType: 'Course du jour' },
+      { isQuinte: false },
+      currentIds
+    ),
+    false
+  );
 });

@@ -139,14 +139,22 @@ function detectEventRace(data) {
   return best;
 }
 
-function shouldUpgradeAutomaticPick(existing, event) {
-  return Boolean(existing && existing.betType === 'Course du jour' && event && event.isQuinte);
+function shouldUpgradeAutomaticPick(existing, event, currentRaceIds = new Set()) {
+  if (!existing || !event || !event.isQuinte) return false;
+  const legacyAutomatic = existing.betType === 'Course du jour';
+  const missingRace = currentRaceIds instanceof Set
+    && currentRaceIds.size > 0
+    && !currentRaceIds.has(existing.externalId);
+  return legacyAutomatic || missingRace;
 }
 
 async function autoAssignNationalPicks(data) {
   const date = data?.meta?.date || new Date().toISOString().slice(0, 10);
   const event = detectEventRace(data);
   if (!event) return { assigned: 0 };
+  const currentRaceIds = new Set(
+    (data.racetracks || []).flatMap((track) => (track.races || []).map((race) => race.id)).filter(Boolean)
+  );
 
   let assigned = 0;
   for (const country of PICK_COUNTRIES) {
@@ -164,7 +172,7 @@ async function autoAssignNationalPicks(data) {
     if (existing) {
       // Preserve manual Quarté/Tiercé/Quinté choices. Only upgrade the legacy
       // automatic heuristic when PMU now identifies the real Quinté+.
-      if (!shouldUpgradeAutomaticPick(existing, event)) continue;
+      if (!shouldUpgradeAutomaticPick(existing, event, currentRaceIds)) continue;
       await prisma.nationalPick.update({
         where: { date_country: { date, country } },
         data,
