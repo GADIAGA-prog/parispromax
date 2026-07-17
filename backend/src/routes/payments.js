@@ -384,7 +384,12 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
       customer: { id: req.userId, phone: user?.phone, country, ip: req.ip },
     });
 
-    await prisma.payment.update({ where: { id: payment.id }, data: { providerRef: result.reference } });
+    // Conserver la réponse d'initiation permet d'auditer un échec de
+    // redirection (par exemple une URL absente) sans journaliser de secret.
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { providerRef: result.reference, rawPayload: JSON.stringify(result.raw) },
+    });
 
     // FeexPay peut déjà renvoyer un statut terminal (sandbox -> SUCCESSFUL direct).
     if (result.status === 'success') {

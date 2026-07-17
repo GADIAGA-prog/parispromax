@@ -144,6 +144,27 @@ function usesRedirect(iso2, network) {
   );
 }
 
+// FeexPay v2 a déjà fait évoluer la forme de certaines réponses selon les
+// réseaux : les informations peuvent être à la racine ou sous `data`, `result`
+// ou `transaction`. On lit uniquement les champs attendus, sans deviner une
+// URL à partir d'une référence de paiement.
+function responseScopes(data) {
+  const root = data && typeof data === 'object' ? data : {};
+  return [root, root.data, root.result, root.transaction, root.payload].filter(
+    (value) => value && typeof value === 'object'
+  );
+}
+
+function firstResponseValue(scopes, keys) {
+  for (const scope of scopes) {
+    for (const key of keys) {
+      const value = scope[key];
+      if (value !== undefined && value !== null && String(value).trim()) return value;
+    }
+  }
+  return null;
+}
+
 async function requestMobilePayment({ transactionId, amount, description, phone, network, country, customer, otp }) {
   if (!isConfigured()) {
     throw new Error('FeexPay non configuré');
@@ -191,26 +212,48 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
     { headers: headers(), timeout: 20000 }
   );
 
-  const reference = data.reference || data.transaction_id || null;
+  const scopes = responseScopes(data);
+  const reference = firstResponseValue(scopes, ['reference', 'transaction_id', 'transactionId']);
   if (!reference) {
-    throw new Error(`FeexPay: référence absente (${data.message || data.status || 'réponse inattendue'})`);
+    const message = firstResponseValue(scopes, ['message', 'detail', 'reason']);
+    const status = firstResponseValue(scopes, ['status', 'state']);
+    throw new Error(`FeexPay: référence absente (${message || status || 'réponse inattendue'})`);
   }
   // Certains réseaux renvoient une page de validation (`payment_url`) à ouvrir ;
   // d'autres (Orange/Moov Burkina via l'API d'intégration) renvoient seulement
   // un `message` d'instruction pour le client (ex. code USSD à composer).
-  const rawUrl = data.payment_url || data.paymentUrl || data.url || null;
+  const rawUrl = firstResponseValue(scopes, [
+    'payment_url',
+    'paymentUrl',
+    'redirect_url',
+    'redirectUrl',
+    'checkout_url',
+    'checkoutUrl',
+    'payment_link',
+    'paymentLink',
+    'url',
+  ]);
   const paymentUrl = rawUrl && /^https?:\/\//.test(String(rawUrl)) ? String(rawUrl) : null;
-  const message = data.message ? String(data.message).slice(0, 300) : null;
+  const messageValue = firstResponseValue(scopes, ['message', 'detail', 'reason', 'error']);
+  const message = messageValue ? String(messageValue).slice(0, 300) : null;
+  const status = firstResponseValue(scopes, ['status', 'state']);
+  const redirectExpected = usesRedirect(country, network);
+  if (redirectExpected && !paymentUrl) {
+    console.warn(
+      `[feexpay] redirection attendue mais URL absente pour ${reseau}; ` +
+        `champs=${Object.keys(data || {}).join(',') || 'aucun'}`
+    );
+  }
   console.log(
-    `[feexpay] ${reseau} -> ref=${reference} status=${data.status || '?'}` +
+    `[feexpay] ${reseau} -> ref=${reference} status=${status || '?'}` +
       `${paymentUrl ? ' (page de validation)' : ''}${message ? ` message="${message}"` : ''}`
   );
 
   return {
     reference: String(reference),
-    status: mapStatus(data.status),
+    status: mapStatus(status),
     paymentUrl,
-    redirectExpected: usesRedirect(country, network),
+    redirectExpected,
     providerMessage: message,
     raw: data,
   };
@@ -309,5 +352,6 @@ module.exports = {
   toInternational,
   requiresOtp,
   usesRedirect,
+  responseScopes,
   NETWORKS_BY_COUNTRY,
 };
