@@ -25,11 +25,11 @@ const COUNTRY_NAMES = {
 };
 
 const PERKS = [
-  'Top 3 pronostics IA sur toutes les courses',
-  'Value Bets & Records Chrono illimités',
-  'Combinaisons Quinté+ optimisées par l’IA',
-  'Alertes avant chaque départ',
-  'Mode hors-ligne complet',
+  'Synthèse de course : forme, piste et indice de confiance',
+  'Sélections hiérarchisées : bases, chances, outsiders et regret',
+  '6 chevaux proposés pour le Quinté+ et pronostics sur toutes les courses',
+  'Tuyaux utiles : déferrage, associations et chevaux à surveiller',
+  'Alertes de départ, résultats officiels et portefeuille de suivi',
 ];
 
 export default function PaywallScreen({ navigation }) {
