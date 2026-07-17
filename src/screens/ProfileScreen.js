@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +15,7 @@ const STATUS_LABEL = {
 };
 
 export default function ProfileScreen({ navigation }) {
-  const { phone, hasPaid, plan, paidUntil, logout, refreshAccess } = useAuth();
+  const { phone, hasPaid, plan, paidUntil, referral, logout, refreshAccess } = useAuth();
 
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
@@ -52,6 +52,24 @@ export default function ProfileScreen({ navigation }) {
           <Pressable onPress={onRefresh} hitSlop={10}>
             <Ionicons name={refreshing ? 'sync' : 'refresh'} size={22} color={COLORS.textMuted} />
           </Pressable>
+        </View>
+
+        <View style={styles.referralCard}>
+          <Ionicons name="gift" size={26} color={COLORS.gold} />
+          <Text style={styles.referralTitle}>Parrainez vos proches</Text>
+          <Text style={styles.referralText}>Ils économisent {referral?.discountPercent || 10}% sur leur premier paiement et vous gagnez 7 jours d'abonnement.</Text>
+          <Text style={styles.referralCode} selectable>{referral?.code || 'Chargement…'}</Text>
+          <Pressable
+            style={styles.shareButton}
+            disabled={!referral?.code}
+            onPress={() => Share.share({ message: `Rejoins ParisPromax avec mon code ${referral.code} et profite de ${referral.discountPercent}% de réduction sur ton premier paiement.` })}
+          >
+            <Ionicons name="share-social" size={18} color="#06251c" />
+            <Text style={styles.shareText}>Partager mon code</Text>
+          </Pressable>
+          {!!referral?.successfulReferrals && (
+            <Text style={styles.referralCount}>{referral.successfulReferrals} parrainage(s) récompensé(s)</Text>
+          )}
         </View>
 
         {/* Account card */}
@@ -207,6 +225,16 @@ const styles = StyleSheet.create({
   statusPill: { marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: 4, borderRadius: RADIUS.pill },
   statusText: { color: '#06251c', fontWeight: '800', fontSize: FONT.sm },
   paidUntil: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.sm },
+  referralCard: {
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.gold, marginBottom: SPACING.lg,
+  },
+  referralTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', marginTop: SPACING.sm },
+  referralText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginTop: 6, lineHeight: 19 },
+  referralCode: { color: COLORS.gold, fontSize: FONT.xl, fontWeight: '900', letterSpacing: 2, marginTop: SPACING.md },
+  shareButton: { flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: COLORS.accent, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, marginTop: SPACING.md },
+  shareText: { color: '#06251c', fontWeight: '900' },
+  referralCount: { color: COLORS.accent, fontSize: FONT.sm, fontWeight: '700', marginTop: SPACING.sm },
   action: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,

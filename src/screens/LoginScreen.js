@@ -38,6 +38,7 @@ export default function LoginScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [resetCode, setResetCode] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
@@ -77,7 +78,7 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       if (isRegister) {
-        const res = await api.register(fullPhone(), password, countryCode);
+        const res = await api.register(fullPhone(), password, countryCode, referralCode);
         setRecovery({ code: res.recoveryCode, session: res });
       } else if (isReset) {
         const res = await api.resetPassword(fullPhone(), resetCode, password);
@@ -192,6 +193,27 @@ export default function LoginScreen() {
                   editable={!busy}
                 />
               </View>
+            </>
+          )}
+
+          {isRegister && (
+            <>
+              <Text style={[styles.label, { marginTop: SPACING.md }]}>Code de parrainage (facultatif)</Text>
+              <View style={styles.inputRow}>
+                <Ionicons name="gift" size={18} color={COLORS.textMuted} />
+                <TextInput
+                  style={[styles.input, { letterSpacing: 1 }]}
+                  placeholder="Ex. PPM12AB34CD"
+                  placeholderTextColor={COLORS.textFaint}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  value={referralCode}
+                  onChangeText={setReferralCode}
+                  maxLength={16}
+                  editable={!busy}
+                />
+              </View>
+              <Text style={styles.referralHint}>Réduction sur votre premier paiement avec un code valide.</Text>
             </>
           )}
 
@@ -339,6 +361,7 @@ const styles = StyleSheet.create({
     color: COLORS.accent, textAlign: 'center', marginTop: SPACING.md,
     fontSize: FONT.sm, textDecorationLine: 'underline',
   },
+  referralHint: { color: COLORS.accent, fontSize: FONT.sm, marginTop: 6 },
   resetTitle: {
     color: COLORS.text, fontSize: FONT.lg, fontWeight: '900',
     textAlign: 'center', marginBottom: SPACING.lg,

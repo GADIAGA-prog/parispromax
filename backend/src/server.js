@@ -13,6 +13,7 @@ const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
 const mlRoutes = require('./routes/ml');
 const legalRoutes = require('./routes/legal');
+const { backfillReferralCodes } = require('./services/referral');
 
 const app = express();
 
@@ -119,6 +120,8 @@ if (process.env.REDIS_URL) {
     console.error('[realtime] init failed (deps installées ?):', e.message);
   }
 }
+
+backfillReferralCodes().catch((error) => console.error('[referral] backfill error', error));
 
 server.listen(config.port, () => {
   console.log(`\n🏇 ParisPromax backend on http://localhost:${config.port}`);

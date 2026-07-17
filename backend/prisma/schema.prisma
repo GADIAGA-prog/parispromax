@@ -20,8 +20,24 @@ model User {
   country       String?        // ISO2 (bf, ci, sn, tg, bj, ne, gn, ml) for payments
   trialStartedAt DateTime?
   createdAt     DateTime       @default(now())
+  referralCode  String?        @unique
   subscriptions Subscription[]
   payments      Payment[]
+  referralsMade Referral[]     @relation("ReferralSponsor")
+  referralUsed  Referral?      @relation("ReferralMember")
+}
+
+model Referral {
+  id          String   @id @default(cuid())
+  sponsorId   String
+  sponsor     User     @relation("ReferralSponsor", fields: [sponsorId], references: [id], onDelete: Cascade)
+  referredId  String   @unique
+  referred    User     @relation("ReferralMember", fields: [referredId], references: [id], onDelete: Cascade)
+  status      String   @default("pending")
+  rewardedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([sponsorId])
 }
 
 // One-time codes for phone login (OTP). `code` stores a SHA-256 hash of the
@@ -60,6 +76,8 @@ model Payment {
   transactionId String   @unique // our generated id sent to the PSP
   providerRef   String?  // id returned by the PSP
   amount        Int
+  baseAmount    Int?
+  referralDiscount Int @default(0)
   currency      String   @default("XOF")
   plan          String?  // plan id: daily | weekly | monthly | quarterly | annual
   method        String?  // card | orange-money | wave | mtn | moov

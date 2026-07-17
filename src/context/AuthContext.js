@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
   const [country, setCountry] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [access, setAccess] = useState(defaultAccess);
+  const [referral, setReferral] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Hydrate token + cached access on boot.
@@ -65,6 +66,7 @@ export function AuthProvider({ children }) {
       const data = await api.me();
       const a = { ...defaultAccess, ...data.access };
       setAccess(a);
+      setReferral(data.referral || null);
       setIsLoggedIn(true);
       if (data.user?.phone) setPhone(data.user.phone);
       if (data.user?.country) setCountry(data.user.country);
@@ -112,6 +114,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.removeItem(ACCESS_CACHE);
     setIsLoggedIn(false);
     setAccess(defaultAccess);
+    setReferral(null);
   }, []);
 
   const value = useMemo(
@@ -127,13 +130,14 @@ export function AuthProvider({ children }) {
       isLocked: !access.hasAccess,
       plan: access.plan,
       paidUntil: access.paidUntil,
+      referral,
       // actions
       login,
       adoptSession,
       refreshAccess,
       logout: doLogout,
     }),
-    [phone, country, isLoggedIn, loading, access, login, adoptSession, refreshAccess, doLogout]
+    [phone, country, isLoggedIn, loading, access, referral, login, adoptSession, refreshAccess, doLogout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

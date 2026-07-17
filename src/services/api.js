@@ -64,8 +64,8 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
 // --- Endpoints -------------------------------------------------------------
 export const api = {
   // Auth (numéro + mot de passe — pas de SMS/email)
-  register: (phone, password, country) =>
-    request('/auth/register', { method: 'POST', body: { phone, password, country } }),
+  register: (phone, password, country, referralCode) =>
+    request('/auth/register', { method: 'POST', body: { phone, password, country, referralCode } }),
   login: (phone, password, country) =>
     request('/auth/login', { method: 'POST', body: { phone, password, country } }),
   // Réinitialisation autonome : numéro + code de récupération -> nouveau mdp.

@@ -7,6 +7,7 @@ const fedapay = require('../services/fedapay');
 const paydunya = require('../services/paydunya');
 const ligdicash = require('../services/ligdicash');
 const feexpay = require('../services/feexpay');
+const pawapay = require('../services/pawapay');
 const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
 const { activateSubscription } = require('../services/subscription');
 const { getPlan } = require('../plans');
@@ -29,6 +30,22 @@ function genTxnId() {
   return `PPM-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 }
 
+async function priceForUser(userId, plan) {
+  const [referral, successes, discountedPending] = await Promise.all([
+    prisma.referral.findUnique({ where: { referredId: userId } }),
+    prisma.payment.count({ where: { userId, status: 'success' } }),
+    prisma.payment.count({
+      where: {
+        userId, status: 'pending', referralDiscount: { gt: 0 },
+        createdAt: { gt: new Date(Date.now() - 30 * 60 * 1000) },
+      },
+    }),
+  ]);
+  const eligible = referral?.status === 'pending' && successes === 0 && discountedPending === 0;
+  const discount = eligible ? Math.round(plan.pricePromo * config.referral.discountPercent / 100) : 0;
+  return { amount: Math.max(0, plan.pricePromo - discount), discount };
+}
+
 // POST /payments/initiate  (auth)  { planId, method?, channels? }
 // Creates a pending Payment for a plan and returns the PSP payment URL.
 router.post('/initiate', requireAuth, async (req, res) => {
@@ -45,7 +62,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
     if (!chosenId) return res.status(400).json({ error: 'Aucun moyen de paiement disponible' });
     const provider = getProvider(chosenId);
 
-    const amount = plan.pricePromo;
+    const { amount, discount } = await priceForUser(req.userId, plan);
     const transactionId = genTxnId();
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
 
@@ -55,6 +72,8 @@ router.post('/initiate', requireAuth, async (req, res) => {
         provider: provider.name,
         transactionId,
         amount,
+        baseAmount: plan.pricePromo,
+        referralDiscount: discount,
         currency: 'XOF',
         plan: plan.id,
         method: req.body.method || null,
@@ -110,20 +129,26 @@ router.post('/initiate', requireAuth, async (req, res) => {
 // subscription can never be activated (and extended) twice for one payment.
 async function finalizePaymentSuccess(payment, { method, raw } = {}) {
   if (!payment) return null;
-  if (payment.status === 'success') return payment; // idempotent
-
-  const flipped = await prisma.payment.updateMany({
-    where: { id: payment.id, status: { not: 'success' } },
-    data: {
-      status: 'success',
-      method: method || payment.method,
-      rawPayload: raw ? JSON.stringify(raw) : payment.rawPayload,
-    },
-  });
-  if (flipped.count === 1 && payment.userId) {
+  if (payment.status === 'success') return payment;
+  await prisma.$transaction(async (tx) => {
+    const flipped = await tx.payment.updateMany({
+      where: { id: payment.id, status: { not: 'success' } },
+      data: {
+        status: 'success', method: method || payment.method,
+        rawPayload: raw ? JSON.stringify(raw) : payment.rawPayload,
+      },
+    });
+    if (flipped.count !== 1 || !payment.userId) return;
     const plan = getPlan(payment.plan) || { days: 30, id: payment.plan };
-    await activateSubscription(payment.userId, plan.days, plan.id);
-  }
+    await activateSubscription(payment.userId, plan.days, plan.id, tx);
+    if (payment.referralDiscount > 0) {
+      const referral = await tx.referral.findUnique({ where: { referredId: payment.userId } });
+      if (referral?.status === 'pending') {
+        await tx.referral.update({ where: { id: referral.id }, data: { status: 'rewarded', rewardedAt: new Date() } });
+        await activateSubscription(referral.sponsorId, config.referral.rewardDays, 'referral-bonus', tx);
+      }
+    }
+  });
   return prisma.payment.findUnique({ where: { id: payment.id } });
 }
 
@@ -306,7 +331,7 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     const country = String(req.body.country || user?.country || 'bf').toLowerCase();
-    const amount = plan.pricePromo;
+    const { amount, discount } = await priceForUser(req.userId, plan);
     const transactionId = genTxnId();
 
     const payment = await prisma.payment.create({
@@ -315,6 +340,8 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
         provider: 'feexpay',
         transactionId,
         amount,
+        baseAmount: plan.pricePromo,
+        referralDiscount: discount,
         currency: 'XOF',
         plan: plan.id,
         method: `mobile:${network.toUpperCase()}`,
@@ -339,6 +366,7 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
         mode: 'mock',
         provider: 'feexpay',
         amount,
+        referralDiscount: discount,
         currency: 'XOF',
         plan: plan.id,
       });
@@ -443,6 +471,29 @@ router.post('/feexpay/webhook', async (req, res) => {
   } catch (e) {
     console.error('feexpay webhook error', e);
     res.status(200).send('OK');
+  }
+});
+
+// POST /payments/pawapay/webhook — le callback n'est jamais cru directement :
+// le statut est relu depuis l'API pawaPay avant toute activation d'abonnement.
+router.post('/pawapay/webhook', async (req, res) => {
+  try {
+    const depositId = String(req.body?.depositId || '');
+    if (!depositId) return res.status(400).send('missing depositId');
+    const payment = await prisma.payment.findFirst({
+      where: { provider: 'pawapay', providerRef: depositId },
+    });
+    if (!payment) return res.status(404).send('not found');
+    const verified = await pawapay.verifyPayment(payment);
+    if (verified.status === 'success') {
+      await finalizePaymentSuccess(payment, { method: verified.method, raw: verified.raw });
+    } else if (verified.status === 'failed') {
+      await markFailed(payment, verified.raw);
+    }
+    return res.send('ok');
+  } catch (error) {
+    console.error('pawapay webhook error', error.response?.data || error.message);
+    return res.status(500).send('error');
   }
 });
 

@@ -14,6 +14,7 @@ const {
 } = require('../security');
 
 const router = express.Router();
+const { ensureReferralCode, normalizeReferralCode } = require('../services/referral');
 
 function normalizePhone(raw) {
   return String(raw || '').replace(/[^\d+]/g, '');
@@ -81,6 +82,9 @@ router.post('/register', ipLimitLogin, async (req, res) => {
   }
 
   const country = normalizeCountry(req.body.country);
+  const referralCode = normalizeReferralCode(req.body.referralCode);
+  const sponsor = referralCode ? await prisma.user.findUnique({ where: { referralCode } }) : null;
+  if (referralCode && !sponsor) return res.status(400).json({ error: 'Code de parrainage invalide' });
   let user = await prisma.user.findUnique({ where: { phone } });
   let isNew = false;
   if (user && user.passwordHash) {
@@ -91,24 +95,35 @@ router.post('/register', ipLimitLogin, async (req, res) => {
   const recoveryCode = genRecoveryCode();
   if (user) {
     // Ancien compte OTP (pré-lancement) sans mot de passe : on le réclame.
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash: hashPassword(password),
-        recoveryCodeHash: sha256(recoveryCode),
-        country: country || user.country,
-      },
+    user = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashPassword(password),
+          recoveryCodeHash: sha256(recoveryCode),
+          country: country || user.country,
+        },
+      });
+      if (sponsor && sponsor.id !== user.id) {
+        const used = await tx.referral.findUnique({ where: { referredId: user.id } });
+        if (!used) await tx.referral.create({ data: { sponsorId: sponsor.id, referredId: user.id } });
+      }
+      return updated;
     });
   } else {
     isNew = true;
-    user = await prisma.user.create({
-      data: {
-        phone,
-        passwordHash: hashPassword(password),
-        recoveryCodeHash: sha256(recoveryCode),
-        country,
-      },
+    user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: { phone, passwordHash: hashPassword(password), recoveryCodeHash: sha256(recoveryCode), country },
+      });
+      await ensureReferralCode(created.id, tx);
+      if (sponsor) await tx.referral.create({ data: { sponsorId: sponsor.id, referredId: created.id } });
+      return tx.user.findUnique({ where: { id: created.id } });
     });
+  }
+
+  if (!user.referralCode) {
+    user = { ...user, referralCode: await ensureReferralCode(user.id) };
   }
 
   const token = signToken(user);
@@ -281,6 +296,8 @@ router.post('/verify-otp', ipLimitVerify, async (req, res) => {
     // Keep the country up to date (e.g. user picked it on a later login).
     user = await prisma.user.update({ where: { id: user.id }, data: { country } });
   }
+
+  await ensureReferralCode(user.id);
 
   const token = signToken(user);
   res.json({ token, user: { id: user.id, phone: user.phone, country: user.country, isNew } });

@@ -2,6 +2,8 @@ const express = require('express');
 const prisma = require('../db');
 const { requireAuth } = require('../auth');
 const { getAccess } = require('../services/subscription');
+const config = require('../config');
+const { ensureReferralCode } = require('../services/referral');
 
 const router = express.Router();
 
@@ -10,9 +12,21 @@ router.get('/', requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
   const access = await getAccess(req.userId);
+  const referralCode = await ensureReferralCode(req.userId);
+  const [referral, successfulPayments, successfulReferrals] = await Promise.all([
+    prisma.referral.findUnique({ where: { referredId: req.userId } }),
+    prisma.payment.count({ where: { userId: req.userId, status: 'success' } }),
+    prisma.referral.count({ where: { sponsorId: req.userId, status: 'rewarded' } }),
+  ]);
 
   res.json({
-    user: { id: user.id, phone: user.phone, country: user.country },
+    user: { id: user.id, phone: user.phone, country: user.country, referralCode },
+    referral: {
+      code: referralCode,
+      discountPercent: config.referral.discountPercent,
+      firstPaymentEligible: Boolean(referral && referral.status === 'pending' && successfulPayments === 0),
+      successfulReferrals,
+    },
     access: {
       hasAccess: access.hasAccess,
       hasPaid: access.hasPaid,
