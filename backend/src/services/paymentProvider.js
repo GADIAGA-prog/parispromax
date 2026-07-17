@@ -5,6 +5,7 @@ const paydunya = require('./paydunya');
 const ligdicash = require('./ligdicash');
 const feexpay = require('./feexpay');
 const pawapay = require('./pawapay');
+const yengapay = require('./yengapay');
 
 // Registry of supported payment providers. Both expose the same interface:
 //   initiatePayment({ transactionId, amount, currency, description, customer })
@@ -20,6 +21,7 @@ const REGISTRY = {
   // et carte (interface redirect standard via initiatePayment).
   feexpay: { impl: feexpay, label: 'FeexPay' },
   pawapay: { impl: pawapay, label: 'pawaPay Sandbox' },
+  yengapay: { impl: yengapay, label: 'YengaPay' },
 };
 
 // Configured default (PAYMENT_PROVIDER env), falling back to fedapay.

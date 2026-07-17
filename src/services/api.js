@@ -113,6 +113,15 @@ export const api = {
       auth: true,
       body: { planId, phone, network, country, otp },
     }),
+  // YengaPay — direct Mobile Money (Orange OTP / Moov validation on phone).
+  yengapayOperators: (country) =>
+    request(`/payments/yengapay/operators?country=${encodeURIComponent(country || '')}`),
+  yengapayMobile: ({ planId, phone, operator, country, otp }) =>
+    request('/payments/yengapay/mobile', {
+      method: 'POST',
+      auth: true,
+      body: { planId, phone, operator, country, otp },
+    }),
 
   // Stats
   successRate: () => request('/stats/success-rate'),

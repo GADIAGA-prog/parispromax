@@ -89,6 +89,15 @@ const config = {
     // (le statut est de toute façon re-vérifié via l'API avant activation).
     webhookSecret: process.env.FEEXPAY_WEBHOOK_SECRET || '',
   },
+  yengapay: {
+    // Direct Payment YengaPay: API key + group + project are required by the
+    // official API. Sandbox uses the staging endpoint.
+    apiKey: process.env.YENGAPAY_API_KEY || '',
+    groupId: process.env.YENGAPAY_GROUP_ID || '',
+    projectId: process.env.YENGAPAY_PROJECT_ID || '',
+    mode: (process.env.YENGAPAY_MODE || 'sandbox').toLowerCase(), // sandbox | live
+    webhookSecret: process.env.YENGAPAY_WEBHOOK_SECRET || '',
+  },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
   cronToken: process.env.CRON_TOKEN || '',
   // Bearer token the Python ML daemon uses to push predictions / read NP.
@@ -158,6 +167,14 @@ config.ligdicash.configured = Boolean(config.ligdicash.apiKey && config.ligdicas
 // invalide"). L'environnement (test/live) suit la clé privée utilisée.
 config.feexpay.baseUrl = process.env.FEEXPAY_BASE_URL || 'https://api-v2.feexpay.me/api';
 config.feexpay.configured = Boolean(config.feexpay.shopId && config.feexpay.token);
+
+config.yengapay.baseUrl =
+  config.yengapay.mode === 'live'
+    ? 'https://api.yengapay.com/api/v1'
+    : 'https://api.staging.yengapay.com/api/v1';
+config.yengapay.configured = Boolean(
+  config.yengapay.apiKey && config.yengapay.groupId && config.yengapay.projectId
+);
 
 config.pawapay.baseUrl =
   config.pawapay.mode === 'live' ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';

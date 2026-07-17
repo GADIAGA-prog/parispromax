@@ -53,6 +53,7 @@ export default function PaywallScreen({ navigation }) {
   const countryName = COUNTRY_NAMES[country] || 'votre pays';
   const providerLabel = providers.find((p) => p.id === providerId)?.label || 'notre partenaire';
   const isFeex = providerId === 'feexpay';
+  const isYenga = providerId === 'yengapay';
 
   // Load the payment providers actually available (FedaPay / CinetPay).
   useEffect(() => {
@@ -94,6 +95,23 @@ export default function PaywallScreen({ navigation }) {
       cancelled = true;
     };
   }, [isFeex, country, phone]);
+
+  useEffect(() => {
+    if (!isYenga) return;
+    let cancelled = false;
+    setMmPhone((v) => v || String(phone || '').replace(/[^\d+]/g, ''));
+    api.yengapayOperators(country)
+      .then((d) => {
+        if (cancelled) return;
+        const ops = d.operators || [];
+        setOperators(ops);
+        setOtpNetworks(d.otpRequired || []);
+        setRedirectNetworks([]);
+        setNetwork((n) => (ops.includes(n) ? n : ops[0] || null));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isYenga, country, phone]);
 
   const pollStatus = async (txn, tries = 6) => {
     for (let i = 0; i < tries; i++) {
@@ -221,6 +239,51 @@ export default function PaywallScreen({ navigation }) {
     }
   };
 
+  const onPayYengaMobile = async () => {
+    if (!network) return Alert.alert('Opérateur requis', 'Choisissez votre opérateur Mobile Money.');
+    const num = String(mmPhone || '').replace(/[^\d+]/g, '');
+    if (num.replace(/\D/g, '').length < 8) {
+      return Alert.alert('Numéro invalide', 'Entrez le numéro de votre compte Mobile Money.');
+    }
+    if (needsOtp && otp.trim().length < 4) {
+      return Alert.alert('Code OTP requis', `Obtenez le code OTP ${network} puis saisissez-le ici.`);
+    }
+    setProcessing(true);
+    try {
+      const res = await api.yengapayMobile({ planId, phone: num, operator: network, country, otp: otp.trim() });
+      if (res.status === 'success') {
+        await refreshAccess();
+        return Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
+          { text: 'Super !', onPress: () => navigation.goBack() },
+        ]);
+      }
+      Alert.alert(
+        'Validez votre paiement 📲',
+        [
+          res.providerMessage,
+          network === 'MOOV'
+            ? 'Une demande de validation a été envoyée sur votre téléphone Moov Money.'
+            : 'Après validation auprès de votre opérateur, revenez ici : votre abonnement s’activera automatiquement.',
+        ].filter(Boolean).join('\n\n')
+      );
+      const status = await pollStatus(res.transactionId, 48);
+      if (status === 'success') {
+        await refreshAccess();
+        Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
+          { text: 'Super !', onPress: () => navigation.goBack() },
+        ]);
+      } else if (status === 'pending') {
+        Alert.alert('Paiement en attente', 'La validation peut prendre quelques instants. Rafraîchissez ensuite votre profil.');
+      } else {
+        Alert.alert('Paiement non abouti', 'Le paiement a échoué ou a été annulé. Réessayez.');
+      }
+    } catch (e) {
+      Alert.alert('Paiement impossible', e.data?.reason || 'Vérifiez le numéro, l’opérateur et le code OTP, puis réessayez.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -303,8 +366,8 @@ export default function PaywallScreen({ navigation }) {
           </>
         )}
 
-        {isFeex ? (
-          /* FeexPay — saisie initiale dans l'app, validation selon l'opérateur. */
+        {isFeex || isYenga ? (
+          /* Paiement mobile direct : validation selon l'opérateur. */
           <>
             <Text style={styles.sectionTitle}>Votre Mobile Money ({countryName})</Text>
             <View style={styles.opRow}>
@@ -341,7 +404,7 @@ export default function PaywallScreen({ navigation }) {
                   keyboardType="number-pad"
                   maxLength={10}
                 />
-                {network === 'ORANGE' && country === 'sn' && (
+                {isFeex && network === 'ORANGE' && country === 'sn' && (
                   <Text style={styles.otpHint}>
                     Composez *144*391# sur votre téléphone pour recevoir votre code OTP.
                   </Text>
@@ -351,18 +414,20 @@ export default function PaywallScreen({ navigation }) {
 
             <View style={styles.payInfo}>
               <Ionicons
-                name={needsRedirect ? 'open-outline' : 'phone-portrait'}
+                name={isFeex && needsRedirect ? 'open-outline' : 'phone-portrait'}
                 size={18}
                 color={COLORS.accent}
               />
               <Text style={styles.payInfoText}>
-                {needsRedirect
+                {isFeex && needsRedirect
                   ? 'Après « Continuer », la page sécurisée FeexPay s’ouvrira pour terminer le paiement. Revenez ensuite dans ParisPromax.'
-                  : 'Une demande de paiement sera envoyée sur votre téléphone. Validez-la avec votre code Mobile Money.'}
+                  : isYenga && network === 'ORANGE'
+                    ? 'Saisissez le code OTP fourni par Orange Money. Votre code PIN Mobile Money ne doit jamais être saisi dans ParisPromax.'
+                    : 'Une demande de paiement sera envoyée sur votre téléphone. Validez-la avec votre code Mobile Money.'}
               </Text>
             </View>
 
-            {needsRedirect && (
+            {isFeex && needsRedirect && (
               <Text style={styles.redirectHint}>
                 Votre code PIN Mobile Money reste confidentiel et ne doit jamais être saisi dans ParisPromax.
               </Text>
@@ -370,16 +435,16 @@ export default function PaywallScreen({ navigation }) {
 
             <Pressable
               style={[styles.payBtn, processing && { opacity: 0.7 }]}
-              onPress={onPayFeexMobile}
+              onPress={isYenga ? onPayYengaMobile : onPayFeexMobile}
               disabled={processing}
             >
               {processing ? (
                 <ActivityIndicator color="#06251c" />
               ) : (
                 <>
-                  <Ionicons name={needsRedirect ? 'open-outline' : 'phone-portrait'} size={18} color="#06251c" />
+                  <Ionicons name={isFeex && needsRedirect ? 'open-outline' : 'phone-portrait'} size={18} color="#06251c" />
                   <Text style={styles.payText}>
-                    {needsRedirect ? 'Continuer' : 'Payer'} {plan ? fmtXOF(referralPrice(plan)) : ''}
+                    {isFeex && needsRedirect ? 'Continuer' : 'Payer'} {plan ? fmtXOF(referralPrice(plan)) : ''}
                   </Text>
                 </>
               )}

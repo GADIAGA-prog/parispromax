@@ -15,6 +15,7 @@ const mlRoutes = require('./routes/ml');
 const legalRoutes = require('./routes/legal');
 const walletRoutes = require('./routes/wallet');
 const { backfillReferralCodes } = require('./services/referral');
+const { getProvider } = require('./services/paymentProvider');
 
 const app = express();
 
@@ -52,9 +53,8 @@ app.use(express.json({ limit: '200kb' }));
 
 app.get('/health', (_req, res) => {
   const provider = config.payments.provider;
-  const configured =
-    provider === 'cinetpay' ? config.cinetpay.configured : config.fedapay.configured;
-  const mode = provider === 'cinetpay' ? config.cinetpay.mode : config.fedapay.mode;
+  const configured = getProvider(provider).isConfigured();
+  const mode = config[provider]?.mode || null;
   res.json({
     ok: true,
     service: 'parispromax-backend',
@@ -128,8 +128,7 @@ backfillReferralCodes().catch((error) => console.error('[referral] backfill erro
 server.listen(config.port, () => {
   console.log(`\n🏇 ParisPromax backend on http://localhost:${config.port}`);
   console.log(`   Admin:    http://localhost:${config.port}/admin`);
-  const payConfigured =
-    config.payments.provider === 'cinetpay' ? config.cinetpay.configured : config.fedapay.configured;
+  const payConfigured = getProvider(config.payments.provider).isConfigured();
   console.log(`   Payments: ${config.payments.provider} — ${payConfigured ? 'LIVE/keys set' : 'MOCK mode (no keys)'}`);
   console.log(`   OTP:      ${config.otpDevMode ? 'DEV (codes returned in API)' : 'SMS provider'}`);
   console.log(`   Realtime: ${realtimeOn ? 'socket.io + IA worker ON' : 'off (no REDIS_URL)'}\n`);

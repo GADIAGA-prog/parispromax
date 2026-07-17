@@ -8,6 +8,7 @@ const paydunya = require('../services/paydunya');
 const ligdicash = require('../services/ligdicash');
 const feexpay = require('../services/feexpay');
 const pawapay = require('../services/pawapay');
+const yengapay = require('../services/yengapay');
 const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
 const { activateSubscription } = require('../services/subscription');
 const { getPlan } = require('../plans');
@@ -434,6 +435,136 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
     }
     res.status(500).json(body);
   }
+});
+
+// GET /payments/yengapay/operators?country=bf â€” the operator selector for
+// YengaPay Direct Payment. Orange/Moov Burkina are included in the sandbox.
+router.get('/yengapay/operators', (req, res) => {
+  const country = String(req.query.country || 'bf').toLowerCase();
+  const operators = yengapay.operatorsForCountry(country);
+  res.json({
+    country,
+    operators,
+    otpRequired: operators.filter((operator) => yengapay.requiresOtp(country, operator)),
+  });
+});
+
+// POST /payments/yengapay/mobile (auth) — YengaPay direct Mobile Money flow.
+// Orange requires the OTP supplied by the operator; Moov is validated directly
+// on the customer's phone. The app never receives or stores a Mobile Money PIN.
+router.post('/yengapay/mobile', requireAuth, async (req, res) => {
+  try {
+    if (!yengapay.isConfigured()) {
+      return res.status(400).json({ error: 'YengaPay non configuré' });
+    }
+    const plan = getPlan(req.body.planId);
+    if (!plan) return res.status(400).json({ error: 'Plan invalide' });
+    const phone = String(req.body.phone || '').trim();
+    const operator = String(req.body.operator || '').trim().toUpperCase();
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    const country = String(req.body.country || user?.country || 'bf').toLowerCase();
+    if (!phone || !operator) return res.status(400).json({ error: 'Numéro et opérateur requis' });
+    if (!yengapay.operatorsForCountry(country).includes(operator)) {
+      return res.status(400).json({ error: 'Opérateur non disponible pour ce pays' });
+    }
+    if (yengapay.requiresOtp(country, operator) && String(req.body.otp || '').trim().length < 4) {
+      return res.status(400).json({ error: 'Code OTP requis pour cet opérateur' });
+    }
+
+    const { amount, discount } = await priceForUser(req.userId, plan);
+    const transactionId = genTxnId();
+    const payment = await prisma.payment.create({
+      data: {
+        userId: req.userId,
+        provider: 'yengapay',
+        transactionId,
+        amount,
+        baseAmount: plan.pricePromo,
+        referralDiscount: discount,
+        currency: 'XOF',
+        plan: plan.id,
+        method: `mobile:${operator}`,
+        status: 'pending',
+        description: `Abonnement ParisPromax — ${plan.label}`,
+      },
+    });
+
+    const intent = await yengapay.initDirectPayment({
+      transactionId,
+      amount,
+      description: payment.description,
+      customer: { id: req.userId },
+    });
+    const result = await yengapay.requestMobilePayment({
+      paymentIntentId: intent.paymentIntentId,
+      operator,
+      country,
+      phone,
+      otp: req.body.otp,
+    });
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { providerRef: String(intent.paymentIntentId), rawPayload: JSON.stringify({ intent, result }) },
+    });
+
+    if (result.status === 'success') {
+      await finalizePaymentSuccess(payment, { method: payment.method, raw: result });
+    } else if (result.status === 'failed') {
+      await markFailed(payment, result);
+    }
+
+    res.json({
+      transactionId,
+      paymentIntentId: intent.paymentIntentId,
+      status: result.status,
+      providerMessage: result.message || null,
+      provider: 'yengapay',
+      amount,
+      currency: 'XOF',
+      plan: plan.id,
+    });
+  } catch (e) {
+    const pdata = e.response?.data;
+    console.error('yengapay mobile error', e.response?.status || '', pdata || e.message);
+    const reason = pdata?.message || pdata?.error || pdata?.detail || (typeof pdata === 'string' ? pdata : null);
+    res.status(500).json({
+      error: 'Échec du paiement YengaPay',
+      ...(reason ? { reason: String(reason).slice(0, 200) } : {}),
+    });
+  }
+});
+
+function yengapayWebhookAuthorized(req) {
+  const secret = config.yengapay.webhookSecret;
+  if (!secret) return true;
+  const authorization = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const supplied = String(
+    req.headers['x-yengapay-webhook-secret'] || req.headers['x-webhook-secret'] || authorization
+  );
+  return safeEqual(supplied, secret);
+}
+
+// POST /payments/yengapay/webhook — callback is only a signal: the payment
+// intent is fetched again from YengaPay before an access entitlement is granted.
+router.post('/yengapay/webhook', async (req, res) => {
+  if (!yengapayWebhookAuthorized(req)) return res.status(401).send('unauthorized');
+  try {
+    const body = req.body || {};
+    const intentId = body.paymentIntentId || body.payment_intent_id || body.data?.paymentIntentId;
+    const reference = body.reference || body.data?.reference || body.metadata?.transactionId;
+    let payment = intentId
+      ? await prisma.payment.findFirst({ where: { provider: 'yengapay', providerRef: String(intentId) } })
+      : null;
+    if (!payment && reference) payment = await prisma.payment.findUnique({ where: { transactionId: String(reference) } });
+    if (payment) {
+      const verified = await yengapay.verifyPayment(payment);
+      if (verified.status === 'success') await finalizePaymentSuccess(payment, { method: verified.method, raw: verified.raw });
+      else if (verified.status === 'failed') await markFailed(payment, verified.raw);
+    }
+  } catch (error) {
+    console.error('yengapay webhook error', error.response?.data || error.message);
+  }
+  return res.status(200).send('OK');
 });
 
 // Vérifie le secret partagé du webhook FeexPay quand il est configuré.
