@@ -10,7 +10,6 @@ import { useSettings } from '../context/SettingsContext';
 import LoginScreen from '../screens/LoginScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
-import QuintePlusScreen from '../screens/QuintePlusScreen';
 import RaceDetailScreen from '../screens/RaceDetailScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import HistoryScreen from '../screens/HistoryScreen';
@@ -48,7 +47,6 @@ function MainTabs() {
         tabBarIcon: ({ color, size }) => {
           const icons = {
             Courses: 'home',
-            'Quinté+': 'trophy',
             Historique: 'time',
             Profil: 'person',
           };
@@ -57,7 +55,6 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Courses" component={HomeScreen} />
-      <Tab.Screen name="Quinté+" component={QuintePlusScreen} />
       <Tab.Screen name="Historique" component={HistoryScreen} />
       <Tab.Screen name="Profil" component={ProfileScreen} />
     </Tab.Navigator>
