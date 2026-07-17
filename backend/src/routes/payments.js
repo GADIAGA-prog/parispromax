@@ -302,7 +302,8 @@ router.post('/ligdicash/webhook', express.urlencoded({ extended: true }), async 
 // GET /payments/feexpay/operators?country=bf — opérateurs mobile money que
 // FeexPay supporte pour un pays (ISO2). Public — alimente le sélecteur de l'app.
 // `otpRequired` indique les opérateurs pour lesquels l'app doit demander un
-// code OTP au client (Orange Sénégal, Coris Bénin).
+// code OTP au client (Orange Sénégal, Coris Bénin). `redirectRequired` indique
+// ceux dont la validation se poursuit sur une page sécurisée FeexPay.
 router.get('/feexpay/operators', (req, res) => {
   const country = String(req.query.country || '').toLowerCase();
   const operators = feexpay.operatorsForCountry(country);
@@ -310,14 +311,14 @@ router.get('/feexpay/operators', (req, res) => {
     country,
     operators,
     otpRequired: operators.filter((op) => feexpay.requiresOtp(country, op)),
+    redirectRequired: operators.filter((op) => feexpay.usesRedirect(country, op)),
   });
 });
 
 // POST /payments/feexpay/mobile  (auth)  { planId, phone, network, country? }
-// Mobile money DIRECT (sans redirection) : FeexPay pousse une confirmation sur
-// le téléphone du client. On crée un Payment en attente, on déclenche
-// requesttopay, on stocke la référence FeexPay, et l'app suit ensuite via
-// /payments/status/:txn (polling + re-vérification serveur).
+// Mobile money FeexPay : selon l'opérateur, FeexPay pousse une confirmation sur
+// le téléphone ou renvoie une page sécurisée à ouvrir. On crée un Payment en
+// attente, on déclenche requesttopay, puis l'app suit /payments/status/:txn.
 router.post('/feexpay/mobile', requireAuth, async (req, res) => {
   try {
     if (!feexpay.isConfigured() && !config.allowMock) {
@@ -399,6 +400,7 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
       // Selon l'opérateur : soit une page de validation à ouvrir (Wave CI…),
       // soit un message d'instruction du PSP (Orange/Moov BF : code USSD).
       paymentUrl: result.paymentUrl || null,
+      redirectExpected: result.redirectExpected,
       providerMessage: result.providerMessage || null,
       provider: 'feexpay',
       amount,

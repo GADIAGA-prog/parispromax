@@ -41,6 +41,7 @@ export default function PaywallScreen({ navigation }) {
   // FeexPay mobile money — saisie in-app (opérateur + numéro).
   const [operators, setOperators] = useState([]);
   const [otpNetworks, setOtpNetworks] = useState([]); // Orange SN, Coris BJ
+  const [redirectNetworks, setRedirectNetworks] = useState([]);
   const [network, setNetwork] = useState(null);
   const [mmPhone, setMmPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -85,6 +86,7 @@ export default function PaywallScreen({ navigation }) {
         const ops = d.operators || [];
         setOperators(ops);
         setOtpNetworks(d.otpRequired || []);
+        setRedirectNetworks(d.redirectRequired || []);
         setNetwork((n) => (ops.includes(n) ? n : ops[0] || null));
       })
       .catch(() => {});
@@ -131,9 +133,10 @@ export default function PaywallScreen({ navigation }) {
     }
   };
 
-  // FeexPay mobile money — paiement DIRECT : FeexPay pousse une demande de
-  // confirmation sur le téléphone. Pas de page à ouvrir ; on suit par polling.
+  // FeexPay mobile money : certains opérateurs poussent une demande sur le
+  // téléphone, tandis qu'Orange/Moov BF poursuivent sur une page FeexPay.
   const needsOtp = otpNetworks.includes(network);
+  const needsRedirect = redirectNetworks.includes(network);
 
   const onPayFeexMobile = async () => {
     if (!network) return Alert.alert('Opérateur requis', 'Choisissez votre opérateur Mobile Money.');
@@ -154,16 +157,30 @@ export default function PaywallScreen({ navigation }) {
         ]);
       }
 
-      // Trois cas : page de validation à ouvrir (Wave CI…), instruction de
-      // l'opérateur (Orange/Moov BF : code USSD à composer), ou notification
+      // Trois cas : page FeexPay à ouvrir, simulation locale, ou notification
       // poussée sur le téléphone (MTN, Moov Bénin…).
       if (res.paymentUrl) {
-        await WebBrowser.openBrowserAsync(res.paymentUrl);
+        await WebBrowser.openBrowserAsync(res.paymentUrl, {
+          showTitle: true,
+          enableBarCollapsing: false,
+        });
       } else if (res.mode === 'mock') {
         Alert.alert(
           '🧪 MODE TEST — paiement simulé',
           "Aucun argent réel : le serveur est en mode test (pas de clés FeexPay). Le paiement sera validé automatiquement dans quelques secondes."
         );
+      } else if (res.redirectExpected || needsRedirect) {
+        Alert.alert(
+          'Redirection FeexPay indisponible',
+          [
+            res.providerMessage,
+            "FeexPay n’a pas fourni la page sécurisée attendue pour cet opérateur. Aucun code PIN ne doit être saisi dans ParisPromax.",
+            'Veuillez réessayer plus tard ou choisir un autre réseau.',
+          ]
+            .filter(Boolean)
+            .join('\n\n')
+        );
+        return;
       } else {
         // On n'invente AUCUNE instruction : seul le message du prestataire fait
         // foi (un mauvais code USSD enverrait l'argent au mauvais endroit).
@@ -287,7 +304,7 @@ export default function PaywallScreen({ navigation }) {
         )}
 
         {isFeex ? (
-          /* FeexPay — saisie Mobile Money DANS l'app (paiement direct) */
+          /* FeexPay — saisie initiale dans l'app, validation selon l'opérateur. */
           <>
             <Text style={styles.sectionTitle}>Votre Mobile Money ({countryName})</Text>
             <View style={styles.opRow}>
@@ -333,12 +350,23 @@ export default function PaywallScreen({ navigation }) {
             )}
 
             <View style={styles.payInfo}>
-              <Ionicons name="phone-portrait" size={18} color={COLORS.accent} />
+              <Ionicons
+                name={needsRedirect ? 'open-outline' : 'phone-portrait'}
+                size={18}
+                color={COLORS.accent}
+              />
               <Text style={styles.payInfoText}>
-                Une demande de paiement sera envoyée sur votre téléphone.
-                Validez-la avec votre code Mobile Money.
+                {needsRedirect
+                  ? 'Après « Continuer », la page sécurisée FeexPay s’ouvrira pour terminer le paiement. Revenez ensuite dans ParisPromax.'
+                  : 'Une demande de paiement sera envoyée sur votre téléphone. Validez-la avec votre code Mobile Money.'}
               </Text>
             </View>
+
+            {needsRedirect && (
+              <Text style={styles.redirectHint}>
+                Votre code PIN Mobile Money reste confidentiel et ne doit jamais être saisi dans ParisPromax.
+              </Text>
+            )}
 
             <Pressable
               style={[styles.payBtn, processing && { opacity: 0.7 }]}
@@ -349,8 +377,10 @@ export default function PaywallScreen({ navigation }) {
                 <ActivityIndicator color="#06251c" />
               ) : (
                 <>
-                  <Ionicons name="phone-portrait" size={18} color="#06251c" />
-                  <Text style={styles.payText}>Payer {plan ? fmtXOF(plan.pricePromo) : ''}</Text>
+                  <Ionicons name={needsRedirect ? 'open-outline' : 'phone-portrait'} size={18} color="#06251c" />
+                  <Text style={styles.payText}>
+                    {needsRedirect ? 'Continuer' : 'Payer'} {plan ? fmtXOF(referralPrice(plan)) : ''}
+                  </Text>
                 </>
               )}
             </Pressable>
@@ -462,4 +492,10 @@ const styles = StyleSheet.create({
   },
   cardLinkText: { color: COLORS.textMuted, fontSize: FONT.sm, textDecorationLine: 'underline' },
   otpHint: { color: COLORS.textMuted, fontSize: FONT.sm - 1, marginBottom: SPACING.sm },
+  redirectHint: {
+    color: COLORS.textFaint,
+    fontSize: FONT.sm - 1,
+    lineHeight: 17,
+    marginTop: SPACING.sm,
+  },
 });

@@ -66,7 +66,7 @@ services:
       # Seul FeexPay est proposé aux clients ; les autres intégrations restent
       # dans le code mais sont masquées (réactivables en retirant de la liste).
       - key: PAYMENT_DISABLED
-        value: fedapay,cinetpay,paydunya,ligdicash
+        value: fedapay,cinetpay,paydunya,ligdicash,pawapay
       # URLs des journaux hippiques nationaux (bouton "Journal" de l'app).
       # À renseigner UNE fois : la page du journal du jour de chaque loterie
       # (ex. LONAB). Reprises automatiquement chaque jour par l'auto-pick.

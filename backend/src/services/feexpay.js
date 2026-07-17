@@ -132,6 +132,18 @@ function requiresOtp(iso2, network) {
   return (c === 'sn' && n === 'ORANGE') || (c === 'bj' && n === 'CORIS');
 }
 
+// Réseaux pour lesquels le SDK FeexPay termine le paiement sur une page web
+// opérateur. L'application doit ouvrir la `payment_url` renvoyée par FeexPay au
+// lieu de laisser croire au client qu'une simple notification sera envoyée.
+function usesRedirect(iso2, network) {
+  const c = String(iso2 || '').toLowerCase();
+  const n = String(network || '').toUpperCase();
+  return (
+    (c === 'bf' && ['ORANGE', 'MOOV'].includes(n)) ||
+    (c === 'ci' && ['ORANGE', 'WAVE'].includes(n))
+  );
+}
+
 async function requestMobilePayment({ transactionId, amount, description, phone, network, country, customer, otp }) {
   if (!isConfigured()) {
     throw new Error('FeexPay non configuré');
@@ -198,6 +210,7 @@ async function requestMobilePayment({ transactionId, amount, description, phone,
     reference: String(reference),
     status: mapStatus(data.status),
     paymentUrl,
+    redirectExpected: usesRedirect(country, network),
     providerMessage: message,
     raw: data,
   };
@@ -295,5 +308,6 @@ module.exports = {
   mapReseau,
   toInternational,
   requiresOtp,
+  usesRedirect,
   NETWORKS_BY_COUNTRY,
 };
