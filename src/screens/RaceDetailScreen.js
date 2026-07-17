@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HorseCard from '../components/HorseCard';
+import RaceInsightsCard from '../components/RaceInsightsCard';
 import LockCard from '../components/LockCard';
 import TrialBanner from '../components/TrialBanner';
 import Disclaimer from '../components/Disclaimer';
-import { BADGES, applyBackendPredictions, groupPredictions } from '../services/aiEngine';
+import { applyBackendPredictions } from '../services/aiEngine';
 import { usePrediction } from '../hooks/usePrediction';
 import { useLiveRace } from '../hooks/useLiveRace';
 import { useAuth } from '../context/AuthContext';
@@ -42,14 +43,6 @@ export default function RaceDetailScreen({ route, navigation }) {
   const isSmart = fromBackend || (live && live.length > 0);
 
   const horses = Array.isArray(shown?.horses) ? shown.horses : [];
-  // Quatre lectures du pronostic : favoris / 5 meilleurs / outsiders / tocard.
-  const { favoris, top5, outsiders, tocard } = useMemo(() => groupPredictions(horses), [horses]);
-  const valueBet = horses.find((h) =>
-    h.badges?.some((b) => b.key === BADGES.VALUE.key)
-  );
-  const chronoHorse = horses.find((h) =>
-    h.badges?.some((b) => b.key === BADGES.CHRONO.key)
-  );
 
   const cond = TRACK_CONDITIONS[condition] || TRACK_CONDITIONS.dry;
   const goPaywall = () => navigation.navigate('Paywall');
@@ -108,96 +101,7 @@ export default function RaceDetailScreen({ route, navigation }) {
           onUnlockPress={goPaywall}
           label="Pronostics IA verrouillés"
         >
-          <View style={styles.aiBox}>
-            {/* ⭐ FAVORIS — les chevaux les plus probables au gagnant */}
-            <Text style={styles.aiHeading}>
-              ⭐ Favoris{isSmart ? '  ·  IA avancée' : ''}
-            </Text>
-            {favoris.map((h, i) => (
-              <View key={h.number} style={styles.topRow}>
-                <Text style={styles.topRank}>{i + 1}.</Text>
-                <View style={styles.topNameBox}>
-                  <Text style={styles.topName}>
-                    n°{h.number} {h.name}
-                  </Text>
-                  {h.probaGagnant != null || h.probaPodium != null ? (
-                    <Text style={styles.topProbaDetail}>
-                      {h.probaGagnant != null ? `Gagnant ${Math.round(h.probaGagnant * 100)}%` : ''}
-                      {h.probaGagnant != null && h.probaPodium != null ? '  ·  ' : ''}
-                      {h.probaPodium != null ? `Podium ${Math.round(h.probaPodium * 100)}%` : ''}
-                    </Text>
-                  ) : null}
-                </View>
-                <Text style={styles.topScore}>{Math.round(h.aiScore)}/100</Text>
-              </View>
-            ))}
-
-            <View style={styles.divider} />
-
-            {/* 🏆 LES 5 MEILLEURS — la base de jeu (Quinté) */}
-            <Text style={styles.groupTitle}>🏆 Les 5 meilleurs</Text>
-            <View style={styles.ballRow}>
-              {top5.map((h) => (
-                <View key={h.number} style={styles.ball}>
-                  <Text style={styles.ballText}>{h.number}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* 💎 OUTSIDERS — grosses cotes à potentiel de podium */}
-            <Text style={styles.groupTitle}>💎 Outsiders</Text>
-            {outsiders.length ? (
-              outsiders.map((h) => (
-                <View key={h.number} style={styles.outsiderRow}>
-                  <Text style={styles.outsiderName}>
-                    n°{h.number} {h.name}
-                  </Text>
-                  <Text style={styles.outsiderMeta}>
-                    {h.odds != null ? `cote ${h.odds}` : ''}
-                    {h.probaPodium != null ? `  ·  podium ${Math.round(h.probaPodium * 100)}%` : ''}
-                  </Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.outsiderMeta}>Aucun outsider fiable détecté sur cette course.</Text>
-            )}
-
-            {/* 🃏 LE TOCARD — la très grosse cote la moins folle (fin de combinaison) */}
-            {tocard ? (
-              <>
-                <Text style={styles.groupTitle}>🃏 Le Tocard</Text>
-                <View style={styles.outsiderRow}>
-                  <Text style={styles.outsiderName}>
-                    n°{tocard.number} {tocard.name}
-                  </Text>
-                  <Text style={styles.outsiderMeta}>
-                    {tocard.odds != null ? `cote ${tocard.odds}` : ''}
-                    {tocard.probaPodium != null
-                      ? `  ·  podium ${Math.round(tocard.probaPodium * 100)}%`
-                      : ''}
-                    {'  ·  à glisser en fin de combinaison'}
-                  </Text>
-                </View>
-              </>
-            ) : null}
-
-            <View style={styles.divider} />
-
-            <View style={styles.miniRow}>
-              <Text style={styles.miniLabel}>⭐ Value Bet</Text>
-              <Text style={styles.miniValue}>
-                {valueBet ? `n°${valueBet.number} ${valueBet.name} (${valueBet.odds})` : '—'}
-              </Text>
-            </View>
-            <View style={styles.miniRow}>
-              <Text style={styles.miniLabel}>⏱️ Record Chrono</Text>
-              <Text style={styles.miniValue}>
-                {chronoHorse
-                  ? `n°${chronoHorse.number} ${chronoHorse.name} (${chronoHorse.chrono}s)`
-                  : 'N/A (plat)'}
-              </Text>
-            </View>
-          </View>
+          <RaceInsightsCard race={shown} advanced={isSmart} />
         </LockCard>
 
         <Disclaimer />
@@ -259,44 +163,7 @@ const styles = StyleSheet.create({
   },
   resultWinner: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   resultBallText: { color: COLORS.text, fontWeight: '900' },
-  aiBox: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md,
-    padding: SPACING.lg,
-  },
-  aiHeading: { color: COLORS.accent, fontWeight: '900', fontSize: FONT.lg, marginBottom: SPACING.sm },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    gap: SPACING.sm,
-  },
-  topRank: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.lg, width: 24 },
-  topNameBox: { flex: 1 },
-  topName: { color: COLORS.white, fontWeight: '700', fontSize: FONT.md },
-  topProbaDetail: { color: COLORS.gold, fontWeight: '700', fontSize: FONT.sm - 1, marginTop: 1 },
-  topScore: { color: COLORS.accent, fontWeight: '900', fontSize: FONT.md },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    marginVertical: SPACING.sm,
-  },
-  groupTitle: {
-    color: COLORS.white, fontWeight: '900', fontSize: FONT.md,
-    marginTop: SPACING.sm, marginBottom: SPACING.sm,
-  },
   ballRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm, flexWrap: 'wrap' },
-  ball: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: COLORS.gold,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  ballText: { color: '#06251c', fontWeight: '900', fontSize: FONT.md },
-  outsiderRow: { paddingVertical: 4 },
-  outsiderName: { color: COLORS.white, fontWeight: '700', fontSize: FONT.md },
-  outsiderMeta: { color: 'rgba(255,255,255,0.75)', fontSize: FONT.sm, marginTop: 1 },
-  miniRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  miniLabel: { color: 'rgba(255,255,255,0.85)', fontSize: FONT.sm, fontWeight: '600' },
-  miniValue: { color: COLORS.white, fontSize: FONT.sm, fontWeight: '700', flexShrink: 1, textAlign: 'right' },
   lockedHint: {
     color: COLORS.textFaint,
     fontSize: FONT.sm,
