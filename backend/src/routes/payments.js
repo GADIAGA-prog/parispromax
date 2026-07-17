@@ -7,6 +7,7 @@ const fedapay = require('../services/fedapay');
 const paydunya = require('../services/paydunya');
 const ligdicash = require('../services/ligdicash');
 const feexpay = require('../services/feexpay');
+const pawapay = require('../services/pawapay');
 const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
 const { activateSubscription } = require('../services/subscription');
 const { getPlan } = require('../plans');
@@ -470,6 +471,29 @@ router.post('/feexpay/webhook', async (req, res) => {
   } catch (e) {
     console.error('feexpay webhook error', e);
     res.status(200).send('OK');
+  }
+});
+
+// POST /payments/pawapay/webhook — le callback n'est jamais cru directement :
+// le statut est relu depuis l'API pawaPay avant toute activation d'abonnement.
+router.post('/pawapay/webhook', async (req, res) => {
+  try {
+    const depositId = String(req.body?.depositId || '');
+    if (!depositId) return res.status(400).send('missing depositId');
+    const payment = await prisma.payment.findFirst({
+      where: { provider: 'pawapay', providerRef: depositId },
+    });
+    if (!payment) return res.status(404).send('not found');
+    const verified = await pawapay.verifyPayment(payment);
+    if (verified.status === 'success') {
+      await finalizePaymentSuccess(payment, { method: verified.method, raw: verified.raw });
+    } else if (verified.status === 'failed') {
+      await markFailed(payment, verified.raw);
+    }
+    return res.send('ok');
+  } catch (error) {
+    console.error('pawapay webhook error', error.response?.data || error.message);
+    return res.status(500).send('error');
   }
 });
 

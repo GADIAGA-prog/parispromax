@@ -98,6 +98,12 @@ const config = {
     priceXOF: Number(process.env.SUB_PRICE_XOF) || 5000,
     periodDays: Number(process.env.SUB_PERIOD_DAYS) || 30,
   },
+  pawapay: {
+    apiToken: process.env.PAWAPAY_API_TOKEN || '',
+    mode: (process.env.PAWAPAY_MODE || 'sandbox').toLowerCase(),
+    baseUrl: '',
+    configured: false,
+  },
   referral: {
     discountPercent: Math.min(100, Math.max(0, Number(process.env.REFERRAL_DISCOUNT_PERCENT) || 10)),
     rewardDays: Math.max(1, Number(process.env.REFERRAL_REWARD_DAYS) || 7),
@@ -152,6 +158,10 @@ config.ligdicash.configured = Boolean(config.ligdicash.apiKey && config.ligdicas
 // invalide"). L'environnement (test/live) suit la clé privée utilisée.
 config.feexpay.baseUrl = process.env.FEEXPAY_BASE_URL || 'https://api-v2.feexpay.me/api';
 config.feexpay.configured = Boolean(config.feexpay.shopId && config.feexpay.token);
+
+config.pawapay.baseUrl =
+  config.pawapay.mode === 'live' ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
+config.pawapay.configured = Boolean(config.pawapay.apiToken);
 
 // ---- Boot-time security checks (fail fast on unsafe production setups) ------
 if (isProdLike) {
