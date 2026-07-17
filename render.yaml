@@ -58,15 +58,15 @@ services:
         sync: false
       - key: OTP_TTL_MINUTES
         value: "5"
-      # Provider de paiement ACTIF en production : FeexPay (compte marchand réel).
-      # Renseigner FEEXPAY_SHOP_ID + FEEXPAY_TOKEN (token live fp_...) dans le
-      # dashboard Render. Orange Money BF et Moov BF passent déjà par FeexPay.
+      # Provider de paiement ACTIF en production : FedaPay.
+      # Renseigner FEDAPAY_SECRET_KEY (clé privée live) dans le dashboard
+      # Render. Le Checkout FedaPay propose Orange Money et Moov Burkina Faso.
       - key: PAYMENT_PROVIDER
-        value: feexpay
-      # Seul FeexPay est proposé aux clients ; les autres intégrations restent
+        value: fedapay
+      # Seul FedaPay est proposé aux clients ; les autres intégrations restent
       # dans le code mais sont masquées (réactivables en retirant de la liste).
       - key: PAYMENT_DISABLED
-        value: fedapay,cinetpay,paydunya,ligdicash,pawapay
+        value: cinetpay,paydunya,ligdicash,pawapay,feexpay
       # URLs des journaux hippiques nationaux (bouton "Journal" de l'app).
       # À renseigner UNE fois : la page du journal du jour de chaque loterie
       # (ex. LONAB). Reprises automatiquement chaque jour par l'auto-pick.
