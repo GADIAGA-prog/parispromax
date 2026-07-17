@@ -223,7 +223,10 @@ router.get('/:externalId/non-partants', async (req, res) => {
 // Exposes the full public data we hold on each runner so the app can display
 // rich cards (trainer, career earnings, unshod status, odds trend…).
 router.get('/:externalId', async (req, res) => {
-  const race = await prisma.race.findUnique({ where: { externalId: req.params.externalId } });
+  const race = await prisma.race.findUnique({
+    where: { externalId: req.params.externalId },
+    include: { result: true },
+  });
   if (!race) return res.status(404).json({ error: 'Course introuvable' });
   const full = parse(race.raw, {});
   const nonPartants = race.nonPartants ? parse(race.nonPartants, []) : [];
@@ -241,6 +244,7 @@ router.get('/:externalId', async (req, res) => {
     prize: full.prize ?? null, // allocation de la course (euros)
     prizePool: full.prizePool || null,
     nonPartants: Array.isArray(nonPartants) ? nonPartants : [],
+    result: race.result ? { winners: parse(race.result.winners, []) } : null,
     horses: (full.horses || []).map((h) => ({
       number: h.number,
       name: h.name,

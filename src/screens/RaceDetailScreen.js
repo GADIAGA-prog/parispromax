@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { applyBackendPredictions } from '../services/aiEngine';
 import { usePrediction } from '../hooks/usePrediction';
 import { useLiveRace } from '../hooks/useLiveRace';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT, TRACK_CONDITIONS } from '../theme/colors';
 
 // Maps the live LTR payload -> the backend-picks shape aiEngine understands.
@@ -29,6 +30,20 @@ function livePicks(preds) {
 export default function RaceDetailScreen({ route, navigation }) {
   const { trackName, condition, race } = route.params;
   const { isLocked } = useAuth();
+  const [officialResult, setOfficialResult] = useState(race?.result || null);
+
+  // Une liste de courses peut venir du cache hors-ligne. À l'ouverture, relire
+  // la fiche publique garantit que l'arrivée officielle la plus récente apparaît.
+  useEffect(() => {
+    let cancelled = false;
+    if (!race?.id) return undefined;
+    api.raceDetail(race.id)
+      .then((detail) => {
+        if (!cancelled) setOfficialResult(detail?.result || null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [race?.id]);
 
   // Subscribers get the trained backend model; everyone falls back to local.
   const { race: analyzed, fromBackend } = usePrediction(race, !isLocked);
@@ -46,6 +61,8 @@ export default function RaceDetailScreen({ route, navigation }) {
 
   const cond = TRACK_CONDITIONS[condition] || TRACK_CONDITIONS.dry;
   const goPaywall = () => navigation.navigate('Paywall');
+  const winners = officialResult?.winners || analyzed.result?.winners || [];
+  const isPast = race?.startsAt && new Date(race.startsAt).getTime() <= Date.now();
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -78,18 +95,26 @@ export default function RaceDetailScreen({ route, navigation }) {
           </View>
         </View>
 
-        {analyzed.result?.winners?.length ? (
+        {winners.length ? (
           <View style={styles.resultBox}>
             <View style={styles.resultHead}>
               <Ionicons name="flag" size={18} color="#06251c" />
               <Text style={styles.resultTitle}>Résultat officiel</Text>
             </View>
             <View style={styles.ballRow}>
-              {analyzed.result.winners.slice(0, 5).map((number, index) => (
+              {winners.slice(0, 5).map((number, index) => (
                 <View key={`${number}-${index}`} style={[styles.resultBall, index === 0 && styles.resultWinner]}>
                   <Text style={styles.resultBallText}>{number}</Text>
                 </View>
               ))}
+            </View>
+          </View>
+        ) : isPast ? (
+          <View style={styles.resultPending}>
+            <Ionicons name="time" size={17} color={COLORS.gold} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.resultPendingTitle}>Arrivée en cours de validation</Text>
+              <Text style={styles.resultPendingText}>Le résultat officiel apparaîtra automatiquement dès sa publication.</Text>
             </View>
           </View>
         ) : null}
@@ -163,6 +188,13 @@ const styles = StyleSheet.create({
   },
   resultWinner: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   resultBallText: { color: COLORS.text, fontWeight: '900' },
+  resultPending: {
+    flexDirection: 'row', gap: SPACING.sm, alignItems: 'flex-start',
+    backgroundColor: 'rgba(251,191,36,0.10)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.4)',
+    borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
+  },
+  resultPendingTitle: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.md },
+  resultPendingText: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2, lineHeight: 18 },
   ballRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm, flexWrap: 'wrap' },
   lockedHint: {
     color: COLORS.textFaint,
