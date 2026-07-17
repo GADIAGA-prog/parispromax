@@ -2,10 +2,10 @@ const prisma = require('../db');
 
 // Activate (or extend) a user's subscription after a successful payment.
 // `days` and `planId` come from the purchased plan.
-async function activateSubscription(userId, days, planId) {
+async function activateSubscription(userId, days, planId, db = prisma) {
   const periodMs = (days || 30) * 24 * 60 * 60 * 1000;
 
-  const existing = await prisma.subscription.findFirst({
+  const existing = await db.subscription.findFirst({
     where: { userId },
     orderBy: { currentPeriodEnd: 'desc' },
   });
@@ -18,12 +18,12 @@ async function activateSubscription(userId, days, planId) {
   const currentPeriodEnd = new Date(base + periodMs);
 
   if (existing) {
-    return prisma.subscription.update({
+    return db.subscription.update({
       where: { id: existing.id },
       data: { status: 'active', plan: planId || existing.plan, currentPeriodEnd },
     });
   }
-  return prisma.subscription.create({
+  return db.subscription.create({
     data: { userId, plan: planId || 'monthly', status: 'active', currentPeriodEnd },
   });
 }

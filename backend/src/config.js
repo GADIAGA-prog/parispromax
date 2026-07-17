@@ -98,6 +98,10 @@ const config = {
     priceXOF: Number(process.env.SUB_PRICE_XOF) || 5000,
     periodDays: Number(process.env.SUB_PERIOD_DAYS) || 30,
   },
+  referral: {
+    discountPercent: Math.min(100, Math.max(0, Number(process.env.REFERRAL_DISCOUNT_PERCENT) || 10)),
+    rewardDays: Math.max(1, Number(process.env.REFERRAL_REWARD_DAYS) || 7),
+  },
   admin: {
     user: process.env.ADMIN_USER || 'admin',
     password: process.env.ADMIN_PASSWORD || 'admin',

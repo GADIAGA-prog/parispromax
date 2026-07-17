@@ -33,7 +33,7 @@ const PERKS = [
 ];
 
 export default function PaywallScreen({ navigation }) {
-  const { refreshAccess, country, phone } = useAuth();
+  const { refreshAccess, country, phone, referral } = useAuth();
   const [planId, setPlanId] = useState('monthly');
   const [providers, setProviders] = useState([]);
   const [providerId, setProviderId] = useState(null);
@@ -46,6 +46,9 @@ export default function PaywallScreen({ navigation }) {
   const [otp, setOtp] = useState('');
 
   const plan = PLANS.find((p) => p.id === planId);
+  const referralPrice = (p) => referral?.firstPaymentEligible
+    ? Math.max(0, p.pricePromo - Math.round(p.pricePromo * referral.discountPercent / 100))
+    : p.pricePromo;
   const countryName = COUNTRY_NAMES[country] || 'votre pays';
   const providerLabel = providers.find((p) => p.id === providerId)?.label || 'notre partenaire';
   const isFeex = providerId === 'feexpay';
@@ -231,7 +234,10 @@ export default function PaywallScreen({ navigation }) {
               </View>
               <View style={styles.priceCol}>
                 {hasPromo && <Text style={styles.priceStrike}>{fmtXOF(p.priceNormal)}</Text>}
-                <Text style={styles.pricePromo}>{fmtXOF(p.pricePromo)}</Text>
+                <Text style={styles.pricePromo}>{fmtXOF(referralPrice(p))}</Text>
+                {referral?.firstPaymentEligible && (
+                  <Text style={styles.referralPrice}>Parrainage -{referral.discountPercent}%</Text>
+                )}
                 {hasPromo && (
                   <View style={styles.discount}>
                     <Text style={styles.discountText}>-{p.discount}%</Text>
@@ -398,6 +404,7 @@ const styles = StyleSheet.create({
   priceCol: { alignItems: 'flex-end' },
   priceStrike: { color: COLORS.textFaint, fontSize: FONT.sm - 1, textDecorationLine: 'line-through' },
   pricePromo: { color: COLORS.accent, fontWeight: '900', fontSize: FONT.md },
+  referralPrice: { color: COLORS.gold, fontWeight: '800', fontSize: FONT.sm - 2, marginTop: 2 },
   discount: {
     backgroundColor: COLORS.gold, borderRadius: RADIUS.sm, paddingHorizontal: 6, paddingVertical: 1, marginTop: 2,
   },
