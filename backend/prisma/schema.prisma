@@ -25,6 +25,21 @@ model User {
   payments      Payment[]
   referralsMade Referral[]     @relation("ReferralSponsor")
   referralUsed  Referral?      @relation("ReferralMember")
+  walletEntries WalletEntry[]
+}
+
+model WalletEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  betType   String?
+  stake     Int
+  winnings  Int      @default(0)
+  playedAt  DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, playedAt])
 }
 
 model Referral {

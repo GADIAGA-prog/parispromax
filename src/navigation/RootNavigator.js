@@ -14,6 +14,7 @@ import RaceDetailScreen from '../screens/RaceDetailScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import WalletScreen from '../screens/WalletScreen';
 import { COLORS } from '../theme/colors';
 
 const navTheme = {
@@ -48,6 +49,7 @@ function MainTabs() {
           const icons = {
             Courses: 'home',
             Historique: 'time',
+            Portefeuille: 'wallet',
             Profil: 'person',
           };
           return <Ionicons name={icons[route.name]} size={size} color={color} />;
@@ -56,6 +58,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Courses" component={HomeScreen} />
       <Tab.Screen name="Historique" component={HistoryScreen} />
+      <Tab.Screen name="Portefeuille" component={WalletScreen} />
       <Tab.Screen name="Profil" component={ProfileScreen} />
     </Tab.Navigator>
   );

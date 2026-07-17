@@ -13,6 +13,7 @@ const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
 const mlRoutes = require('./routes/ml');
 const legalRoutes = require('./routes/legal');
+const walletRoutes = require('./routes/wallet');
 const { backfillReferralCodes } = require('./services/referral');
 
 const app = express();
@@ -98,6 +99,7 @@ app.use('/stats', statsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/ml', mlRoutes);
 app.use('/legal', legalRoutes);
+app.use('/wallet', walletRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path }));
 

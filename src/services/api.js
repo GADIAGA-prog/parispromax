@@ -81,6 +81,12 @@ export const api = {
   me: () => request('/me', { auth: true }),
   deleteAccount: () => request('/me', { method: 'DELETE', auth: true }),
 
+  // Portefeuille de suivi des jeux (aucun argent n'est détenu dans l'app).
+  wallet: () => request('/wallet', { auth: true }),
+  addWalletEntry: (entry) => request('/wallet', { method: 'POST', auth: true, body: entry }),
+  updateWalletEntry: (id, entry) => request(`/wallet/${id}`, { method: 'PUT', auth: true, body: entry }),
+  deleteWalletEntry: (id) => request(`/wallet/${id}`, { method: 'DELETE', auth: true }),
+
   // Races
   races: (date) => request(`/races${date ? `?date=${date}` : ''}`),
   // Course PMU du jour du pays (Quarté LONAB…) + journal national.
