@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PressableScale from './PressableScale';
@@ -13,6 +13,21 @@ function formatXOF(amount) {
 // onRacePress(track, race).
 export default function TrackCard({ track, onRacePress }) {
   const cond = TRACK_CONDITIONS[track.condition] || TRACK_CONDITIONS.dry;
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const raceState = (race) => {
+    const start = race.startsAt ? new Date(race.startsAt).getTime() : NaN;
+    if (!Number.isFinite(start)) return { kind: 'future', label: null };
+    const minutes = Math.ceil((start - now) / 60000);
+    if (minutes <= 0) return { kind: 'past', label: race.result ? 'Voir le résultat' : 'Terminée' };
+    if (minutes <= 60) return { kind: 'soon', label: `Départ dans ${minutes} min` };
+    return { kind: 'future', label: null };
+  };
 
   return (
     <View style={styles.card}>
@@ -32,10 +47,12 @@ export default function TrackCard({ track, onRacePress }) {
         <Text style={styles.prize}>Dotation : {formatXOF(track.prizePool)}</Text>
       </View>
 
-      {track.races.map((race) => (
+      {track.races.map((race) => {
+        const state = raceState(race);
+        return (
         <PressableScale
           key={race.id}
-          style={styles.race}
+          style={[styles.race, styles[`race_${state.kind}`]]}
           onPress={() => onRacePress?.(track, race)}
         >
           <View style={styles.raceNumber}>
@@ -52,10 +69,23 @@ export default function TrackCard({ track, onRacePress }) {
               {race.runners || race.horses?.length} partants
               {race.prize ? ` · ${Number(race.prize).toLocaleString('fr-FR')} €` : ''}
             </Text>
+            {state.label ? (
+              <View style={[styles.stateBadge, styles[`badge_${state.kind}`]]}>
+                <Ionicons
+                  name={state.kind === 'soon' ? 'alarm' : race.result ? 'flag' : 'time'}
+                  size={12}
+                  color={state.kind === 'soon' ? '#78350f' : COLORS.textMuted}
+                />
+                <Text style={[styles.stateText, state.kind === 'soon' && styles.stateTextSoon]}>
+                  {state.label}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
         </PressableScale>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -117,6 +147,12 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.border,
     gap: SPACING.sm,
   },
+  race_future: { backgroundColor: 'transparent' },
+  race_soon: {
+    backgroundColor: 'rgba(251,191,36,0.14)', borderLeftWidth: 3,
+    borderLeftColor: COLORS.gold, paddingHorizontal: SPACING.sm,
+  },
+  race_past: { backgroundColor: 'rgba(148,163,184,0.08)', opacity: 0.78 },
   raceNumber: {
     width: 38,
     height: 30,
@@ -140,4 +176,13 @@ const styles = StyleSheet.create({
     fontSize: FONT.sm - 1,
     marginTop: 2,
   },
+  stateBadge: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4,
+    marginTop: 5, paddingHorizontal: 7, paddingVertical: 3, borderRadius: RADIUS.pill,
+  },
+  badge_soon: { backgroundColor: COLORS.gold },
+  badge_past: { backgroundColor: 'rgba(148,163,184,0.18)' },
+  badge_future: { backgroundColor: 'transparent' },
+  stateText: { color: COLORS.textMuted, fontSize: FONT.sm - 2, fontWeight: '800' },
+  stateTextSoon: { color: '#78350f' },
 });

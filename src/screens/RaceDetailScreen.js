@@ -85,6 +85,22 @@ export default function RaceDetailScreen({ route, navigation }) {
           </View>
         </View>
 
+        {analyzed.result?.winners?.length ? (
+          <View style={styles.resultBox}>
+            <View style={styles.resultHead}>
+              <Ionicons name="flag" size={18} color="#06251c" />
+              <Text style={styles.resultTitle}>Résultat officiel</Text>
+            </View>
+            <View style={styles.ballRow}>
+              {analyzed.result.winners.slice(0, 5).map((number, index) => (
+                <View key={`${number}-${index}`} style={[styles.resultBall, index === 0 && styles.resultWinner]}>
+                  <Text style={styles.resultBallText}>{number}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
         {/* AI prediction summary — locked behind paywall when trial expired */}
         <Text style={styles.sectionTitle}>🤖 Pronostics IA</Text>
         <LockCard
@@ -231,6 +247,18 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
     marginBottom: SPACING.sm,
   },
+  resultBox: {
+    backgroundColor: 'rgba(34,197,94,0.14)', borderWidth: 1, borderColor: COLORS.success,
+    borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm,
+  },
+  resultHead: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: SPACING.sm },
+  resultTitle: { color: COLORS.success, fontWeight: '900', fontSize: FONT.md },
+  resultBall: {
+    width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.success,
+  },
+  resultWinner: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
+  resultBallText: { color: COLORS.text, fontWeight: '900' },
   aiBox: {
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.md,

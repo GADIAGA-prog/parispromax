@@ -13,6 +13,28 @@ function parse(json, fallback) {
   }
 }
 
+// Convertit une date/heure hippique française en ISO UTC, indépendamment du
+// fuseau du serveur Render. Cela garde les alertes mobiles exactes en Afrique.
+function parisStartIso(date, time) {
+  const match = String(time || '').match(/(\d{1,2})[:h](\d{2})/i);
+  if (!date || !match) return null;
+  const [year, month, day] = String(date).split('-').map(Number);
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+  const guess = Date.UTC(year, month - 1, day, hour, minute);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(guess));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const displayedAsUtc = Date.UTC(
+    Number(values.year), Number(values.month) - 1, Number(values.day),
+    Number(values.hour), Number(values.minute)
+  );
+  return new Date(guess - (displayedAsUtc - guess)).toISOString();
+}
+
 // GET /races — list of today's (latest) races, grouped by track. Public.
 router.get('/', async (req, res) => {
   const date = req.query.date;
@@ -42,6 +64,8 @@ router.get('/', async (req, res) => {
       name: r.name,
       distance: r.distance,
       time: full.time || '',
+      date: r.date,
+      startsAt: parisStartIso(r.date, full.time),
       prize: full.prize ?? null,
       bets: full.bets || [],
       isQuinte: Boolean(full.isQuinte),
@@ -64,7 +88,9 @@ router.get('/full', async (req, res) => {
     date = latest?.date;
   }
   const where = date ? { date } : {};
-  const races = await prisma.race.findMany({ where, orderBy: { createdAt: 'desc' }, take: 300 });
+  const races = await prisma.race.findMany({
+    where, orderBy: { createdAt: 'desc' }, take: 300, include: { result: true },
+  });
 
   const byTrack = {};
   for (const r of races) {
@@ -85,6 +111,9 @@ router.get('/full', async (req, res) => {
       name: r.name,
       distance: r.distance,
       time: full.time || '',
+      date: r.date,
+      startsAt: parisStartIso(r.date, full.time),
+      result: r.result ? { winners: parse(r.result.winners, []) } : null,
       prize: full.prize ?? null,
       bets: full.bets || [],
       isQuinte: Boolean(full.isQuinte),
