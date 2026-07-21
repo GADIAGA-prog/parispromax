@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import api from '../services/api';
 import {
   DEFAULT_PAYMENT_COUNTRIES,
@@ -39,9 +40,12 @@ function normalizeBirthDateInput(raw) {
 
 // Connexion par numéro + MOT DE PASSE (aucun SMS ni email). Le reset de mot de
 // passe est autonome : un CODE DE RÉCUPÉRATION est remis à l'inscription.
-export default function LoginScreen() {
+export default function LoginScreen({ route }) {
   const { login, adoptSession } = useAuth();
-  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
+  const { completeOnboarding } = useSettings();
+  const [mode, setMode] = useState(
+    route?.params?.initialMode === 'register' ? 'register' : 'login'
+  ); // 'login' | 'register' | 'reset'
   const [countries, setCountries] = useState(DEFAULT_PAYMENT_COUNTRIES);
   const [countryCode, setCountryCode] = useState('bf');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -64,8 +68,8 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
-  // Après register/reset : { code, session } — on affiche le code de
-  // récupération et on n'adopte la session qu'une fois le code noté.
+  // Après register/reset, le code est affiché avant la prochaine étape. Une
+  // inscription revient à la connexion ; seul un reset adopte la session.
   const [recovery, setRecovery] = useState(null);
 
   const selected = countryByCode(countryCode, countries)
@@ -164,7 +168,8 @@ export default function LoginScreen() {
           recoveryQuestion: selectedRecoveryQuestion.id,
           recoveryAnswer,
         });
-        setRecovery({ code: res.recoveryCode, session: res });
+        await completeOnboarding();
+        setRecovery({ code: res.recoveryCode, next: 'login' });
       } else if (isReset) {
         const res = resetMethod === 'question'
           ? await api.resetPasswordSecurity(
@@ -174,9 +179,10 @@ export default function LoginScreen() {
             password
           )
           : await api.resetPassword(normalizedPhone, resetCode, password);
-        setRecovery({ code: res.recoveryCode, session: res });
+        setRecovery({ code: res.recoveryCode, next: 'session', session: res });
       } else {
         await login(normalizedPhone, password, countryCode);
+        await completeOnboarding();
         // On success the navigator switches automatically.
       }
     } catch (e) {
@@ -193,17 +199,27 @@ export default function LoginScreen() {
       } else if (e.status === 429) {
         setError('Trop de tentatives. Réessayez dans quelques minutes.');
       } else {
-        setError(e.message && e.status ? e.message : 'Échec. Vérifiez votre connexion internet.');
+        setError(e.message || 'Impossible de joindre le serveur. Réessayez dans un instant.');
       }
     } finally {
       setBusy(false);
     }
   };
 
-  // L'utilisateur a noté son code -> on adopte la session (navigation bascule).
+  // Après inscription, revenir explicitement à la connexion. Après un reset,
+  // conserver le comportement existant et adopter la session obtenue.
   const onRecoveryNoted = async () => {
+    const next = recovery?.next;
     const session = recovery?.session;
     setRecovery(null);
+    if (next === 'login') {
+      setMode('login');
+      setPassword('');
+      setReferralCode('');
+      setRecoveryAnswer('');
+      setNotice('Compte créé avec succès. Connectez-vous avec votre numéro et votre mot de passe.');
+      return;
+    }
     if (session) await adoptSession(session);
   };
 
@@ -658,8 +674,7 @@ export default function LoginScreen() {
 
         <Text style={styles.footer}>Optimisé pour les connexions lentes 🌍 · Mode hors-ligne intégré</Text>
 
-        {/* Code de récupération — affiché UNE fois ; la session n'est adoptée
-            qu'après confirmation, sinon l'écran disparaîtrait trop tôt. */}
+        {/* Code de récupération — affiché UNE fois avant de continuer. */}
         <Modal visible={!!recovery} transparent animationType="fade" onRequestClose={() => {}}>
           <View style={styles.modalBackdrop}>
             <View style={styles.modalCard}>
@@ -675,7 +690,11 @@ export default function LoginScreen() {
               </Text>
               <Pressable style={styles.button} onPress={onRecoveryNoted}>
                 <Ionicons name="checkmark" size={18} color="#06251c" />
-                <Text style={styles.buttonText}>J'ai noté mon code</Text>
+                <Text style={styles.buttonText}>
+                  {recovery?.next === 'login'
+                    ? "J'ai noté le code · Me connecter"
+                    : "J'ai noté mon code"}
+                </Text>
               </Pressable>
             </View>
           </View>

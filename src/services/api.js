@@ -55,8 +55,8 @@ export async function clearToken() {
 }
 
 // Core request helper. Throws { status, data } on non-2xx.
-async function request(path, { method = 'GET', body, auth = false, timeout = 15000 } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
+async function request(path, { method = 'GET', body, auth = false, timeout = 30000 } = {}) {
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
   if (auth) {
     const token = await getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -71,8 +71,15 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
+    const responseText = await res.text();
+    let data = null;
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = { error: res.ok ? null : 'Le serveur a renvoyé une réponse temporairement invalide.' };
+      }
+    }
     if (!res.ok) {
       const err = new Error((data && data.error) || `HTTP ${res.status}`);
       err.status = res.status;
@@ -80,6 +87,21 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
       throw err;
     }
     return data;
+  } catch (error) {
+    if (error?.status) throw error;
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error(
+        'Le serveur met trop de temps à répondre. Patientez quelques secondes puis réessayez.'
+      );
+      timeoutError.code = 'TIMEOUT';
+      throw timeoutError;
+    }
+    const networkError = new Error(
+      'Serveur ParisPromax injoignable. Vérifiez le réseau puis réessayez.'
+    );
+    networkError.code = 'NETWORK_ERROR';
+    networkError.cause = error;
+    throw networkError;
   } finally {
     clearTimeout(timer);
   }
@@ -88,12 +110,24 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
 // --- Endpoints -------------------------------------------------------------
 export const api = {
   // Auth (identity + password; sensitive recovery fields stay server-side).
-  register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
+  register: (payload) => request('/auth/register', {
+    method: 'POST',
+    body: payload,
+    timeout: 90000,
+  }),
   login: (phone, password, country) =>
-    request('/auth/login', { method: 'POST', body: { phone, password, country } }),
+    request('/auth/login', {
+      method: 'POST',
+      body: { phone, password, country },
+      timeout: 60000,
+    }),
   // Réinitialisation autonome : numéro + code de récupération -> nouveau mdp.
   resetPassword: (phone, recoveryCode, newPassword) =>
-    request('/auth/reset-password', { method: 'POST', body: { phone, recoveryCode, newPassword } }),
+    request('/auth/reset-password', {
+      method: 'POST',
+      body: { phone, recoveryCode, newPassword },
+      timeout: 60000,
+    }),
   recoveryQuestions: () => request('/auth/recovery-questions'),
   recoveryQuestion: (phone) =>
     request('/auth/recovery-question', { method: 'POST', body: { phone } }),
@@ -101,6 +135,7 @@ export const api = {
     request('/auth/reset-password-security', {
       method: 'POST',
       body: { phone, birthDate, answer, newPassword },
+      timeout: 60000,
     }),
   requestRecoverySupport: (payload) =>
     request('/auth/recovery-request', { method: 'POST', body: payload }),

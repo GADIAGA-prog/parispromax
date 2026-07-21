@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import LoginScreen from '../screens/LoginScreen';
 import AgeGateScreen from '../screens/AgeGateScreen';
-import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import RaceDetailScreen from '../screens/RaceDetailScreen';
 import PaywallScreen from '../screens/PaywallScreen';
@@ -89,10 +88,13 @@ export default function RootNavigator() {
       >
         {!adultVerified ? (
           <Stack.Screen name="AgeGate" component={AgeGateScreen} options={{ headerShown: false }} />
-        ) : !onboarded ? (
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         ) : !isLoggedIn ? (
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            initialParams={{ initialMode: onboarded ? 'login' : 'register' }}
+            options={{ headerShown: false }}
+          />
         ) : (
           <>
             <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />

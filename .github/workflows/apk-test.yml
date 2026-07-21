@@ -47,12 +47,12 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Name APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk parispromax-test-sdk56-2026-07-21.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk parispromax-test-sdk56-auth-flow-2026-07-21.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: parispromax-test-sdk56-2026-07-21
-          path: parispromax-test-sdk56-2026-07-21.apk
+          name: parispromax-test-sdk56-auth-flow-2026-07-21
+          path: parispromax-test-sdk56-auth-flow-2026-07-21.apk
           if-no-files-found: error
           retention-days: 7
