@@ -12,6 +12,7 @@ const express = require('express');
 const router = express.Router();
 
 const CONTACT = 'gadiagafrancois@gmail.com';
+const ACCOUNT_RECOVERY_CONTACT = 'ftevolt@gmail.com';
 
 function page(title, body) {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/>
@@ -40,7 +41,7 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
 <h2>Données collectées</h2>
 <ul>
   <li><strong>Numéro de téléphone</strong> — utilisé comme identifiant de compte
-      (connexion par mot de passe ; aucun SMS ni email n'est envoyé).</li>
+      (connexion par mot de passe ; aucun SMS automatique n'est envoyé).</li>
   <li><strong>Pays</strong> — pour proposer les moyens de paiement adaptés.</li>
   <li><strong>Historique de paiements</strong> — montant, formule, statut et référence
       de transaction, pour la gestion de votre abonnement et nos obligations comptables.</li>
@@ -48,18 +49,27 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
   <li><strong>Portefeuille de suivi</strong> — libellé, type de jeu, mise, gain et date
       uniquement lorsque vous choisissez d'enregistrer ces informations.</li>
 </ul>
-<p>Nous ne collectons ni nom, ni e-mail, ni position, ni contacts, ni identifiant
-publicitaire. L'application n'affiche pas de publicité.</p>
+<p>Aucune adresse e-mail n'est associée au compte. Si vous contactez volontairement
+le support de récupération, l'adresse d'expédition et le contenu du message sont
+reçus uniquement pour traiter votre demande. Nous ne collectons ni position, ni
+contacts, ni identifiant publicitaire. L'application n'affiche pas de publicité.</p>
 <p>La date de naissance saisie dans l'écran de contrôle d'âge est vérifiée
 localement sur votre appareil. Elle n'est ni transmise ni conservée par notre serveur.</p>
 
 <h2>Utilisation</h2>
 <ul>
   <li>Connexion sécurisée par mot de passe (stocké haché, jamais en clair) ;
-      récupération de compte par code de récupération personnel.</li>
+      récupération par code personnel ou assistance manuelle après vérification.</li>
   <li>Activation et suivi de votre abonnement.</li>
   <li>Aucune vente ni partage de vos données à des tiers à des fins commerciales.</li>
 </ul>
+
+<h2>Récupération assistée du compte</h2>
+<p>Si vous avez perdu à la fois votre mot de passe et votre code de récupération,
+vous pouvez écrire à <a href="mailto:${ACCOUNT_RECOVERY_CONTACT}">${ACCOUNT_RECOVERY_CONTACT}</a>.
+Indiquez le numéro du compte et une référence de paiement permettant de vérifier
+votre identité. Ne communiquez jamais votre PIN Mobile Money. Les informations de
+la demande servent uniquement à rétablir l'accès au compte.</p>
 
 <h2>Paiements</h2>
 <p>Les paiements sont traités par le prestataire affiché avant votre validation,

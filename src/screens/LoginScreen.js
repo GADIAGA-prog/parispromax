@@ -11,6 +11,7 @@ import {
   Modal,
   ScrollView,
   Image,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +23,8 @@ import {
   toE164Phone,
 } from '../services/countries';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
+
+const ACCOUNT_RECOVERY_EMAIL = 'ftevolt@gmail.com';
 
 // Connexion par numéro + MOT DE PASSE (aucun SMS ni email). Le reset de mot de
 // passe est autonome : un CODE DE RÉCUPÉRATION est remis à l'inscription.
@@ -118,12 +121,45 @@ export default function LoginScreen() {
     if (session) await adoptSession(session);
   };
 
+  const contactRecoverySupport = async () => {
+    const normalizedPhone = fullPhone();
+    if (!normalizedPhone) {
+      setError("Entrez d'abord le numéro de téléphone du compte.");
+      return;
+    }
+    const subject = 'Réinitialisation de compte ParisPromax';
+    const body = [
+      'Bonjour,',
+      '',
+      "J'ai oublié mon mot de passe et mon code de récupération ParisPromax.",
+      `Numéro du compte : ${normalizedPhone}`,
+      `Pays : ${selected.name} (${countryCode.toUpperCase()})`,
+      '',
+      'Référence de mon dernier paiement YengaPay : ',
+      '',
+      "Je comprends que l'identité du compte doit être vérifiée avant toute réinitialisation.",
+      'Je ne communiquerai jamais mon code PIN Mobile Money.',
+    ].join('\n');
+    const mailto = `mailto:${ACCOUNT_RECOVERY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      setError('');
+      await Linking.openURL(mailto);
+    } catch {
+      setError(`Envoyez votre demande à ${ACCOUNT_RECOVERY_EMAIL} avec votre numéro et une référence de paiement.`);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
+        style={styles.keyboard}
       >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.logoWrap}>
           <Image
             source={require('../../assets/logo-emblem.png')}
@@ -202,6 +238,20 @@ export default function LoginScreen() {
                   editable={!busy}
                 />
               </View>
+              <Pressable
+                style={styles.supportLink}
+                onPress={contactRecoverySupport}
+                disabled={busy}
+                hitSlop={8}
+              >
+                <Ionicons name="mail-outline" size={17} color={COLORS.gold} />
+                <Text style={styles.supportLinkText}>
+                  Je n'ai plus mon code — contacter le support
+                </Text>
+              </Pressable>
+              <Text style={styles.supportHint}>
+                Demande envoyée à {ACCOUNT_RECOVERY_EMAIL}. Une référence de paiement pourra être demandée pour vérifier le compte.
+              </Text>
             </>
           )}
 
@@ -299,8 +349,9 @@ export default function LoginScreen() {
               </Text>
               <Text style={styles.recoveryText}>
                 Notez ce code et gardez-le précieusement (photo, papier…).{'\n\n'}
-                C'est le SEUL moyen de récupérer votre compte si vous oubliez
-                votre mot de passe — nous n'envoyons ni SMS ni email.
+                C'est le moyen le plus rapide de récupérer votre compte. Si vous
+                perdez aussi ce code, le support pourra vous aider par e-mail
+                après vérification de votre identité.
               </Text>
               <Pressable style={styles.button} onPress={onRecoveryNoted}>
                 <Ionicons name="checkmark" size={18} color="#06251c" />
@@ -339,6 +390,7 @@ export default function LoginScreen() {
             </View>
           </Pressable>
         </Modal>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -346,7 +398,8 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, padding: SPACING.xl, justifyContent: 'center' },
+  keyboard: { flex: 1 },
+  container: { flexGrow: 1, padding: SPACING.xl, justifyContent: 'center' },
   logoWrap: { alignItems: 'center', marginBottom: SPACING.xxl },
   logo: {
     width: 116, height: 116, marginBottom: SPACING.md,
@@ -369,6 +422,18 @@ const styles = StyleSheet.create({
   forgotHint: {
     color: COLORS.accent, textAlign: 'center', marginTop: SPACING.md,
     fontSize: FONT.sm, textDecorationLine: 'underline',
+  },
+  supportLink: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, marginTop: SPACING.md,
+  },
+  supportLinkText: {
+    color: COLORS.gold, fontSize: FONT.sm, fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
+  supportHint: {
+    color: COLORS.textFaint, fontSize: 11, lineHeight: 16,
+    textAlign: 'center', marginTop: 6,
   },
   referralHint: { color: COLORS.accent, fontSize: FONT.sm, marginTop: 6 },
   resetTitle: {

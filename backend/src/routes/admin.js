@@ -221,25 +221,30 @@ router.get('/api/national-picks', async (req, res) => {
 });
 
 // POST /admin/api/reset-password  { phone, newPassword }
-// Support client : « mot de passe oublié » (pas de SMS/email dans l'app, donc
-// la réinitialisation passe par vous). Vérifiez l'identité de l'appelant
-// (ex. référence d'un paiement) avant de réinitialiser.
+// Support client après demande envoyée à ftevolt@gmail.com. Vérifiez toujours
+// l'identité (ex. référence d'un paiement) avant de réinitialiser. L'ancien
+// code de récupération est également remplacé afin de fermer toute session de
+// récupération potentiellement compromise.
 router.post('/api/reset-password', express.json(), async (req, res) => {
-  const { hashPassword } = require('../security');
+  const { genRecoveryCode, hashPassword, hashRecoveryCode } = require('../security');
   const phone = String(req.body.phone || '').replace(/[^\d+]/g, '');
   const newPassword = req.body.newPassword;
-  if (!phone || typeof newPassword !== 'string' || newPassword.length < 8) {
-    return res.status(400).json({ error: 'phone et newPassword (8 car. min) requis' });
+  if (!phone || typeof newPassword !== 'string' || newPassword.length < 12) {
+    return res.status(400).json({ error: 'phone et newPassword (12 car. min) requis' });
   }
+  const recoveryCode = genRecoveryCode();
   try {
     await prisma.user.update({
       where: { phone },
-      data: { passwordHash: hashPassword(newPassword) },
+      data: {
+        passwordHash: hashPassword(newPassword),
+        recoveryCodeHash: hashRecoveryCode(recoveryCode),
+      },
     });
   } catch {
     return res.status(404).json({ error: 'Utilisateur introuvable' });
   }
-  res.json({ ok: true, phone });
+  res.json({ ok: true, phone, recoveryCode });
 });
 
 // POST /admin/api/backfill-runners — reconstruit les Runner des courses passées
@@ -293,7 +298,8 @@ const DASHBOARD_HTML = `<!doctype html>
   .s-failed{background:rgba(239,68,68,.15);color:var(--danger)}
   .filters{margin-bottom:12px}
   .muted{color:var(--muted);font-size:13px;margin-left:8px}
-  button,select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer}
+  button,select,input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+  button{cursor:pointer}
 </style></head>
 <body>
 <header><h1>🏇 ParisPromax — Back-office paiements</h1><span id="now" style="color:#9fe3c8"></span></header>
@@ -311,6 +317,18 @@ const DASHBOARD_HTML = `<!doctype html>
     <button id="scrapeBtn" onclick="scrape()" style="background:#10b981;color:#06251c;font-weight:800">🏇 Scraper les courses du jour</button>
     <button onclick="ingest()">⬇ Charger la démo</button>
     <span id="ingestMsg" class="muted"></span>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="label">🔐 Réinitialisation assistée — demandes reçues sur ftevolt@gmail.com</div>
+    <p class="muted" style="margin-left:0">
+      Vérifiez une référence de paiement avant toute action. Ne demandez jamais le PIN Mobile Money.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input id="supportPhone" autocomplete="off" placeholder="Téléphone, ex. +22670000000" style="width:230px"/>
+      <input id="supportPassword" type="password" autocomplete="new-password" placeholder="Mot de passe temporaire (12 car. min.)" style="width:280px"/>
+      <button onclick="resetSupportPassword()" style="background:#10b981;color:#06251c;font-weight:800">Réinitialiser</button>
+    </div>
+    <div id="supportMsg" class="muted" style="margin:10px 0 0"></div>
   </div>
   <div class="card" style="margin-bottom:24px">
     <div class="label">🏇 Course PMU du jour par pays (Quarté LONAB, LONACI…)</div>
@@ -379,6 +397,30 @@ const DASHBOARD_HTML = `<!doctype html>
     } catch(e){ msg.textContent = '❌ '+e.message; }
     finally { btn.disabled = false; }
     load();
+  }
+  async function resetSupportPassword(){
+    const msg = document.getElementById('supportMsg');
+    const phone = document.getElementById('supportPhone').value.trim();
+    const newPassword = document.getElementById('supportPassword').value;
+    if (!phone || newPassword.length < 12) {
+      msg.textContent = '❌ Numéro et mot de passe temporaire de 12 caractères minimum requis.';
+      return;
+    }
+    if (!confirm('Identité vérifiée par référence de paiement pour '+phone+' ?')) return;
+    msg.textContent = '⏳ Réinitialisation…';
+    try {
+      const r = await fetch('/admin/api/reset-password', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({phone, newPassword}),
+      });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || 'Erreur');
+      msg.textContent = '✅ Compte réinitialisé. Nouveau code de récupération : '+d.recoveryCode+' — transmettez-le séparément et demandez au client de le conserver.';
+      document.getElementById('supportPassword').value = '';
+    } catch(e) {
+      msg.textContent = '❌ '+e.message;
+    }
   }
   const FLAGS = ${JSON.stringify(PICK_FLAGS)};
   async function loadPicks(){

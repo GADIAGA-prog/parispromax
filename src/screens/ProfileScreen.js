@@ -115,7 +115,7 @@ export default function ProfileScreen({ navigation }) {
           onPress={() =>
             Alert.alert(
               'Code de récupération',
-              "Un NOUVEAU code va être généré (l'ancien ne marchera plus). Notez-le : c'est le seul moyen de récupérer votre compte en cas d'oubli du mot de passe. Continuer ?",
+              "Un NOUVEAU code va être généré (l'ancien ne marchera plus). Notez-le : c'est le moyen le plus rapide de récupérer votre compte. Si vous perdez aussi ce code, contactez ftevolt@gmail.com. Continuer ?",
               [
                 { text: 'Annuler', style: 'cancel' },
                 {

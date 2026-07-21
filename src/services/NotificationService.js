@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
@@ -6,7 +5,9 @@ import Constants from 'expo-constants';
 // LOCAL notifications, but loading/initializing the module in Expo Go still
 // logs a noisy warning. Detect Expo Go so we can skip setup there; everything
 // runs normally in a development build / standalone app.
-const IS_EXPO_GO = Constants.appOwnership === 'expo';
+const IS_EXPO_GO = Constants.expoGoConfig != null || Constants.appOwnership === 'expo';
+let notificationsModule = null;
+let notificationHandlerConfigured = false;
 
 // ---------------------------------------------------------------------------
 // PARISPROMAX — Local push notifications (simulated alerts)
@@ -18,21 +19,32 @@ const IS_EXPO_GO = Constants.appOwnership === 'expo';
 // keeps it working offline.
 // ---------------------------------------------------------------------------
 
-// Foreground display behavior. Skipped in Expo Go: any native expo-notifications
-// call there emits the "push removed from Expo Go" warning.
-if (!IS_EXPO_GO) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }),
-  });
+// Importing expo-notifications itself initializes the remote-push native module
+// on Android. Since that module does not exist in Expo Go SDK 53+, keep the
+// import lazy and never evaluate it there. Development/release builds retain
+// the complete notifications behavior.
+async function getNotifications() {
+  if (IS_EXPO_GO) return null;
+  if (!notificationsModule) {
+    notificationsModule = await import('expo-notifications');
+  }
+  if (!notificationHandlerConfigured) {
+    notificationsModule.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+    notificationHandlerConfigured = true;
+  }
+  return notificationsModule;
 }
 
 export async function registerForNotifications() {
-  if (IS_EXPO_GO) return false; // skip in Expo Go (avoids push-removed warning)
+  const Notifications = await getNotifications();
+  if (!Notifications) return false;
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('pronostics', {
@@ -57,7 +69,8 @@ export async function registerForNotifications() {
 
 // Daily 08:00 "Morning Alert".
 export async function scheduleMorningAlert() {
-  if (IS_EXPO_GO) return null;
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
   try {
     return await Notifications.scheduleNotificationAsync({
       content: {
@@ -79,7 +92,8 @@ export async function scheduleMorningAlert() {
 
 // "Urgency Alert" 15 minutes before a race (pass a JS Date of the race start).
 export async function scheduleRaceUrgencyAlert(raceName, startDate) {
-  if (IS_EXPO_GO) return null;
+  const Notifications = await getNotifications();
+  if (!Notifications) return null;
   try {
     const fireAt = new Date(startDate.getTime() - 15 * 60 * 1000);
     if (fireAt.getTime() <= Date.now()) return null; // too late, skip
@@ -100,7 +114,8 @@ export async function scheduleRaceUrgencyAlert(raceName, startDate) {
 // Fire an immediate demo notification (used by the Dev Panel / Profile).
 // Returns false in Expo Go so the caller can show an in-app message instead.
 export async function sendTestNotification() {
-  if (IS_EXPO_GO) return false;
+  const Notifications = await getNotifications();
+  if (!Notifications) return false;
   try {
     const granted = await registerForNotifications();
     if (!granted) return false;
@@ -119,7 +134,8 @@ export async function sendTestNotification() {
 }
 
 export async function cancelAll() {
-  if (IS_EXPO_GO) return;
+  const Notifications = await getNotifications();
+  if (!Notifications) return;
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (e) {
