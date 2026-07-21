@@ -80,6 +80,29 @@ function verifyRecoveryCode(code, stored) {
   return safeEqual(String(stored), sha256(normalized));
 }
 
+// Security answers are intentionally normalized before hashing so harmless
+// differences in accents, punctuation or repeated spaces do not lock a user
+// out. The normalized value is still protected with the same salted scrypt
+// construction as passwords and is never stored or logged in plaintext.
+function normalizeRecoveryAnswer(raw) {
+  return String(raw || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function hashRecoveryAnswer(answer) {
+  return hashPassword(normalizeRecoveryAnswer(answer));
+}
+
+function verifyRecoveryAnswer(answer, stored) {
+  const normalized = normalizeRecoveryAnswer(answer);
+  return normalized.length >= 2 && verifyPassword(normalized, stored);
+}
+
 // Minimal in-memory sliding-window rate limiter (single-instance deploys).
 // Usage: app.post('/x', rateLimit({ windowMs: 600000, max: 30 }), handler)
 function rateLimit({ windowMs, max, keyFn }) {
@@ -119,5 +142,8 @@ module.exports = {
   verifyPassword,
   hashRecoveryCode,
   verifyRecoveryCode,
+  normalizeRecoveryAnswer,
+  hashRecoveryAnswer,
+  verifyRecoveryAnswer,
   rateLimit,
 };

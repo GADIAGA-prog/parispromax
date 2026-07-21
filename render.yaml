@@ -160,6 +160,22 @@ services:
       # The following are set manually in the Render dashboard (secrets / post-deploy):
       - key: ADMIN_PASSWORD
         sync: false
+      # Assisted account recovery. Destination + credentials stay server-side;
+      # Gmail requires an App Password, never the normal account password.
+      - key: RECOVERY_EMAIL_TO
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_SECURE
+        value: "true"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
       - key: PUBLIC_BASE_URL
         value: https://parispromax-backend.onrender.com
       # CinetPay new API: API key (sk_test_/sk_live_) + API password.

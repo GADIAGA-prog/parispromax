@@ -100,6 +100,27 @@ router.get('/api/stats', async (req, res) => {
   }
 });
 
+// Pending identity checks submitted from the mobile recovery form.
+router.get('/api/recovery-requests', async (_req, res) => {
+  const requests = await prisma.recoveryRequest.findMany({
+    where: { status: 'pending' },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+    include: {
+      user: {
+        select: {
+          firstName: true,
+          lastName: true,
+          birthDate: true,
+          birthPlace: true,
+          phone: true,
+        },
+      },
+    },
+  });
+  res.json({ requests });
+});
+
 // POST /admin/api/results  { externalId, winners: [4,7,1,...] }
 // Records the official arrival and computes whether our #1 AI pick placed.
 router.post('/api/results', express.json(), async (req, res) => {
@@ -220,7 +241,7 @@ router.get('/api/national-picks', async (req, res) => {
   res.json({ date, picks });
 });
 
-// POST /admin/api/reset-password  { phone, newPassword }
+// POST /admin/api/reset-password  { phone, newPassword, requestId? }
 // Support client après demande envoyée à ftevolt@gmail.com. Vérifiez toujours
 // l'identité (ex. référence d'un paiement) avant de réinitialiser. L'ancien
 // code de récupération est également remplacé afin de fermer toute session de
@@ -229,6 +250,7 @@ router.post('/api/reset-password', express.json(), async (req, res) => {
   const { genRecoveryCode, hashPassword, hashRecoveryCode } = require('../security');
   const phone = String(req.body.phone || '').replace(/[^\d+]/g, '');
   const newPassword = req.body.newPassword;
+  const requestId = String(req.body.requestId || '').trim();
   if (!phone || typeof newPassword !== 'string' || newPassword.length < 12) {
     return res.status(400).json({ error: 'phone et newPassword (12 car. min) requis' });
   }
@@ -243,6 +265,12 @@ router.post('/api/reset-password', express.json(), async (req, res) => {
     });
   } catch {
     return res.status(404).json({ error: 'Utilisateur introuvable' });
+  }
+  if (requestId) {
+    await prisma.recoveryRequest.updateMany({
+      where: { id: requestId, phone, status: 'pending' },
+      data: { status: 'resolved', resolvedAt: new Date() },
+    });
   }
   res.json({ ok: true, phone, recoveryCode });
 });
@@ -319,16 +347,18 @@ const DASHBOARD_HTML = `<!doctype html>
     <span id="ingestMsg" class="muted"></span>
   </div>
   <div class="card" style="margin-bottom:24px">
-    <div class="label">🔐 Réinitialisation assistée — demandes reçues sur ftevolt@gmail.com</div>
+    <div class="label">🔐 Réinitialisation assistée</div>
     <p class="muted" style="margin-left:0">
       Vérifiez une référence de paiement avant toute action. Ne demandez jamais le PIN Mobile Money.
     </p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <input id="supportPhone" autocomplete="off" placeholder="Téléphone, ex. +22670000000" style="width:230px"/>
       <input id="supportPassword" type="password" autocomplete="new-password" placeholder="Mot de passe temporaire (12 car. min.)" style="width:280px"/>
+      <input id="supportRequestId" type="hidden"/>
       <button onclick="resetSupportPassword()" style="background:#10b981;color:#06251c;font-weight:800">Réinitialiser</button>
     </div>
     <div id="supportMsg" class="muted" style="margin:10px 0 0"></div>
+    <div id="recoveryRequests" style="margin-top:14px"></div>
   </div>
   <div class="card" style="margin-bottom:24px">
     <div class="label">🏇 Course PMU du jour par pays (Quarté LONAB, LONACI…)</div>
@@ -351,6 +381,8 @@ const DASHBOARD_HTML = `<!doctype html>
 <script>
   document.getElementById('now').textContent = new Date().toLocaleString('fr-FR');
   function fmt(n){return Number(n).toLocaleString('fr-FR')}
+  function esc(v){return String(v == null ? '' : v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  let recoveryRequestById = {};
   async function load(){
     const s = document.getElementById('statusFilter').value;
     const [stats, pay] = await Promise.all([
@@ -402,6 +434,7 @@ const DASHBOARD_HTML = `<!doctype html>
     const msg = document.getElementById('supportMsg');
     const phone = document.getElementById('supportPhone').value.trim();
     const newPassword = document.getElementById('supportPassword').value;
+    const requestId = document.getElementById('supportRequestId').value;
     if (!phone || newPassword.length < 12) {
       msg.textContent = '❌ Numéro et mot de passe temporaire de 12 caractères minimum requis.';
       return;
@@ -412,14 +445,43 @@ const DASHBOARD_HTML = `<!doctype html>
       const r = await fetch('/admin/api/reset-password', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({phone, newPassword}),
+        body: JSON.stringify({phone, newPassword, requestId}),
       });
       const d = await r.json();
       if (!d.ok) throw new Error(d.error || 'Erreur');
       msg.textContent = '✅ Compte réinitialisé. Nouveau code de récupération : '+d.recoveryCode+' — transmettez-le séparément et demandez au client de le conserver.';
       document.getElementById('supportPassword').value = '';
+      document.getElementById('supportRequestId').value = '';
+      loadRecoveryRequests();
     } catch(e) {
       msg.textContent = '❌ '+e.message;
+    }
+  }
+  function selectRecoveryRequest(id){
+    const item = recoveryRequestById[id];
+    if (!item) return;
+    document.getElementById('supportPhone').value = item.phone;
+    document.getElementById('supportRequestId').value = item.id;
+    document.getElementById('supportMsg').textContent = 'Demande sélectionnée : '+item.id+'. Vérifiez les informations avant de continuer.';
+  }
+  async function loadRecoveryRequests(){
+    try {
+      const data = await fetch('/admin/api/recovery-requests').then(r=>r.json());
+      const items = data.requests || [];
+      recoveryRequestById = Object.fromEntries(items.map(item=>[item.id,item]));
+      document.getElementById('recoveryRequests').innerHTML = items.length ? items.map(item=>{
+        const stored = item.user || {};
+        return '<div style="border-top:1px solid var(--border);padding:10px 0">'+
+          '<strong>'+esc(item.phone)+'</strong> · '+esc(new Date(item.createdAt).toLocaleString('fr-FR'))+
+          (item.emailSent?' · ✉️ notifié':' · en attente')+'<br/>'+
+          '<span class="muted" style="margin:0">Déclaré : '+esc(item.claimedFirstName)+' '+esc(item.claimedLastName)+
+          ', '+esc(item.claimedBirthDate)+', '+esc(item.claimedBirthPlace)+' · Paiement : '+esc(item.paymentReference||'non fourni')+'</span><br/>'+
+          '<span class="muted" style="margin:0">Compte : '+esc(stored.firstName||'—')+' '+esc(stored.lastName||'—')+
+          ', '+esc(stored.birthDate||'—')+', '+esc(stored.birthPlace||'—')+'</span> '+
+          '<button onclick="selectRecoveryRequest(\''+item.id+'\')">Traiter</button></div>';
+      }).join('') : '<span class="muted" style="margin:0">Aucune demande en attente.</span>';
+    } catch(e) {
+      document.getElementById('recoveryRequests').textContent = 'Impossible de charger les demandes.';
     }
   }
   const FLAGS = ${JSON.stringify(PICK_FLAGS)};
@@ -456,7 +518,9 @@ const DASHBOARD_HTML = `<!doctype html>
   }
   load();
   loadPicks();
+  loadRecoveryRequests();
   setInterval(load, 15000);
+  setInterval(loadRecoveryRequests, 30000);
 </script>
 </body></html>`;
 

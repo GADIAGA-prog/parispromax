@@ -12,7 +12,7 @@ import api, { getToken, setToken, clearToken } from '../services/api';
 // ---------------------------------------------------------------------------
 // PARISPROMAX — Auth context backed by the hosted backend.
 //
-//  - Login = phone -> OTP code -> JWT (stored).
+//  - Login = phone + password -> JWT (stored).
 //  - Access state (trial / paid) comes from the backend /me endpoint and is
 //    cached locally so the paywall still resolves while briefly offline.
 // ---------------------------------------------------------------------------
@@ -32,6 +32,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [phone, setPhone] = useState(null);
   const [country, setCountry] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [access, setAccess] = useState(defaultAccess);
   const [referral, setReferral] = useState(null);
@@ -70,6 +71,7 @@ export function AuthProvider({ children }) {
       setIsLoggedIn(true);
       if (data.user?.phone) setPhone(data.user.phone);
       if (data.user?.country) setCountry(data.user.country);
+      if (data.user) setProfile(data.user);
       await AsyncStorage.setItem(ACCESS_CACHE, JSON.stringify(a));
       return a;
     } catch (e) {
@@ -86,6 +88,7 @@ export function AuthProvider({ children }) {
     async (res) => {
       await setToken(res.token);
       setPhone(res.user.phone);
+      setProfile(res.user);
       if (res.user.country) setCountry(res.user.country);
       await AsyncStorage.setItem(PHONE_KEY, res.user.phone);
       setIsLoggedIn(true);
@@ -114,6 +117,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.multiRemove([ACCESS_CACHE, PHONE_KEY]);
     setPhone(null);
     setCountry(null);
+    setProfile(null);
     setIsLoggedIn(false);
     setAccess(defaultAccess);
     setReferral(null);
@@ -124,6 +128,7 @@ export function AuthProvider({ children }) {
       // identity
       phone,
       country,
+      profile,
       isLoggedIn,
       loading,
       // access
@@ -139,7 +144,7 @@ export function AuthProvider({ children }) {
       refreshAccess,
       logout: doLogout,
     }),
-    [phone, country, isLoggedIn, loading, access, referral, login, adoptSession, refreshAccess, doLogout]
+    [phone, country, profile, isLoggedIn, loading, access, referral, login, adoptSession, refreshAccess, doLogout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

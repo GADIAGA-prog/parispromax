@@ -20,7 +20,17 @@ router.get('/', requireAuth, async (req, res) => {
   ]);
 
   res.json({
-    user: { id: user.id, phone: user.phone, country: user.country, referralCode },
+    user: {
+      id: user.id,
+      phone: user.phone,
+      country: user.country,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      birthDate: user.birthDate,
+      birthPlace: user.birthPlace,
+      hasSecurityQuestion: Boolean(user.recoveryQuestion && user.recoveryAnswerHash),
+      referralCode,
+    },
     referral: {
       code: referralCode,
       discountPercent: config.referral.discountPercent,
@@ -63,6 +73,9 @@ router.delete('/', requireAuth, async (req, res) => {
 
   await prisma.$transaction([
     prisma.subscription.deleteMany({ where: { userId: user.id } }),
+    prisma.recoveryRequest.deleteMany({
+      where: { OR: [{ userId: user.id }, { phone: user.phone }] },
+    }),
     prisma.payment.updateMany({
       where: { userId: user.id },
       data: { userId: null, rawPayload: null },

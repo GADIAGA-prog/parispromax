@@ -11,7 +11,6 @@ import {
   Modal,
   ScrollView,
   Image,
-  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,7 +23,19 @@ import {
 } from '../services/countries';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
-const ACCOUNT_RECOVERY_EMAIL = 'ftevolt@gmail.com';
+const DEFAULT_RECOVERY_QUESTIONS = [
+  { id: 'first_school', label: 'Quel est le nom de votre première école ?' },
+  { id: 'childhood_nickname', label: "Quel était votre surnom d'enfance ?" },
+  { id: 'childhood_district', label: "Dans quel quartier avez-vous grandi ?" },
+  { id: 'first_teacher', label: 'Quel était le prénom de votre premier enseignant ?' },
+];
+
+function normalizeBirthDateInput(raw) {
+  const value = String(raw || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const match = value.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
+}
 
 // Connexion par numéro + MOT DE PASSE (aucun SMS ni email). Le reset de mot de
 // passe est autonome : un CODE DE RÉCUPÉRATION est remis à l'inscription.
@@ -38,8 +49,20 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [resetCode, setResetCode] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthPlace, setBirthPlace] = useState('');
+  const [recoveryQuestions, setRecoveryQuestions] = useState(DEFAULT_RECOVERY_QUESTIONS);
+  const [recoveryQuestion, setRecoveryQuestion] = useState(DEFAULT_RECOVERY_QUESTIONS[0].id);
+  const [questionPickerOpen, setQuestionPickerOpen] = useState(false);
+  const [recoveryAnswer, setRecoveryAnswer] = useState('');
+  const [resetMethod, setResetMethod] = useState('code'); // code | question | support
+  const [accountQuestion, setAccountQuestion] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   // Après register/reset : { code, session } — on affiche le code de
   // récupération et on n'adopte la session qu'une fois le code noté.
@@ -50,6 +73,9 @@ export default function LoginScreen() {
     || DEFAULT_PAYMENT_COUNTRIES[0];
   const isRegister = mode === 'register';
   const isReset = mode === 'reset';
+  const selectedRecoveryQuestion = recoveryQuestions.find(
+    (question) => question.id === recoveryQuestion
+  ) || recoveryQuestions[0];
 
   // Le backend renvoie uniquement les pays couverts par au moins un moyen de
   // paiement actif. La liste YengaPay locale sert de repli hors connexion.
@@ -65,6 +91,16 @@ export default function LoginScreen() {
         ));
       })
       .catch(() => {});
+    api.recoveryQuestions()
+      .then((data) => {
+        const list = Array.isArray(data?.questions) ? data.questions : [];
+        if (cancelled || !list.length) return;
+        setRecoveryQuestions(list);
+        setRecoveryQuestion((current) => (
+          list.some((question) => question.id === current) ? current : list[0].id
+        ));
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -74,26 +110,70 @@ export default function LoginScreen() {
 
   const onSubmit = async () => {
     const normalizedPhone = fullPhone();
+    const normalizedBirthDate = normalizeBirthDateInput(birthDate);
     if (!normalizedPhone) {
       setError('Entrez un numéro de téléphone valide.');
       return;
     }
-    if (isReset && resetCode.replace(/[^a-zA-Z0-9]/g, '').length < 8) {
+    if (isRegister) {
+      if (firstName.trim().length < 2 || lastName.trim().length < 2) {
+        setError('Prénom et nom : 2 caractères minimum.');
+        return;
+      }
+      if (!normalizedBirthDate || birthPlace.trim().length < 2) {
+        setError('Date (JJ/MM/AAAA) et lieu de naissance requis.');
+        return;
+      }
+      if (!selectedRecoveryQuestion || recoveryAnswer.trim().length < 2) {
+        setError('Choisissez une question et saisissez votre réponse secrète.');
+        return;
+      }
+    }
+    if (isReset && resetMethod === 'code' && resetCode.replace(/[^a-zA-Z0-9]/g, '').length < 8) {
       setError('Entrez votre code de récupération (8 caractères).');
       return;
+    }
+    if (isReset && resetMethod === 'question') {
+      if (!accountQuestion) {
+        setError("Chargez d'abord la question associée au compte.");
+        return;
+      }
+      if (!normalizedBirthDate || recoveryAnswer.trim().length < 2) {
+        setError('Date de naissance et réponse secrète requises.');
+        return;
+      }
     }
     if (password.length < 8) {
       setError('Mot de passe : 8 caractères minimum.');
       return;
     }
     setError('');
+    setNotice('');
     setBusy(true);
     try {
       if (isRegister) {
-        const res = await api.register(normalizedPhone, password, countryCode, referralCode);
+        const res = await api.register({
+          phone: normalizedPhone,
+          password,
+          country: countryCode,
+          referralCode,
+          firstName,
+          lastName,
+          birthDate: normalizedBirthDate,
+          birthPlace,
+          recoveryQuestion: selectedRecoveryQuestion.id,
+          recoveryAnswer,
+        });
         setRecovery({ code: res.recoveryCode, session: res });
       } else if (isReset) {
-        const res = await api.resetPassword(normalizedPhone, resetCode, password);
+        const res = resetMethod === 'question'
+          ? await api.resetPasswordSecurity(
+            normalizedPhone,
+            normalizedBirthDate,
+            recoveryAnswer,
+            password
+          )
+          : await api.resetPassword(normalizedPhone, resetCode, password);
         setRecovery({ code: res.recoveryCode, session: res });
       } else {
         await login(normalizedPhone, password, countryCode);
@@ -103,7 +183,13 @@ export default function LoginScreen() {
       if (e.status === 409) {
         setError('Ce numéro a déjà un compte. Passez sur « Connexion ».');
       } else if (e.status === 401) {
-        setError(isReset ? 'Numéro ou code de récupération incorrect.' : 'Numéro ou mot de passe incorrect.');
+        setError(
+          isReset && resetMethod === 'question'
+            ? 'Date de naissance ou réponse secrète incorrecte.'
+            : isReset
+              ? 'Numéro ou code de récupération incorrect.'
+              : 'Numéro ou mot de passe incorrect.'
+        );
       } else if (e.status === 429) {
         setError('Trop de tentatives. Réessayez dans quelques minutes.');
       } else {
@@ -121,33 +207,123 @@ export default function LoginScreen() {
     if (session) await adoptSession(session);
   };
 
-  const contactRecoverySupport = async () => {
+  const loadAccountQuestion = async () => {
     const normalizedPhone = fullPhone();
     if (!normalizedPhone) {
       setError("Entrez d'abord le numéro de téléphone du compte.");
       return;
     }
-    const subject = 'Réinitialisation de compte ParisPromax';
-    const body = [
-      'Bonjour,',
-      '',
-      "J'ai oublié mon mot de passe et mon code de récupération ParisPromax.",
-      `Numéro du compte : ${normalizedPhone}`,
-      `Pays : ${selected.name} (${countryCode.toUpperCase()})`,
-      '',
-      'Référence de mon dernier paiement YengaPay : ',
-      '',
-      "Je comprends que l'identité du compte doit être vérifiée avant toute réinitialisation.",
-      'Je ne communiquerai jamais mon code PIN Mobile Money.',
-    ].join('\n');
-    const mailto = `mailto:${ACCOUNT_RECOVERY_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setBusy(true);
     try {
       setError('');
-      await Linking.openURL(mailto);
-    } catch {
-      setError(`Envoyez votre demande à ${ACCOUNT_RECOVERY_EMAIL} avec votre numéro et une référence de paiement.`);
+      const result = await api.recoveryQuestion(normalizedPhone);
+      setAccountQuestion(result.question || '');
+    } catch (e) {
+      setAccountQuestion('');
+      setError(e.message || "Question de récupération indisponible pour ce compte.");
+    } finally {
+      setBusy(false);
     }
   };
+
+  const submitSupportRequest = async () => {
+    const normalizedPhone = fullPhone();
+    const normalizedBirthDate = normalizeBirthDateInput(birthDate);
+    if (!normalizedPhone) return setError('Entrez un numéro de téléphone valide.');
+    if (
+      firstName.trim().length < 2 ||
+      lastName.trim().length < 2 ||
+      !normalizedBirthDate ||
+      birthPlace.trim().length < 2
+    ) {
+      setError("Complétez les informations d'identité demandées.");
+      return;
+    }
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await api.requestRecoverySupport({
+        phone: normalizedPhone,
+        firstName,
+        lastName,
+        birthDate: normalizedBirthDate,
+        birthPlace,
+        paymentReference,
+      });
+      setNotice(result.message || 'Demande transmise au support.');
+    } catch (e) {
+      setError(e.message || "Impossible d'envoyer la demande pour le moment.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const identityFields = (
+    <>
+      <View style={styles.nameGrid}>
+        <View style={styles.nameField}>
+          <Text style={styles.label}>Prénom</Text>
+          <View style={styles.inputRow}>
+            <Ionicons name="person-outline" size={18} color={COLORS.textMuted} />
+            <TextInput
+              style={styles.input}
+              placeholder="Prénom"
+              placeholderTextColor={COLORS.textFaint}
+              value={firstName}
+              onChangeText={setFirstName}
+              autoCapitalize="words"
+              maxLength={80}
+              editable={!busy}
+            />
+          </View>
+        </View>
+        <View style={styles.nameField}>
+          <Text style={styles.label}>Nom</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              placeholder="Nom"
+              placeholderTextColor={COLORS.textFaint}
+              value={lastName}
+              onChangeText={setLastName}
+              autoCapitalize="characters"
+              maxLength={80}
+              editable={!busy}
+            />
+          </View>
+        </View>
+      </View>
+      <Text style={[styles.label, { marginTop: SPACING.md }]}>Date de naissance</Text>
+      <View style={styles.inputRow}>
+        <Ionicons name="calendar-outline" size={18} color={COLORS.textMuted} />
+        <TextInput
+          style={styles.input}
+          placeholder="JJ/MM/AAAA"
+          placeholderTextColor={COLORS.textFaint}
+          keyboardType="numbers-and-punctuation"
+          value={birthDate}
+          onChangeText={setBirthDate}
+          maxLength={10}
+          editable={!busy}
+        />
+      </View>
+      <Text style={[styles.label, { marginTop: SPACING.md }]}>Lieu de naissance</Text>
+      <View style={styles.inputRow}>
+        <Ionicons name="location-outline" size={18} color={COLORS.textMuted} />
+        <TextInput
+          style={styles.input}
+          placeholder="Ville / localité"
+          placeholderTextColor={COLORS.textFaint}
+          value={birthPlace}
+          onChangeText={setBirthPlace}
+          autoCapitalize="words"
+          maxLength={120}
+          editable={!busy}
+        />
+      </View>
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -219,39 +395,160 @@ export default function LoginScreen() {
             />
           </View>
 
-          {isReset && (
+          {isRegister && (
             <>
-              <Text style={[styles.label, { marginTop: SPACING.md }]}>
-                Code de récupération (remis à l'inscription)
-              </Text>
+              <Text style={styles.sectionTitle}>Informations personnelles</Text>
+              {identityFields}
+              <Text style={styles.sectionTitle}>Récupération du compte</Text>
+              <Text style={styles.label}>Question secrète</Text>
+              <Pressable
+                style={styles.countrySelect}
+                onPress={() => setQuestionPickerOpen(true)}
+                disabled={busy}
+              >
+                <Text style={[styles.countryText, { flex: 1 }]} numberOfLines={2}>
+                  {selectedRecoveryQuestion?.label}
+                </Text>
+                <Ionicons name="chevron-down" size={18} color={COLORS.textMuted} />
+              </Pressable>
+              <Text style={[styles.label, { marginTop: SPACING.md }]}>Votre réponse secrète</Text>
               <View style={styles.inputRow}>
-                <Ionicons name="key" size={18} color={COLORS.textMuted} />
+                <Ionicons name="shield-checkmark-outline" size={18} color={COLORS.textMuted} />
                 <TextInput
-                  style={[styles.input, { letterSpacing: 2 }]}
-                  placeholder="XXXX-XXXX"
+                  style={styles.input}
+                  placeholder="Réponse que vous retiendrez"
                   placeholderTextColor={COLORS.textFaint}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  value={resetCode}
-                  onChangeText={setResetCode}
-                  maxLength={9}
+                  value={recoveryAnswer}
+                  onChangeText={setRecoveryAnswer}
+                  autoCapitalize="sentences"
+                  maxLength={100}
                   editable={!busy}
                 />
               </View>
-              <Pressable
-                style={styles.supportLink}
-                onPress={contactRecoverySupport}
-                disabled={busy}
-                hitSlop={8}
-              >
-                <Ionicons name="mail-outline" size={17} color={COLORS.gold} />
-                <Text style={styles.supportLinkText}>
-                  Je n'ai plus mon code — contacter le support
-                </Text>
-              </Pressable>
               <Text style={styles.supportHint}>
-                Demande envoyée à {ACCOUNT_RECOVERY_EMAIL}. Une référence de paiement pourra être demandée pour vérifier le compte.
+                La réponse est hachée et ne pourra jamais être relue par le support.
               </Text>
+            </>
+          )}
+
+          {isReset && (
+            <>
+              <Text style={styles.sectionTitle}>Choisissez une méthode</Text>
+              <View style={styles.tabs}>
+                {[
+                  { key: 'code', label: 'Code' },
+                  { key: 'question', label: 'Question' },
+                  { key: 'support', label: 'Assistance' },
+                ].map((item) => (
+                  <Pressable
+                    key={item.key}
+                    style={[styles.tab, resetMethod === item.key && styles.tabActive]}
+                    onPress={() => {
+                      setResetMethod(item.key);
+                      setError('');
+                      setNotice('');
+                      setAccountQuestion('');
+                      setRecoveryAnswer('');
+                    }}
+                    disabled={busy}
+                  >
+                    <Text style={[styles.tabText, resetMethod === item.key && styles.tabTextActive]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {resetMethod === 'code' && (
+                <>
+                  <Text style={styles.label}>Code de récupération</Text>
+                  <View style={styles.inputRow}>
+                    <Ionicons name="key" size={18} color={COLORS.textMuted} />
+                    <TextInput
+                      style={[styles.input, { letterSpacing: 2 }]}
+                      placeholder="XXXX-XXXX"
+                      placeholderTextColor={COLORS.textFaint}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      value={resetCode}
+                      onChangeText={setResetCode}
+                      maxLength={9}
+                      editable={!busy}
+                    />
+                  </View>
+                </>
+              )}
+
+              {resetMethod === 'question' && (
+                <>
+                  <Pressable
+                    style={styles.secondaryButton}
+                    onPress={loadAccountQuestion}
+                    disabled={busy}
+                  >
+                    <Ionicons name="help-circle-outline" size={18} color={COLORS.accent} />
+                    <Text style={styles.secondaryButtonText}>Afficher ma question secrète</Text>
+                  </Pressable>
+                  {!!accountQuestion && (
+                    <>
+                      <Text style={styles.questionCard}>{accountQuestion}</Text>
+                      <Text style={styles.label}>Votre réponse</Text>
+                      <View style={styles.inputRow}>
+                        <Ionicons name="shield-checkmark-outline" size={18} color={COLORS.textMuted} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Réponse secrète"
+                          placeholderTextColor={COLORS.textFaint}
+                          value={recoveryAnswer}
+                          onChangeText={setRecoveryAnswer}
+                          maxLength={100}
+                          editable={!busy}
+                        />
+                      </View>
+                      <Text style={[styles.label, { marginTop: SPACING.md }]}>Date de naissance</Text>
+                      <View style={styles.inputRow}>
+                        <Ionicons name="calendar-outline" size={18} color={COLORS.textMuted} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="JJ/MM/AAAA"
+                          placeholderTextColor={COLORS.textFaint}
+                          keyboardType="numbers-and-punctuation"
+                          value={birthDate}
+                          onChangeText={setBirthDate}
+                          maxLength={10}
+                          editable={!busy}
+                        />
+                      </View>
+                    </>
+                  )}
+                </>
+              )}
+
+              {resetMethod === 'support' && (
+                <>
+                  <Text style={styles.supportIntro}>
+                    Votre demande sera envoyée par le serveur. L'adresse destinataire reste masquée.
+                  </Text>
+                  {identityFields}
+                  <Text style={[styles.label, { marginTop: SPACING.md }]}>Référence YengaPay (facultative)</Text>
+                  <View style={styles.inputRow}>
+                    <Ionicons name="receipt-outline" size={18} color={COLORS.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Référence du dernier paiement"
+                      placeholderTextColor={COLORS.textFaint}
+                      value={paymentReference}
+                      onChangeText={setPaymentReference}
+                      autoCapitalize="characters"
+                      maxLength={120}
+                      editable={!busy}
+                    />
+                  </View>
+                  <Text style={styles.supportHint}>
+                    Ne communiquez jamais votre PIN Mobile Money ni votre ancien mot de passe.
+                  </Text>
+                </>
+              )}
             </>
           )}
 
@@ -276,42 +573,65 @@ export default function LoginScreen() {
             </>
           )}
 
-          <Text style={[styles.label, { marginTop: SPACING.md }]}>
-            {isRegister
-              ? 'Choisissez un mot de passe (8 caractères min.)'
-              : isReset
-                ? 'Nouveau mot de passe (8 caractères min.)'
-                : 'Mot de passe'}
-          </Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="lock-closed" size={18} color={COLORS.textMuted} />
-            <TextInput
-              style={[styles.input, { letterSpacing: 1 }]}
-              placeholder="Mot de passe"
-              placeholderTextColor={COLORS.textFaint}
-              secureTextEntry={!showPwd}
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
-              maxLength={72}
-              editable={!busy}
-            />
-            <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={10}>
-              <Ionicons name={showPwd ? 'eye-off' : 'eye'} size={18} color={COLORS.textMuted} />
-            </Pressable>
-          </View>
+          {(!isReset || resetMethod !== 'support') && (
+            <>
+              <Text style={[styles.label, { marginTop: SPACING.md }]}>
+                {isRegister
+                  ? 'Choisissez un mot de passe (8 caractères min.)'
+                  : isReset
+                    ? 'Nouveau mot de passe (8 caractères min.)'
+                    : 'Mot de passe'}
+              </Text>
+              <View style={styles.inputRow}>
+                <Ionicons name="lock-closed" size={18} color={COLORS.textMuted} />
+                <TextInput
+                  style={[styles.input, { letterSpacing: 1 }]}
+                  placeholder="Mot de passe"
+                  placeholderTextColor={COLORS.textFaint}
+                  secureTextEntry={!showPwd}
+                  autoCapitalize="none"
+                  value={password}
+                  onChangeText={setPassword}
+                  maxLength={72}
+                  editable={!busy}
+                />
+                <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={10}>
+                  <Ionicons name={showPwd ? 'eye-off' : 'eye'} size={18} color={COLORS.textMuted} />
+                </Pressable>
+              </View>
+            </>
+          )}
 
           {!!error && <Text style={styles.error}>{error}</Text>}
-          <Pressable style={[styles.button, busy && styles.busy]} onPress={onSubmit} disabled={busy}>
+          {!!notice && <Text style={styles.notice}>{notice}</Text>}
+          <Pressable
+            style={[styles.button, busy && styles.busy]}
+            onPress={isReset && resetMethod === 'support' ? submitSupportRequest : onSubmit}
+            disabled={busy}
+          >
             {busy ? (
               <ActivityIndicator color="#06251c" />
             ) : (
               <>
                 <Text style={styles.buttonText}>
-                  {isRegister ? 'Créer mon compte' : isReset ? 'Réinitialiser & me connecter' : 'Se connecter'}
+                  {isRegister
+                    ? 'Créer mon compte'
+                    : isReset && resetMethod === 'support'
+                      ? 'Envoyer ma demande'
+                      : isReset
+                        ? 'Réinitialiser & me connecter'
+                        : 'Se connecter'}
                 </Text>
                 <Ionicons
-                  name={isRegister ? 'person-add' : isReset ? 'key' : 'arrow-forward'}
+                  name={
+                    isRegister
+                      ? 'person-add'
+                      : isReset && resetMethod === 'support'
+                        ? 'send'
+                        : isReset
+                          ? 'key'
+                          : 'arrow-forward'
+                  }
                   size={18}
                   color="#06251c"
                 />
@@ -320,12 +640,12 @@ export default function LoginScreen() {
           </Pressable>
 
           {mode === 'login' && (
-            <Pressable onPress={() => { setMode('reset'); setError(''); }} hitSlop={8}>
-              <Text style={styles.forgotHint}>Mot de passe oublié ? Utiliser mon code de récupération</Text>
+            <Pressable onPress={() => { setMode('reset'); setError(''); setNotice(''); }} hitSlop={8}>
+              <Text style={styles.forgotHint}>Mot de passe oublié ? Récupérer mon compte</Text>
             </Pressable>
           )}
           {isReset && (
-            <Pressable onPress={() => { setMode('login'); setError(''); }} hitSlop={8}>
+            <Pressable onPress={() => { setMode('login'); setError(''); setNotice(''); }} hitSlop={8}>
               <Text style={styles.forgotHint}>← Retour à la connexion</Text>
             </Pressable>
           )}
@@ -390,6 +710,36 @@ export default function LoginScreen() {
             </View>
           </Pressable>
         </Modal>
+
+        <Modal
+          visible={questionPickerOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setQuestionPickerOpen(false)}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setQuestionPickerOpen(false)}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Choisissez votre question secrète</Text>
+              <ScrollView>
+                {recoveryQuestions.map((question) => (
+                  <Pressable
+                    key={question.id}
+                    style={[
+                      styles.questionRow,
+                      question.id === recoveryQuestion && styles.countryRowActive,
+                    ]}
+                    onPress={() => {
+                      setRecoveryQuestion(question.id);
+                      setQuestionPickerOpen(false);
+                    }}
+                  >
+                    <Text style={styles.questionRowText}>{question.label}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </Pressable>
+        </Modal>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -411,6 +761,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   label: { color: COLORS.textMuted, fontSize: FONT.sm, marginBottom: SPACING.sm, fontWeight: '600' },
+  sectionTitle: {
+    color: COLORS.accent, fontSize: FONT.md, fontWeight: '900',
+    marginTop: SPACING.lg, marginBottom: SPACING.md,
+  },
+  nameGrid: { flexDirection: 'row', gap: SPACING.sm },
+  nameField: { flex: 1 },
   tabs: {
     flexDirection: 'row', backgroundColor: COLORS.background, borderRadius: RADIUS.md,
     padding: 4, marginBottom: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
@@ -434,6 +790,24 @@ const styles = StyleSheet.create({
   supportHint: {
     color: COLORS.textFaint, fontSize: 11, lineHeight: 16,
     textAlign: 'center', marginTop: 6,
+  },
+  supportIntro: {
+    color: COLORS.textMuted, fontSize: FONT.sm, lineHeight: 19,
+    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  secondaryButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: SPACING.sm, borderWidth: 1, borderColor: COLORS.accent,
+    borderRadius: RADIUS.md, paddingVertical: SPACING.md,
+  },
+  secondaryButtonText: { color: COLORS.accent, fontWeight: '800', fontSize: FONT.sm },
+  questionCard: {
+    color: COLORS.gold, fontSize: FONT.md, fontWeight: '800', lineHeight: 22,
+    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md,
+    marginVertical: SPACING.md,
   },
   referralHint: { color: COLORS.accent, fontSize: FONT.sm, marginTop: 6 },
   resetTitle: {
@@ -474,8 +848,11 @@ const styles = StyleSheet.create({
   countryRowActive: { backgroundColor: COLORS.primary },
   countryRowText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '600' },
   countryRowDial: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700' },
+  questionRow: { paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.md },
+  questionRowText: { color: COLORS.text, fontSize: FONT.md, lineHeight: 22 },
   input: { flex: 1, color: COLORS.text, fontSize: FONT.lg, paddingVertical: SPACING.md, letterSpacing: 2 },
   error: { color: COLORS.danger, marginTop: SPACING.sm, fontSize: FONT.sm },
+  notice: { color: COLORS.accent, marginTop: SPACING.sm, fontSize: FONT.sm, lineHeight: 19 },
   devHint: { color: COLORS.gold, marginTop: SPACING.sm, fontSize: FONT.sm, fontWeight: '700' },
   button: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,

@@ -22,6 +22,12 @@ La modification du 20 juillet 2026 ajoute uniquement la colonne nullable
 `Result.predictionSnapshot`. Elle conserve toutes les lignes existantes et le
 script devient un no-op si la colonne est déjà présente.
 
+La modification du 21 juillet 2026 ajoute des champs d'identité et de
+récupération tous nullables sur `User`, ainsi que la table
+`RecoveryRequest`. Les comptes et abonnements existants sont conservés ; les
+anciens utilisateurs peuvent continuer à utiliser leur mot de passe et leur
+code, puis compléter leur récupération via l'assistance si nécessaire.
+
 Sur un futur plan Render payant, déplacer `npm run db:sync:prod` vers
 `preDeployCommand` permettra de séparer compilation et migration.
 

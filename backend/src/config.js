@@ -126,6 +126,16 @@ const config = {
     // An invalid production password disables /admin without crashing the API.
     enabled: !isProdLike || adminPassword.length >= 16,
   },
+  recoverySupport: {
+    // Kept server-side so the destination is never shipped in the mobile app.
+    emailTo: process.env.RECOVERY_EMAIL_TO || 'ftevolt@gmail.com',
+    smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+    smtpPort: Number(process.env.SMTP_PORT) || 465,
+    smtpSecure: String(process.env.SMTP_SECURE || 'true') !== 'false',
+    smtpUser: process.env.SMTP_USER || '',
+    smtpPass: process.env.SMTP_PASS || '',
+    smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+  },
   // Bearer token the IA microservice requires (mirrors PPM_IA_TOKEN on the
   // Python side). Optional: when unset, iaClient sends no Authorization header.
   iaToken: process.env.IA_TOKEN || '',
@@ -181,6 +191,12 @@ config.yengapay.configured = Boolean(
 config.pawapay.baseUrl =
   config.pawapay.mode === 'live' ? 'https://api.pawapay.io' : 'https://api.sandbox.pawapay.io';
 config.pawapay.configured = Boolean(config.pawapay.apiToken);
+config.recoverySupport.configured = Boolean(
+  config.recoverySupport.emailTo &&
+  config.recoverySupport.smtpHost &&
+  config.recoverySupport.smtpUser &&
+  config.recoverySupport.smtpPass
+);
 
 // ---- Boot-time security checks (fail fast on unsafe production setups) ------
 if (isProdLike) {

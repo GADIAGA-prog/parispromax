@@ -15,8 +15,14 @@ datasource db {
 model User {
   id            String         @id @default(cuid())
   phone         String         @unique
+  firstName     String?
+  lastName      String?
+  birthDate     String?        // YYYY-MM-DD; collected for age + assisted recovery
+  birthPlace    String?
   passwordHash  String?        // scrypt (connexion sans SMS/email) ; null = ancien compte OTP
   recoveryCodeHash String?     // SHA-256 du code de récupération (reset autonome sans SMS/email)
+  recoveryQuestion String?     // identifier from the server-side allow-list
+  recoveryAnswerHash String?   // salted scrypt; the answer is never stored in plaintext
   country       String?        // ISO2 (bf, ci, sn, tg, bj, ne, gn, ml) for payments
   trialStartedAt DateTime?
   createdAt     DateTime       @default(now())
@@ -26,6 +32,26 @@ model User {
   referralsMade Referral[]     @relation("ReferralSponsor")
   referralUsed  Referral?      @relation("ReferralMember")
   walletEntries WalletEntry[]
+  recoveryRequests RecoveryRequest[]
+}
+
+model RecoveryRequest {
+  id               String   @id @default(cuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  phone            String
+  claimedFirstName String?
+  claimedLastName  String?
+  claimedBirthDate String?
+  claimedBirthPlace String?
+  paymentReference String?
+  status           String   @default("pending") // pending | resolved | rejected
+  emailSent        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  resolvedAt       DateTime?
+
+  @@index([phone, createdAt])
+  @@index([status, createdAt])
 }
 
 model WalletEntry {

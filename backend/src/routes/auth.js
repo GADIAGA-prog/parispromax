@@ -5,6 +5,7 @@ const { signToken } = require('../auth');
 const { sendSms } = require('../services/sms');
 const {
   sha256,
+  safeEqual,
   genOtpCode,
   genRecoveryCode,
   normalizeRecoveryCode,
@@ -12,6 +13,8 @@ const {
   verifyPassword,
   hashRecoveryCode,
   verifyRecoveryCode,
+  hashRecoveryAnswer,
+  verifyRecoveryAnswer,
   rateLimit,
 } = require('../security');
 
@@ -19,6 +22,14 @@ const router = express.Router();
 const { ensureReferralCode, normalizeReferralCode } = require('../services/referral');
 const { availableProviders } = require('../services/paymentProvider');
 const { countriesForProviderIds } = require('../services/paymentCountries');
+const {
+  RECOVERY_QUESTIONS,
+  cleanText,
+  normalizeBirthDate,
+  questionLabel,
+  validateRegistrationProfile,
+} = require('../services/accountRecovery');
+const { sendRecoveryRequestEmail } = require('../services/recoveryEmail');
 
 function normalizePhone(raw) {
   return String(raw || '').replace(/[^\d+]/g, '');
@@ -46,6 +57,7 @@ const OTP_MAX_ATTEMPTS = 5;               // failed guesses before the code dies
 const ipLimitRequest = rateLimit({ windowMs: 10 * 60 * 1000, max: 30 });
 const ipLimitVerify = rateLimit({ windowMs: 10 * 60 * 1000, max: 30 });
 const ipLimitLogin = rateLimit({ windowMs: 10 * 60 * 1000, max: 40 });
+const ipLimitRecovery = rateLimit({ windowMs: 15 * 60 * 1000, max: 15 });
 
 // --- Connexion par MOT DE PASSE (sans SMS ni email) --------------------------
 // Anti-force-brute par numéro : 10 échecs -> verrou 15 minutes (en mémoire,
@@ -75,7 +87,7 @@ function validPassword(pw) {
   return typeof pw === 'string' && pw.length >= 8 && pw.length <= 72;
 }
 
-// POST /auth/register  { phone, password, country? }
+// POST /auth/register  { phone, password, country, identity, recovery Q/A }
 // Crée le compte (ou pose le mot de passe d'un ancien compte OTP sans mot de
 // passe) et retourne un JWT — l'utilisateur est connecté immédiatement.
 router.post('/register', ipLimitLogin, async (req, res) => {
@@ -87,6 +99,16 @@ router.post('/register', ipLimitLogin, async (req, res) => {
   if (!validPassword(password)) {
     return res.status(400).json({ error: 'Mot de passe : 8 caractères minimum' });
   }
+  const profile = validateRegistrationProfile(req.body);
+  if (!profile.ok) return res.status(400).json({ error: profile.error });
+  const profileData = {
+    firstName: profile.data.firstName,
+    lastName: profile.data.lastName,
+    birthDate: profile.data.birthDate,
+    birthPlace: profile.data.birthPlace,
+    recoveryQuestion: profile.data.recoveryQuestion,
+    recoveryAnswerHash: hashRecoveryAnswer(profile.data.recoveryAnswer),
+  };
 
   const country = normalizeCountry(req.body.country);
   if (!country) {
@@ -112,6 +134,7 @@ router.post('/register', ipLimitLogin, async (req, res) => {
           passwordHash: hashPassword(password),
           recoveryCodeHash: hashRecoveryCode(recoveryCode),
           country: country || user.country,
+          ...profileData,
         },
       });
       if (sponsor && sponsor.id !== user.id) {
@@ -124,7 +147,13 @@ router.post('/register', ipLimitLogin, async (req, res) => {
     isNew = true;
     user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
-        data: { phone, passwordHash: hashPassword(password), recoveryCodeHash: hashRecoveryCode(recoveryCode), country },
+        data: {
+          phone,
+          passwordHash: hashPassword(password),
+          recoveryCodeHash: hashRecoveryCode(recoveryCode),
+          country,
+          ...profileData,
+        },
       });
       await ensureReferralCode(created.id, tx);
       if (sponsor) await tx.referral.create({ data: { sponsorId: sponsor.id, referredId: created.id } });
@@ -140,7 +169,14 @@ router.post('/register', ipLimitLogin, async (req, res) => {
   res.json({
     token,
     recoveryCode, // à afficher/noter côté app — jamais renvoyé à nouveau
-    user: { id: user.id, phone: user.phone, country: user.country, isNew },
+    user: {
+      id: user.id,
+      phone: user.phone,
+      country: user.country,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isNew,
+    },
   });
 });
 
@@ -179,7 +215,149 @@ router.post('/reset-password', ipLimitLogin, async (req, res) => {
   res.json({
     token,
     recoveryCode,
-    user: { id: updated.id, phone: updated.phone, country: updated.country, isNew: false },
+    user: {
+      id: updated.id,
+      phone: updated.phone,
+      country: updated.country,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      isNew: false,
+    },
+  });
+});
+
+// Public allow-list used by the registration form. No secrets or user data.
+router.get('/recovery-questions', (_req, res) => {
+  res.json({ questions: RECOVERY_QUESTIONS });
+});
+
+// POST /auth/recovery-question { phone }
+// Returns only the public question label. The answer and identity fields are
+// never returned. Rate-limited to reduce account-enumeration attempts.
+router.post('/recovery-question', ipLimitRecovery, async (req, res) => {
+  const phone = normalizePhone(req.body.phone);
+  if (phone.length < 8 || phone.length > 16) {
+    return res.status(400).json({ error: 'Numéro invalide' });
+  }
+  const user = await prisma.user.findUnique({
+    where: { phone },
+    select: { recoveryQuestion: true, recoveryAnswerHash: true },
+  });
+  const question = user?.recoveryAnswerHash ? questionLabel(user.recoveryQuestion) : null;
+  if (!question) {
+    return res.status(404).json({
+      error: "La récupération par question n'est pas disponible pour ce compte",
+    });
+  }
+  res.json({ question });
+});
+
+// POST /auth/reset-password-security { phone, birthDate, answer, newPassword }
+// Both the birth date and the scrypt-hashed answer must match. A successful
+// reset rotates the paper recovery code too, exactly like the code flow.
+router.post('/reset-password-security', ipLimitRecovery, async (req, res) => {
+  const phone = normalizePhone(req.body.phone);
+  const birthDate = normalizeBirthDate(req.body.birthDate);
+  const answer = req.body.answer;
+  const newPassword = req.body.newPassword;
+  if (!phone || !birthDate || typeof answer !== 'string') {
+    return res.status(400).json({ error: 'Informations de récupération invalides' });
+  }
+  if (!validPassword(newPassword)) {
+    return res.status(400).json({ error: 'Mot de passe : 8 caractères minimum' });
+  }
+  if (pwdLocked(phone)) {
+    return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { phone } });
+  const identityMatches = Boolean(
+    user?.birthDate &&
+    safeEqual(user.birthDate, birthDate) &&
+    verifyRecoveryAnswer(answer, user.recoveryAnswerHash)
+  );
+  if (!identityMatches) {
+    pwdFail(phone);
+    return res.status(401).json({ error: 'Informations de récupération incorrectes' });
+  }
+  pwdOk(phone);
+
+  const recoveryCode = genRecoveryCode();
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash: hashPassword(newPassword),
+      recoveryCodeHash: hashRecoveryCode(recoveryCode),
+    },
+  });
+  const token = signToken(updated);
+  res.json({
+    token,
+    recoveryCode,
+    user: {
+      id: updated.id,
+      phone: updated.phone,
+      country: updated.country,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      isNew: false,
+    },
+  });
+});
+
+// POST /auth/recovery-request
+// Creates a durable request and optionally notifies the private support inbox.
+// The destination and SMTP details never appear in the response or mobile app.
+router.post('/recovery-request', ipLimitRecovery, async (req, res) => {
+  const phone = normalizePhone(req.body.phone);
+  if (phone.length < 8 || phone.length > 16) {
+    return res.status(400).json({ error: 'Numéro invalide' });
+  }
+  const claimedFirstName = cleanText(req.body.firstName, 80);
+  const claimedLastName = cleanText(req.body.lastName, 80);
+  const claimedBirthDate = normalizeBirthDate(req.body.birthDate);
+  const claimedBirthPlace = cleanText(req.body.birthPlace, 120);
+  const paymentReference = cleanText(req.body.paymentReference, 120);
+  if (
+    claimedFirstName.length < 2 ||
+    claimedLastName.length < 2 ||
+    !claimedBirthDate ||
+    claimedBirthPlace.length < 2
+  ) {
+    return res.status(400).json({ error: "Informations d'identité incomplètes" });
+  }
+
+  const user = await prisma.user.findUnique({ where: { phone }, select: { id: true } });
+  const request = await prisma.recoveryRequest.create({
+    data: {
+      userId: user?.id || null,
+      phone,
+      claimedFirstName,
+      claimedLastName,
+      claimedBirthDate,
+      claimedBirthPlace,
+      paymentReference: paymentReference || null,
+    },
+  });
+
+  try {
+    const delivery = await sendRecoveryRequestEmail(request);
+    if (delivery.sent) {
+      await prisma.recoveryRequest.update({
+        where: { id: request.id },
+        data: { emailSent: true },
+      });
+    }
+  } catch (error) {
+    // The durable request remains visible in the back-office. Do not expose
+    // SMTP details or account existence to the public caller.
+    console.error(`[recovery] email delivery failed for request ${request.id}:`, error.message);
+  }
+
+  res.status(202).json({
+    ok: true,
+    requestId: request.id,
+    message: 'Demande transmise au support. Une vérification sera effectuée avant tout changement.',
   });
 });
 
@@ -211,7 +389,14 @@ router.post('/login', ipLimitLogin, async (req, res) => {
   const token = signToken(updated);
   res.json({
     token,
-    user: { id: updated.id, phone: updated.phone, country: updated.country, isNew: false },
+    user: {
+      id: updated.id,
+      phone: updated.phone,
+      country: updated.country,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      isNew: false,
+    },
   });
 });
 

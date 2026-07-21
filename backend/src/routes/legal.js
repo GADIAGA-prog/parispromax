@@ -12,7 +12,6 @@ const express = require('express');
 const router = express.Router();
 
 const CONTACT = 'gadiagafrancois@gmail.com';
-const ACCOUNT_RECOVERY_CONTACT = 'ftevolt@gmail.com';
 
 function page(title, body) {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/>
@@ -42,6 +41,10 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
 <ul>
   <li><strong>Numéro de téléphone</strong> — utilisé comme identifiant de compte
       (connexion par mot de passe ; aucun SMS automatique n'est envoyé).</li>
+  <li><strong>Identité déclarée</strong> — prénom, nom, date et lieu de naissance,
+      utilisés pour contrôler la majorité et sécuriser la récupération du compte.</li>
+  <li><strong>Question de récupération</strong> — la réponse est stockée uniquement
+      sous forme de condensat scrypt salé et ne peut pas être relue.</li>
   <li><strong>Pays</strong> — pour proposer les moyens de paiement adaptés.</li>
   <li><strong>Historique de paiements</strong> — montant, formule, statut et référence
       de transaction, pour la gestion de votre abonnement et nos obligations comptables.</li>
@@ -53,8 +56,9 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
 le support de récupération, l'adresse d'expédition et le contenu du message sont
 reçus uniquement pour traiter votre demande. Nous ne collectons ni position, ni
 contacts, ni identifiant publicitaire. L'application n'affiche pas de publicité.</p>
-<p>La date de naissance saisie dans l'écran de contrôle d'âge est vérifiée
-localement sur votre appareil. Elle n'est ni transmise ni conservée par notre serveur.</p>
+<p>La date de naissance du compte est transmise au serveur et conservée pour le
+contrôle de majorité et la récupération sécurisée. Elle n'est pas communiquée au
+prestataire de paiement.</p>
 
 <h2>Utilisation</h2>
 <ul>
@@ -66,8 +70,9 @@ localement sur votre appareil. Elle n'est ni transmise ni conservée par notre s
 
 <h2>Récupération assistée du compte</h2>
 <p>Si vous avez perdu à la fois votre mot de passe et votre code de récupération,
-vous pouvez écrire à <a href="mailto:${ACCOUNT_RECOVERY_CONTACT}">${ACCOUNT_RECOVERY_CONTACT}</a>.
-Indiquez le numéro du compte et une référence de paiement permettant de vérifier
+utilisez le formulaire « Assistance » depuis l'écran de récupération. La demande
+est transmise par le serveur sans afficher l'adresse de destination. Indiquez le
+numéro du compte et, si possible, une référence de paiement permettant de vérifier
 votre identité. Ne communiquez jamais votre PIN Mobile Money. Les informations de
 la demande servent uniquement à rétablir l'accès au compte.</p>
 
@@ -95,6 +100,8 @@ la durée imposée par les obligations comptables, fiscales, de lutte contre la 
 par la réglementation applicable, après dissociation du compte. Vous pouvez
 supprimer votre compte à tout moment : voir
 <a href="/legal/account-deletion">Suppression de compte</a>.</p>
+<p>Les demandes d'assistance sont conservées le temps nécessaire à la vérification,
+au traitement et à la prévention des abus.</p>
 
 <h2>Vos droits et mineurs</h2>
 <p>Vous pouvez demander l'accès, la rectification ou la suppression de vos données
@@ -176,7 +183,7 @@ de téléphone du compte. Traitement sous 7 jours.</p>
 
 <h2>Données supprimées</h2>
 <ul>
-  <li>Compte (numéro de téléphone, pays) — supprimé.</li>
+  <li>Compte (identité déclarée, numéro, pays et récupération) — supprimé.</li>
   <li>Abonnements et codes de connexion — supprimés.</li>
   <li>Portefeuille de suivi et parrainages — supprimés.</li>
   <li>Historique de paiements — dissocié du compte, données techniques brutes effacées et conservé

@@ -18,7 +18,7 @@ const STATUS_LABEL = {
 };
 
 export default function ProfileScreen({ navigation }) {
-  const { phone, hasPaid, plan, paidUntil, referral, logout, refreshAccess } = useAuth();
+  const { phone, profile, hasPaid, plan, paidUntil, referral, logout, refreshAccess } = useAuth();
   const showPaymentHistory = Platform.OS !== 'android';
   const appVersion = Constants.expoConfig?.version || '1.0.0';
 
@@ -88,6 +88,11 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.phone}>
             {phone ? (phone.startsWith('+') ? phone : `+${phone}`) : 'Invité'}
           </Text>
+          {!!(profile?.firstName || profile?.lastName) && (
+            <Text style={styles.identityName}>
+              {[profile?.firstName, profile?.lastName].filter(Boolean).join(' ')}
+            </Text>
+          )}
           <View
             style={[
               styles.statusPill,
@@ -115,7 +120,7 @@ export default function ProfileScreen({ navigation }) {
           onPress={() =>
             Alert.alert(
               'Code de récupération',
-              "Un NOUVEAU code va être généré (l'ancien ne marchera plus). Notez-le : c'est le moyen le plus rapide de récupérer votre compte. Si vous perdez aussi ce code, contactez ftevolt@gmail.com. Continuer ?",
+              "Un NOUVEAU code va être généré (l'ancien ne marchera plus). Notez-le : c'est le moyen le plus rapide de récupérer votre compte. Si vous perdez aussi ce code, utilisez l'assistance depuis l'écran de récupération. Continuer ?",
               [
                 { text: 'Annuler', style: 'cancel' },
                 {
@@ -250,6 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md,
   },
   phone: { color: COLORS.text, fontSize: FONT.xl, fontWeight: '900' },
+  identityName: { color: COLORS.textMuted, fontSize: FONT.md, fontWeight: '700', marginTop: 4 },
   statusPill: { marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: 4, borderRadius: RADIUS.pill },
   statusText: { color: '#06251c', fontWeight: '800', fontSize: FONT.sm },
   paidUntil: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.sm },

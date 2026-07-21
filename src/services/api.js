@@ -87,14 +87,23 @@ async function request(path, { method = 'GET', body, auth = false, timeout = 150
 
 // --- Endpoints -------------------------------------------------------------
 export const api = {
-  // Auth (numéro + mot de passe — pas de SMS/email)
-  register: (phone, password, country, referralCode) =>
-    request('/auth/register', { method: 'POST', body: { phone, password, country, referralCode } }),
+  // Auth (identity + password; sensitive recovery fields stay server-side).
+  register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
   login: (phone, password, country) =>
     request('/auth/login', { method: 'POST', body: { phone, password, country } }),
   // Réinitialisation autonome : numéro + code de récupération -> nouveau mdp.
   resetPassword: (phone, recoveryCode, newPassword) =>
     request('/auth/reset-password', { method: 'POST', body: { phone, recoveryCode, newPassword } }),
+  recoveryQuestions: () => request('/auth/recovery-questions'),
+  recoveryQuestion: (phone) =>
+    request('/auth/recovery-question', { method: 'POST', body: { phone } }),
+  resetPasswordSecurity: (phone, birthDate, answer, newPassword) =>
+    request('/auth/reset-password-security', {
+      method: 'POST',
+      body: { phone, birthDate, answer, newPassword },
+    }),
+  requestRecoverySupport: (payload) =>
+    request('/auth/recovery-request', { method: 'POST', body: payload }),
   newRecoveryCode: () => request('/me/recovery-code', { method: 'POST', auth: true }),
   // Legacy OTP (conservé côté backend, plus utilisé par l'app)
   requestOtp: (phone) => request('/auth/request-otp', { method: 'POST', body: { phone } }),
