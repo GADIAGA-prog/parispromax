@@ -215,4 +215,6 @@ services:
     # Conserver le Key Value gratuit existant.
     plan: free
     ipAllowList: []
-    maxmemoryPolicy: allkeys-lru
+    # BullMQ exige noeviction afin qu'une tache en file ne soit jamais supprimee
+    # silencieusement lorsque la memoire du Key Value est pleine.
+    maxmemoryPolicy: noeviction
