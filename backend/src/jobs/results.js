@@ -2,6 +2,7 @@
 const prisma = require('../db');
 const { fetchResult } = require('./scrape');
 const { fetchPmuResult } = require('./scrapePmu');
+const { buildPredictionSnapshot } = require('../services/predictionSelection');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -45,6 +46,7 @@ async function detectResults({ dates } = {}) {
     if (!winners || winners.length < 3) continue; // not run yet
 
     let predicted = false;
+    let predictionSnapshot = null;
     if (race.predictions.length) {
       let picks = [];
       try {
@@ -55,10 +57,18 @@ async function detectResults({ dates } = {}) {
       const top = picks[0];
       // Hit = our #1 AI pick finished in the top 3 (placé).
       predicted = top ? winners.slice(0, 3).includes(top.number) : false;
+      predictionSnapshot = JSON.stringify(
+        buildPredictionSnapshot(picks, race, Math.min(winners.length, 5))
+      );
     }
 
     await prisma.result.create({
-      data: { raceId: race.id, winners: JSON.stringify(winners), predicted },
+      data: {
+        raceId: race.id,
+        winners: JSON.stringify(winners),
+        predictionSnapshot,
+        predicted,
+      },
     });
     await stampFinishPositions(race.id, winners);
     recorded++;

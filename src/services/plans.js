@@ -2,11 +2,11 @@
 // Prices in XOF. The backend remains the source of truth for charging.
 
 export const PLANS = [
-  { id: 'daily', label: 'Journalier', sub: '1 jour', days: 1, priceNormal: 400, pricePromo: 400 },
-  { id: 'weekly', label: 'Hebdomadaire', sub: '7 jours', days: 7, priceNormal: 2800, pricePromo: 2600 },
-  { id: 'monthly', label: 'Mensuel', sub: '30 jours', days: 30, priceNormal: 12000, pricePromo: 10800 },
-  { id: 'quarterly', label: 'Trimestriel', sub: '90 jours', days: 90, priceNormal: 36000, pricePromo: 30600 },
-  { id: 'annual', label: 'Annuel', sub: '365 jours', days: 365, priceNormal: 144000, pricePromo: 108000 },
+  { id: 'daily', label: 'Journalier', sub: '1 jour', days: 1, priceNormal: 200, pricePromo: 200 },
+  { id: 'weekly', label: 'Hebdomadaire', sub: '7 jours', days: 7, priceNormal: 1400, pricePromo: 1300 },
+  { id: 'monthly', label: 'Mensuel', sub: '30 jours', days: 30, priceNormal: 6000, pricePromo: 5400 },
+  { id: 'quarterly', label: 'Trimestriel', sub: '90 jours', days: 90, priceNormal: 18000, pricePromo: 15300 },
+  { id: 'annual', label: 'Annuel', sub: '365 jours', days: 365, priceNormal: 72000, pricePromo: 54000 },
 ];
 
 PLANS.forEach((p) => {

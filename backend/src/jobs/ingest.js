@@ -11,6 +11,8 @@ const fs = require('fs');
 const path = require('path');
 const prisma = require('../db');
 const { rankRunners } = require('../services/aiEngine');
+const { availableProviders } = require('../services/paymentProvider');
+const { countriesForProviderIds } = require('../services/paymentCountries');
 const { computeRatings, ratingForHorse, ratingFrom, syncActorStats } = require('./ratings');
 
 const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.json');
@@ -114,7 +116,11 @@ async function ingestData(data) {
 // plus grosse allocation (à défaut, celle avec le plus de partants — les
 // Quarté/Quinté se courent sur de gros champs). Tourne après chaque scrape ;
 // ne remplace JAMAIS une désignation manuelle faite dans le back-office.
-const PICK_COUNTRIES = ['bf', 'ci', 'sn', 'tg', 'bj', 'cg'];
+function pickCountries() {
+  return countriesForProviderIds(
+    availableProviders().map((provider) => provider.id)
+  ).map((country) => country.code);
+}
 
 function detectEventRace(data) {
   let best = null;
@@ -157,7 +163,7 @@ async function autoAssignNationalPicks(data) {
   );
 
   let assigned = 0;
-  for (const country of PICK_COUNTRIES) {
+  for (const country of pickCountries()) {
     // URL du journal du pays, configurable une fois pour toutes via env
     // (ex. JOURNAL_URL_BF=https://www.lonab.bf/journal-hippique).
     const journalUrl = process.env[`JOURNAL_URL_${country.toUpperCase()}`] || null;
@@ -287,5 +293,5 @@ module.exports = {
   backfillRunners,
   autoAssignNationalPicks,
   RACES_FILE,
-  _test: { detectEventRace, shouldUpgradeAutomaticPick },
+  _test: { detectEventRace, shouldUpgradeAutomaticPick, pickCountries },
 };

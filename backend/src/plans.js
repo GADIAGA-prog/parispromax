@@ -2,11 +2,11 @@
 // Prices in XOF. priceNormal = reference price, pricePromo = charged price.
 
 const PLANS = [
-  { id: 'daily',     label: 'Journalier',   days: 1,   priceNormal: 400,    pricePromo: 400 },
-  { id: 'weekly',    label: 'Hebdomadaire', days: 7,   priceNormal: 2800,   pricePromo: 2600 },
-  { id: 'monthly',   label: 'Mensuel',      days: 30,  priceNormal: 12000,  pricePromo: 10800 },
-  { id: 'quarterly', label: 'Trimestriel',  days: 90,  priceNormal: 36000,  pricePromo: 30600 },
-  { id: 'annual',    label: 'Annuel',       days: 365, priceNormal: 144000, pricePromo: 108000 },
+  { id: 'daily',     label: 'Journalier',   days: 1,   priceNormal: 200,   pricePromo: 200 },
+  { id: 'weekly',    label: 'Hebdomadaire', days: 7,   priceNormal: 1400,  pricePromo: 1300 },
+  { id: 'monthly',   label: 'Mensuel',      days: 30,  priceNormal: 6000,  pricePromo: 5400 },
+  { id: 'quarterly', label: 'Trimestriel',  days: 90,  priceNormal: 18000, pricePromo: 15300 },
+  { id: 'annual',    label: 'Annuel',       days: 365, priceNormal: 72000, pricePromo: 54000 },
 ];
 
 // Attach computed discount percentage.

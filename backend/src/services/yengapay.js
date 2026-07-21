@@ -1,9 +1,11 @@
 const axios = require('axios');
+const crypto = require('crypto');
 const config = require('../config');
+const { safeEqual } = require('../security');
 
 // YengaPay Direct Payment API. This flow deliberately stays in the app: the
-// customer chooses the operator and, for Orange Money, enters the OTP supplied
-// by the operator. No Mobile Money PIN is collected by ParisPromax.
+// customer chooses the operator and follows the OTP flow declared by YengaPay.
+// No Mobile Money PIN is ever collected by ParisPromax.
 
 const isConfigured = () => config.yengapay.configured;
 
@@ -20,6 +22,9 @@ function http() {
 
 const OPERATORS_BY_COUNTRY = {
   bf: ['ORANGE', 'MOOV', 'TELECEL', 'CORISM', 'SANKM'],
+  // The official SDK currently advertises Orange + Moov in CI, while the
+  // YengaPay operator catalogue additionally advertises MTN MoMo CI. The
+  // PaymentIntent remains the final authority before a debit is requested.
   ci: ['ORANGE', 'MOOV', 'MTN'],
   sn: ['ORANGE'],
   ml: ['ORANGE'],
@@ -28,15 +33,50 @@ const OPERATORS_BY_COUNTRY = {
   bj: ['MOOV'],
 };
 
+const OPERATOR_NAMES = {
+  ORANGE: 'Orange Money',
+  MOOV: 'Moov Money',
+  TELECEL: 'Telecel Money',
+  CORISM: 'Coris Money',
+  SANKM: 'Sank Money',
+  MTN: 'MTN MoMo',
+};
+
+// Current direct-payment guide:
+// - CORISM/SANKM: request the OTP from YengaPay, then call /pay with it.
+// - ORANGE/TELECEL: the customer obtains the OTP, then /pay is called directly.
+// - MOOV/MTN: push validation on the customer's phone, no OTP field here.
+const SERVER_OTP_OPERATORS = new Set(['CORISM', 'SANKM']);
+const CUSTOMER_OTP_OPERATORS = new Set(['ORANGE', 'TELECEL']);
+
+function normalizeOperatorCode(operator) {
+  const code = String(operator || '').trim().toUpperCase();
+  return ['MTN_MOMO_CI', 'MTN_MOMO'].includes(code) ? 'MTN' : code;
+}
+
 function operatorsForCountry(country) {
   return OPERATORS_BY_COUNTRY[String(country || '').toLowerCase()] || [];
 }
 
-function requiresOtp(country, operator) {
-  const op = String(operator || '').toUpperCase();
-  // Official YengaPay flow: Orange is one-step with OTP; Coris, Sank and
-  // Telecel use an OTP flow. Moov triggers a validation on the handset.
-  return op === 'ORANGE' || ['CORISM', 'SANKM', 'TELECEL'].includes(op);
+function operatorDetailsForCountry(country) {
+  return operatorsForCountry(country).map((code) => ({
+    code,
+    name: OPERATOR_NAMES[code] || code,
+    otpMode: SERVER_OTP_OPERATORS.has(code)
+      ? 'server'
+      : CUSTOMER_OTP_OPERATORS.has(code)
+        ? 'customer'
+        : 'none',
+  }));
+}
+
+function requiresOtp(_country, operator) {
+  const op = normalizeOperatorCode(operator);
+  return SERVER_OTP_OPERATORS.has(op) || CUSTOMER_OTP_OPERATORS.has(op);
+}
+
+function requiresOtpRequest(operator) {
+  return SERVER_OTP_OPERATORS.has(normalizeOperatorCode(operator));
 }
 
 function normalizePhone(raw, country) {
@@ -54,6 +94,7 @@ function mapStatus(status) {
     case 'DONE':
     case 'SUCCESS':
     case 'SUCCESSFUL':
+    case 'COMPLETED':
       return 'success';
     case 'FAILED':
     case 'CANCELLED':
@@ -62,6 +103,29 @@ function mapStatus(status) {
     default:
       return 'pending';
   }
+}
+
+function availableOperator(intent, country, operator) {
+  const available = Array.isArray(intent?.availableOperators) ? intent.availableOperators : [];
+  if (!available.length) return null;
+  const expectedCountry = String(country || '').toUpperCase();
+  const expectedOperator = normalizeOperatorCode(operator);
+  return available.find(
+    (item) =>
+      normalizeOperatorCode(item?.code) === expectedOperator &&
+      String(item?.countryCode || '').toUpperCase() === expectedCountry
+  ) || null;
+}
+
+function verifyWebhookHash(body, receivedHash, secret = config.yengapay.webhookSecret) {
+  if (!secret) return true;
+  if (!receivedHash) return false;
+  const supplied = String(receivedHash).replace(/^sha256=/i, '');
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(body || {}))
+    .digest('hex');
+  return safeEqual(expected, supplied);
 }
 
 async function initDirectPayment({ transactionId, amount, description, customer }) {
@@ -93,6 +157,19 @@ async function requestMobilePayment({ paymentIntentId, operator, country, phone,
   return { ...data, status: mapStatus(data?.status) };
 }
 
+async function sendPaymentOtp({ paymentIntentId, operator, country, phone }) {
+  const { data } = await http().post(
+    `/groups/${config.yengapay.groupId}/projects/${config.yengapay.projectId}/direct-payment/send-otp`,
+    {
+      paymentIntentId,
+      operatorCode: String(operator).toUpperCase(),
+      countryCode: String(country).toUpperCase(),
+      customerMSISDN: normalizePhone(phone, country),
+    }
+  );
+  return data;
+}
+
 async function verifyPayment(payment) {
   if (!isConfigured()) return { status: 'pending', method: null, raw: null };
   const ref = payment?.providerRef;
@@ -106,8 +183,15 @@ async function verifyPayment(payment) {
 module.exports = {
   isConfigured,
   operatorsForCountry,
+  operatorDetailsForCountry,
+  normalizeOperatorCode,
   requiresOtp,
+  requiresOtpRequest,
+  availableOperator,
+  verifyWebhookHash,
+  normalizePhone,
   initDirectPayment,
+  sendPaymentOtp,
   requestMobilePayment,
   verifyPayment,
   mapStatus,

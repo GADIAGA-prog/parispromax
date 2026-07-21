@@ -111,7 +111,9 @@ export function AuthProvider({ children }) {
 
   const doLogout = useCallback(async () => {
     await clearToken();
-    await AsyncStorage.removeItem(ACCESS_CACHE);
+    await AsyncStorage.multiRemove([ACCESS_CACHE, PHONE_KEY]);
+    setPhone(null);
+    setCountry(null);
     setIsLoggedIn(false);
     setAccess(defaultAccess);
     setReferral(null);

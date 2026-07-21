@@ -1,4 +1,5 @@
 const prisma = require('../db');
+const { getPlan } = require('../plans');
 
 // Activate (or extend) a user's subscription after a successful payment.
 // `days` and `planId` come from the purchased plan.
@@ -28,6 +29,41 @@ async function activateSubscription(userId, days, planId, db = prisma) {
   });
 }
 
+function referralRewardDays(purchasedDays) {
+  const days = Number(purchasedDays);
+  return Number.isFinite(days) && days > 0 ? days / 2 : 0;
+}
+
+// Reward a sponsor exactly once, using the referred user's FIRST successful
+// subscription payment. A later renewal can never change the reward duration.
+async function rewardSponsorForFirstSubscription(
+  referredId,
+  db = prisma,
+  activate = activateSubscription
+) {
+  const referral = await db.referral.findUnique({ where: { referredId } });
+  if (referral?.status !== 'pending') return null;
+
+  const firstPayment = await db.payment.findFirst({
+    where: { userId: referredId, status: 'success' },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+  });
+  if (!firstPayment) return null;
+
+  const firstPlan = getPlan(firstPayment.plan) || { days: 30 };
+  const rewardDays = referralRewardDays(firstPlan.days);
+  if (!rewardDays) return null;
+
+  const claimed = await db.referral.updateMany({
+    where: { id: referral.id, status: 'pending' },
+    data: { status: 'rewarded', rewardedAt: new Date() },
+  });
+  if (claimed.count !== 1) return null;
+
+  await activate(referral.sponsorId, rewardDays, 'referral-bonus', db);
+  return { firstPaymentId: firstPayment.id, rewardDays };
+}
+
 // Access = an active (non-expired) paid subscription. No trial anymore.
 async function getAccess(userId) {
   const now = new Date();
@@ -45,4 +81,9 @@ async function getAccess(userId) {
   };
 }
 
-module.exports = { activateSubscription, getAccess };
+module.exports = {
+  activateSubscription,
+  referralRewardDays,
+  rewardSponsorForFirstSubscription,
+  getAccess,
+};

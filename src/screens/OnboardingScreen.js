@@ -26,7 +26,7 @@ const SLIDES = [
   {
     icon: 'pricetags',
     title: 'Des formules pour tous',
-    text: "Abonnez-vous à partir de 400 XOF/jour. Payez facilement par carte bancaire ou Mobile Money (Orange, MTN, Wave, Moov).",
+    text: "Abonnez-vous à partir de 200 XOF/jour. Payez facilement par carte bancaire ou Mobile Money (Orange, MTN, Wave, Moov).",
   },
 ];
 

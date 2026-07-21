@@ -11,17 +11,18 @@ const isProdLike = isProd || !isSqliteDev;
 const config = {
   port: Number(process.env.PORT) || 4000,
   isProd,
-  // The local MOCK checkout (free "simulate success") must NEVER be reachable in
-  // production, otherwise anyone could grant themselves a subscription. It is on
-  // ONLY with a SQLite dev DB, or if explicitly forced via ALLOW_MOCK_PAYMENTS.
+  // The local MOCK checkout (free "simulate success") must NEVER be reachable
+  // outside the local SQLite database, even if an environment variable is set
+  // incorrectly on a production service.
   allowMock:
-    String(process.env.ALLOW_MOCK_PAYMENTS || '') === 'true' || (isSqliteDev && !isProd),
+    isSqliteDev && !isProd && String(process.env.ALLOW_MOCK_PAYMENTS || 'true') !== 'false',
   corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
-  jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
+  jwtSecret: String(process.env.JWT_SECRET || '').trim() || 'dev-secret-change-me',
   otpTtlMinutes: Number(process.env.OTP_TTL_MINUTES) || 5,
   // OTP dev mode returns the code in the API response (no SMS). It MUST never
   // default to on outside the local SQLite dev DB, otherwise anyone could log
-  // in as any phone number. Explicit OTP_DEV_MODE=true still wins (staging).
+  // in as any phone number. The boot checks reject an explicit `true` outside
+  // local SQLite as well.
   otpDevMode:
     process.env.OTP_DEV_MODE != null
       ? String(process.env.OTP_DEV_MODE) === 'true'
@@ -104,7 +105,7 @@ const config = {
   // Falls back to CRON_TOKEN so a single secret can cover both integrations.
   mlToken: process.env.ML_PUSH_TOKEN || process.env.CRON_TOKEN || '',
   subscription: {
-    priceXOF: Number(process.env.SUB_PRICE_XOF) || 5000,
+    priceXOF: Number(process.env.SUB_PRICE_XOF) || 5400,
     periodDays: Number(process.env.SUB_PERIOD_DAYS) || 30,
   },
   pawapay: {
@@ -115,7 +116,6 @@ const config = {
   },
   referral: {
     discountPercent: Math.min(100, Math.max(0, Number(process.env.REFERRAL_DISCOUNT_PERCENT) || 10)),
-    rewardDays: Math.max(1, Number(process.env.REFERRAL_REWARD_DAYS) || 7),
   },
   admin: {
     user: process.env.ADMIN_USER || 'admin',
@@ -182,16 +182,19 @@ config.pawapay.configured = Boolean(config.pawapay.apiToken);
 
 // ---- Boot-time security checks (fail fast on unsafe production setups) ------
 if (isProdLike) {
-  if (!process.env.JWT_SECRET) {
+  if (!String(process.env.JWT_SECRET || '').trim() || config.jwtSecret.length < 32) {
     // A guessable secret lets anyone forge tokens for any account.
     throw new Error(
-      '[config] JWT_SECRET est obligatoire hors dev (DATABASE_URL non-SQLite). Définissez-le puis redémarrez.'
+      '[config] JWT_SECRET est obligatoire et doit contenir au moins 32 caractères hors dev.'
     );
   }
   if (config.otpDevMode) {
-    console.warn(
-      '[config] ⚠️ OTP_DEV_MODE=true avec une base de production : les codes OTP sont renvoyés par l’API. À réserver au staging.'
+    throw new Error(
+      '[config] OTP_DEV_MODE=true est interdit hors de la base SQLite locale.'
     );
+  }
+  if (config.admin.enabled && config.admin.password.length < 16) {
+    throw new Error('[config] ADMIN_PASSWORD doit contenir au moins 16 caractères hors dev.');
   }
   if (!config.admin.enabled) {
     console.warn(

@@ -1,0 +1,20 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const {
+  sha256,
+  hashRecoveryCode,
+  verifyRecoveryCode,
+} = require('../src/security');
+
+test('les nouveaux codes de récupération sont protégés par scrypt', () => {
+  const stored = hashRecoveryCode('ABCD-2345');
+  assert.match(stored, /^scrypt\$/);
+  assert.equal(verifyRecoveryCode('abcd 2345', stored), true);
+  assert.equal(verifyRecoveryCode('ABCD-2346', stored), false);
+});
+
+test('les anciens condensats SHA-256 restent utilisables pendant la migration', () => {
+  const legacy = sha256('ABCD-2345');
+  assert.equal(verifyRecoveryCode('ABCD2345', legacy), true);
+  assert.equal(verifyRecoveryCode('ZZZZ-9999', legacy), false);
+});

@@ -36,13 +36,9 @@ async function runRefresh() {
       const { autoAssignNationalPicks } = require('../jobs/ingest');
       await autoAssignNationalPicks(payload);
 
-      const old = await prisma.race.findMany({ where: { date: today }, select: { id: true } });
-      const ids = old.map((r) => r.id);
-      if (ids.length) {
-        await prisma.prediction.deleteMany({ where: { raceId: { in: ids } } });
-        await prisma.result.deleteMany({ where: { raceId: { in: ids } } });
-        await prisma.race.deleteMany({ where: { id: { in: ids } } });
-      }
+      // ingestData upserts races. Do not delete the date first: doing so erased
+      // already detected results and could leave the day empty after a partial
+      // upstream response or an ingestion failure.
       const scraped = await ingestData(payload);
       console.log(`[cron] scraped ${scraped} races (${payload.racetracks.length} tracks) for ${today}`);
     }

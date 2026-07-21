@@ -6,7 +6,7 @@ const number = (value, fallback = 0) => {
 };
 
 function betText(race) {
-  return `${race?.isQuinte ? 'quinte ' : ''}${JSON.stringify(race?.bets || [])} ${race?.name || ''}`
+  return `${race?.isQuinte ? 'quinte ' : ''}${race?.betType || ''} ${JSON.stringify(race?.bets || [])} ${race?.name || ''}`
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
@@ -72,28 +72,38 @@ export function buildRaceInsights(race) {
   const sorted = [...(race?.horses || [])]
     .filter((horse) => horse && horse.nonPartant !== true)
     .sort((a, b) => number(a.rank, 999) - number(b.rank, 999) || number(b.aiScore) - number(a.aiScore));
-  const selectionSize = Math.min(sorted.length, format.places + 1);
+  const selectionSize = Math.min(sorted.length, format.places + 2);
   const confidence = confidenceFor(sorted);
-  const baseCount = selectionSize >= 5 && confidence.stars >= 4 ? 2 : Math.min(1, selectionSize);
-  const bases = sorted.slice(0, baseCount);
+  const bases = sorted.slice(0, Math.min(1, selectionSize));
   const used = new Set(bases.map((horse) => horse.number));
 
-  const outsider = sorted
+  // Le couplé associe la base au meilleur cheval restant. La base est répétée
+  // dans l'affichage du couplé mais ne compte qu'une fois dans la sélection.
+  const couplePartner = sorted.find((horse) => !used.has(horse.number)) || null;
+  if (couplePartner) used.add(couplePartner.number);
+  const couple = couplePartner ? [...bases, couplePartner] : [...bases];
+
+  const tocard = sorted
     .filter((horse) => !used.has(horse.number))
-    .filter((horse) => number(horse.odds) >= 8 || horse.backendValueBet || hasBadge(horse, BADGES.VALUE.key))
+    .filter((horse) => number(horse.odds) >= 15 || horse.backendValueBet || hasBadge(horse, BADGES.VALUE.key))
     .filter((horse) => horse.probaPodium == null || number(horse.probaPodium) >= 0.08)
     .sort((a, b) => number(b.probaPodium) - number(a.probaPodium) || number(b.aiScore) - number(a.aiScore))[0];
 
-  const reserveForOutsider = outsider && selectionSize - baseCount >= 3 ? 1 : 0;
-  const chanceCount = Math.max(0, selectionSize - baseCount - reserveForOutsider - 1);
-  const chances = sorted.filter((horse) => !used.has(horse.number) && horse.number !== outsider?.number).slice(0, chanceCount);
+  const fixedCount = bases.length + (couplePartner ? 1 : 0);
+  const reserveForTocard = tocard && selectionSize - fixedCount >= 2 ? 1 : 0;
+  const reserveForRegret = selectionSize - fixedCount - reserveForTocard >= 1 ? 1 : 0;
+  const chanceCount = Math.max(0, selectionSize - fixedCount - reserveForTocard - reserveForRegret);
+  const chances = sorted
+    .filter((horse) => !used.has(horse.number) && horse.number !== tocard?.number)
+    .slice(0, chanceCount);
   chances.forEach((horse) => used.add(horse.number));
-  const outsiders = reserveForOutsider ? [outsider] : [];
-  outsiders.forEach((horse) => used.add(horse.number));
-  let regret = sorted.find((horse) => !used.has(horse.number)) || null;
+  const tocards = reserveForTocard ? [tocard] : [];
+  tocards.forEach((horse) => used.add(horse.number));
+  let regret = reserveForRegret ? sorted.find((horse) => !used.has(horse.number)) || null : null;
 
-  // Champs très courts : compléter sans dépasser nombre à l'arrivée + 1.
-  const selected = [...bases, ...chances, ...outsiders];
+  // La combinaison contient exactement le nombre à l'arrivée + 2, dans la
+  // limite du nombre réel de partants, sans compter deux fois la base du couplé.
+  const selected = [...bases, ...(couplePartner ? [couplePartner] : []), ...chances, ...tocards];
   if (regret && selected.length < selectionSize) selected.push(regret);
   while (selected.length < selectionSize) {
     const next = sorted.find((horse) => !selected.some((item) => item.number === horse.number));
@@ -113,8 +123,11 @@ export function buildRaceInsights(race) {
     selectionSize,
     confidence,
     bases,
+    couple,
     chances,
-    outsiders,
+    outsiders: tocards,
+    tocards,
+    tocard: tocards[0] || null,
     regret,
     selected,
     tips,

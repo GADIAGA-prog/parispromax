@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,24 +16,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import {
+  DEFAULT_PAYMENT_COUNTRIES,
+  countryByCode,
+  toE164Phone,
+} from '../services/countries';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
-
-// Pays supportés par FeexPay (Mobile Money) — seuls pays d'inscription.
-// Le pays choisi détermine les opérateurs proposés au paiement (Orange/Moov BF…).
-const COUNTRIES = [
-  { code: 'bf', name: 'Burkina Faso', dial: '+226', flag: '🇧🇫' },
-  { code: 'ci', name: "Côte d'Ivoire", dial: '+225', flag: '🇨🇮' },
-  { code: 'sn', name: 'Sénégal', dial: '+221', flag: '🇸🇳' },
-  { code: 'tg', name: 'Togo', dial: '+228', flag: '🇹🇬' },
-  { code: 'bj', name: 'Bénin', dial: '+229', flag: '🇧🇯' },
-  { code: 'cg', name: 'Congo-Brazzaville', dial: '+242', flag: '🇨🇬' },
-];
 
 // Connexion par numéro + MOT DE PASSE (aucun SMS ni email). Le reset de mot de
 // passe est autonome : un CODE DE RÉCUPÉRATION est remis à l'inscription.
 export default function LoginScreen() {
   const { login, adoptSession } = useAuth();
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
+  const [countries, setCountries] = useState(DEFAULT_PAYMENT_COUNTRIES);
   const [countryCode, setCountryCode] = useState('bf');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [phone, setPhone] = useState('');
@@ -47,22 +42,36 @@ export default function LoginScreen() {
   // récupération et on n'adopte la session qu'une fois le code noté.
   const [recovery, setRecovery] = useState(null);
 
-  const selected = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0];
+  const selected = countryByCode(countryCode, countries)
+    || countries[0]
+    || DEFAULT_PAYMENT_COUNTRIES[0];
   const isRegister = mode === 'register';
   const isReset = mode === 'reset';
 
+  // Le backend renvoie uniquement les pays couverts par au moins un moyen de
+  // paiement actif. La liste YengaPay locale sert de repli hors connexion.
+  useEffect(() => {
+    let cancelled = false;
+    api.paymentCountries()
+      .then((data) => {
+        const list = Array.isArray(data?.countries) ? data.countries : [];
+        if (cancelled || !list.length) return;
+        setCountries(list);
+        setCountryCode((current) => (
+          list.some((country) => country.code === current) ? current : list[0].code
+        ));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   // Build a clean E.164 number, tolerant of any way the user typed it: with or
   // without the country code, a leading "+", "00", or national "0".
-  const fullPhone = () => {
-    const cc = selected.dial.replace('+', ''); // "226"
-    let d = phone.replace(/\D/g, '').replace(/^00/, '').replace(/^0+/, '');
-    while (d.startsWith(cc) && d.length - cc.length >= 8) d = d.slice(cc.length);
-    return `+${cc}${d}`;
-  };
+  const fullPhone = () => toE164Phone(phone, selected);
 
   const onSubmit = async () => {
-    const local = phone.replace(/\D/g, '').replace(/^0+/, '');
-    if (local.length < 8) {
+    const normalizedPhone = fullPhone();
+    if (!normalizedPhone) {
       setError('Entrez un numéro de téléphone valide.');
       return;
     }
@@ -70,21 +79,21 @@ export default function LoginScreen() {
       setError('Entrez votre code de récupération (8 caractères).');
       return;
     }
-    if (password.length < 6) {
-      setError('Mot de passe : 6 caractères minimum.');
+    if (password.length < 8) {
+      setError('Mot de passe : 8 caractères minimum.');
       return;
     }
     setError('');
     setBusy(true);
     try {
       if (isRegister) {
-        const res = await api.register(fullPhone(), password, countryCode, referralCode);
+        const res = await api.register(normalizedPhone, password, countryCode, referralCode);
         setRecovery({ code: res.recoveryCode, session: res });
       } else if (isReset) {
-        const res = await api.resetPassword(fullPhone(), resetCode, password);
+        const res = await api.resetPassword(normalizedPhone, resetCode, password);
         setRecovery({ code: res.recoveryCode, session: res });
       } else {
-        await login(fullPhone(), password, countryCode);
+        await login(normalizedPhone, password, countryCode);
         // On success the navigator switches automatically.
       }
     } catch (e) {
@@ -219,9 +228,9 @@ export default function LoginScreen() {
 
           <Text style={[styles.label, { marginTop: SPACING.md }]}>
             {isRegister
-              ? 'Choisissez un mot de passe (6 caractères min.)'
+              ? 'Choisissez un mot de passe (8 caractères min.)'
               : isReset
-                ? 'Nouveau mot de passe (6 caractères min.)'
+                ? 'Nouveau mot de passe (8 caractères min.)'
                 : 'Mot de passe'}
           </Text>
           <View style={styles.inputRow}>
@@ -273,7 +282,7 @@ export default function LoginScreen() {
 
           <View style={styles.trialNote}>
             <Ionicons name="pricetags" size={14} color={COLORS.accent} />
-            <Text style={styles.trialNoteText}>Abonnements à partir de 400 XOF/jour.</Text>
+            <Text style={styles.trialNoteText}>Abonnements à partir de 200 XOF/jour.</Text>
           </View>
         </View>
 
@@ -311,7 +320,7 @@ export default function LoginScreen() {
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>Choisissez votre pays</Text>
               <ScrollView>
-                {COUNTRIES.map((c) => (
+                {countries.map((c) => (
                   <Pressable
                     key={c.code}
                     style={[styles.countryRow, c.code === countryCode && styles.countryRowActive]}

@@ -11,11 +11,12 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "gen:prod-schema": "node scripts/gen-prod-schema.js",
-    "build:prod": "node scripts/gen-prod-schema.js && prisma generate --schema=prisma/schema.production.prisma && prisma db push --schema=prisma/schema.production.prisma --skip-generate --accept-data-loss",
+    "build:prod": "node scripts/gen-prod-schema.js && prisma generate --schema=prisma/schema.production.prisma",
+    "db:sync:prod": "node scripts/gen-prod-schema.js && prisma db push --schema=prisma/schema.production.prisma --skip-generate",
     "pawapay:test": "node scripts/test-pawapay.js"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.13.0"
   },
   "keywords": [],
   "author": "",

@@ -77,8 +77,13 @@ export default function HistoryScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const topPick = item.topPicks && item.topPicks[0];
-          const podium = (item.winners || []).slice(0, 5);
+          const arrival = item.winners || [];
+          const podium = arrival.slice(0, 5);
+          const selectionSize = item.groups?.selectionSize || Math.min(Math.max(arrival.length, 3), 5) + 2;
+          const predictions = (item.topPicks || [])
+            .slice()
+            .sort((a, b) => (a.rank || 999) - (b.rank || 999))
+            .slice(0, selectionSize);
           return (
             <View style={styles.card}>
               <View style={styles.cardHead}>
@@ -94,14 +99,14 @@ export default function HistoryScreen() {
               </View>
 
               {/* Our AI prediction */}
-              {topPick && (
+              {predictions.length > 0 && (
                 <View style={styles.line}>
                   <Text style={styles.lineLabel}>🤖 Pronostic IA</Text>
                   <View style={styles.chips}>
-                    {item.topPicks.slice(0, 3).map((p) => {
+                    {predictions.map((p, index) => {
                       const hit = podium.includes(p.number);
                       return (
-                        <View key={p.number} style={[styles.chip, hit && styles.chipHit]}>
+                        <View key={`${p.number}-${p.rank || index}`} style={[styles.chip, hit && styles.chipHit]}>
                           <Text style={[styles.chipText, hit && styles.chipTextHit]}>{p.number}</Text>
                         </View>
                       );

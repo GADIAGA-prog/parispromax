@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const prisma = require('../db');
 const config = require('../config');
 const { requireAuth } = require('../auth');
@@ -10,11 +11,28 @@ const feexpay = require('../services/feexpay');
 const pawapay = require('../services/pawapay');
 const yengapay = require('../services/yengapay');
 const { getProvider, availableProviders, defaultName } = require('../services/paymentProvider');
-const { activateSubscription } = require('../services/subscription');
+const {
+  countriesForProviderIds,
+  publicCountry,
+  providerSupportsCountry,
+} = require('../services/paymentCountries');
+const {
+  activateSubscription,
+  rewardSponsorForFirstSubscription,
+} = require('../services/subscription');
 const { getPlan } = require('../plans');
-const { safeEqual } = require('../security');
+const { safeEqual, rateLimit } = require('../security');
 
 const router = express.Router();
+const MIN_PAYMENT_XOF = 200;
+
+// GET /payments/countries — countries covered by at least one payment provider
+// that is actually enabled and configured on this deployment.
+router.get('/countries', (_req, res) => {
+  const providerIds = availableProviders().map((provider) => provider.id);
+  const countries = countriesForProviderIds(providerIds).map(publicCountry);
+  res.json({ countries });
+});
 
 // Diagnostic detail on provider errors, only for callers holding the cron token.
 function diagAllowed(req) {
@@ -23,13 +41,26 @@ function diagAllowed(req) {
 
 // GET /payments/providers — the payment options the app should offer (only the
 // ones actually usable right now). Public.
-router.get('/providers', (_req, res) => {
-  res.json({ providers: availableProviders(), default: defaultName });
+router.get('/providers', (req, res) => {
+  const country = String(req.query.country || '').toLowerCase();
+  const providers = availableProviders().filter(
+    (provider) => !country || providerSupportsCountry(provider.id, country)
+  );
+  const preferred = providers.some((provider) => provider.id === defaultName)
+    ? defaultName
+    : providers[0]?.id || null;
+  res.json({ providers, default: preferred });
 });
 
 function genTxnId() {
-  return `PPM-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  return `PPM-${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
 }
+
+const paymentWriteLimit = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  keyFn: (req) => req.userId || req.ip || 'unknown',
+});
 
 async function priceForUser(userId, plan) {
   const [referral, successes, discountedPending] = await Promise.all([
@@ -43,19 +74,29 @@ async function priceForUser(userId, plan) {
     }),
   ]);
   const eligible = referral?.status === 'pending' && successes === 0 && discountedPending === 0;
-  const discount = eligible ? Math.round(plan.pricePromo * config.referral.discountPercent / 100) : 0;
-  return { amount: Math.max(0, plan.pricePromo - discount), discount };
+  const requestedDiscount = eligible
+    ? Math.round(plan.pricePromo * config.referral.discountPercent / 100)
+    : 0;
+  // YengaPay advertises a minimum payment of 200 XOF. The daily plan costs
+  // exactly 200 XOF, so its first-payment referral reduction cannot lower it.
+  const amount = Math.max(MIN_PAYMENT_XOF, plan.pricePromo - requestedDiscount);
+  return { amount, discount: plan.pricePromo - amount };
 }
 
 // POST /payments/initiate  (auth)  { planId, method?, channels? }
 // Creates a pending Payment for a plan and returns the PSP payment URL.
-router.post('/initiate', requireAuth, async (req, res) => {
+router.post('/initiate', requireAuth, paymentWriteLimit, async (req, res) => {
+  let payment = null;
   try {
     const plan = getPlan(req.body.planId);
     if (!plan) return res.status(400).json({ error: 'Plan invalide' });
 
     // Pick a usable provider: the requested one if available, else the default.
-    const avail = availableProviders();
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user) return res.status(401).json({ error: 'Compte introuvable' });
+    const avail = availableProviders().filter((candidate) =>
+      providerSupportsCountry(candidate.id, user.country)
+    );
     const chosenId =
       req.body.provider && avail.some((p) => p.id === req.body.provider)
         ? req.body.provider
@@ -65,9 +106,7 @@ router.post('/initiate', requireAuth, async (req, res) => {
 
     const { amount, discount } = await priceForUser(req.userId, plan);
     const transactionId = genTxnId();
-    const user = await prisma.user.findUnique({ where: { id: req.userId } });
-
-    const payment = await prisma.payment.create({
+    payment = await prisma.payment.create({
       data: {
         userId: req.userId,
         provider: provider.name,
@@ -111,6 +150,9 @@ router.post('/initiate', requireAuth, async (req, res) => {
       plan: plan.id,
     });
   } catch (e) {
+    if (payment) {
+      await markFailed(payment, { reason: 'provider_initialization_failed' }).catch(() => {});
+    }
     console.error('initiate error', e.response?.data || e.message);
     const body = { error: "Échec de l'initialisation du paiement" };
     // Provider error detail, gated behind the admin/cron token (safe in prod).
@@ -142,13 +184,7 @@ async function finalizePaymentSuccess(payment, { method, raw } = {}) {
     if (flipped.count !== 1 || !payment.userId) return;
     const plan = getPlan(payment.plan) || { days: 30, id: payment.plan };
     await activateSubscription(payment.userId, plan.days, plan.id, tx);
-    if (payment.referralDiscount > 0) {
-      const referral = await tx.referral.findUnique({ where: { referredId: payment.userId } });
-      if (referral?.status === 'pending') {
-        await tx.referral.update({ where: { id: referral.id }, data: { status: 'rewarded', rewardedAt: new Date() } });
-        await activateSubscription(referral.sponsorId, config.referral.rewardDays, 'referral-bonus', tx);
-      }
-    }
+    await rewardSponsorForFirstSubscription(payment.userId, tx);
   });
   return prisma.payment.findUnique({ where: { id: payment.id } });
 }
@@ -320,7 +356,8 @@ router.get('/feexpay/operators', (req, res) => {
 // Mobile money FeexPay : selon l'opérateur, FeexPay pousse une confirmation sur
 // le téléphone ou renvoie une page sécurisée à ouvrir. On crée un Payment en
 // attente, on déclenche requesttopay, puis l'app suit /payments/status/:txn.
-router.post('/feexpay/mobile', requireAuth, async (req, res) => {
+router.post('/feexpay/mobile', requireAuth, paymentWriteLimit, async (req, res) => {
+  let payment = null;
   try {
     if (!feexpay.isConfigured() && !config.allowMock) {
       return res.status(400).json({ error: 'FeexPay non disponible' });
@@ -332,11 +369,14 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
     if (!phone || !network) return res.status(400).json({ error: 'Numéro et opérateur requis' });
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    const country = String(req.body.country || user?.country || 'bf').toLowerCase();
+    const country = String(user?.country || '').toLowerCase();
+    if (!providerSupportsCountry('feexpay', country)) {
+      return res.status(400).json({ error: 'FeexPay non disponible pour le pays du compte' });
+    }
     const { amount, discount } = await priceForUser(req.userId, plan);
     const transactionId = genTxnId();
 
-    const payment = await prisma.payment.create({
+    payment = await prisma.payment.create({
       data: {
         userId: req.userId,
         provider: 'feexpay',
@@ -414,6 +454,9 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
       plan: plan.id,
     });
   } catch (e) {
+    if (payment) {
+      await markFailed(payment, { reason: 'provider_initialization_failed' }).catch(() => {});
+    }
     const pdata = e.response?.data;
     console.error(
       'feexpay mobile error',
@@ -438,21 +481,26 @@ router.post('/feexpay/mobile', requireAuth, async (req, res) => {
 });
 
 // GET /payments/yengapay/operators?country=bf â€” the operator selector for
-// YengaPay Direct Payment. Orange/Moov Burkina are included in the sandbox.
+// YengaPay Direct Payment. The response also tells the app which OTP flow is
+// required for every operator.
 router.get('/yengapay/operators', (req, res) => {
   const country = String(req.query.country || 'bf').toLowerCase();
   const operators = yengapay.operatorsForCountry(country);
   res.json({
     country,
     operators,
+    operatorDetails: yengapay.operatorDetailsForCountry(country),
     otpRequired: operators.filter((operator) => yengapay.requiresOtp(country, operator)),
+    otpRequestRequired: operators.filter((operator) => yengapay.requiresOtpRequest(operator)),
   });
 });
 
 // POST /payments/yengapay/mobile (auth) — YengaPay direct Mobile Money flow.
-// Orange requires the OTP supplied by the operator; Moov is validated directly
-// on the customer's phone. The app never receives or stores a Mobile Money PIN.
-router.post('/yengapay/mobile', requireAuth, async (req, res) => {
+// Orange/Telecel use a customer-generated OTP. Coris/Sank ask YengaPay to send
+// the OTP first. Moov/MTN use a push confirmation. The app never receives or
+// stores a Mobile Money PIN.
+router.post('/yengapay/mobile', requireAuth, paymentWriteLimit, async (req, res) => {
+  let payment = null;
   try {
     if (!yengapay.isConfigured()) {
       return res.status(400).json({ error: 'YengaPay non configuré' });
@@ -462,45 +510,130 @@ router.post('/yengapay/mobile', requireAuth, async (req, res) => {
     const phone = String(req.body.phone || '').trim();
     const operator = String(req.body.operator || '').trim().toUpperCase();
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    const country = String(req.body.country || user?.country || 'bf').toLowerCase();
+    const country = String(user?.country || '').toLowerCase();
+    if (!providerSupportsCountry('yengapay', country)) {
+      return res.status(400).json({ error: 'YengaPay non disponible pour le pays du compte' });
+    }
     if (!phone || !operator) return res.status(400).json({ error: 'Numéro et opérateur requis' });
     if (!yengapay.operatorsForCountry(country).includes(operator)) {
       return res.status(400).json({ error: 'Opérateur non disponible pour ce pays' });
     }
-    if (yengapay.requiresOtp(country, operator) && String(req.body.otp || '').trim().length < 4) {
+    const otp = String(req.body.otp || '').trim();
+    const needsOtpRequest = yengapay.requiresOtpRequest(operator);
+    if (yengapay.requiresOtp(country, operator) && !needsOtpRequest && otp.length < 4) {
       return res.status(400).json({ error: 'Code OTP requis pour cet opérateur' });
     }
 
-    const { amount, discount } = await priceForUser(req.userId, plan);
-    const transactionId = genTxnId();
-    const payment = await prisma.payment.create({
-      data: {
-        userId: req.userId,
-        provider: 'yengapay',
+    let transactionId = String(req.body.transactionId || '').trim();
+    let intent;
+    let providerOperator = operator;
+
+    if (transactionId) {
+      payment = await prisma.payment.findUnique({ where: { transactionId } });
+      if (
+        !payment ||
+        payment.userId !== req.userId ||
+        payment.provider !== 'yengapay' ||
+        payment.status !== 'pending' ||
+        payment.plan !== plan.id ||
+        payment.method !== `mobile:${operator}` ||
+        !payment.providerRef
+      ) {
+        return res.status(400).json({ error: 'Demande OTP invalide ou expirée' });
+      }
+      if (!needsOtpRequest || otp.length < 4) {
+        return res.status(400).json({ error: 'Code OTP requis pour finaliser ce paiement' });
+      }
+      intent = { paymentIntentId: payment.providerRef };
+    } else {
+      const { amount, discount } = await priceForUser(req.userId, plan);
+      transactionId = genTxnId();
+      payment = await prisma.payment.create({
+        data: {
+          userId: req.userId,
+          provider: 'yengapay',
+          transactionId,
+          amount,
+          baseAmount: plan.pricePromo,
+          referralDiscount: discount,
+          currency: 'XOF',
+          plan: plan.id,
+          method: `mobile:${operator}`,
+          status: 'pending',
+          description: `Abonnement ParisPromax — ${plan.label}`,
+        },
+      });
+
+      intent = await yengapay.initDirectPayment({
         transactionId,
         amount,
-        baseAmount: plan.pricePromo,
-        referralDiscount: discount,
-        currency: 'XOF',
-        plan: plan.id,
-        method: `mobile:${operator}`,
-        status: 'pending',
-        description: `Abonnement ParisPromax — ${plan.label}`,
-      },
-    });
+        description: payment.description,
+        customer: { id: req.userId },
+      });
 
-    const intent = await yengapay.initDirectPayment({
-      transactionId,
-      amount,
-      description: payment.description,
-      customer: { id: req.userId },
-    });
+      const advertisedOperators = Array.isArray(intent.availableOperators)
+        ? intent.availableOperators
+        : [];
+      const advertisedOperator = yengapay.availableOperator(intent, country, operator);
+      if (advertisedOperators.length && !advertisedOperator) {
+        const availableCodes = advertisedOperators
+          .filter((item) => String(item?.countryCode || '').toLowerCase() === country)
+          .map((item) => String(item?.code || '').toUpperCase())
+          .filter(Boolean);
+        await markFailed(payment, {
+          reason: 'operator_unavailable',
+          country,
+          operator,
+          availableOperators: availableCodes,
+        });
+        return res.status(400).json({
+          error: 'Opérateur indisponible',
+          reason: availableCodes.length
+            ? `Choisissez un opérateur disponible : ${availableCodes.join(', ')}.`
+            : 'Aucun opérateur YengaPay n’est disponible pour ce pays et ce montant.',
+        });
+      }
+      // Some operators use a provider-specific code (for example MTN_MOMO_CI).
+      // Send the exact code returned by this PaymentIntent, not our UI alias.
+      providerOperator = advertisedOperator?.code || operator;
+
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { providerRef: String(intent.paymentIntentId), rawPayload: JSON.stringify({ intent }) },
+      });
+
+      if (needsOtpRequest && otp.length < 4) {
+        const otpResult = await yengapay.sendPaymentOtp({
+          paymentIntentId: intent.paymentIntentId,
+          operator: providerOperator,
+          country,
+          phone,
+        });
+        const safeOtpResult = { ...otpResult };
+        delete safeOtpResult.otp;
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { rawPayload: JSON.stringify({ intent, otp: safeOtpResult }) },
+        });
+        return res.json({
+          transactionId,
+          paymentIntentId: intent.paymentIntentId,
+          status: 'otp_required',
+          providerMessage: safeOtpResult.message || 'Un code OTP vous a été envoyé par SMS.',
+          provider: 'yengapay',
+          amount: payment.amount,
+          currency: payment.currency,
+          plan: payment.plan,
+        });
+      }
+    }
+
     const result = await yengapay.requestMobilePayment({
       paymentIntentId: intent.paymentIntentId,
-      operator,
+      operator: providerOperator,
       country,
       phone,
-      otp: req.body.otp,
+      otp,
     });
     await prisma.payment.update({
       where: { id: payment.id },
@@ -519,15 +652,19 @@ router.post('/yengapay/mobile', requireAuth, async (req, res) => {
       status: result.status,
       providerMessage: result.message || null,
       provider: 'yengapay',
-      amount,
-      currency: 'XOF',
-      plan: plan.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      plan: payment.plan,
     });
   } catch (e) {
+    if (payment) {
+      await markFailed(payment, { reason: 'provider_initialization_failed' }).catch(() => {});
+    }
     const pdata = e.response?.data;
     console.error('yengapay mobile error', e.response?.status || '', pdata || e.message);
     const reason = pdata?.message || pdata?.error || pdata?.detail || (typeof pdata === 'string' ? pdata : null);
-    res.status(500).json({
+    const providerStatus = Number(e.response?.status) || 0;
+    res.status(providerStatus >= 400 && providerStatus < 500 ? 400 : 502).json({
       error: 'Échec du paiement YengaPay',
       ...(reason ? { reason: String(reason).slice(0, 200) } : {}),
     });
@@ -535,19 +672,16 @@ router.post('/yengapay/mobile', requireAuth, async (req, res) => {
 });
 
 function yengapayWebhookAuthorized(req) {
-  const secret = config.yengapay.webhookSecret;
-  if (!secret) return true;
-  const authorization = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  const supplied = String(
-    req.headers['x-yengapay-webhook-secret'] || req.headers['x-webhook-secret'] || authorization
+  return yengapay.verifyWebhookHash(
+    req.body,
+    req.headers['x-webhook-hash'] || req.headers['x-yengapay-signature']
   );
-  return safeEqual(supplied, secret);
 }
 
 // POST /payments/yengapay/webhook — callback is only a signal: the payment
 // intent is fetched again from YengaPay before an access entitlement is granted.
 router.post('/yengapay/webhook', async (req, res) => {
-  if (!yengapayWebhookAuthorized(req)) return res.status(401).send('unauthorized');
+  if (!yengapayWebhookAuthorized(req)) return res.status(400).send('invalid webhook hash');
   try {
     const body = req.body || {};
     const intentId = body.paymentIntentId || body.payment_intent_id || body.data?.paymentIntentId;

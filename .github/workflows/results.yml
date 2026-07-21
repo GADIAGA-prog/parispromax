@@ -22,6 +22,7 @@ jobs:
       - name: Trigger results detection
         run: |
           curl -fsS -X POST \
-            "https://parispromax-backend.onrender.com/cron/results?token=${{ secrets.CRON_TOKEN }}" \
+            -H "x-cron-token: ${{ secrets.CRON_TOKEN }}" \
+            "https://parispromax-backend.onrender.com/cron/results" \
             --max-time 60
           echo ""

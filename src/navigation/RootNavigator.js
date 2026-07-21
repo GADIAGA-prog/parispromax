@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import LoginScreen from '../screens/LoginScreen';
+import AgeGateScreen from '../screens/AgeGateScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import RaceDetailScreen from '../screens/RaceDetailScreen';
@@ -66,7 +67,7 @@ function MainTabs() {
 
 export default function RootNavigator() {
   const { isLoggedIn, loading } = useAuth();
-  const { onboarded, loading: settingsLoading } = useSettings();
+  const { adultVerified, onboarded, loading: settingsLoading } = useSettings();
 
   if (loading || settingsLoading) {
     return (
@@ -86,7 +87,9 @@ export default function RootNavigator() {
           contentStyle: { backgroundColor: COLORS.background },
         }}
       >
-        {!onboarded ? (
+        {!adultVerified ? (
+          <Stack.Screen name="AgeGate" component={AgeGateScreen} options={{ headerShown: false }} />
+        ) : !onboarded ? (
           <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         ) : !isLoggedIn ? (
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />

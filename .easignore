@@ -1,0 +1,39 @@
+# Dependencies and local Expo state
+node_modules/
+.expo/
+dist/
+web-build/
+
+# Local secrets, credentials and generated native projects
+.env
+.env.*
+backend.env
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+/android/
+/ios/
+
+# Server/ML sources are deployed separately and are not needed in the AAB
+backend/
+ml/
+builds/
+docker-compose.yml
+render.yaml
+
+# Standalone scraper and local tooling are not imported by the mobile app
+src/backend-scraper/
+scripts/
+
+# Miscellaneous development files
+.git/
+.github/
+.agents/
+.claude/
+*.db
+*.db-journal
+npm-debug.*
+.DS_Store

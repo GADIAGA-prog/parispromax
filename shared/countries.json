@@ -1,0 +1,11 @@
+[
+  { "code": "bf", "name": "Burkina Faso", "dial": "+226", "flag": "🇧🇫", "nationalLength": 8, "providers": ["yengapay", "feexpay", "fedapay"] },
+  { "code": "ci", "name": "Côte d'Ivoire", "dial": "+225", "flag": "🇨🇮", "nationalLength": 10, "keepLeadingZero": true, "providers": ["yengapay", "feexpay", "fedapay"] },
+  { "code": "sn", "name": "Sénégal", "dial": "+221", "flag": "🇸🇳", "nationalLength": 9, "providers": ["yengapay", "feexpay", "fedapay"] },
+  { "code": "tg", "name": "Togo", "dial": "+228", "flag": "🇹🇬", "nationalLength": 8, "providers": ["yengapay", "feexpay", "fedapay"] },
+  { "code": "bj", "name": "Bénin", "dial": "+229", "flag": "🇧🇯", "nationalLength": 10, "keepLeadingZero": true, "providers": ["yengapay", "feexpay", "fedapay"] },
+  { "code": "ml", "name": "Mali", "dial": "+223", "flag": "🇲🇱", "nationalLength": 8, "providers": ["yengapay", "fedapay"] },
+  { "code": "ne", "name": "Niger", "dial": "+227", "flag": "🇳🇪", "nationalLength": 8, "providers": ["yengapay", "fedapay"] },
+  { "code": "cg", "name": "Congo-Brazzaville", "dial": "+242", "flag": "🇨🇬", "nationalLength": 9, "providers": ["feexpay"] },
+  { "code": "gn", "name": "Guinée", "dial": "+224", "flag": "🇬🇳", "nationalLength": 9, "providers": ["fedapay"] }
+]

@@ -14,8 +14,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Monthly VIP price expressed per currency (approximate, locally tuned).
 export const CURRENCIES = {
-  XOF: { code: 'XOF', label: 'Franc CFA (UEMOA)', symbol: 'XOF', price: 5000, countries: 'CI · SN · ML · BF · BJ · TG' },
-  XAF: { code: 'XAF', label: 'Franc CFA (CEMAC)', symbol: 'XAF', price: 5000, countries: 'CM · GA · CG · TD' },
+  XOF: { code: 'XOF', label: 'Franc CFA (UEMOA)', symbol: 'XOF', price: 5400, countries: 'CI · SN · ML · BF · BJ · TG' },
+  XAF: { code: 'XAF', label: 'Franc CFA (CEMAC)', symbol: 'XAF', price: 5400, countries: 'CM · GA · CG · TD' },
   GHS: { code: 'GHS', label: 'Cedi ghanéen', symbol: '₵', price: 60, countries: 'Ghana' },
   NGN: { code: 'NGN', label: 'Naira nigérian', symbol: '₦', price: 7000, countries: 'Nigeria' },
 };
@@ -23,6 +23,7 @@ export const CURRENCIES = {
 const KEYS = {
   currency: '@ppm_currency',
   onboarded: '@ppm_onboarded',
+  adultVerified: '@ppm_adult_verified',
 };
 
 const SettingsContext = createContext(null);
@@ -30,17 +31,20 @@ const SettingsContext = createContext(null);
 export function SettingsProvider({ children }) {
   const [currencyCode, setCurrencyCode] = useState('XOF');
   const [onboarded, setOnboarded] = useState(false);
+  const [adultVerified, setAdultVerified] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const [c, o] = await Promise.all([
+        const [c, o, adult] = await Promise.all([
           AsyncStorage.getItem(KEYS.currency),
           AsyncStorage.getItem(KEYS.onboarded),
+          AsyncStorage.getItem(KEYS.adultVerified),
         ]);
         if (c && CURRENCIES[c]) setCurrencyCode(c);
         if (o === 'true') setOnboarded(true);
+        if (adult === 'true') setAdultVerified(true);
       } catch (e) {
         // ignore
       } finally {
@@ -60,6 +64,11 @@ export function SettingsProvider({ children }) {
     await AsyncStorage.setItem(KEYS.onboarded, 'true');
   }, []);
 
+  const confirmAdult = useCallback(async () => {
+    setAdultVerified(true);
+    await AsyncStorage.setItem(KEYS.adultVerified, 'true');
+  }, []);
+
   const currency = CURRENCIES[currencyCode] || CURRENCIES.XOF;
 
   // Format an amount expressed in the *base* (XOF) into the active currency.
@@ -76,12 +85,14 @@ export function SettingsProvider({ children }) {
       currency,
       currencyCode,
       currencies: CURRENCIES,
+      adultVerified,
       onboarded,
       setCurrency,
       completeOnboarding,
+      confirmAdult,
       formatPrice,
     }),
-    [loading, currency, currencyCode, onboarded, setCurrency, completeOnboarding, formatPrice]
+    [loading, currency, currencyCode, adultVerified, onboarded, setCurrency, completeOnboarding, confirmAdult, formatPrice]
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

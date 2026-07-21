@@ -15,19 +15,36 @@ import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../context/AuthContext';
 import { PLANS, fmtXOF } from '../services/plans';
 import api from '../services/api';
+import { countryByCode } from '../services/countries';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
-// The actual Mobile Money operators shown depend on the user's country and are
-// presented on the secure FedaPay page after tapping "Payer".
-const COUNTRY_NAMES = {
-  bf: 'Burkina Faso', ci: "Côte d'Ivoire", sn: 'Sénégal', tg: 'Togo',
-  bj: 'Bénin', cg: 'Congo-Brazzaville',
-};
+function yengaPaymentHelp(country, operator, amount) {
+  const op = String(operator || '').toUpperCase();
+  if (op === 'ORANGE' && country === 'bf') {
+    return `Composez *144*4*6*${amount}# depuis le numéro Orange Money, validez avec votre code secret, puis saisissez ici l’OTP reçu.`;
+  }
+  if (op === 'ORANGE') {
+    return `Depuis le numéro Orange Money, ouvrez le menu USSD ou l’application Orange Money, choisissez le paiement en ligne et générez un OTP de ${fmtXOF(amount)}.`;
+  }
+  if (op === 'CORISM' || op === 'SANKM') {
+    return `Appuyez sur « Recevoir le code OTP ». ${op === 'CORISM' ? 'Coris Money' : 'Sank Money'} enverra ensuite le code par SMS au numéro indiqué.`;
+  }
+  if (op === 'MOOV') {
+    return 'Aucun OTP à saisir dans ParisPromax : validez la demande Moov Money reçue sur votre téléphone.';
+  }
+  if (op === 'TELECEL') {
+    return 'Générez votre code de paiement depuis le menu ou l’application Telecel Money, puis saisissez cet OTP ici. Ne saisissez jamais votre code PIN secret.';
+  }
+  if (op === 'MTN') {
+    return 'Aucun OTP à générer ici : validez la demande MTN MoMo reçue sur votre téléphone.';
+  }
+  return 'Suivez la demande envoyée par votre opérateur sur le téléphone associé au compte Mobile Money.';
+}
 
 const PERKS = [
   'Synthèse de course : forme, piste et indice de confiance',
   'Sélections hiérarchisées : bases, chances, outsiders et regret',
-  '6 chevaux proposés pour le Quinté+ et pronostics sur toutes les courses',
+  '7 chevaux proposés pour le Quinté+ et pronostics sur toutes les courses',
   'Tuyaux utiles : déferrage, associations et chevaux à surveiller',
   'Alertes de départ, résultats officiels et portefeuille de suivi',
 ];
@@ -40,17 +57,20 @@ export default function PaywallScreen({ navigation }) {
   const [processing, setProcessing] = useState(false);
   // FeexPay mobile money — saisie in-app (opérateur + numéro).
   const [operators, setOperators] = useState([]);
-  const [otpNetworks, setOtpNetworks] = useState([]); // Orange SN, Coris BJ
+  const [operatorDetails, setOperatorDetails] = useState([]);
+  const [otpNetworks, setOtpNetworks] = useState([]);
+  const [otpRequestNetworks, setOtpRequestNetworks] = useState([]);
   const [redirectNetworks, setRedirectNetworks] = useState([]);
   const [network, setNetwork] = useState(null);
   const [mmPhone, setMmPhone] = useState('');
   const [otp, setOtp] = useState('');
+  const [yengaPendingTxn, setYengaPendingTxn] = useState(null);
 
   const plan = PLANS.find((p) => p.id === planId);
   const referralPrice = (p) => referral?.firstPaymentEligible
-    ? Math.max(0, p.pricePromo - Math.round(p.pricePromo * referral.discountPercent / 100))
+    ? Math.max(200, p.pricePromo - Math.round(p.pricePromo * referral.discountPercent / 100))
     : p.pricePromo;
-  const countryName = COUNTRY_NAMES[country] || 'votre pays';
+  const countryName = countryByCode(country)?.name || 'votre pays';
   const providerLabel = providers.find((p) => p.id === providerId)?.label || 'notre partenaire';
   const isFeex = providerId === 'feexpay';
   const isYenga = providerId === 'yengapay';
@@ -59,7 +79,7 @@ export default function PaywallScreen({ navigation }) {
   useEffect(() => {
     let cancelled = false;
     api
-      .paymentProviders()
+      .paymentProviders(country)
       .then((d) => {
         if (cancelled) return;
         const list = d.providers || [];
@@ -72,7 +92,7 @@ export default function PaywallScreen({ navigation }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [country]);
 
   // When FeexPay is selected, load the mobile-money operators for the user's
   // country and prefill the phone with the account number.
@@ -86,7 +106,9 @@ export default function PaywallScreen({ navigation }) {
         if (cancelled) return;
         const ops = d.operators || [];
         setOperators(ops);
+        setOperatorDetails([]);
         setOtpNetworks(d.otpRequired || []);
+        setOtpRequestNetworks([]);
         setRedirectNetworks(d.redirectRequired || []);
         setNetwork((n) => (ops.includes(n) ? n : ops[0] || null));
       })
@@ -105,13 +127,22 @@ export default function PaywallScreen({ navigation }) {
         if (cancelled) return;
         const ops = d.operators || [];
         setOperators(ops);
+        setOperatorDetails(d.operatorDetails || []);
         setOtpNetworks(d.otpRequired || []);
+        setOtpRequestNetworks(d.otpRequestRequired || []);
         setRedirectNetworks([]);
+        setYengaPendingTxn(null);
+        setOtp('');
         setNetwork((n) => (ops.includes(n) ? n : ops[0] || null));
       })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [isYenga, country, phone]);
+
+  useEffect(() => {
+    setYengaPendingTxn(null);
+    setOtp('');
+  }, [planId]);
 
   const pollStatus = async (txn, tries = 6) => {
     for (let i = 0; i < tries; i++) {
@@ -154,6 +185,7 @@ export default function PaywallScreen({ navigation }) {
   // FeexPay mobile money : certains opérateurs poussent une demande sur le
   // téléphone, tandis qu'Orange/Moov BF poursuivent sur une page FeexPay.
   const needsOtp = otpNetworks.includes(network);
+  const needsServerOtp = isYenga && otpRequestNetworks.includes(network);
   const needsRedirect = redirectNetworks.includes(network);
 
   const onPayFeexMobile = async () => {
@@ -245,13 +277,31 @@ export default function PaywallScreen({ navigation }) {
     if (num.replace(/\D/g, '').length < 8) {
       return Alert.alert('Numéro invalide', 'Entrez le numéro de votre compte Mobile Money.');
     }
-    if (needsOtp && otp.trim().length < 4) {
+    if (needsOtp && !needsServerOtp && otp.trim().length < 4) {
       return Alert.alert('Code OTP requis', `Obtenez le code OTP ${network} puis saisissez-le ici.`);
+    }
+    if (needsServerOtp && yengaPendingTxn && otp.trim().length < 4) {
+      return Alert.alert('Code OTP requis', 'Saisissez le code reçu par SMS avant de finaliser le paiement.');
     }
     setProcessing(true);
     try {
-      const res = await api.yengapayMobile({ planId, phone: num, operator: network, country, otp: otp.trim() });
+      const res = await api.yengapayMobile({
+        planId,
+        phone: num,
+        operator: network,
+        country,
+        otp: otp.trim(),
+        transactionId: needsServerOtp ? yengaPendingTxn : null,
+      });
+      if (res.status === 'otp_required') {
+        setYengaPendingTxn(res.transactionId);
+        return Alert.alert(
+          'Code OTP envoyé',
+          res.providerMessage || 'Consultez vos SMS, saisissez le code reçu puis appuyez sur « Payer ».'
+        );
+      }
       if (res.status === 'success') {
+        setYengaPendingTxn(null);
         await refreshAccess();
         return Alert.alert('Paiement confirmé ✅', 'Votre abonnement est actif. Bonne chance !', [
           { text: 'Super !', onPress: () => navigation.goBack() },
@@ -261,9 +311,7 @@ export default function PaywallScreen({ navigation }) {
         'Validez votre paiement 📲',
         [
           res.providerMessage,
-          network === 'MOOV'
-            ? 'Une demande de validation a été envoyée sur votre téléphone Moov Money.'
-            : 'Après validation auprès de votre opérateur, revenez ici : votre abonnement s’activera automatiquement.',
+          'Après validation auprès de votre opérateur, revenez ici : votre abonnement s’activera automatiquement.',
         ].filter(Boolean).join('\n\n')
       );
       const status = await pollStatus(res.transactionId, 48);
@@ -301,7 +349,11 @@ export default function PaywallScreen({ navigation }) {
             <Pressable
               key={p.id}
               style={[styles.plan, active && styles.planActive]}
-              onPress={() => setPlanId(p.id)}
+              onPress={() => {
+                setPlanId(p.id);
+                setOtp('');
+                setYengaPendingTxn(null);
+              }}
             >
               <Ionicons
                 name={active ? 'radio-button-on' : 'radio-button-off'}
@@ -348,7 +400,11 @@ export default function PaywallScreen({ navigation }) {
                 <Pressable
                   key={pr.id}
                   style={[styles.provider, active && styles.providerActive]}
-                  onPress={() => setProviderId(pr.id)}
+                  onPress={() => {
+                    setProviderId(pr.id);
+                    setOtp('');
+                    setYengaPendingTxn(null);
+                  }}
                 >
                   <Ionicons name="wallet" size={20} color={active ? COLORS.accent : COLORS.textFaint} />
                   <View style={{ flex: 1, marginLeft: SPACING.sm }}>
@@ -373,13 +429,18 @@ export default function PaywallScreen({ navigation }) {
             <View style={styles.opRow}>
               {operators.map((op) => {
                 const active = op === network;
+                const operatorName = operatorDetails.find((item) => item.code === op)?.name || op;
                 return (
                   <Pressable
                     key={op}
                     style={[styles.opChip, active && styles.opChipActive]}
-                    onPress={() => setNetwork(op)}
+                    onPress={() => {
+                      setNetwork(op);
+                      setOtp('');
+                      setYengaPendingTxn(null);
+                    }}
                   >
-                    <Text style={[styles.opChipText, active && styles.opChipTextActive]}>{op}</Text>
+                    <Text style={[styles.opChipText, active && styles.opChipTextActive]}>{operatorName}</Text>
                   </Pressable>
                 );
               })}
@@ -387,12 +448,18 @@ export default function PaywallScreen({ navigation }) {
             <TextInput
               style={styles.phoneInput}
               value={mmPhone}
-              onChangeText={setMmPhone}
+              onChangeText={(value) => {
+                setMmPhone(value);
+                if (yengaPendingTxn) {
+                  setYengaPendingTxn(null);
+                  setOtp('');
+                }
+              }}
               placeholder="Numéro Mobile Money"
               placeholderTextColor={COLORS.textFaint}
               keyboardType="phone-pad"
             />
-            {/* Code OTP — exigé par certains opérateurs (Orange Sénégal, Coris). */}
+            {/* Code OTP — le mode exact est fourni par le backend pour chaque opérateur. */}
             {needsOtp && (
               <>
                 <TextInput
@@ -404,6 +471,11 @@ export default function PaywallScreen({ navigation }) {
                   keyboardType="number-pad"
                   maxLength={10}
                 />
+                {isYenga && (
+                  <Text style={styles.otpHint}>
+                    {yengaPaymentHelp(country, network, referralPrice(plan))}
+                  </Text>
+                )}
                 {isFeex && network === 'ORANGE' && country === 'sn' && (
                   <Text style={styles.otpHint}>
                     Composez *144*391# sur votre téléphone pour recevoir votre code OTP.
@@ -421,8 +493,10 @@ export default function PaywallScreen({ navigation }) {
               <Text style={styles.payInfoText}>
                 {isFeex && needsRedirect
                   ? 'Après « Continuer », la page sécurisée FeexPay s’ouvrira pour terminer le paiement. Revenez ensuite dans ParisPromax.'
-                  : isYenga && network === 'ORANGE'
-                    ? 'Saisissez le code OTP fourni par Orange Money. Votre code PIN Mobile Money ne doit jamais être saisi dans ParisPromax.'
+                  : isYenga && needsOtp
+                    ? 'Votre code secret ou PIN Mobile Money reste confidentiel : ne le saisissez jamais dans ParisPromax.'
+                    : isYenga
+                      ? yengaPaymentHelp(country, network, referralPrice(plan))
                     : 'Une demande de paiement sera envoyée sur votre téléphone. Validez-la avec votre code Mobile Money.'}
               </Text>
             </View>
@@ -444,7 +518,9 @@ export default function PaywallScreen({ navigation }) {
                 <>
                   <Ionicons name={isFeex && needsRedirect ? 'open-outline' : 'phone-portrait'} size={18} color="#06251c" />
                   <Text style={styles.payText}>
-                    {isFeex && needsRedirect ? 'Continuer' : 'Payer'} {plan ? fmtXOF(referralPrice(plan)) : ''}
+                    {needsServerOtp && !yengaPendingTxn
+                      ? 'Recevoir le code OTP'
+                      : `${isFeex && needsRedirect ? 'Continuer' : 'Payer'} ${plan ? fmtXOF(referralPrice(plan)) : ''}`}
                   </Text>
                 </>
               )}
@@ -476,7 +552,7 @@ export default function PaywallScreen({ navigation }) {
           </>
         )}
 
-        <Text style={styles.secure}>🔒 Paiement sécurisé · Mobile Money & cartes</Text>
+        <Text style={styles.secure}>🔒 Paiement sécurisé · Aucun code PIN n’est conservé</Text>
       </ScrollView>
     </SafeAreaView>
   );

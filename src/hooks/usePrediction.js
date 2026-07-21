@@ -19,13 +19,13 @@ function localAnalyze(race) {
 }
 
 export function usePrediction(race, enabled) {
-  const [analyzed, setAnalyzed] = useState(() => localAnalyze(race));
+  const [analyzed, setAnalyzed] = useState(() => (enabled ? localAnalyze(race) : race));
   // Tracks whether the displayed scores came from the backend model.
   const [fromBackend, setFromBackend] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const base = localAnalyze(race);
+    const base = enabled ? localAnalyze(race) : race;
     setAnalyzed(base);
     setFromBackend(false);
 

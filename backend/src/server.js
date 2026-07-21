@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const config = require('./config');
+const prisma = require('./db');
 
 const authRoutes = require('./routes/auth');
 const meRoutes = require('./routes/me');
@@ -28,6 +29,12 @@ app.use((req, res, next) => {
   res.set('X-Content-Type-Options', 'nosniff');
   res.set('X-Frame-Options', 'DENY');
   res.set('Referrer-Policy', 'no-referrer');
+  res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.set(
+    'Content-Security-Policy',
+    "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; " +
+      "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+  );
   if (config.isProd) {
     res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
@@ -51,21 +58,33 @@ app.use(
 // NOTE: payment webhook needs the raw-ish body but we use JSON/urlencoded per route.
 app.use(express.json({ limit: '200kb' }));
 
-app.get('/health', (_req, res) => {
+app.get('/health', async (_req, res) => {
   const provider = config.payments.provider;
   const configured = getProvider(provider).isConfigured();
   const mode = config[provider]?.mode || null;
-  res.json({
-    ok: true,
-    service: 'parispromax-backend',
-    revision: process.env.RENDER_GIT_COMMIT
-      ? process.env.RENDER_GIT_COMMIT.slice(0, 7)
-      : null,
-    paymentProvider: provider,
-    paymentMode: mode, // sandbox | live (non-secret, for diagnostics)
-    payments: configured ? 'configured' : 'mock',
-    time: new Date().toISOString(),
-  });
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    const ready = configured || config.allowMock;
+    res.status(ready ? 200 : 503).json({
+      ok: ready,
+      service: 'parispromax-backend',
+      revision: process.env.RENDER_GIT_COMMIT
+        ? process.env.RENDER_GIT_COMMIT.slice(0, 7)
+        : null,
+      database: 'up',
+      paymentProvider: provider,
+      paymentMode: mode, // sandbox | live (non-secret, for diagnostics)
+      payments: configured ? 'configured' : config.allowMock ? 'mock' : 'unavailable',
+      time: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      ok: false,
+      service: 'parispromax-backend',
+      database: 'down',
+      time: new Date().toISOString(),
+    });
+  }
 });
 
 // Friendly landing page so the root URL isn't a bare "Not found".
@@ -85,6 +104,7 @@ app.get('/', (_req, res) => {
   <a href="/admin">Back-office</a><a href="/health">État</a>
   <p class="muted"><a href="/legal/privacy" style="background:none;color:#94a3b8;font-weight:400">Confidentialité</a> ·
   <a href="/legal/terms" style="background:none;color:#94a3b8;font-weight:400">Conditions</a> ·
+  <a href="/legal/responsible-gambling" style="background:none;color:#94a3b8;font-weight:400">Jeu responsable</a> ·
   <a href="/legal/account-deletion" style="background:none;color:#94a3b8;font-weight:400">Suppression de compte</a></p>
   </div></body></html>`);
 });
@@ -129,7 +149,11 @@ server.listen(config.port, () => {
   console.log(`\n🏇 ParisPromax backend on http://localhost:${config.port}`);
   console.log(`   Admin:    http://localhost:${config.port}/admin`);
   const payConfigured = getProvider(config.payments.provider).isConfigured();
-  console.log(`   Payments: ${config.payments.provider} — ${payConfigured ? 'LIVE/keys set' : 'MOCK mode (no keys)'}`);
+  console.log(
+    `   Payments: ${config.payments.provider} — ${
+      payConfigured ? 'keys set' : config.allowMock ? 'LOCAL MOCK' : 'NOT CONFIGURED'
+    }`
+  );
   console.log(`   OTP:      ${config.otpDevMode ? 'DEV (codes returned in API)' : 'SMS provider'}`);
   console.log(`   Realtime: ${realtimeOn ? 'socket.io + IA worker ON' : 'off (no REDIS_URL)'}\n`);
 });

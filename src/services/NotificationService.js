@@ -102,6 +102,8 @@ export async function scheduleRaceUrgencyAlert(raceName, startDate) {
 export async function sendTestNotification() {
   if (IS_EXPO_GO) return false;
   try {
+    const granted = await registerForNotifications();
+    if (!granted) return false;
     return await Notifications.scheduleNotificationAsync({
       content: {
         title: '🔔 Alerte test ParisPromax',

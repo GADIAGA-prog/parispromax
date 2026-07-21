@@ -2,6 +2,7 @@ const express = require('express');
 const prisma = require('../db');
 const { requireAuth } = require('../auth');
 const { getAccess } = require('../services/subscription');
+const { groupPicks: buildGroups } = require('../services/predictionSelection');
 
 const router = express.Router();
 
@@ -164,6 +165,7 @@ router.get('/national', async (req, res) => {
             number: full.number || '',
             time: full.time || '',
             prize: full.prize ?? null,
+            betType: pick.betType || 'Course du jour',
             bets: full.bets || [],
             isQuinte: Boolean(full.isQuinte),
             type: full.type || race.discipline || null,
@@ -185,20 +187,28 @@ router.get('/history', async (req, res) => {
     orderBy: { createdAt: 'desc' },
     take: 60,
     include: {
-      race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } } },
+      race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 50 } } },
     },
   });
 
   const history = results.map((r) => {
     const winners = parse(r.winners, []);
-    const picks = parse(r.race.predictions[0]?.topPicks, []);
+    const snapshot = parse(r.predictionSnapshot, null);
+    // For legacy rows without a snapshot, use the prediction that existed
+    // when the result was recorded instead of a later recalculation.
+    const historicalPrediction = r.race.predictions.find(
+      (prediction) => prediction.createdAt <= r.createdAt
+    ) || r.race.predictions.at(-1);
+    const picks = parse(historicalPrediction?.topPicks, []);
+    const groups = snapshot?.groups || buildGroups(picks, r.race, Math.min(winners.length, 5));
     return {
       id: r.id,
       track: r.race.track,
       race: r.race.name,
       date: r.race.date,
       winners, // finishing order [num, num, ...]
-      topPicks: picks, // [{ number, name, aiScore, rank }]
+      topPicks: snapshot?.topPicks || groups.selected, // pronostic figé = arrivée + 2
+      groups,
       aiHit: r.predicted, // our #1 pick finished in the top 3
     };
   });
@@ -278,37 +288,6 @@ function ltrToTopPicks(preds) {
     }));
 }
 
-// Trois lectures du pronostic à partir des picks classés :
-//   favoris (2-3 les plus probables) / top5 (base Quinté) / outsiders
-//   (cote >= 8, écartés des favoris, meilleur potentiel podium).
-function groupPicks(picks) {
-  const sorted = (picks || []).slice().sort((a, b) => (a.rank || 999) - (b.rank || 999));
-  const top5 = sorted.slice(0, 5);
-  let favoris = sorted.slice(0, 2);
-  const third = sorted[2];
-  if (third && (third.probaGagnant == null || third.probaGagnant >= 0.15)) {
-    favoris = sorted.slice(0, 3);
-  }
-  const favNums = new Set(favoris.map((p) => p.number));
-  const outsiders = sorted
-    .filter((p) => (Number(p.odds) >= 8 || (p.odds == null && (p.rank || 0) > 5)))
-    .filter((p) => !favNums.has(p.number))
-    .filter((p) => p.probaPodium == null || p.probaPodium >= 0.1)
-    .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || (b.aiScore || 0) - (a.aiScore || 0))
-    .slice(0, 3);
-
-  // LE TOCARD : la très grosse cote (>= 15) que le modèle juge la moins folle —
-  // le cheval "surprise" à glisser en fin de combinaison.
-  const top5Nums = new Set(top5.map((p) => p.number));
-  const tocard =
-    sorted
-      .filter((p) => Number(p.odds) >= 15 && !top5Nums.has(p.number))
-      .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || (b.aiScore || 0) - (a.aiScore || 0))[0] ||
-    null;
-
-  return { favoris, top5, outsiders, tocard };
-}
-
 // GET /races/:externalId/prediction — AI top picks. GATED: requires an active
 // subscription or trial. Serves the trained LTR model when the IA microservice
 // is enabled (IA_URL), and falls back to the stored JS-engine predictions.
@@ -330,7 +309,7 @@ router.get('/:externalId/prediction', requireAuth, async (req, res) => {
       const ia = await getPredictions(req.params.externalId);
       if (ia && Array.isArray(ia.predictions) && ia.predictions.length) {
         const picks = ltrToTopPicks(ia.predictions);
-        return res.json({ raceId: race.externalId, source: 'ltr', topPicks: picks, groups: groupPicks(picks) });
+        return res.json({ raceId: race.externalId, source: 'ltr', topPicks: picks, groups: buildGroups(picks, race) });
       }
     } catch (e) {
       console.error('[prediction] IA fallback ->', e.message);
@@ -342,7 +321,7 @@ router.get('/:externalId/prediction', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Pronostic indisponible' });
   }
   const picks = parse(race.predictions[0].topPicks, []);
-  res.json({ raceId: race.externalId, source: 'js', topPicks: picks, groups: groupPicks(picks) });
+  res.json({ raceId: race.externalId, source: 'js', topPicks: picks, groups: buildGroups(picks, race) });
 });
 
 module.exports = router;

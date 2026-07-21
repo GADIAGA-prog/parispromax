@@ -16,6 +16,7 @@ import Disclaimer from '../components/Disclaimer';
 import { loadRaces } from '../services/dataService';
 import api from '../services/api';
 import { analyzeRace, confidenceLabel } from '../services/aiEngine';
+import { buildRaceInsights } from '../services/raceInsights';
 import { usePrediction } from '../hooks/usePrediction';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
@@ -63,15 +64,16 @@ export default function QuintePlusScreen({ navigation }) {
   // Upgrade the featured race with the backend model for subscribers.
   const { race: heroRace } = usePrediction(featured?.race, !isLocked && !!featured);
 
-  const top5 = useMemo(
-    () => (heroRace?.horses ? heroRace.horses.slice(0, 5) : []),
+  const insights = useMemo(
+    () => buildRaceInsights(heroRace || {}),
     [heroRace]
   );
+  const selection = insights.selected;
 
   const avgScore = useMemo(() => {
-    if (!top5.length) return 0;
-    return Math.round(top5.reduce((s, h) => s + (h.aiScore || 0), 0) / top5.length);
-  }, [top5]);
+    if (!selection.length) return 0;
+    return Math.round(selection.reduce((s, h) => s + (h.aiScore || 0), 0) / selection.length);
+  }, [selection]);
 
   if (loading) {
     return (
@@ -115,12 +117,12 @@ export default function QuintePlusScreen({ navigation }) {
           <View style={styles.hero}>
             <Text style={styles.heroLabel}>🏆 Combinaison IA recommandée</Text>
             <View style={styles.comboRow}>
-              {top5.map((h, i) => (
+              {selection.map((h, i) => (
                 <React.Fragment key={h.number}>
                   <View style={styles.comboBall}>
                     <Text style={styles.comboNum}>{h.number}</Text>
                   </View>
-                  {i < top5.length - 1 && <Text style={styles.comboSep}>-</Text>}
+                  {i < selection.length - 1 && <Text style={styles.comboSep}>-</Text>}
                 </React.Fragment>
               ))}
             </View>
@@ -136,9 +138,9 @@ export default function QuintePlusScreen({ navigation }) {
 
         <Disclaimer />
 
-        {/* Detail of the 5 picks */}
-        <Text style={styles.sectionTitle}>Le détail des 5 bases</Text>
-        {top5.map((h) => (
+        {/* Détail de la sélection : nombre à l'arrivée + 2. */}
+        <Text style={styles.sectionTitle}>Le détail des {selection.length} chevaux</Text>
+        {selection.map((h) => (
           <HorseCard key={h.number} horse={h} showAI={!isLocked} />
         ))}
 

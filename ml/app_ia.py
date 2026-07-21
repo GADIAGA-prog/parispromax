@@ -6,8 +6,8 @@ PAR COURSE, calibre en mélangeant avec la probabilité implicite du marché
 (quand des cotes existent), calcule la probabilité de PODIUM par la formule de
 Harville, puis marque les "Value Bet" (proba IA > proba implicite du marché).
 
-Sécurité : si PPM_IA_TOKEN est défini, /predict exige
-`Authorization: Bearer <PPM_IA_TOKEN>` (comparaison à temps constant).
+Sécurité : /predict exige `Authorization: Bearer <PPM_IA_TOKEN>` quand le
+jeton est défini ; sur Render, le service refuse de démarrer sans ce jeton.
 
 Lancer :  uvicorn app_ia:app --host 0.0.0.0 --port 8100
 """
@@ -27,8 +27,10 @@ from ltr_features import build_features, FEATURES
 
 MODEL_PATH = os.environ.get("PPM_MODEL_PATH", "model/model.cbm")
 SOFTMAX_TEMPERATURE = float(os.environ.get("PPM_SOFTMAX_TEMP", "0.5"))
-# Jeton Bearer optionnel : quand il est défini, /predict est protégé.
+# Jeton Bearer optionnel en local, obligatoire sur Render.
 IA_TOKEN = os.environ.get("PPM_IA_TOKEN", "")
+if os.environ.get("RENDER") and not IA_TOKEN:
+    raise RuntimeError("PPM_IA_TOKEN est obligatoire sur Render")
 # Calibration pragmatique : proba finale = w*modèle + (1-w)*marché (si cotes).
 # Le marché est très informatif en hippique ; le mélange réduit fortement les
 # probabilités sur/sous-confiantes du softmax non calibré.
@@ -55,7 +57,7 @@ def _load_model():
 
 
 def _check_token(authorization: Optional[str]) -> None:
-    """Exige le Bearer PPM_IA_TOKEN quand il est configuré (sinon ouvert)."""
+    """Exige le Bearer PPM_IA_TOKEN quand il est configuré (sinon local ouvert)."""
     if not IA_TOKEN:
         return
     supplied = ""

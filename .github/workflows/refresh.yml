@@ -10,7 +10,6 @@ name: Scrape races (full refresh)
 on:
   schedule:
     - cron: '0 6 * * *'     # 06:00 au Burkina Faso
-      timezone: 'Africa/Ouagadougou'
     - cron: '0 11 * * *'    # 11:00 UTC — midday (odds start publishing)
     - cron: '30 15 * * *'   # 15:30 UTC — afternoon (fresh odds)
   workflow_dispatch: {}
@@ -22,7 +21,8 @@ jobs:
       - name: Trigger full refresh
         run: |
           curl -fsS -X POST \
-            "https://parispromax-backend.onrender.com/cron/refresh?token=${{ secrets.CRON_TOKEN }}" \
+            -H "x-cron-token: ${{ secrets.CRON_TOKEN }}" \
+            "https://parispromax-backend.onrender.com/cron/refresh" \
             --max-time 60 --retry 3 --retry-delay 20 --retry-all-errors
           echo ""
 
@@ -32,6 +32,7 @@ jobs:
       - name: Reconcile the national Quinte pick
         run: |
           curl -fsS -X POST \
-            "https://parispromax-backend.onrender.com/cron/picks?token=${{ secrets.CRON_TOKEN }}" \
+            -H "x-cron-token: ${{ secrets.CRON_TOKEN }}" \
+            "https://parispromax-backend.onrender.com/cron/picks" \
             --max-time 60 --retry 3 --retry-delay 20 --retry-all-errors
           echo ""

@@ -3,6 +3,9 @@ const prisma = require('../db');
 const { requireAdmin } = require('../auth');
 const { ingestFromFile, ingestData } = require('../jobs/ingest');
 const { scrapeProgramme } = require('../jobs/scrape');
+const { buildPredictionSnapshot } = require('../services/predictionSelection');
+const { availableProviders } = require('../services/paymentProvider');
+const { countriesForProviderIds } = require('../services/paymentCountries');
 
 const router = express.Router();
 
@@ -31,20 +34,13 @@ router.post('/api/scrape', async (req, res) => {
     if (!payload.racetracks.length) {
       return res.status(502).json({ error: 'Aucune donnée récupérée (geny indisponible ou rate-limit).' });
     }
-    // Clean replace: drop this date's existing races (+ their predictions/results)
-    // so demo/stale data doesn't mix with the fresh scrape.
-    const old = await prisma.race.findMany({ where: { date }, select: { id: true } });
-    const ids = old.map((r) => r.id);
-    if (ids.length) {
-      await prisma.prediction.deleteMany({ where: { raceId: { in: ids } } });
-      await prisma.result.deleteMany({ where: { raceId: { in: ids } } });
-      await prisma.race.deleteMany({ where: { id: { in: ids } } });
-    }
+    // ingestData upserts races. Never delete the date first: a partial upstream
+    // response or a failed ingest must not erase results and historical picks.
     const count = await ingestData(payload);
     // Auto-désignation de la course du jour par pays (sans écraser le manuel).
     const { autoAssignNationalPicks } = require('../jobs/ingest');
     const picks = await autoAssignNationalPicks(payload);
-    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count, replaced: ids.length, autoPicks: picks.assigned });
+    res.json({ ok: true, date, hippodromes: payload.racetracks.length, count, autoPicks: picks.assigned });
   } catch (e) {
     console.error('scrape endpoint error', e.message);
     if (e.code === 'UPSTREAM_RATE_LIMIT') {
@@ -125,6 +121,7 @@ router.post('/api/results', express.json(), async (req, res) => {
   if (!race) return res.status(404).json({ error: 'Course introuvable' });
 
   let predicted = false;
+  let predictionSnapshot = null;
   if (race.predictions.length) {
     let picks = [];
     try {
@@ -135,12 +132,15 @@ router.post('/api/results', express.json(), async (req, res) => {
     const topPick = picks[0];
     // Hit = our #1 pick finished in the top 3 (placé).
     predicted = topPick ? winners.slice(0, 3).includes(topPick.number) : false;
+    predictionSnapshot = JSON.stringify(
+      buildPredictionSnapshot(picks, race, Math.min(winners.length, 5))
+    );
   }
 
   const result = await prisma.result.upsert({
     where: { raceId: race.id },
-    update: { winners: JSON.stringify(winners), predicted },
-    create: { raceId: race.id, winners: JSON.stringify(winners), predicted },
+    update: { winners: JSON.stringify(winners), predictionSnapshot, predicted },
+    create: { raceId: race.id, winners: JSON.stringify(winners), predictionSnapshot, predicted },
   });
   // Stamp the LTR training labels on the Runner rows too.
   const { stampFinishPositions } = require('../jobs/results');
@@ -175,7 +175,9 @@ router.post('/api/non-partants', express.json(), async (req, res) => {
 });
 
 // --- Course PMU du jour par pays (Quarté LONAB, LONACI…) ---------------------
-const PICK_COUNTRIES = ['bf', 'ci', 'sn', 'tg', 'bj', 'cg'];
+function pickCountryCatalog() {
+  return countriesForProviderIds(availableProviders().map((provider) => provider.id));
+}
 
 // POST /admin/api/national-pick { country, externalId, date?, betType?, journalUrl? }
 router.post('/api/national-pick', express.json(), async (req, res) => {
@@ -184,8 +186,9 @@ router.post('/api/national-pick', express.json(), async (req, res) => {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(req.body.date || '')
     ? req.body.date
     : new Date().toISOString().slice(0, 10);
-  if (!PICK_COUNTRIES.includes(country)) {
-    return res.status(400).json({ error: `country invalide (${PICK_COUNTRIES.join(', ')})` });
+  const allowedCountries = pickCountryCatalog().map((item) => item.code);
+  if (!allowedCountries.includes(country)) {
+    return res.status(400).json({ error: `country invalide (${allowedCountries.join(', ')})` });
   }
   if (!externalId) return res.status(400).json({ error: 'externalId requis' });
   const race = await prisma.race.findUnique({ where: { externalId } });
@@ -225,8 +228,8 @@ router.post('/api/reset-password', express.json(), async (req, res) => {
   const { hashPassword } = require('../security');
   const phone = String(req.body.phone || '').replace(/[^\d+]/g, '');
   const newPassword = req.body.newPassword;
-  if (!phone || typeof newPassword !== 'string' || newPassword.length < 6) {
-    return res.status(400).json({ error: 'phone et newPassword (6 car. min) requis' });
+  if (!phone || typeof newPassword !== 'string' || newPassword.length < 8) {
+    return res.status(400).json({ error: 'phone et newPassword (8 car. min) requis' });
   }
   try {
     await prisma.user.update({
@@ -256,6 +259,13 @@ router.post('/api/backfill-runners', async (_req, res) => {
 router.get('/', async (_req, res) => {
   res.type('html').send(DASHBOARD_HTML);
 });
+
+const PICK_COUNTRY_OPTIONS = pickCountryCatalog()
+  .map((country) => `<option value="${country.code}">${country.flag} ${country.name}</option>`)
+  .join('');
+const PICK_FLAGS = Object.fromEntries(
+  pickCountryCatalog().map((country) => [country.code, country.flag])
+);
 
 const DASHBOARD_HTML = `<!doctype html>
 <html lang="fr"><head>
@@ -306,9 +316,7 @@ const DASHBOARD_HTML = `<!doctype html>
     <div class="label">🏇 Course PMU du jour par pays (Quarté LONAB, LONACI…)</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
       <select id="npCountry">
-        <option value="bf">🇧🇫 Burkina</option><option value="ci">🇨🇮 Côte d'Ivoire</option>
-        <option value="sn">🇸🇳 Sénégal</option><option value="tg">🇹🇬 Togo</option>
-        <option value="bj">🇧🇯 Bénin</option><option value="cg">🇨🇬 Congo</option>
+        ${PICK_COUNTRY_OPTIONS}
       </select>
       <select id="npRace" style="max-width:340px"><option>Chargement des courses…</option></select>
       <input id="npBet" placeholder="Pari (ex. Quarté)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:130px"/>
@@ -372,7 +380,7 @@ const DASHBOARD_HTML = `<!doctype html>
     finally { btn.disabled = false; }
     load();
   }
-  const FLAGS = {bf:'🇧🇫',ci:'🇨🇮',sn:'🇸🇳',tg:'🇹🇬',bj:'🇧🇯',cg:'🇨🇬'};
+  const FLAGS = ${JSON.stringify(PICK_FLAGS)};
   async function loadPicks(){
     try {
       // Courses du jour pour le sélecteur.

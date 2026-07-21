@@ -20,7 +20,11 @@ services:
     # (premier login/paiement du matin ~30 s d'attente, webhooks retardés).
     plan: starter
     rootDir: backend
-    buildCommand: npm install && npm run build:prod
+    buildCommand: npm ci && npm run build:prod
+    # La base n'est modifiÃ©e qu'aprÃ¨s une compilation rÃ©ussie. `db push`
+    # compare le schÃ©ma PostgreSQL rÃ©el et refuse toute perte de donnÃ©es car
+    # l'option --accept-data-loss n'est volontairement jamais fournie.
+    preDeployCommand: npm run db:sync:prod
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
@@ -34,6 +38,8 @@ services:
         generateValue: true
       - key: PORT
         value: "4000"
+      - key: CORS_ORIGINS
+        value: https://parispromax-backend.onrender.com
       # NE JAMAIS mettre "true" en production : l'API renverrait le code OTP
       # dans la réponse, permettant de se connecter avec n'importe quel numéro.
       - key: OTP_DEV_MODE
@@ -58,11 +64,11 @@ services:
         sync: false
       - key: OTP_TTL_MINUTES
         value: "5"
-      # Provider de paiement actif : YengaPay sandbox (Orange/Moov Burkina).
+      # Provider de paiement actif : YengaPay production (paiements réels).
       # Les trois identifiants YengaPay restent exclusivement dans Render.
       - key: PAYMENT_PROVIDER
         value: yengapay
-      # Seul YengaPay est proposé aux clients pendant les tests sandbox.
+      # Seul YengaPay est proposé aux clients en production.
       - key: PAYMENT_DISABLED
         value: fedapay,cinetpay,paydunya,ligdicash,pawapay,feexpay
       # URLs des journaux hippiques nationaux (bouton "Journal" de l'app).
@@ -78,7 +84,13 @@ services:
         sync: false
       - key: JOURNAL_URL_BJ
         sync: false
+      - key: JOURNAL_URL_ML
+        sync: false
+      - key: JOURNAL_URL_NE
+        sync: false
       - key: JOURNAL_URL_CG
+        sync: false
+      - key: JOURNAL_URL_GN
         sync: false
       - key: FEDAPAY_MODE
         value: live
@@ -119,11 +131,14 @@ services:
       # Secret partagé du webhook (Bearer) — à inventer, pas la clé privée.
       - key: FEEXPAY_WEBHOOK_SECRET
         sync: false
-      # YengaPay Direct Payment sandbox. Depuis le dashboard YengaPay, copiez
-      # l'API key, le Group ID et le Project ID sans les committer. Webhook :
+      # YengaPay Direct Payment production. Depuis le projet YengaPay de
+      # production, copiez l'API key, le Group ID et le Project ID sans les
+      # committer. Webhook :
       # <PUBLIC_BASE_URL>/payments/yengapay/webhook
+      # Le secret ci-dessous est celui généré par YengaPay ; le backend vérifie
+      # le HMAC-SHA256 de l'en-tête x-webhook-hash.
       - key: YENGAPAY_MODE
-        value: sandbox
+        value: live
       - key: YENGAPAY_API_KEY
         sync: false
       - key: YENGAPAY_GROUP_ID
@@ -139,7 +154,7 @@ services:
       - key: PAWAPAY_API_TOKEN
         sync: false
       - key: SUB_PRICE_XOF
-        value: "5000"
+        value: "5400"
       - key: SUB_PERIOD_DAYS
         value: "30"
       - key: ADMIN_USER
@@ -148,7 +163,7 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: PUBLIC_BASE_URL
-        sync: false
+        value: https://parispromax-backend.onrender.com
       # CinetPay new API: API key (sk_test_/sk_live_) + API password.
       - key: CINETPAY_API_KEY
         sync: false
@@ -190,7 +205,7 @@ services:
           name: parispromax-db
           property: connectionString
       # Jeton Bearer exigé sur /predict (même valeur que IA_TOKEN côté backend).
-      # Tant qu'il n'est pas défini, /predict reste ouvert (compat) — à définir.
+      # Le service refuse de démarrer sur Render tant qu'il n'est pas défini.
       - key: PPM_IA_TOKEN
         sync: false
 

@@ -1,10 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 // ---------------------------------------------------------------------------
 // PARISPROMAX — API client (talks to the hosted backend).
 //
 // Base URL comes from EXPO_PUBLIC_API_URL, defaulting to the Render service.
-// Stores the JWT in AsyncStorage and attaches it to authed requests.
+// Stores the JWT in the native encrypted keychain/keystore and attaches it to
+// authenticated requests. AsyncStorage is used only as a one-time migration
+// source for users who installed an older version of the application.
 // ---------------------------------------------------------------------------
 
 export const API_URL =
@@ -16,14 +19,35 @@ let cachedToken = null;
 
 export async function getToken() {
   if (cachedToken) return cachedToken;
-  cachedToken = await AsyncStorage.getItem(TOKEN_KEY);
+  const secureStoreAvailable = await SecureStore.isAvailableAsync();
+  if (secureStoreAvailable) {
+    cachedToken = await SecureStore.getItemAsync(TOKEN_KEY);
+    if (!cachedToken) {
+      const legacyToken = await AsyncStorage.getItem(TOKEN_KEY);
+      if (legacyToken) {
+        await SecureStore.setItemAsync(TOKEN_KEY, legacyToken);
+        await AsyncStorage.removeItem(TOKEN_KEY);
+        cachedToken = legacyToken;
+      }
+    }
+  } else {
+    cachedToken = await AsyncStorage.getItem(TOKEN_KEY);
+  }
   return cachedToken;
 }
 
 export async function setToken(token) {
   cachedToken = token;
-  if (token) await AsyncStorage.setItem(TOKEN_KEY, token);
-  else await AsyncStorage.removeItem(TOKEN_KEY);
+  const secureStoreAvailable = await SecureStore.isAvailableAsync();
+  if (secureStoreAvailable) {
+    if (token) await SecureStore.setItemAsync(TOKEN_KEY, token);
+    else await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await AsyncStorage.removeItem(TOKEN_KEY);
+  } else if (token) {
+    await AsyncStorage.setItem(TOKEN_KEY, token);
+  } else {
+    await AsyncStorage.removeItem(TOKEN_KEY);
+  }
 }
 
 export async function clearToken() {
@@ -99,7 +123,9 @@ export const api = {
   plans: () => request('/plans'),
 
   // Payments
-  paymentProviders: () => request('/payments/providers'),
+  paymentCountries: () => request('/payments/countries'),
+  paymentProviders: (country) =>
+    request(`/payments/providers${country ? `?country=${encodeURIComponent(country)}` : ''}`),
   initiatePayment: (planId, provider) =>
     request('/payments/initiate', { method: 'POST', auth: true, body: { planId, provider } }),
   paymentStatus: (txn) => request(`/payments/status/${txn}`, { auth: true }),
@@ -116,11 +142,11 @@ export const api = {
   // YengaPay — direct Mobile Money (Orange OTP / Moov validation on phone).
   yengapayOperators: (country) =>
     request(`/payments/yengapay/operators?country=${encodeURIComponent(country || '')}`),
-  yengapayMobile: ({ planId, phone, operator, country, otp }) =>
+  yengapayMobile: ({ planId, phone, operator, country, otp, transactionId }) =>
     request('/payments/yengapay/mobile', {
       method: 'POST',
       auth: true,
-      body: { planId, phone, operator, country, otp },
+      body: { planId, phone, operator, country, otp, transactionId },
     }),
 
   // Stats

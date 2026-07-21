@@ -10,22 +10,29 @@ const {
   normalizeRecoveryCode,
   hashPassword,
   verifyPassword,
+  hashRecoveryCode,
+  verifyRecoveryCode,
   rateLimit,
 } = require('../security');
 
 const router = express.Router();
 const { ensureReferralCode, normalizeReferralCode } = require('../services/referral');
+const { availableProviders } = require('../services/paymentProvider');
+const { countriesForProviderIds } = require('../services/paymentCountries');
 
 function normalizePhone(raw) {
   return String(raw || '').replace(/[^\d+]/g, '');
 }
 
-// Pays supportés par FeexPay (ISO2) — seuls pays d'inscription autorisés.
-// Doit rester aligné avec NETWORKS_BY_COUNTRY dans services/feexpay.js.
-const SUPPORTED_COUNTRIES = new Set(['bf', 'bj', 'ci', 'tg', 'sn', 'cg']);
+// Pays couverts par au moins un prestataire réellement actif sur ce déploiement.
+// La même source alimente le sélecteur de pays de l'application.
+function supportedCountries() {
+  const providerIds = availableProviders().map((provider) => provider.id);
+  return new Set(countriesForProviderIds(providerIds).map((country) => country.code));
+}
 function normalizeCountry(raw) {
   const c = String(raw || '').trim().toLowerCase();
-  return SUPPORTED_COUNTRIES.has(c) ? c : null;
+  return supportedCountries().has(c) ? c : null;
 }
 
 // Anti-abuse limits on OTP generation (per phone number).
@@ -65,7 +72,7 @@ function pwdOk(phone) {
 }
 
 function validPassword(pw) {
-  return typeof pw === 'string' && pw.length >= 6 && pw.length <= 72;
+  return typeof pw === 'string' && pw.length >= 8 && pw.length <= 72;
 }
 
 // POST /auth/register  { phone, password, country? }
@@ -78,10 +85,13 @@ router.post('/register', ipLimitLogin, async (req, res) => {
     return res.status(400).json({ error: 'Numéro invalide' });
   }
   if (!validPassword(password)) {
-    return res.status(400).json({ error: 'Mot de passe : 6 caractères minimum' });
+    return res.status(400).json({ error: 'Mot de passe : 8 caractères minimum' });
   }
 
   const country = normalizeCountry(req.body.country);
+  if (!country) {
+    return res.status(400).json({ error: 'Pays non pris en charge par les moyens de paiement actifs' });
+  }
   const referralCode = normalizeReferralCode(req.body.referralCode);
   const sponsor = referralCode ? await prisma.user.findUnique({ where: { referralCode } }) : null;
   if (referralCode && !sponsor) return res.status(400).json({ error: 'Code de parrainage invalide' });
@@ -100,7 +110,7 @@ router.post('/register', ipLimitLogin, async (req, res) => {
         where: { id: user.id },
         data: {
           passwordHash: hashPassword(password),
-          recoveryCodeHash: sha256(recoveryCode),
+          recoveryCodeHash: hashRecoveryCode(recoveryCode),
           country: country || user.country,
         },
       });
@@ -114,7 +124,7 @@ router.post('/register', ipLimitLogin, async (req, res) => {
     isNew = true;
     user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
-        data: { phone, passwordHash: hashPassword(password), recoveryCodeHash: sha256(recoveryCode), country },
+        data: { phone, passwordHash: hashPassword(password), recoveryCodeHash: hashRecoveryCode(recoveryCode), country },
       });
       await ensureReferralCode(created.id, tx);
       if (sponsor) await tx.referral.create({ data: { sponsorId: sponsor.id, referredId: created.id } });
@@ -146,14 +156,14 @@ router.post('/reset-password', ipLimitLogin, async (req, res) => {
     return res.status(400).json({ error: 'Numéro ou code de récupération invalide' });
   }
   if (!validPassword(newPassword)) {
-    return res.status(400).json({ error: 'Mot de passe : 6 caractères minimum' });
+    return res.status(400).json({ error: 'Mot de passe : 8 caractères minimum' });
   }
   if (pwdLocked(phone)) {
     return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
   }
 
   const user = await prisma.user.findUnique({ where: { phone } });
-  if (!user || !user.recoveryCodeHash || user.recoveryCodeHash !== sha256(code)) {
+  if (!user || !verifyRecoveryCode(code, user.recoveryCodeHash)) {
     pwdFail(phone); // partage le verrou anti-force-brute du login
     return res.status(401).json({ error: 'Numéro ou code de récupération incorrect' });
   }
@@ -162,7 +172,7 @@ router.post('/reset-password', ipLimitLogin, async (req, res) => {
   const recoveryCode = genRecoveryCode(); // rotation : l'ancien code est consommé
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash: hashPassword(newPassword), recoveryCodeHash: sha256(recoveryCode) },
+    data: { passwordHash: hashPassword(newPassword), recoveryCodeHash: hashRecoveryCode(recoveryCode) },
   });
 
   const token = signToken(updated);

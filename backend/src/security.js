@@ -65,6 +65,21 @@ function verifyPassword(password, stored) {
   }
 }
 
+// Recovery codes have enough entropy for users to write down, but storing a
+// fast SHA-256 digest made an offline database leak unnecessarily easy to brute
+// force. New codes use scrypt; the SHA-256 fallback keeps existing accounts
+// recoverable and is automatically replaced after the next successful reset.
+function hashRecoveryCode(code) {
+  return hashPassword(normalizeRecoveryCode(code) || code);
+}
+
+function verifyRecoveryCode(code, stored) {
+  const normalized = normalizeRecoveryCode(code);
+  if (!normalized || !stored) return false;
+  if (String(stored).startsWith('scrypt$')) return verifyPassword(normalized, stored);
+  return safeEqual(String(stored), sha256(normalized));
+}
+
 // Minimal in-memory sliding-window rate limiter (single-instance deploys).
 // Usage: app.post('/x', rateLimit({ windowMs: 600000, max: 30 }), handler)
 function rateLimit({ windowMs, max, keyFn }) {
@@ -102,5 +117,7 @@ module.exports = {
   normalizeRecoveryCode,
   hashPassword,
   verifyPassword,
+  hashRecoveryCode,
+  verifyRecoveryCode,
   rateLimit,
 };

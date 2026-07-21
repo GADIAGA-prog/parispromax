@@ -1,23 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
-// Wraps premium content. When `locked` is true, the children are blurred and
-// an interactive lock overlay redirects the user to the Paywall.
+// Premium content is never mounted for locked users. A blurred copy would still
+// expose the real values in the React tree and accessibility snapshot.
 export default function LockCard({ locked, onUnlockPress, children, label }) {
   if (!locked) return <>{children}</>;
 
   return (
     <View style={styles.wrap}>
-      {/* The real content, rendered underneath but obscured. */}
-      <View style={styles.hidden} pointerEvents="none">
-        {children}
-      </View>
-
-      {/* Blur + lock overlay. */}
-      <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill} />
       <Pressable
         style={styles.overlay}
         onPress={onUnlockPress}
@@ -39,19 +31,19 @@ export default function LockCard({ locked, onUnlockPress, children, label }) {
 
 const styles = StyleSheet.create({
   wrap: {
-    position: 'relative',
     borderRadius: RADIUS.md,
     overflow: 'hidden',
-  },
-  hidden: {
-    opacity: 0.5,
+    minHeight: 220,
+    backgroundColor: COLORS.primary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: SPACING.lg,
-    backgroundColor: 'rgba(15,23,42,0.55)',
+    backgroundColor: 'rgba(15,23,42,0.92)',
   },
   title: {
     color: COLORS.text,

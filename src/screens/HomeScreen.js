@@ -16,15 +16,15 @@ import TrialBanner from '../components/TrialBanner';
 import TrackCard from '../components/TrackCard';
 import TrackCardSkeleton from '../components/Skeleton';
 import { loadRaces } from '../services/dataService';
-import { analyzeRace } from '../services/aiEngine';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { countryFlags } from '../services/countries';
 import { COLORS, SPACING, FONT, RADIUS } from '../theme/colors';
 
-const FLAGS = { bf: '🇧🇫', ci: '🇨🇮', sn: '🇸🇳', tg: '🇹🇬', bj: '🇧🇯', cg: '🇨🇬' };
+const FLAGS = countryFlags();
 
 export default function HomeScreen({ navigation }) {
-  const { country } = useAuth();
+  const { country, hasPaid } = useAuth();
   const [tracks, setTracks] = useState([]);
   const [source, setSource] = useState(null);
   const [offline, setOffline] = useState(false);
@@ -35,12 +35,7 @@ export default function HomeScreen({ navigation }) {
 
   const fetchData = useCallback(async () => {
     const { data, source: src, offline: off } = await loadRaces();
-    // Pre-analyze every race so AI scores/badges are ready for the cards.
-    const analyzed = (data.racetracks || []).map((t) => ({
-      ...t,
-      races: t.races.map((r) => analyzeRace(r)),
-    }));
-    setTracks(analyzed);
+    setTracks(data.racetracks || []);
     setSource(src);
     setOffline(off);
     try {
@@ -78,7 +73,7 @@ export default function HomeScreen({ navigation }) {
     if (!target) return;
     for (const t of tracks) {
       const race = (t.races || []).find((r) => r.id === target.id);
-      if (race) return onRacePress(t, race);
+      if (race) return onRacePress(t, { ...race, betType: national.betType || target.betType || null });
     }
   };
 
@@ -114,7 +109,15 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.title}>Programme du jour</Text>
           <Text style={styles.subtitle}>Hippodromes · Courses PMU</Text>
         </View>
-        <Ionicons name="sparkles" size={26} color={COLORS.accent} />
+        <Pressable
+          style={styles.subscribeBtn}
+          onPress={() => navigation.navigate('Paywall')}
+          accessibilityRole="button"
+          accessibilityLabel={hasPaid ? 'Prolonger mon abonnement' : "S'abonner"}
+        >
+          <Ionicons name="diamond" size={16} color="#06251c" />
+          <Text style={styles.subscribeText}>{hasPaid ? 'Prolonger' : "S'abonner"}</Text>
+        </Pressable>
       </View>
 
       <TrialBanner />
@@ -198,6 +201,16 @@ const styles = StyleSheet.create({
   title: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900' },
   subtitle: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 2 },
   headerLogo: { width: 40, height: 40 },
+  subscribeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  subscribeText: { color: '#06251c', fontSize: FONT.sm, fontWeight: '900' },
   offline: {
     flexDirection: 'row',
     alignItems: 'center',

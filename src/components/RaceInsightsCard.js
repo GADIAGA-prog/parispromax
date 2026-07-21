@@ -54,15 +54,15 @@ export default function RaceInsightsCard({ race, advanced = false }) {
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>La base incontournable</Text>
+      <Text style={styles.sectionTitle}>La base</Text>
       {insights.bases.map((horse) => <HorseLine key={horse.number} horse={horse} accent={COLORS.accent} />)}
 
       <View style={styles.divider} />
       <Text style={styles.sectionTitle}>Sélection {insights.format.label} en {insights.selectionSize}</Text>
-      <Text style={styles.help}>Toujours le nombre requis à l’arrivée + 1 cheval de couverture.</Text>
-      <Group title="Bases" horses={insights.bases} color={COLORS.accent} />
+      <Text style={styles.help}>Nombre de chevaux à l’arrivée + 2 chevaux de couverture.</Text>
+      <Group title="Couplé recommandé" horses={insights.couple} color={COLORS.accent} />
       <Group title="Chances régulières" horses={insights.chances} color={COLORS.info} />
-      <Group title="Outsiders" horses={insights.outsiders} color={COLORS.gold} />
+      <Group title="Tocard" horses={insights.tocards} color={COLORS.gold} />
       <Group title="Regret" horses={insights.regret ? [insights.regret] : []} color={COLORS.textMuted} />
 
       <View style={styles.divider} />

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, Share, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
+import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { sendTestNotification } from '../services/NotificationService';
+import { LEGAL_URLS } from '../services/legal';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 const STATUS_LABEL = {
@@ -16,6 +19,8 @@ const STATUS_LABEL = {
 
 export default function ProfileScreen({ navigation }) {
   const { phone, hasPaid, plan, paidUntil, referral, logout, refreshAccess } = useAuth();
+  const showPaymentHistory = Platform.OS !== 'android';
+  const appVersion = Constants.expoConfig?.version || '1.0.0';
 
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
@@ -33,12 +38,15 @@ export default function ProfileScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    loadPayments();
-  }, [loadPayments]);
+    if (showPaymentHistory) loadPayments();
+  }, [loadPayments, showPaymentHistory]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refreshAccess(), loadPayments()]);
+    await Promise.all([
+      refreshAccess(),
+      ...(showPaymentHistory ? [loadPayments()] : []),
+    ]);
     setRefreshing(false);
   };
 
@@ -57,12 +65,12 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.referralCard}>
           <Ionicons name="gift" size={26} color={COLORS.gold} />
           <Text style={styles.referralTitle}>Parrainez vos proches</Text>
-          <Text style={styles.referralText}>Ils économisent {referral?.discountPercent || 10}% sur leur premier paiement et vous gagnez 7 jours d'abonnement.</Text>
+          <Text style={styles.referralText}>Ils économisent jusqu’à {referral?.discountPercent || 10}% sur leur premier paiement (hors formule à 200 XOF) et vous recevez la moitié de la durée d'abonnement achetée.</Text>
           <Text style={styles.referralCode} selectable>{referral?.code || 'Chargement…'}</Text>
           <Pressable
             style={styles.shareButton}
             disabled={!referral?.code}
-            onPress={() => Share.share({ message: `Rejoins ParisPromax avec mon code ${referral.code} et profite de ${referral.discountPercent}% de réduction sur ton premier paiement.` })}
+            onPress={() => Share.share({ message: `Rejoins ParisPromax avec mon code ${referral.code} et profite de jusqu’à ${referral.discountPercent}% de réduction sur ton premier paiement (hors formule à 200 XOF).` })}
           >
             <Ionicons name="share-social" size={18} color="#06251c" />
             <Text style={styles.shareText}>Partager mon code</Text>
@@ -144,29 +152,49 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
 
-        {/* Payment history */}
-        <Text style={styles.sectionLabel}>Historique des paiements</Text>
-        {loadingPayments ? (
-          <ActivityIndicator color={COLORS.accent} style={{ marginVertical: SPACING.md }} />
-        ) : payments.length === 0 ? (
-          <Text style={styles.empty}>Aucun paiement pour le moment.</Text>
-        ) : (
-          payments.map((p) => (
-            <View key={p.transactionId} style={styles.payRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.payAmount}>
-                  {p.amount.toLocaleString('fr-FR')} {p.currency}
-                </Text>
-                <Text style={styles.payMeta}>
-                  {new Date(p.createdAt).toLocaleDateString('fr-FR')} · {p.method || '—'}
-                </Text>
-              </View>
-              <View style={[styles.payBadge, styles[`pay_${p.status}`]]}>
-                <Text style={styles.payBadgeText}>{STATUS_LABEL[p.status] || p.status}</Text>
-              </View>
-            </View>
-          ))
+        {showPaymentHistory && (
+          <>
+            <Text style={styles.sectionLabel}>Historique des paiements</Text>
+            {loadingPayments ? (
+              <ActivityIndicator color={COLORS.accent} style={{ marginVertical: SPACING.md }} />
+            ) : payments.length === 0 ? (
+              <Text style={styles.empty}>Aucun paiement pour le moment.</Text>
+            ) : (
+              payments.map((p) => (
+                <View key={p.transactionId} style={styles.payRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.payAmount}>
+                      {p.amount.toLocaleString('fr-FR')} {p.currency}
+                    </Text>
+                    <Text style={styles.payMeta}>
+                      {new Date(p.createdAt).toLocaleDateString('fr-FR')} · {p.method || '—'}
+                    </Text>
+                  </View>
+                  <View style={[styles.payBadge, styles[`pay_${p.status}`]]}>
+                    <Text style={styles.payBadgeText}>{STATUS_LABEL[p.status] || p.status}</Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </>
         )}
+
+        <Text style={styles.sectionLabel}>Informations et protection</Text>
+        <Pressable style={styles.action} onPress={() => WebBrowser.openBrowserAsync(LEGAL_URLS.responsibleGambling)}>
+          <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.gold} />
+          <Text style={styles.actionText}>Jeu responsable et aide</Text>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
+        <Pressable style={styles.action} onPress={() => WebBrowser.openBrowserAsync(LEGAL_URLS.privacy)}>
+          <Ionicons name="lock-closed-outline" size={20} color={COLORS.accent} />
+          <Text style={styles.actionText}>Politique de confidentialité</Text>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
+        <Pressable style={styles.action} onPress={() => WebBrowser.openBrowserAsync(LEGAL_URLS.terms)}>
+          <Ionicons name="document-text-outline" size={20} color={COLORS.accent} />
+          <Text style={styles.actionText}>Conditions d’utilisation</Text>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
 
         <Pressable style={[styles.action, { marginTop: SPACING.lg }]} onPress={logout}>
           <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
@@ -202,7 +230,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={[styles.actionText, { color: COLORS.danger }]}>Supprimer mon compte</Text>
         </Pressable>
 
-        <Text style={styles.version}>ParisPromax v1.0.0</Text>
+        <Text style={styles.version}>ParisPromax v{appVersion}</Text>
       </ScrollView>
     </SafeAreaView>
   );

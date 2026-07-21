@@ -40,12 +40,12 @@ router.get('/', requireAuth, async (req, res) => {
 // Permet à un utilisateur connecté de (re)noter un code valide s'il a perdu
 // celui remis à l'inscription. L'ancien code devient invalide.
 router.post('/recovery-code', requireAuth, async (req, res) => {
-  const { genRecoveryCode, sha256 } = require('../security');
+  const { genRecoveryCode, hashRecoveryCode } = require('../security');
   const recoveryCode = genRecoveryCode();
   try {
     await prisma.user.update({
       where: { id: req.userId },
-      data: { recoveryCodeHash: sha256(recoveryCode) },
+      data: { recoveryCodeHash: hashRecoveryCode(recoveryCode) },
     });
   } catch {
     return res.status(404).json({ error: 'Utilisateur introuvable' });
@@ -63,7 +63,10 @@ router.delete('/', requireAuth, async (req, res) => {
 
   await prisma.$transaction([
     prisma.subscription.deleteMany({ where: { userId: user.id } }),
-    prisma.payment.updateMany({ where: { userId: user.id }, data: { userId: null } }),
+    prisma.payment.updateMany({
+      where: { userId: user.id },
+      data: { userId: null, rawPayload: null },
+    }),
     prisma.otpCode.deleteMany({ where: { phone: user.phone } }),
     prisma.user.delete({ where: { id: user.id } }),
   ]);

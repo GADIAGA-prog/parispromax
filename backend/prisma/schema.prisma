@@ -198,10 +198,11 @@ model Prediction {
 }
 
 model Result {
-  id         String   @id @default(cuid())
-  raceId     String   @unique
-  race       Race     @relation(fields: [raceId], references: [id])
-  winners    String   // JSON string: [4,7,1,9,3]
-  predicted  Boolean  @default(false) // did our top pick land in the placed runners?
-  createdAt  DateTime @default(now())
+  id                 String   @id @default(cuid())
+  raceId             String   @unique
+  race               Race     @relation(fields: [raceId], references: [id])
+  winners            String   // JSON string: [4,7,1,9,3]
+  predictionSnapshot String?  // frozen JSON { topPicks, groups } (arrival places + 2)
+  predicted          Boolean  @default(false) // did our top pick land in the placed runners?
+  createdAt          DateTime @default(now())
 }
