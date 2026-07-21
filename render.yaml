@@ -6,9 +6,9 @@
 
 databases:
   - name: parispromax-db
-    # Payant : le Postgres gratuit de Render EXPIRE après ~30 jours (perte de
-    # données) — inutilisable en production. basic-256mb ≈ 6 $/mois.
-    plan: basic-256mb
+    # Le Postgres gratuit expire le 30/07/2026. La montée vers un plan
+    # persistant doit être décidée manuellement dans Render.
+    plan: free
     databaseName: parispromax
     user: parispromax
 
@@ -16,15 +16,13 @@ services:
   - type: web
     name: parispromax-backend
     runtime: node
-    # Payant (≈ 7 $/mois) : le plan free endort le serveur après inactivité
-    # (premier login/paiement du matin ~30 s d'attente, webhooks retardés).
-    plan: starter
+    # Le plan gratuit peut s'endormir ; conserver `free` évite toute facturation
+    # déclenchée automatiquement par une synchronisation du Blueprint.
+    plan: free
     rootDir: backend
     buildCommand: npm ci && npm run build:prod
-    # La base n'est modifiÃ©e qu'aprÃ¨s une compilation rÃ©ussie. `db push`
-    # compare le schÃ©ma PostgreSQL rÃ©el et refuse toute perte de donnÃ©es car
-    # l'option --accept-data-loss n'est volontairement jamais fournie.
-    preDeployCommand: npm run db:sync:prod
+    # Le plan free ne prend pas en charge preDeployCommand. Le script applique
+    # donc `db push` pendant le build, toujours sans --accept-data-loss.
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
@@ -192,8 +190,8 @@ services:
   - type: web
     name: parispromax-ia
     runtime: docker
-    # Payant (≈ 7 $/mois) : évite le cold start du modèle avant chaque course.
-    plan: starter
+    # Conserver le plan gratuit existant ; les cold starts restent possibles.
+    plan: free
     rootDir: ml
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
@@ -214,7 +212,7 @@ services:
 # renseignez REDIS_URL (Internal URL) à la main sur les 2 services.
   - type: redis
     name: parispromax-redis
-    # Payant (≈ 10 $/mois) : cache prédictions + temps réel persistants.
-    plan: starter
+    # Conserver le Key Value gratuit existant.
+    plan: free
     ipAllowList: []
     maxmemoryPolicy: allkeys-lru

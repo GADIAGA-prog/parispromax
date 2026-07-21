@@ -11,8 +11,9 @@ les premières migrations contiennent notamment le type SQLite `DATETIME`.
 La base Render existante a été créée et synchronisée historiquement avec
 `prisma db push`. Pour préserver cet historique sans baseline destructive :
 
-1. `npm run build:prod` génère le client et ne touche pas à la base ;
-2. Render exécute `npm run db:sync:prod` en `preDeployCommand` ;
+1. `npm run build:prod` génère le client PostgreSQL ;
+2. le plan Render gratuit, qui ne prend pas en charge `preDeployCommand`,
+   exécute ensuite `prisma db push` dans le même build ;
 3. Prisma compare la base PostgreSQL réelle au schéma généré et applique
    uniquement les changements compatibles ;
 4. aucune option `--accept-data-loss` n'est autorisée.
@@ -20,6 +21,9 @@ La base Render existante a été créée et synchronisée historiquement avec
 La modification du 20 juillet 2026 ajoute uniquement la colonne nullable
 `Result.predictionSnapshot`. Elle conserve toutes les lignes existantes et le
 script devient un no-op si la colonne est déjà présente.
+
+Sur un futur plan Render payant, déplacer `npm run db:sync:prod` vers
+`preDeployCommand` permettra de séparer compilation et migration.
 
 Une conversion future vers `prisma migrate deploy` exigera d'abord une baseline
 PostgreSQL explicite sur une copie de la production. Il ne faut pas réutiliser
