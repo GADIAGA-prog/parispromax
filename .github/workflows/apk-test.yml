@@ -1,0 +1,59 @@
+name: Build test APK
+
+on:
+  push:
+    branches:
+      - codex/apk-test-sdk56
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android API 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build standalone release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Name APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk parispromax-test-sdk56-2026-07-21.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: parispromax-test-sdk56-2026-07-21
+          path: parispromax-test-sdk56-2026-07-21.apk
+          if-no-files-found: error
+          retention-days: 7
