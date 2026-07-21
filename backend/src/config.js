@@ -7,6 +7,7 @@ const isSqliteDev = String(process.env.DATABASE_URL || '').startsWith('file:');
 // "Prod-like" = anything that is not the local SQLite dev DB. Security defaults
 // below must be SAFE in this mode even when NODE_ENV is missing.
 const isProdLike = isProd || !isSqliteDev;
+const adminPassword = String(process.env.ADMIN_PASSWORD || '').trim();
 
 const config = {
   port: Number(process.env.PORT) || 4000,
@@ -119,10 +120,11 @@ const config = {
   },
   admin: {
     user: process.env.ADMIN_USER || 'admin',
-    password: process.env.ADMIN_PASSWORD || 'admin',
+    password: adminPassword || 'admin',
     // The back-office (payments, phone numbers, scrape triggers) must never be
-    // reachable with the default admin/admin pair outside the local dev DB.
-    enabled: !isProdLike || Boolean(process.env.ADMIN_PASSWORD),
+    // reachable with weak/default credentials outside the local dev DB.
+    // An invalid production password disables /admin without crashing the API.
+    enabled: !isProdLike || adminPassword.length >= 16,
   },
   // Bearer token the IA microservice requires (mirrors PPM_IA_TOKEN on the
   // Python side). Optional: when unset, iaClient sends no Authorization header.
@@ -193,12 +195,9 @@ if (isProdLike) {
       '[config] OTP_DEV_MODE=true est interdit hors de la base SQLite locale.'
     );
   }
-  if (config.admin.enabled && config.admin.password.length < 16) {
-    throw new Error('[config] ADMIN_PASSWORD doit contenir au moins 16 caractères hors dev.');
-  }
   if (!config.admin.enabled) {
     console.warn(
-      '[config] ⚠️ ADMIN_PASSWORD non défini : le back-office /admin est DÉSACTIVÉ (identifiants par défaut refusés).'
+      '[config] ADMIN_PASSWORD absent ou trop court : le back-office /admin est DESACTIVE (16 caracteres minimum hors dev).'
     );
   }
   if (!/^https:\/\//.test(config.publicBaseUrl)) {
