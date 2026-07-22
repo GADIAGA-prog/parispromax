@@ -73,6 +73,7 @@ a { color: inherit; }
 .button-primary { color: #03261b; background: linear-gradient(135deg, #38eaae, #20cc91); box-shadow: 0 10px 30px rgba(45, 226, 160, .15); }
 .button-ghost { color: var(--muted); }
 .button-outline { border: 1px solid rgba(45, 226, 160, .45); color: var(--green); }
+.button-android { border: 1px solid rgba(54, 163, 255, .48); color: #a9d6ff; background: rgba(54, 163, 255, .08); }
 .button-large { min-height: 52px; padding-inline: 22px; }
 .button-full { width: 100%; min-height: 50px; }
 .text-button { border: 0; background: transparent; color: var(--green); padding: 0; cursor: pointer; font-weight: 750; text-align: left; }
@@ -113,6 +114,16 @@ a { color: inherit; }
 .proof-strip { display: grid; grid-template-columns: repeat(4, 1fr); width: min(1240px, calc(100% - 40px)); margin-inline: auto; border-block: 1px solid var(--line); }
 .proof-strip div { padding: 27px 24px; border-right: 1px solid var(--line); }.proof-strip div:last-child { border: 0; }
 .proof-strip strong, .proof-strip span { display: block; }.proof-strip strong { font-size: 18px; }.proof-strip span { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+.app-download-section { padding-block: 64px 38px; }
+.app-download-card { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(260px, 340px); align-items: center; gap: 28px; padding: 30px; border: 1px solid rgba(54, 163, 255, .3); border-radius: 26px; background: linear-gradient(135deg, rgba(54, 163, 255, .1), rgba(45, 226, 160, .055)); box-shadow: var(--shadow); }
+.app-download-icon { width: 72px; height: 72px; display: grid; place-items: center; border-radius: 20px; color: #03261b; background: linear-gradient(135deg, var(--green), #78f6cb); font-size: 34px; font-weight: 950; box-shadow: 0 14px 34px rgba(45, 226, 160, .16); }
+.app-download-copy h2 { margin: 7px 0 10px; font-size: clamp(25px, 3vw, 37px); line-height: 1.1; letter-spacing: -1.2px; }
+.app-download-copy p { margin: 0; max-width: 700px; color: var(--muted); line-height: 1.65; }
+.app-download-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.app-download-meta span { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: #b8c5d5; font-size: 11px; font-weight: 750; }
+.app-download-actions { display: grid; gap: 10px; }
+.app-download-actions small { color: var(--faint); line-height: 1.5; }
 
 .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 48px; margin-bottom: 44px; }
 .section-heading h2, .plans-intro h2, .security-card h2 { margin: 8px 0 0; font-size: clamp(34px, 4vw, 52px); line-height: 1.06; letter-spacing: -2px; }
@@ -194,7 +205,7 @@ footer { width:min(1240px,calc(100% - 40px)); margin:40px auto 0; padding:40px 0
 
 @media (max-width: 980px) {
   .site-header { grid-template-columns:1fr auto; }.desktop-nav,.header-actions{display:none}.menu-button{display:block}
-  .hero{grid-template-columns:1fr;min-height:auto;padding-top:70px}.hero-copy{max-width:760px}.hero h1{letter-spacing:-3px}.hero-panel{max-width:680px;width:100%;margin-inline:auto}
+  .hero{grid-template-columns:1fr;min-height:auto;padding-top:70px}.hero-copy{max-width:760px}.hero h1{letter-spacing:-3px}.hero-panel{max-width:680px;width:100%;margin-inline:auto}.app-download-card{grid-template-columns:auto 1fr}.app-download-actions{grid-column:1/-1}
   .proof-strip{grid-template-columns:repeat(2,1fr)}.proof-strip div:nth-child(2){border-right:0}.proof-strip div:nth-child(-n+2){border-bottom:1px solid var(--line)}
   .race-workspace{grid-template-columns:1fr}.race-sidebar{border:0;border-bottom:1px solid var(--line)}.race-list{display:flex;gap:8px;overflow:auto;max-height:none}.track-label{writing-mode:vertical-rl}.race-item{min-width:225px}
   .national-race-content{grid-template-columns:auto 1fr}.national-actions{grid-column:1/-1;display:flex;align-items:center;max-width:none}.guide-grid{grid-template-columns:repeat(2,1fr)}
@@ -202,7 +213,7 @@ footer { width:min(1240px,calc(100% - 40px)); margin:40px auto 0; padding:40px 0
 }
 
 @media (max-width: 640px) {
-  .site-header{padding-inline:16px}.brand img{width:42px;height:42px}.brand small{display:none}.section{width:min(100% - 28px,1240px);padding-block:72px}.hero{padding-top:55px}.hero h1{font-size:46px;letter-spacing:-2.6px}.hero-actions{display:grid}.hero-actions .button{width:100%}.trust-row{display:grid;gap:8px}.hero-panel{padding:18px;border-radius:22px}.hero-race-head{margin:24px 0 18px}.confidence{width:70px;height:70px}.panel-footer{display:grid}.proof-strip{width:calc(100% - 28px)}.proof-strip div{padding:20px 14px}.section-heading{display:block}.section-heading>p{margin-top:18px}.national-spotlight{padding:18px}.national-spotlight-head{display:grid}.country-filter select{width:100%;min-width:0}.national-race-content{grid-template-columns:1fr}.quinte-seal{width:68px;height:68px;font-size:34px}.national-actions{display:grid;grid-column:auto;width:100%}.national-actions .button{width:100%}.race-detail{padding:18px}.detail-head{display:block}.race-badge{display:inline-block;margin-top:12px}.final-verdict{grid-template-columns:1fr}.final-five{grid-template-columns:repeat(5,68px);overflow-x:auto;padding-bottom:5px}.analysis-grid,.guide-grid{grid-template-columns:1fr}.horse-table th:nth-child(3),.horse-table td:nth-child(3){display:none}.method-grid,.plans-grid,.account-grid{grid-template-columns:1fr}.method-card{min-height:240px}.plans-grid{gap:10px}.security-card{padding:25px 20px}footer{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.modal{padding:24px 18px}.modal-brand{padding-right:28px}
+  .site-header{padding-inline:16px}.brand img{width:42px;height:42px}.brand small{display:none}.section{width:min(100% - 28px,1240px);padding-block:72px}.hero{padding-top:55px}.hero h1{font-size:46px;letter-spacing:-2.6px}.hero-actions{display:grid}.hero-actions .button{width:100%}.trust-row{display:grid;gap:8px}.hero-panel{padding:18px;border-radius:22px}.hero-race-head{margin:24px 0 18px}.confidence{width:70px;height:70px}.panel-footer{display:grid}.proof-strip{width:calc(100% - 28px)}.proof-strip div{padding:20px 14px}.app-download-section{padding-block:38px}.app-download-card{grid-template-columns:1fr;padding:22px}.app-download-icon{width:60px;height:60px;border-radius:17px}.app-download-actions{grid-column:auto}.app-download-actions .button{width:100%}.section-heading{display:block}.section-heading>p{margin-top:18px}.national-spotlight{padding:18px}.national-spotlight-head{display:grid}.country-filter select{width:100%;min-width:0}.national-race-content{grid-template-columns:1fr}.quinte-seal{width:68px;height:68px;font-size:34px}.national-actions{display:grid;grid-column:auto;width:100%}.national-actions .button{width:100%}.race-detail{padding:18px}.detail-head{display:block}.race-badge{display:inline-block;margin-top:12px}.final-verdict{grid-template-columns:1fr}.final-five{grid-template-columns:repeat(5,68px);overflow-x:auto;padding-bottom:5px}.analysis-grid,.guide-grid{grid-template-columns:1fr}.horse-table th:nth-child(3),.horse-table td:nth-child(3){display:none}.method-grid,.plans-grid,.account-grid{grid-template-columns:1fr}.method-card{min-height:240px}.plans-grid{gap:10px}.security-card{padding:25px 20px}footer{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.modal{padding:24px 18px}.modal-brand{padding-right:28px}
 }
 
 @media (prefers-reduced-motion: reduce) { html{scroll-behavior:auto}.reveal{animation:none}.button{transition:none} }

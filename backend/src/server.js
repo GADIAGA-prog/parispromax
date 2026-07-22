@@ -20,6 +20,9 @@ const { getProvider } = require('./services/paymentProvider');
 
 const app = express();
 const publicDir = path.join(__dirname, '..', 'public');
+const androidApkUrl =
+  process.env.ANDROID_APK_URL ||
+  'https://github.com/GADIAGA-prog/parispromax/releases/latest/download/ParisPromax-Android.apk';
 
 // Behind Render's proxy: makes req.ip the real client IP (rate limiting).
 app.set('trust proxy', 1);
@@ -96,6 +99,13 @@ app.get('/health', async (_req, res) => {
 // flows simple while the mobile app continues using the exact same backend.
 app.get('/', (_req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// Stable first-party download URL used by the website. The APK itself lives in
+// GitHub Releases so the 79 MB binary does not slow down every Render deploy.
+app.get('/download/android', (_req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.redirect(302, androidApkUrl);
 });
 
 app.use('/auth', authRoutes);
