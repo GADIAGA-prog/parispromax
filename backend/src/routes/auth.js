@@ -380,11 +380,18 @@ router.post('/login', ipLimitLogin, async (req, res) => {
   }
   pwdOk(phone);
 
-  const country = normalizeCountry(req.body.country);
-  const updated =
-    country && user.country !== country
-      ? await prisma.user.update({ where: { id: user.id }, data: { country } })
-      : user;
+  // Country synchronisation is useful for plans and payments, but it is not
+  // part of password verification. A temporary profile-write failure must not
+  // prevent an otherwise valid login.
+  let updated = user;
+  try {
+    const country = normalizeCountry(req.body.country);
+    if (country && user.country !== country) {
+      updated = await prisma.user.update({ where: { id: user.id }, data: { country } });
+    }
+  } catch (error) {
+    console.error('[auth] country sync skipped after valid login:', error.message);
+  }
 
   const token = signToken(updated);
   res.json({

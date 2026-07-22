@@ -21,7 +21,7 @@
   <link rel="icon" href="/assets/logo-emblem.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260722-11" />
+  <link rel="stylesheet" href="/styles.css?v=20260722-12" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -258,7 +258,13 @@
       <div class="account-grid">
         <article class="account-card"><span>État de l'accès</span><strong id="access-label">Vérification…</strong><p id="access-detail">Votre abonnement est synchronisé avec l'application mobile.</p></article>
         <article class="account-card"><span>Compte</span><strong id="account-phone">—</strong><p id="account-country">—</p></article>
-        <article class="account-card account-card-accent"><span>Code de parrainage</span><strong id="referral-code">—</strong><button class="text-button" id="copy-referral" type="button">Copier le code</button></article>
+        <article class="account-card account-card-accent account-card-referral">
+          <span>Parrainage</span><strong id="referral-code">—</strong><p>Invitez un proche avec votre lien personnel. Votre code sera ajouté automatiquement à son inscription.</p>
+          <label class="referral-link-label" for="referral-link">Votre lien personnel</label>
+          <input class="referral-link-input" id="referral-link" type="text" readonly aria-label="Lien personnel de parrainage" />
+          <div class="referral-actions"><button class="text-button" id="copy-referral" type="button">Copier le code</button><button class="text-button" id="copy-referral-link" type="button">Copier le lien</button><button class="text-button" id="share-referral-link" type="button">Partager</button></div>
+          <p class="referral-message" id="referral-message" role="status" aria-live="polite"></p>
+        </article>
       </div>
     </section>
   </main>
@@ -278,6 +284,7 @@
       <label>Pays<select name="country" class="country-select" required></select></label>
       <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" placeholder="Ex. 70 XX XX XX" required /></label>
       <label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required /></label>
+      <button class="auth-help-button" id="open-password-recovery" type="button">Mot de passe oublié ?</button>
       <button class="button button-primary button-full" type="submit">Se connecter <span>→</span></button>
     </form>
 
@@ -298,9 +305,28 @@
 
   <dialog id="recovery-dialog" class="modal modal-compact">
     <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
-    <span class="success-icon">✓</span><h2>Compte créé</h2><p>Notez ce code de récupération dans un endroit sûr. Il ne sera affiché qu'une seule fois.</p>
+    <span class="success-icon">✓</span><h2 id="recovery-success-title">Compte créé</h2><p id="recovery-success-copy">Notez ce code de récupération dans un endroit sûr. Il ne sera affiché qu'une seule fois.</p>
     <code id="recovery-code">—</code>
     <button class="button button-primary button-full" id="continue-login" type="button">Continuer vers la connexion</button>
+  </dialog>
+
+  <dialog id="password-recovery-dialog" class="modal modal-compact password-recovery-dialog">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+    <span class="section-kicker">RÉCUPÉRATION SÉCURISÉE</span><h2>Réinitialiser le mot de passe</h2><p>Identifiez votre compte, puis répondez à votre question de sécurité.</p>
+    <form id="recovery-identify-form" class="form-stack">
+      <label>Pays<select name="country" class="country-select" required></select></label>
+      <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" placeholder="Ex. 70 XX XX XX" required /></label>
+      <button class="button button-primary button-full" type="submit">Continuer</button>
+    </form>
+    <form id="recovery-reset-form" class="form-stack hidden">
+      <div class="security-question-box"><small>Votre question</small><strong id="recovery-question-label">—</strong></div>
+      <label>Date de naissance<input name="birthDate" type="date" required /></label>
+      <label>Votre réponse<input name="answer" autocomplete="off" required minlength="2" /></label>
+      <label>Nouveau mot de passe<input name="newPassword" type="password" autocomplete="new-password" required minlength="8" /></label>
+      <button class="button button-primary button-full" type="submit">Changer mon mot de passe</button>
+      <button class="auth-help-button" id="restart-recovery" type="button">Utiliser un autre numéro</button>
+    </form>
+    <p class="form-message" id="password-recovery-message" role="status"></p>
   </dialog>
 
   <dialog id="install-dialog" class="modal modal-compact">
@@ -335,7 +361,16 @@
     <p class="form-message" id="payment-message" role="status"></p>
   </dialog>
 
+  <button class="chat-launcher" id="chat-toggle" type="button" aria-label="Ouvrir l’assistant ParisPromax" aria-expanded="false" aria-controls="chatbox"><span aria-hidden="true">💬</span><b>Aide</b></button>
+  <aside class="chatbox hidden" id="chatbox" role="dialog" aria-label="Assistant ParisPromax">
+    <div class="chatbox-head"><div><strong>Assistant ParisPromax</strong><span><i></i> Réponses instantanées</span></div><button id="chat-close" type="button" aria-label="Fermer l’assistant">×</button></div>
+    <div class="chat-messages" id="chat-messages" aria-live="polite"><div class="chat-message bot">Bonjour 👋 Comment puis-je vous aider aujourd’hui ?</div></div>
+    <div class="chat-quick" aria-label="Questions fréquentes"><button type="button" data-chat-question="connexion">Problème de connexion</button><button type="button" data-chat-question="parrainage">Parrainage</button><button type="button" data-chat-question="abonnement">Abonnement</button><button type="button" data-chat-question="pronostics">Pronostics</button></div>
+    <form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">Votre question</label><input id="chat-input" name="message" maxlength="240" autocomplete="off" placeholder="Écrivez votre question…" required /><button type="submit" aria-label="Envoyer">→</button></form>
+    <small class="chat-safety">Ne communiquez jamais votre mot de passe ou votre code Mobile Money.</small>
+  </aside>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260722-8" defer></script>
+  <script src="/app.js?v=20260722-9" defer></script>
 </body>
 </html>

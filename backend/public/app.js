@@ -13,6 +13,7 @@ const state = {
   notifications: [],
   selectedRaceId: null,
   selectedPlan: null,
+  recovery: { phone: '', country: 'bf' },
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
 };
 
@@ -146,13 +147,12 @@ function showShareMessage(message) {
   showShareMessage.timer = setTimeout(() => { node.textContent = ''; }, 3200);
 }
 
-async function copySiteLink() {
-  const { url } = siteSharePayload();
+async function copyPlainText(value) {
   try {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(value);
   } catch (_) {
     const field = document.createElement('textarea');
-    field.value = url;
+    field.value = value;
     field.setAttribute('readonly', '');
     field.style.position = 'fixed';
     field.style.opacity = '0';
@@ -161,6 +161,11 @@ async function copySiteLink() {
     document.execCommand('copy');
     field.remove();
   }
+}
+
+async function copySiteLink() {
+  const { url } = siteSharePayload();
+  await copyPlainText(url);
   showShareMessage('Lien ParisPromax copié. Vous pouvez maintenant le partager.');
   toast('Lien du site copié');
 }
@@ -177,6 +182,196 @@ async function shareSite() {
     }
   }
   await copySiteLink();
+}
+
+function normalizeReferralCodeClient(value) {
+  return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 32);
+}
+
+function referralUrl(code) {
+  const url = new URL('/', window.location.origin);
+  url.searchParams.set('ref', normalizeReferralCodeClient(code));
+  return url.href;
+}
+
+function currentReferralCode() {
+  return normalizeReferralCodeClient(state.me?.referral?.code || $('#referral-code')?.textContent);
+}
+
+function showReferralMessage(message) {
+  const node = $('#referral-message');
+  if (!node) return;
+  node.textContent = message;
+  clearTimeout(showReferralMessage.timer);
+  showReferralMessage.timer = setTimeout(() => { node.textContent = ''; }, 3500);
+}
+
+async function copyReferralCode() {
+  const code = currentReferralCode();
+  if (!code) return;
+  await copyPlainText(code);
+  showReferralMessage('Code de parrainage copié.');
+  toast('Code copié');
+}
+
+async function copyReferralLink() {
+  const code = currentReferralCode();
+  if (!code) return;
+  await copyPlainText(referralUrl(code));
+  showReferralMessage('Lien personnel copié. Le code sera prérempli à l’inscription.');
+  toast('Lien de parrainage copié');
+}
+
+async function shareReferralLink() {
+  const code = currentReferralCode();
+  if (!code) return;
+  const payload = {
+    title: 'Rejoignez ParisPromax',
+    text: `Je vous invite sur ParisPromax avec mon code ${code}.`,
+    url: referralUrl(code),
+  };
+  if (navigator.share) {
+    try {
+      await navigator.share(payload);
+      showReferralMessage('Invitation partagée.');
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+    }
+  }
+  await copyReferralLink();
+}
+
+function applyReferralInvitation() {
+  if (state.token && state.me) return;
+  const code = normalizeReferralCodeClient(new URLSearchParams(window.location.search).get('ref'));
+  if (!code) return;
+  const form = $('#register-form');
+  form.elements.referralCode.value = code;
+  openAuth('register');
+  setMessage('#auth-message', `Code de parrainage ${code} appliqué automatiquement.`, true);
+}
+
+function loginErrorMessage(error) {
+  if (error?.status >= 500) return 'Connexion temporairement indisponible. Réessayez dans un instant.';
+  return error?.message || 'Impossible de se connecter pour le moment.';
+}
+
+function resetPasswordRecoveryUi() {
+  $('#recovery-identify-form').classList.remove('hidden');
+  $('#recovery-reset-form').classList.add('hidden');
+  $('#recovery-reset-form').reset();
+  setMessage('#password-recovery-message', '');
+  state.recovery = { phone: '', country: 'bf' };
+}
+
+function openPasswordRecovery() {
+  resetPasswordRecoveryUi();
+  const loginForm = $('#login-form');
+  const form = $('#recovery-identify-form');
+  form.elements.country.value = loginForm.elements.country.value || 'bf';
+  form.elements.phone.value = loginForm.elements.phone.value || '';
+  closeDialogs();
+  openDialog('#password-recovery-dialog');
+}
+
+async function identifyRecoveryAccount(form) {
+  const data = Object.fromEntries(new FormData(form));
+  const phone = normalizePhone(data.phone, data.country);
+  const result = await api('/auth/recovery-question', {
+    auth: false,
+    method: 'POST',
+    body: JSON.stringify({ phone }),
+  });
+  state.recovery = { phone, country: data.country };
+  $('#recovery-question-label').textContent = result.question;
+  form.classList.add('hidden');
+  $('#recovery-reset-form').classList.remove('hidden');
+  setMessage('#password-recovery-message', 'Question de sécurité trouvée.', true);
+}
+
+async function resetPasswordWithSecurity(form) {
+  const data = Object.fromEntries(new FormData(form));
+  const result = await api('/auth/reset-password-security', {
+    auth: false,
+    method: 'POST',
+    body: JSON.stringify({ phone: state.recovery.phone, ...data }),
+    timeout: 60000,
+  });
+  $('#recovery-code').textContent = result.recoveryCode || 'Non disponible';
+  $('#recovery-success-title').textContent = 'Mot de passe modifié';
+  $('#recovery-success-copy').textContent = 'Notez votre nouveau code de récupération. Il remplace l’ancien et ne sera affiché qu’une seule fois.';
+  const loginForm = $('#login-form');
+  loginForm.elements.phone.value = state.recovery.phone;
+  loginForm.elements.country.value = state.recovery.country;
+  form.reset();
+  closeDialogs();
+  openDialog('#recovery-dialog');
+}
+
+function setChatboxOpen(open) {
+  $('#chatbox').classList.toggle('hidden', !open);
+  $('#chat-toggle').setAttribute('aria-expanded', String(open));
+  if (open) setTimeout(() => $('#chat-input').focus(), 0);
+}
+
+function chatAnswer(question) {
+  const normalized = String(question || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (/connexion|connecter|mot de passe|serveur/.test(normalized)) {
+    return { text: 'Vérifiez le pays et le numéro, puis réessayez. Si le mot de passe est refusé, utilisez « Mot de passe oublié ? » sous le formulaire de connexion.', label: 'Ouvrir la connexion', auth: 'login' };
+  }
+  if (/parrain|invitation|code/.test(normalized)) {
+    return state.me
+      ? { text: 'Votre code et votre lien personnel sont visibles dans Mon espace. Le lien préremplit automatiquement votre code chez le nouveau membre.', label: 'Voir mon espace', target: '#espace' }
+      : { text: 'Connectez-vous pour afficher votre code et partager votre lien personnel de parrainage.', label: 'Se connecter', auth: 'login' };
+  }
+  if (/abonnement|formule|acces|prix/.test(normalized)) {
+    return { text: 'Les formules disponibles sont prépayées et sans reconduction automatique. Vous pouvez les consulter dans la section Abonnements.', label: 'Voir les abonnements', target: '#abonnements' };
+  }
+  if (/pronostic|course|quinte|cote|cheval/.test(normalized)) {
+    return { text: 'Les courses, cotes et analyses sont regroupées dans le programme du jour. Le pronostic final suit le format Podium + 2.', label: 'Voir les courses', target: '#courses' };
+  }
+  if (/paiement|mobile money|otp/.test(normalized)) {
+    return { text: 'Choisissez une formule, puis suivez les instructions de l’opérateur affiché. Ne saisissez jamais votre code PIN Mobile Money sur ParisPromax.', label: 'Voir les formules', target: '#abonnements' };
+  }
+  if (/telegram|canal/.test(normalized)) {
+    return { text: 'Le canal Telegram officiel publie les actualités, programmes et analyses ParisPromax.', label: 'Rejoindre Telegram', target: 'https://t.me/ParisPromaxOfficiel', external: true };
+  }
+  return { text: 'Je peux vous guider sur la connexion, le parrainage, les abonnements, les paiements et les pronostics. Pour une demande personnelle, contactez l’équipe.', label: 'Contacter ParisPromax', target: '#contact' };
+}
+
+function appendChatMessage(role, text, action) {
+  const messages = $('#chat-messages');
+  const node = document.createElement('div');
+  node.className = `chat-message ${role}`;
+  node.append(document.createTextNode(text));
+  if (action?.label) {
+    const link = document.createElement('a');
+    link.href = action.auth ? '#' : action.target;
+    link.textContent = `${action.label} →`;
+    if (action.external) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
+    link.addEventListener('click', (event) => {
+      if (action.auth) { event.preventDefault(); setChatboxOpen(false); openAuth(action.auth); }
+      else if (!action.external) setChatboxOpen(false);
+    });
+    node.append(link);
+  }
+  messages.append(node);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function askChat(question) {
+  const labels = {
+    connexion: 'Je n’arrive pas à me connecter',
+    parrainage: 'Comment partager mon code de parrainage ?',
+    abonnement: 'Quelles sont les formules ?',
+    pronostics: 'Où voir les pronostics ?',
+  };
+  const text = labels[question] || String(question || '').trim();
+  if (!text) return;
+  appendChatMessage('user', text);
+  const answer = chatAnswer(text);
+  setTimeout(() => appendChatMessage('bot', answer.text, answer), 180);
 }
 
 async function api(path, options = {}) {
@@ -676,16 +871,28 @@ function renderRaceDetail(context, detail, prediction, predictionError) {
 async function login(form) {
   const data = Object.fromEntries(new FormData(form));
   const phone = normalizePhone(data.phone, data.country);
-  const result = await api('/auth/login', {
+  const options = {
     auth: false,
     method: 'POST',
     body: JSON.stringify({ phone, password: data.password, country: data.country }),
     timeout: 60000,
-  });
+  };
+  let result;
+  try {
+    result = await api('/auth/login', options);
+  } catch (error) {
+    if (error.status < 500) throw error;
+    result = await api('/auth/login', options);
+  }
   state.token = result.token;
   sessionStorage.setItem('ppm_web_token', state.token);
-  closeDialogs();
   await refreshMe();
+  if (!state.me) {
+    state.token = '';
+    sessionStorage.removeItem('ppm_web_token');
+    throw new Error('La session n’a pas pu être ouverte. Réessayez.');
+  }
+  closeDialogs();
   toast('Connexion réussie');
   if (state.selectedRaceId) selectRace(state.selectedRaceId);
 }
@@ -700,6 +907,8 @@ async function register(form) {
     timeout: 90000,
   });
   $('#recovery-code').textContent = result.recoveryCode || 'Non disponible';
+  $('#recovery-success-title').textContent = 'Compte créé';
+  $('#recovery-success-copy').textContent = 'Notez ce code de récupération dans un endroit sûr. Il ne sera affiché qu’une seule fois.';
   closeDialogs();
   openDialog('#recovery-dialog');
   const loginForm = $('#login-form');
@@ -728,13 +937,18 @@ function renderSession() {
   $('#account-button').classList.toggle('hidden', !loggedIn);
   $('#espace').classList.toggle('hidden', !loggedIn);
   buildMemberNotifications();
-  if (!loggedIn) return;
+  if (!loggedIn) {
+    $('#referral-link').value = '';
+    return;
+  }
   const { user, access, referral } = state.me;
   $('#account-title').textContent = `Bienvenue, ${user.firstName || 'dans votre espace'}.`;
   $('#account-phone').textContent = user.phone;
   const country = state.countries.find((item) => item.code === user.country);
   $('#account-country').textContent = country?.name || user.country?.toUpperCase() || 'Pays non renseigné';
-  $('#referral-code').textContent = referral?.code || '—';
+  const referralCode = normalizeReferralCodeClient(referral?.code);
+  $('#referral-code').textContent = referralCode || '—';
+  $('#referral-link').value = referralCode ? referralUrl(referralCode) : '';
   $('#access-label').textContent = access?.hasAccess ? 'Accès actif' : 'Accès limité';
   $('#access-detail').textContent = access?.hasAccess
     ? `Formule ${access.plan || 'active'}${access.paidUntil ? ` · jusqu’au ${dateLabel(access.paidUntil)}` : ''}`
@@ -966,7 +1180,7 @@ function bindEvents() {
     button.disabled = true;
     setMessage('#auth-message', 'Connexion en cours…', true);
     try { await login(event.currentTarget); }
-    catch (error) { setMessage('#auth-message', error.message); }
+    catch (error) { setMessage('#auth-message', loginErrorMessage(error)); }
     finally { button.disabled = false; }
   });
   $('#register-form').addEventListener('submit', async (event) => {
@@ -978,6 +1192,26 @@ function bindEvents() {
     catch (error) { setMessage('#auth-message', error.message); }
     finally { button.disabled = false; }
   });
+  $('#open-password-recovery').addEventListener('click', openPasswordRecovery);
+  $('#recovery-identify-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = $('button[type="submit"]', event.currentTarget);
+    button.disabled = true;
+    setMessage('#password-recovery-message', 'Recherche du compte…', true);
+    try { await identifyRecoveryAccount(event.currentTarget); }
+    catch (error) { setMessage('#password-recovery-message', error.message); }
+    finally { button.disabled = false; }
+  });
+  $('#recovery-reset-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = $('button[type="submit"]', event.currentTarget);
+    button.disabled = true;
+    setMessage('#password-recovery-message', 'Modification du mot de passe…', true);
+    try { await resetPasswordWithSecurity(event.currentTarget); }
+    catch (error) { setMessage('#password-recovery-message', error.message); }
+    finally { button.disabled = false; }
+  });
+  $('#restart-recovery').addEventListener('click', resetPasswordRecoveryUi);
   $('#continue-login').addEventListener('click', () => { closeDialogs(); openAuth('login'); });
   $('#payment-form').addEventListener('submit', (event) => { event.preventDefault(); submitPayment(event.currentTarget); });
   $('#contact-form').addEventListener('submit', (event) => { event.preventDefault(); submitContactForm(event.currentTarget); });
@@ -993,9 +1227,20 @@ function bindEvents() {
   $('#notification-read-all').addEventListener('click', () => markNotificationsRead());
   $('#native-share').addEventListener('click', shareSite);
   $('#copy-site-link').addEventListener('click', copySiteLink);
-  $('#copy-referral').addEventListener('click', async () => {
-    const code = $('#referral-code').textContent;
-    if (code && code !== '—') { await navigator.clipboard.writeText(code); toast('Code copié'); }
+  $('#copy-referral').addEventListener('click', copyReferralCode);
+  $('#copy-referral-link').addEventListener('click', copyReferralLink);
+  $('#share-referral-link').addEventListener('click', shareReferralLink);
+  $('#chat-toggle').addEventListener('click', () => setChatboxOpen($('#chatbox').classList.contains('hidden')));
+  $('#chat-close').addEventListener('click', () => setChatboxOpen(false));
+  $$('[data-chat-question]').forEach((button) => button.addEventListener('click', () => askChat(button.dataset.chatQuestion)));
+  $('#chat-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const input = $('#chat-input');
+    askChat(input.value);
+    input.value = '';
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !$('#chatbox').classList.contains('hidden')) setChatboxOpen(false);
   });
   const menuButton = $('#menu-button');
   menuButton.addEventListener('click', () => {
@@ -1018,6 +1263,7 @@ async function boot() {
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }
   await Promise.all([loadRaces(), refreshMe(), loadReviewSummary()]);
+  applyReferralInvitation();
 }
 
 boot();
