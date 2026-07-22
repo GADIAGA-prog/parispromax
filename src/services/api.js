@@ -13,7 +13,10 @@ import * as SecureStore from 'expo-secure-store';
 export const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'https://parispromax-backend.onrender.com';
 
-const TOKEN_KEY = '@ppm_token';
+// SecureStore SDK 56 only accepts alphanumeric characters, `.`, `-` and `_`.
+// Keep the historical `@ppm_token` key exclusively for AsyncStorage migration.
+const SECURE_TOKEN_KEY = 'ppm_token';
+const LEGACY_ASYNC_TOKEN_KEY = '@ppm_token';
 
 let cachedToken = null;
 
@@ -21,17 +24,17 @@ export async function getToken() {
   if (cachedToken) return cachedToken;
   const secureStoreAvailable = await SecureStore.isAvailableAsync();
   if (secureStoreAvailable) {
-    cachedToken = await SecureStore.getItemAsync(TOKEN_KEY);
+    cachedToken = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
     if (!cachedToken) {
-      const legacyToken = await AsyncStorage.getItem(TOKEN_KEY);
+      const legacyToken = await AsyncStorage.getItem(LEGACY_ASYNC_TOKEN_KEY);
       if (legacyToken) {
-        await SecureStore.setItemAsync(TOKEN_KEY, legacyToken);
-        await AsyncStorage.removeItem(TOKEN_KEY);
+        await SecureStore.setItemAsync(SECURE_TOKEN_KEY, legacyToken);
+        await AsyncStorage.removeItem(LEGACY_ASYNC_TOKEN_KEY);
         cachedToken = legacyToken;
       }
     }
   } else {
-    cachedToken = await AsyncStorage.getItem(TOKEN_KEY);
+    cachedToken = await AsyncStorage.getItem(LEGACY_ASYNC_TOKEN_KEY);
   }
   return cachedToken;
 }
@@ -40,13 +43,13 @@ export async function setToken(token) {
   cachedToken = token;
   const secureStoreAvailable = await SecureStore.isAvailableAsync();
   if (secureStoreAvailable) {
-    if (token) await SecureStore.setItemAsync(TOKEN_KEY, token);
-    else await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    if (token) await SecureStore.setItemAsync(SECURE_TOKEN_KEY, token);
+    else await SecureStore.deleteItemAsync(SECURE_TOKEN_KEY);
+    await AsyncStorage.removeItem(LEGACY_ASYNC_TOKEN_KEY);
   } else if (token) {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    await AsyncStorage.setItem(LEGACY_ASYNC_TOKEN_KEY, token);
   } else {
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    await AsyncStorage.removeItem(LEGACY_ASYNC_TOKEN_KEY);
   }
 }
 
