@@ -130,7 +130,6 @@ function siteSharePayload() {
 function prepareSiteShareLinks() {
   const payload = siteSharePayload();
   const links = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${payload.text} ${payload.url}`)}`,
     telegram: `https://t.me/share/url?url=${encodeURIComponent(payload.url)}&text=${encodeURIComponent(payload.text)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(payload.url)}`,
   };
