@@ -8,7 +8,7 @@ Date de l'audit : 20 juillet 2026
 
 **État Google Play : NO-GO pour une publication publique dans les pays actuellement ciblés.**
 
-Ce blocage n'est pas un défaut de compilation. ParisPromax fournit des pronostics, des cotes, un suivi de mises/gains et des outils d'aide au pari. La politique Google Play classe aussi comme fonctionnalité liée aux jeux d'argent les applications qui facilitent les paris, suivent les performances/cotes ou aident à gérer la participation. Une application de ce type doit être acceptée dans le programme Google dédié, détenir les licences requises et être distribuée uniquement dans les pays et pour les produits autorisés.
+Ce blocage n'est pas un défaut de compilation. ParisPromax fournit des pronostics et des cotes hippiques. Le portefeuille de mises/gains et le simulateur de mise ont été retirés. La politique Google Play peut néanmoins classer les pronostics et le suivi des cotes comme des fonctionnalités facilitant les paris. Une application qualifiée ainsi doit être acceptée dans le programme Google dédié, détenir les licences requises et être distribuée uniquement dans les pays et pour les produits autorisés.
 
 Les pays de paiement actuellement proposés par ParisPromax — Burkina Faso, Côte d'Ivoire, Sénégal, Togo, Bénin, Mali, Niger, Congo-Brazzaville et Guinée — ne figurent pas dans la liste Google des pays où une demande d'application de jeux d'argent en argent réel est acceptée. En l'état, soumettre cette application expose le compte développeur à un refus ou à une mesure d'application de la politique.
 

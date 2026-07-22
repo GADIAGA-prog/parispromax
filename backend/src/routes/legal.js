@@ -49,8 +49,6 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
   <li><strong>Historique de paiements</strong> — montant, formule, statut et référence
       de transaction, pour la gestion de votre abonnement et nos obligations comptables.</li>
   <li><strong>Parrainage</strong> — code utilisé et état de la récompense.</li>
-  <li><strong>Portefeuille de suivi</strong> — libellé, type de jeu, mise, gain et date
-      uniquement lorsque vous choisissez d'enregistrer ces informations.</li>
 </ul>
 <p>Aucune adresse e-mail n'est associée au compte. Si vous contactez volontairement
 le support de récupération, l'adresse d'expédition et le contenu du message sont
@@ -185,7 +183,7 @@ de téléphone du compte. Traitement sous 7 jours.</p>
 <ul>
   <li>Compte (identité déclarée, numéro, pays et récupération) — supprimé.</li>
   <li>Abonnements et codes de connexion — supprimés.</li>
-  <li>Portefeuille de suivi et parrainages — supprimés.</li>
+  <li>Parrainages et récompenses associées — supprimés.</li>
   <li>Historique de paiements — dissocié du compte, données techniques brutes effacées et conservé
       uniquement pour nos obligations comptables légales.</li>
 </ul>

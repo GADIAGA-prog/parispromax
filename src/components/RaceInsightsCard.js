@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { buildRaceInsights, combinations } from '../services/raceInsights';
+import { buildRaceInsights } from '../services/raceInsights';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 function HorseLine({ horse, accent = COLORS.text }) {
@@ -33,10 +33,6 @@ function Group({ title, horses, color }) {
 
 export default function RaceInsightsCard({ race, advanced = false }) {
   const insights = useMemo(() => buildRaceInsights(race), [race]);
-  const [flexi, setFlexi] = useState(1);
-  const [unitStake, setUnitStake] = useState('100');
-  const comboCount = combinations(insights.selected.length, insights.format.places);
-  const total = comboCount * Math.max(0, Number(unitStake) || 0) * flexi;
   const stars = `${'★'.repeat(insights.confidence.stars)}${'☆'.repeat(5 - insights.confidence.stars)}`;
 
   return (
@@ -77,33 +73,6 @@ export default function RaceInsightsCard({ race, advanced = false }) {
         </View>
       )) : <Text style={styles.help}>Aucun signal suffisamment convergent sur cette course.</Text>}
 
-      <View style={styles.divider} />
-      <Text style={styles.sectionTitle}>Simulateur de mise</Text>
-      <Text style={styles.help}>{comboCount} combinaison(s) pour couvrir la sélection recommandée.</Text>
-      <View style={styles.stakeRow}>
-        <Text style={styles.stakeLabel}>Mise unitaire</Text>
-        <TextInput
-          value={unitStake}
-          onChangeText={(value) => setUnitStake(value.replace(/\D/g, ''))}
-          keyboardType="number-pad"
-          style={styles.stakeInput}
-          placeholder="100"
-          placeholderTextColor={COLORS.textFaint}
-        />
-        <Text style={styles.stakeCurrency}>XOF</Text>
-      </View>
-      <View style={styles.flexRow}>
-        {[1, 0.5, 0.25].map((value) => (
-          <Pressable key={value} style={[styles.flexChip, flexi === value && styles.flexChipActive]} onPress={() => setFlexi(value)}>
-            <Text style={[styles.flexText, flexi === value && styles.flexTextActive]}>Flexi {value * 100}%</Text>
-          </Pressable>
-        ))}
-      </View>
-      <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Coût estimé</Text>
-        <Text style={styles.total}>{Math.round(total).toLocaleString('fr-FR')} XOF</Text>
-      </View>
-      <Text style={styles.disclaimer}>Simulation indicative : vérifiez la mise minimale auprès de votre opérateur.</Text>
     </View>
   );
 }
@@ -131,17 +100,4 @@ const styles = StyleSheet.create({
   tip: { flexDirection: 'row', gap: SPACING.sm, paddingVertical: SPACING.sm },
   tipName: { color: COLORS.text, fontWeight: '800' },
   tipReason: { color: COLORS.gold, fontSize: FONT.sm, marginTop: 2 },
-  stakeRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.sm },
-  stakeLabel: { color: COLORS.textMuted, fontSize: FONT.sm, flex: 1 },
-  stakeInput: { minWidth: 88, color: COLORS.text, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, textAlign: 'right', fontWeight: '800' },
-  stakeCurrency: { color: COLORS.textMuted, fontWeight: '800' },
-  flexRow: { flexDirection: 'row', gap: 6, marginTop: SPACING.md },
-  flexChip: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.pill, paddingVertical: 7, alignItems: 'center' },
-  flexChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  flexText: { color: COLORS.textMuted, fontSize: FONT.sm - 1, fontWeight: '800' },
-  flexTextActive: { color: '#06251c' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md },
-  totalLabel: { color: COLORS.text, fontWeight: '800' },
-  total: { color: COLORS.gold, fontSize: FONT.xl, fontWeight: '900' },
-  disclaimer: { color: COLORS.textFaint, fontSize: FONT.sm - 2, marginTop: 5, fontStyle: 'italic' },
 });

@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const cors = require('cors');
 const config = require('./config');
 const prisma = require('./db');
@@ -14,11 +15,11 @@ const statsRoutes = require('./routes/stats');
 const adminRoutes = require('./routes/admin');
 const mlRoutes = require('./routes/ml');
 const legalRoutes = require('./routes/legal');
-const walletRoutes = require('./routes/wallet');
 const { backfillReferralCodes } = require('./services/referral');
 const { getProvider } = require('./services/paymentProvider');
 
 const app = express();
+const publicDir = path.join(__dirname, '..', 'public');
 
 // Behind Render's proxy: makes req.ip the real client IP (rate limiting).
 app.set('trust proxy', 1);
@@ -57,6 +58,7 @@ app.use(
 
 // NOTE: payment webhook needs the raw-ish body but we use JSON/urlencoded per route.
 app.use(express.json({ limit: '200kb' }));
+app.use(express.static(publicDir, { index: false, maxAge: config.isProd ? '1h' : 0 }));
 
 app.get('/health', async (_req, res) => {
   const provider = config.payments.provider;
@@ -87,26 +89,10 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-// Friendly landing page so the root URL isn't a bare "Not found".
+// Public Web portal: same-origin API access keeps authentication and payment
+// flows simple while the mobile app continues using the exact same backend.
 app.get('/', (_req, res) => {
-  res.type('html').send(`<!doctype html><html lang="fr"><head><meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>ParisPromax API</title>
-  <style>body{margin:0;background:#0f172a;color:#f8fafc;font-family:system-ui,Arial,sans-serif;
-  display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}
-  .card{background:#111c33;border:1px solid #1e293b;border-radius:16px;padding:36px;max-width:420px}
-  h1{color:#10b981;margin:0 0 8px} a{display:inline-block;margin:6px;padding:10px 18px;border-radius:10px;
-  background:#10b981;color:#06251c;font-weight:800;text-decoration:none}
-  .muted{color:#94a3b8;font-size:14px}</style></head>
-  <body><div class="card">
-  <h1>🏇 ParisPromax API</h1>
-  <p class="muted">Le serveur fonctionne. Ceci est l'API ; il n'y a pas de page publique ici.</p>
-  <a href="/admin">Back-office</a><a href="/health">État</a>
-  <p class="muted"><a href="/legal/privacy" style="background:none;color:#94a3b8;font-weight:400">Confidentialité</a> ·
-  <a href="/legal/terms" style="background:none;color:#94a3b8;font-weight:400">Conditions</a> ·
-  <a href="/legal/responsible-gambling" style="background:none;color:#94a3b8;font-weight:400">Jeu responsable</a> ·
-  <a href="/legal/account-deletion" style="background:none;color:#94a3b8;font-weight:400">Suppression de compte</a></p>
-  </div></body></html>`);
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 app.use('/auth', authRoutes);
@@ -119,7 +105,6 @@ app.use('/stats', statsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/ml', mlRoutes);
 app.use('/legal', legalRoutes);
-app.use('/wallet', walletRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path }));
 

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="description" content="ParisPromax transforme les données hippiques en analyses claires, pronostics IA et suivi des cotes." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://parispromax-backend.onrender.com/" />
+  <meta property="og:title" content="ParisPromax — L'analyse hippique, plus claire" />
+  <meta property="og:description" content="Courses, cotes et pronostics IA dans une interface claire et responsable." />
+  <meta property="og:image" content="https://parispromax-backend.onrender.com/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ParisPromax — L'analyse hippique, plus claire" />
+  <meta name="twitter:description" content="Courses, cotes et pronostics IA dans une interface claire et responsable." />
+  <meta name="twitter:image" content="https://parispromax-backend.onrender.com/og.png" />
+  <link rel="icon" href="/assets/logo-emblem.png" />
+  <link rel="stylesheet" href="/styles.css" />
+  <title>ParisPromax — L'analyse hippique, plus claire</title>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#accueil" aria-label="ParisPromax, accueil">
+      <img src="/assets/logo-emblem.png" alt="" width="48" height="48" />
+      <span><strong>PARISPRO</strong>MAX<small>Pronostics IA · Courses PMU</small></span>
+    </a>
+    <nav class="desktop-nav" aria-label="Navigation principale">
+      <a href="#courses">Courses</a>
+      <a href="#methode">Méthode</a>
+      <a href="#abonnements">Abonnements</a>
+      <a href="#securite">Sécurité</a>
+    </nav>
+    <div class="header-actions">
+      <button class="button button-ghost" type="button" data-open-auth="login">Connexion</button>
+      <button class="button button-primary" type="button" data-open-auth="register">Créer un compte</button>
+      <button class="button button-primary hidden" id="account-button" type="button">Mon espace</button>
+    </div>
+    <button class="menu-button" id="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
+  </header>
+
+  <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
+    <a href="#courses">Courses</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#securite">Sécurité</a>
+  </nav>
+
+  <main>
+    <section class="hero section" id="accueil">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span></span> Données actualisées · Lecture simple</div>
+        <h1>Comprenez la course.<br /><em>Décidez avec méthode.</em></h1>
+        <p class="hero-lead">ParisPromax réunit les partants, les cotes, la forme et notre analyse IA dans une interface claire — sans portefeuille de jeu ni simulateur de mise.</p>
+        <div class="hero-actions">
+          <a class="button button-primary button-large" href="#courses">Voir les courses du jour <span aria-hidden="true">→</span></a>
+          <button class="button button-outline button-large" type="button" data-open-auth="register">Essayer ParisPromax</button>
+        </div>
+        <div class="trust-row" aria-label="Engagements ParisPromax">
+          <span>✓ Réservé aux 18+</span><span>✓ Aucun pari encaissé</span><span>✓ Paiement Mobile Money sécurisé</span>
+        </div>
+      </div>
+
+      <div class="hero-panel reveal delay-one" aria-label="Aperçu d'une analyse ParisPromax">
+        <div class="panel-topline"><span class="live-dot"></span><span id="hero-race-status">PROCHAINE ANALYSE</span><time id="hero-race-time">Aujourd'hui</time></div>
+        <div class="hero-race-head">
+          <div><small id="hero-track">Réunion principale</small><h2 id="hero-race">Course du jour</h2><p id="hero-meta">Chargement des données officielles…</p></div>
+          <div class="confidence"><span>Indice IA</span><strong>84</strong><small>/100</small></div>
+        </div>
+        <div class="selection-preview" id="selection-preview">
+          <div class="pick main-pick"><span>1</span><div><small>BASE</small><strong>Analyse en cours</strong></div><b>—</b></div>
+          <div class="pick"><span>2</span><div><small>CHANCE</small><strong>Données synchronisées</strong></div><b>—</b></div>
+          <div class="pick"><span>3</span><div><small>À SUIVRE</small><strong>Cotes actualisées</strong></div><b>—</b></div>
+        </div>
+        <div class="panel-footer"><span>Analyse statistique à titre informatif</span><span>Actualisation automatique</span></div>
+      </div>
+    </section>
+
+    <section class="proof-strip" aria-label="Points forts">
+      <div><strong>24/7</strong><span>Accès Web et mobile</span></div>
+      <div><strong>IA + données</strong><span>Une lecture structurée</span></div>
+      <div><strong>Temps réel</strong><span>Cotes et résultats</span></div>
+      <div><strong>100 %</strong><span>Transparent et informatif</span></div>
+    </section>
+
+    <section class="section race-section" id="courses">
+      <div class="section-heading reveal">
+        <div><span class="section-kicker">PROGRAMME DU JOUR</span><h2>Les courses, sans le bruit.</h2></div>
+        <p>Choisissez une réunion pour consulter les partants et les cotes. Les pronostics détaillés sont visibles avec un accès actif.</p>
+      </div>
+      <div class="race-workspace reveal">
+        <aside class="race-sidebar">
+          <div class="sidebar-head"><strong>Réunions</strong><button type="button" id="refresh-races" aria-label="Actualiser les courses">↻</button></div>
+          <div id="race-list" class="race-list" aria-live="polite"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div>
+        </aside>
+        <article class="race-detail" id="race-detail" aria-live="polite">
+          <div class="empty-state"><div class="empty-mark">PPM</div><h3>Sélectionnez une course</h3><p>Le détail des partants, les cotes et l'analyse apparaîtront ici.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section method-section" id="methode">
+      <div class="section-heading reveal">
+        <div><span class="section-kicker">NOTRE MÉTHODE</span><h2>Une analyse lisible, jamais une promesse.</h2></div>
+        <p>Chaque signal est replacé dans son contexte. Aucun algorithme ne peut garantir le résultat d'une course.</p>
+      </div>
+      <div class="method-grid">
+        <article class="method-card reveal"><span>01</span><div class="method-icon">⌁</div><h3>Données de course</h3><p>Partants, distance, discipline, jockey, entraîneur, forme récente et conditions de piste.</p></article>
+        <article class="method-card reveal delay-one"><span>02</span><div class="method-icon">◇</div><h3>Lecture probabiliste</h3><p>Notre modèle classe les concurrents et met en évidence les signaux qui convergent.</p></article>
+        <article class="method-card reveal delay-two"><span>03</span><div class="method-icon">↗</div><h3>Cotes contextualisées</h3><p>Les cotes sont présentées comme une information de marché, avec une lecture simple de leur évolution.</p></article>
+        <article class="method-card reveal delay-three"><span>04</span><div class="method-icon">✓</div><h3>Résultats vérifiés</h3><p>L'historique rapproche le pronostic publié de l'arrivée officielle, sans réécrire le passé.</p></article>
+      </div>
+    </section>
+
+    <section class="section plans-section" id="abonnements">
+      <div class="plans-intro reveal">
+        <span class="section-kicker">ACCÈS COMPLET</span>
+        <h2>Choisissez votre rythme.</h2>
+        <p>Accès immédiat aux analyses complètes sur le Web et l'application mobile. Paiement prépayé, sans reconduction automatique.</p>
+        <ul><li>Pronostics IA structurés</li><li>Cotes et partants détaillés</li><li>Historique des résultats</li><li>Alertes avant le départ</li></ul>
+      </div>
+      <div class="plans-grid reveal delay-one" id="plans-grid"><div class="plan-placeholder"></div><div class="plan-placeholder"></div></div>
+    </section>
+
+    <section class="section security-section" id="securite">
+      <div class="security-card reveal">
+        <div><span class="section-kicker">CONFIANCE</span><h2>Votre compte reste sous votre contrôle.</h2><p>Les échanges sont chiffrés, le mot de passe n'est jamais conservé en clair et le paiement est traité par le prestataire affiché avant validation.</p></div>
+        <div class="security-points"><span><b>01</b>Suppression du compte accessible</span><span><b>02</b>Aucun code PIN Mobile Money collecté</span><span><b>03</b>Aucune publicité ni revente de données</span></div>
+      </div>
+    </section>
+
+    <section class="section account-section hidden" id="espace">
+      <div class="section-heading"><div><span class="section-kicker">MON ESPACE</span><h2 id="account-title">Bienvenue.</h2></div><button class="button button-ghost" id="logout-button" type="button">Se déconnecter</button></div>
+      <div class="account-grid">
+        <article class="account-card"><span>État de l'accès</span><strong id="access-label">Vérification…</strong><p id="access-detail">Votre abonnement est synchronisé avec l'application mobile.</p></article>
+        <article class="account-card"><span>Compte</span><strong id="account-phone">—</strong><p id="account-country">—</p></article>
+        <article class="account-card account-card-accent"><span>Code de parrainage</span><strong id="referral-code">—</strong><button class="text-button" id="copy-referral" type="button">Copier le code</button></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand"><img src="/assets/logo-emblem.png" alt="" width="44" height="44" /><div><strong>PARISPROMAX</strong><span>L'analyse hippique, plus claire.</span></div></div>
+    <div class="footer-links"><a href="/legal/privacy">Confidentialité</a><a href="/legal/terms">Conditions</a><a href="/legal/responsible-gambling">Jeu responsable</a><a href="/legal/account-deletion">Supprimer mon compte</a></div>
+    <p>ParisPromax ne permet pas de parier, ne collecte aucune mise et ne garantit aucun gain. Service réservé aux personnes majeures.</p>
+  </footer>
+
+  <dialog id="auth-dialog" class="modal">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+    <div class="modal-brand"><img src="/assets/logo-emblem.png" alt="" width="56" height="56" /><div><strong>ParisPromax</strong><span>Votre espace d'analyse</span></div></div>
+    <div class="auth-tabs" role="tablist"><button type="button" data-auth-tab="login" class="active">Connexion</button><button type="button" data-auth-tab="register">Créer un compte</button></div>
+
+    <form id="login-form" class="form-stack">
+      <label>Pays<select name="country" class="country-select" required></select></label>
+      <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" placeholder="Ex. 76251570" required /></label>
+      <label>Mot de passe<input name="password" type="password" autocomplete="current-password" minlength="8" required /></label>
+      <button class="button button-primary button-full" type="submit">Se connecter <span>→</span></button>
+    </form>
+
+    <form id="register-form" class="form-stack hidden">
+      <div class="form-grid"><label>Prénom<input name="firstName" autocomplete="given-name" required minlength="2" /></label><label>Nom<input name="lastName" autocomplete="family-name" required minlength="2" /></label></div>
+      <div class="form-grid"><label>Date de naissance<input name="birthDate" type="date" required /></label><label>Lieu de naissance<input name="birthPlace" required minlength="2" /></label></div>
+      <label>Pays<select name="country" class="country-select" required></select></label>
+      <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" required /></label>
+      <label>Mot de passe<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <label>Question de récupération<select name="recoveryQuestion" id="recovery-question" required></select></label>
+      <label>Votre réponse<input name="recoveryAnswer" autocomplete="off" required minlength="2" /></label>
+      <label>Code de parrainage <small>(facultatif)</small><input name="referralCode" autocomplete="off" /></label>
+      <label class="check-label"><input name="adult" type="checkbox" required /> <span>Je confirme avoir au moins 18 ans et accepter les conditions d'utilisation.</span></label>
+      <button class="button button-primary button-full" type="submit">Valider mon inscription <span>→</span></button>
+    </form>
+    <p class="form-message" id="auth-message" role="status"></p>
+  </dialog>
+
+  <dialog id="recovery-dialog" class="modal modal-compact">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+    <span class="success-icon">✓</span><h2>Compte créé</h2><p>Notez ce code de récupération dans un endroit sûr. Il ne sera affiché qu'une seule fois.</p>
+    <code id="recovery-code">—</code>
+    <button class="button button-primary button-full" id="continue-login" type="button">Continuer vers la connexion</button>
+  </dialog>
+
+  <dialog id="payment-dialog" class="modal">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+    <span class="section-kicker">PAIEMENT SÉCURISÉ</span><h2 id="payment-title">Activer votre accès</h2><p id="payment-summary">Sélectionnez votre opérateur Mobile Money.</p>
+    <form id="payment-form" class="form-stack">
+      <div id="operator-list" class="operator-list"></div>
+      <label>Numéro Mobile Money<input id="payment-phone" name="phone" type="tel" required /></label>
+      <label id="otp-field" class="hidden">Code OTP<input id="payment-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" /></label>
+      <p class="payment-help" id="payment-help">Votre code PIN Mobile Money ne doit jamais être saisi sur ParisPromax.</p>
+      <button class="button button-primary button-full" type="submit" id="payment-submit">Continuer</button>
+    </form>
+    <p class="form-message" id="payment-message" role="status"></p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

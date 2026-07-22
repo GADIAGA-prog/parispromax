@@ -46,7 +46,7 @@ const PERKS = [
   'Sélections hiérarchisées : bases, chances, outsiders et regret',
   '7 chevaux proposés pour le Quinté+ et pronostics sur toutes les courses',
   'Tuyaux utiles : déferrage, associations et chevaux à surveiller',
-  'Alertes de départ, résultats officiels et portefeuille de suivi',
+  'Alertes de départ et résultats officiels vérifiés',
 ];
 
 export default function PaywallScreen({ navigation }) {
@@ -406,7 +406,7 @@ export default function PaywallScreen({ navigation }) {
                     setYengaPendingTxn(null);
                   }}
                 >
-                  <Ionicons name="wallet" size={20} color={active ? COLORS.accent : COLORS.textFaint} />
+                  <Ionicons name="phone-portrait" size={20} color={active ? COLORS.accent : COLORS.textFaint} />
                   <View style={{ flex: 1, marginLeft: SPACING.sm }}>
                     <Text style={styles.providerName}>{pr.label}</Text>
                     <Text style={styles.providerSub}>Mobile Money & cartes</Text>
