@@ -49,6 +49,9 @@ Cette page décrit les données que nous collectons et l'usage que nous en faiso
   <li><strong>Historique de paiements</strong> — montant, formule, statut et référence
       de transaction, pour la gestion de votre abonnement et nos obligations comptables.</li>
   <li><strong>Parrainage</strong> — code utilisé et état de la récompense.</li>
+  <li><strong>Messages au support</strong> — nom, moyen de contact, sujet et message
+      transmis volontairement depuis le formulaire « Nous contacter ».</li>
+  <li><strong>Avis sur le service</strong> — note, appréciation et nom facultatif.</li>
 </ul>
 <p>Aucune adresse e-mail n'est associée au compte. Si vous contactez volontairement
 le support de récupération, l'adresse d'expédition et le contenu du message sont
@@ -100,6 +103,9 @@ supprimer votre compte à tout moment : voir
 <a href="/legal/account-deletion">Suppression de compte</a>.</p>
 <p>Les demandes d'assistance sont conservées le temps nécessaire à la vérification,
 au traitement et à la prévention des abus.</p>
+<p>Les messages de contact sont conservés le temps nécessaire à leur traitement.
+Les notes et appréciations sont conservées pour mesurer et améliorer la qualité
+du service. Les appréciations individuelles ne sont pas publiées automatiquement.</p>
 
 <h2>Vos droits et mineurs</h2>
 <p>Vous pouvez demander l'accès, la rectification ou la suppression de vos données

@@ -54,6 +54,33 @@ model RecoveryRequest {
   @@index([status, createdAt])
 }
 
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  contact   String
+  subject   String
+  message   String
+  status    String   @default("pending") // pending | resolved | archived
+  emailSent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+
+  @@index([status, createdAt])
+}
+
+model ServiceReview {
+  id        String   @id @default(cuid())
+  name      String?
+  rating    Int
+  comment   String
+  status    String   @default("received") // received | reviewed | archived
+  emailSent Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([rating, createdAt])
+}
+
 model WalletEntry {
   id        String   @id @default(cuid())
   userId    String

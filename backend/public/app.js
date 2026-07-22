@@ -15,6 +15,16 @@ const state = {
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
 };
 
+const FALLBACK_COUNTRIES = [
+  { code: 'bf', flag: '🇧🇫', name: 'Burkina Faso' },
+  { code: 'ci', flag: '🇨🇮', name: "Côte d'Ivoire" },
+  { code: 'sn', flag: '🇸🇳', name: 'Sénégal' },
+  { code: 'tg', flag: '🇹🇬', name: 'Togo' },
+  { code: 'bj', flag: '🇧🇯', name: 'Bénin' },
+  { code: 'ml', flag: '🇲🇱', name: 'Mali' },
+  { code: 'ne', flag: '🇳🇪', name: 'Niger' },
+];
+
 let deferredInstallPrompt = null;
 
 function isStandaloneApp() {
@@ -205,6 +215,17 @@ function renderCountrySelects() {
     `<option value="${escapeHtml(country.code)}">${escapeHtml(country.flag || '')} ${escapeHtml(country.name)}</option>`
   ).join('');
   nationalSelect.value = state.nationalCountry;
+  renderCountryMarquee();
+}
+
+function renderCountryMarquee() {
+  const track = $('#country-marquee-track');
+  if (!track) return;
+  const countries = state.countries.length ? state.countries : FALLBACK_COUNTRIES;
+  const items = countries.map((country) =>
+    `<span class="country-marquee-item" role="listitem"><span class="country-marquee-flag">${escapeHtml(country.flag || '🌍')}</span>${escapeHtml(country.name)}</span>`
+  ).join('');
+  track.innerHTML = `<div class="country-marquee-group" role="list">${items}</div><div class="country-marquee-group" aria-hidden="true">${items}</div>`;
 }
 
 function renderQuestions() {
@@ -666,6 +687,67 @@ async function pollPayment(transactionId) {
   setMessage('#payment-message', 'Confirmation en attente. Votre accès s’activera automatiquement après validation.', true);
 }
 
+function renderReviewSummary(summary = {}) {
+  const count = Number(summary.count) || 0;
+  const average = Number(summary.average) || 0;
+  const filled = Math.max(0, Math.min(5, Math.round(average)));
+  $('#review-average').textContent = count ? average.toFixed(1).replace('.0', '') : '—';
+  $('#review-stars').textContent = `${'★'.repeat(filled)}${'☆'.repeat(5 - filled)}`;
+  $('#review-count').textContent = count
+    ? `${count} avis reçu${count > 1 ? 's' : ''}`
+    : 'Soyez le premier à donner votre avis.';
+}
+
+async function loadReviewSummary() {
+  try {
+    renderReviewSummary(await api('/feedback/reviews/summary', { auth: false }));
+  } catch (_) {
+    renderReviewSummary();
+  }
+}
+
+async function submitContactForm(form) {
+  const button = $('button[type="submit"]', form);
+  button.disabled = true;
+  setMessage('#contact-message', 'Envoi en cours…', true);
+  try {
+    const payload = Object.fromEntries(new FormData(form).entries());
+    const result = await api('/feedback/contact', {
+      method: 'POST',
+      auth: false,
+      body: JSON.stringify(payload),
+    });
+    form.reset();
+    setMessage('#contact-message', result.message || 'Votre message a bien été transmis.', true);
+  } catch (error) {
+    setMessage('#contact-message', error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function submitReviewForm(form) {
+  const button = $('button[type="submit"]', form);
+  button.disabled = true;
+  setMessage('#review-message', 'Publication en cours…', true);
+  try {
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.rating = Number(payload.rating);
+    const result = await api('/feedback/reviews', {
+      method: 'POST',
+      auth: false,
+      body: JSON.stringify(payload),
+    });
+    form.reset();
+    renderReviewSummary(result.summary);
+    setMessage('#review-message', result.message || 'Merci pour votre avis.', true);
+  } catch (error) {
+    setMessage('#review-message', error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function bindEvents() {
   $$('[data-install-app]').forEach((button) => button.addEventListener('click', requestAppInstallation));
   $$('[data-open-auth]').forEach((button) => button.addEventListener('click', () => openAuth(button.dataset.openAuth)));
@@ -694,6 +776,8 @@ function bindEvents() {
   });
   $('#continue-login').addEventListener('click', () => { closeDialogs(); openAuth('login'); });
   $('#payment-form').addEventListener('submit', (event) => { event.preventDefault(); submitPayment(event.currentTarget); });
+  $('#contact-form').addEventListener('submit', (event) => { event.preventDefault(); submitContactForm(event.currentTarget); });
+  $('#review-form').addEventListener('submit', (event) => { event.preventDefault(); submitReviewForm(event.currentTarget); });
   $('#refresh-races').addEventListener('click', loadRaces);
   $('#quinte-country').addEventListener('change', (event) => {
     state.nationalCountry = event.target.value;
@@ -723,9 +807,10 @@ async function boot() {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   bindEvents();
+  renderCountryMarquee();
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }
-  await Promise.all([loadRaces(), refreshMe()]);
+  await Promise.all([loadRaces(), refreshMe(), loadReviewSummary()]);
 }
 
 boot();

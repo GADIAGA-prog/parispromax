@@ -21,7 +21,7 @@
   <link rel="icon" href="/assets/logo-emblem.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260722-4" />
+  <link rel="stylesheet" href="/styles.css?v=20260722-6" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -39,6 +39,7 @@
       <a href="#guide">Guide</a>
       <a href="#methode">Méthode</a>
       <a href="#abonnements">Abonnements</a>
+      <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
       <button class="button button-install" type="button" data-install-app>Installer</button>
@@ -50,8 +51,14 @@
   </header>
 
   <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
-    <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#securite">Sécurité</a>
+    <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact et avis</a><a href="#securite">Sécurité</a>
   </nav>
+
+  <div class="country-marquee" aria-label="Pays pris en charge par ParisPromax">
+    <div class="country-marquee-track" id="country-marquee-track">
+      <div class="country-marquee-group"><span class="country-marquee-item">Pays partenaires · Chargement…</span></div>
+    </div>
+  </div>
 
   <main>
     <section class="hero section" id="accueil">
@@ -170,6 +177,46 @@
       <div class="plans-grid reveal delay-one" id="plans-grid"><div class="plan-placeholder"></div><div class="plan-placeholder"></div></div>
     </section>
 
+    <section class="section community-section" id="contact">
+      <div class="section-heading reveal">
+        <div><span class="section-kicker">À VOTRE ÉCOUTE</span><h2>Contactez-nous et partagez votre expérience.</h2></div>
+        <p>Une question, une difficulté ou une suggestion ? Votre message est transmis à l’équipe ParisPromax. Votre avis nous aide à améliorer le service.</p>
+      </div>
+      <div class="community-grid">
+        <article class="community-card reveal">
+          <div class="community-card-head"><span>NOUS CONTACTER</span><h3>Comment pouvons-nous vous aider ?</h3><p>Réponse à l’adresse ou au numéro que vous indiquez.</p></div>
+          <form id="contact-form" class="form-stack">
+            <label>Nom<input name="name" autocomplete="name" required minlength="2" maxlength="80" /></label>
+            <label>Téléphone ou e-mail<input name="contact" autocomplete="email" required minlength="5" maxlength="120" /></label>
+            <label>Sujet<select name="subject" required><option value="general">Question générale</option><option value="account">Compte et connexion</option><option value="subscription">Abonnement</option><option value="payment">Paiement</option><option value="partnership">Partenariat</option><option value="other">Autre demande</option></select></label>
+            <label>Votre message<textarea name="message" rows="5" required minlength="10" maxlength="2000"></textarea></label>
+            <label class="website-field" aria-hidden="true">Site internet<input name="website" tabindex="-1" autocomplete="off" /></label>
+            <button class="button button-primary button-full" type="submit">Envoyer mon message <span aria-hidden="true">→</span></button>
+            <p class="form-message" id="contact-message" role="status"></p>
+          </form>
+        </article>
+
+        <article class="community-card community-card-review reveal delay-one">
+          <div class="community-card-head"><span>VOTRE AVIS</span><h3>Que pensez-vous de ParisPromax ?</h3><p>Attribuez une note et dites-nous ce que vous appréciez ou souhaitez améliorer.</p></div>
+          <div class="review-summary" aria-live="polite"><strong id="review-average">—</strong><span>/5</span><div id="review-stars" aria-hidden="true">☆☆☆☆☆</div><small id="review-count">Soyez le premier à donner votre avis.</small></div>
+          <form id="review-form" class="form-stack">
+            <fieldset class="rating-fieldset"><legend>Votre note</legend><div class="star-rating">
+              <input type="radio" id="rating-5" name="rating" value="5" required /><label for="rating-5" title="5 étoiles" aria-label="5 étoiles">★</label>
+              <input type="radio" id="rating-4" name="rating" value="4" /><label for="rating-4" title="4 étoiles" aria-label="4 étoiles">★</label>
+              <input type="radio" id="rating-3" name="rating" value="3" /><label for="rating-3" title="3 étoiles" aria-label="3 étoiles">★</label>
+              <input type="radio" id="rating-2" name="rating" value="2" /><label for="rating-2" title="2 étoiles" aria-label="2 étoiles">★</label>
+              <input type="radio" id="rating-1" name="rating" value="1" /><label for="rating-1" title="1 étoile" aria-label="1 étoile">★</label>
+            </div></fieldset>
+            <label>Votre nom <small>(facultatif)</small><input name="name" autocomplete="name" maxlength="80" /></label>
+            <label>Votre appréciation<textarea name="comment" rows="4" required minlength="3" maxlength="1000"></textarea></label>
+            <label class="website-field" aria-hidden="true">Site internet<input name="website" tabindex="-1" autocomplete="off" /></label>
+            <button class="button button-outline button-full" type="submit">Envoyer mon avis <span aria-hidden="true">★</span></button>
+            <p class="form-message" id="review-message" role="status"></p>
+          </form>
+        </article>
+      </div>
+    </section>
+
     <section class="section security-section" id="securite">
       <div class="security-card reveal">
         <div><span class="section-kicker">CONFIANCE</span><h2>Votre compte reste sous votre contrôle.</h2><p>Les échanges sont chiffrés, le mot de passe n'est jamais conservé en clair et le paiement est traité par le prestataire affiché avant validation.</p></div>
@@ -189,7 +236,7 @@
 
   <footer>
     <div class="footer-brand"><img src="/assets/logo-emblem.png" alt="" width="44" height="44" /><div><strong>PARISPROMAX</strong><span>L'analyse hippique, plus claire.</span></div></div>
-    <div class="footer-links"><a href="/download/android">Télécharger Android</a><a href="mailto:ftevolut@gmail.com">Contact</a><a href="/legal/privacy">Confidentialité</a><a href="/legal/terms">Conditions</a><a href="/legal/responsible-gambling">Jeu responsable</a><a href="/legal/account-deletion">Supprimer mon compte</a></div>
+    <div class="footer-links"><a href="/download/android">Télécharger Android</a><a href="#contact">Nous contacter</a><a href="#contact">Donner un avis</a><a href="/legal/privacy">Confidentialité</a><a href="/legal/terms">Conditions</a><a href="/legal/responsible-gambling">Jeu responsable</a><a href="/legal/account-deletion">Supprimer mon compte</a></div>
     <p>ParisPromax ne permet pas de parier, ne collecte aucune mise et ne garantit aucun gain. Service réservé aux personnes majeures.</p>
   </footer>
 
@@ -250,6 +297,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260722-3" defer></script>
+  <script src="/app.js?v=20260722-5" defer></script>
 </body>
 </html>
