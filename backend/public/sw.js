@@ -1,4 +1,4 @@
-const CACHE_NAME = 'parispromax-shell-20260722-8';
+const CACHE_NAME = 'parispromax-shell-20260722-9';
 const CORE_ASSETS = [
   '/',
   '/manifest.webmanifest',
