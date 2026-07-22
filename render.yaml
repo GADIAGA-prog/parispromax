@@ -37,7 +37,7 @@ services:
       - key: PORT
         value: "4000"
       - key: CORS_ORIGINS
-        value: https://parispromax-backend.onrender.com
+        value: https://parispromax.com,https://www.parispromax.com,https://parispromax-backend.onrender.com
       # NE JAMAIS mettre "true" en production : l'API renverrait le code OTP
       # dans la réponse, permettant de se connecter avec n'importe quel numéro.
       - key: OTP_DEV_MODE
@@ -163,7 +163,7 @@ services:
       # Assisted account recovery. Destination + credentials stay server-side;
       # Gmail requires an App Password, never the normal account password.
       - key: RECOVERY_EMAIL_TO
-        sync: false
+        value: ftevolut@gmail.com
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
@@ -171,11 +171,11 @@ services:
       - key: SMTP_SECURE
         value: "true"
       - key: SMTP_USER
-        sync: false
+        value: ftevolut@gmail.com
       - key: SMTP_PASS
         sync: false
       - key: SMTP_FROM
-        sync: false
+        value: ParisPromax <ftevolut@gmail.com>
       - key: PUBLIC_BASE_URL
         value: https://parispromax-backend.onrender.com
       # CinetPay new API: API key (sk_test_/sk_live_) + API password.

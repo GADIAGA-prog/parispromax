@@ -242,7 +242,7 @@ router.get('/api/national-picks', async (req, res) => {
 });
 
 // POST /admin/api/reset-password  { phone, newPassword, requestId? }
-// Support client après demande envoyée à ftevolt@gmail.com. Vérifiez toujours
+// Support client après demande envoyée à ftevolut@gmail.com. Vérifiez toujours
 // l'identité (ex. référence d'un paiement) avant de réinitialiser. L'ancien
 // code de récupération est également remplacé afin de fermer toute session de
 // récupération potentiellement compromise.

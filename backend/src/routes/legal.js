@@ -11,7 +11,7 @@ const express = require('express');
 //                               Profil -> « Supprimer mon compte »).
 const router = express.Router();
 
-const CONTACT = 'gadiagafrancois@gmail.com';
+const CONTACT = 'ftevolut@gmail.com';
 
 function page(title, body) {
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"/>

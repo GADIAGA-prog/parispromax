@@ -128,7 +128,7 @@ const config = {
   },
   recoverySupport: {
     // Kept server-side so the destination is never shipped in the mobile app.
-    emailTo: process.env.RECOVERY_EMAIL_TO || 'ftevolt@gmail.com',
+    emailTo: process.env.RECOVERY_EMAIL_TO || 'ftevolut@gmail.com',
     smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
     smtpPort: Number(process.env.SMTP_PORT) || 465,
     smtpSecure: String(process.env.SMTP_SECURE || 'true') !== 'false',
