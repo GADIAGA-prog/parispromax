@@ -15,6 +15,68 @@ const state = {
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
 };
 
+let deferredInstallPrompt = null;
+
+function isStandaloneApp() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function setInstallButtonsVisible(visible) {
+  $$('[data-install-app]').forEach((button) => button.classList.toggle('hidden', !visible));
+}
+
+function installationSteps() {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) {
+    return [
+      'Ouvrez ParisPromax dans Safari.',
+      'Touchez le bouton Partager.',
+      'Choisissez « Sur l’écran d’accueil », activez « Ouvrir comme app web », puis touchez « Ajouter ».',
+    ];
+  }
+  if (/android/.test(ua)) {
+    return [
+      'Ouvrez le menu ⋮ de votre navigateur.',
+      'Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».',
+      'Confirmez avec « Installer ».',
+    ];
+  }
+  return [
+    'Ouvrez le menu de Chrome ou Edge, ou utilisez l’icône d’installation dans la barre d’adresse.',
+    'Choisissez « Installer ParisPromax ».',
+    'Confirmez : ParisPromax s’ouvrira ensuite dans sa propre fenêtre.',
+  ];
+}
+
+async function requestAppInstallation() {
+  if (isStandaloneApp()) {
+    toast('ParisPromax est déjà installé');
+    return;
+  }
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (choice.outcome === 'accepted') setInstallButtonsVisible(false);
+    return;
+  }
+  const steps = installationSteps();
+  $('#install-steps').innerHTML = steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('');
+  openDialog('#install-dialog');
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  setInstallButtonsVisible(true);
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  setInstallButtonsVisible(false);
+  toast('ParisPromax est installé');
+});
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -605,6 +667,7 @@ async function pollPayment(transactionId) {
 }
 
 function bindEvents() {
+  $$('[data-install-app]').forEach((button) => button.addEventListener('click', requestAppInstallation));
   $$('[data-open-auth]').forEach((button) => button.addEventListener('click', () => openAuth(button.dataset.openAuth)));
   $$('[data-auth-tab]').forEach((button) => button.addEventListener('click', () => switchAuthTab(button.dataset.authTab)));
   $$('[data-close-modal]').forEach((button) => button.addEventListener('click', () => button.closest('dialog').close()));
@@ -655,6 +718,10 @@ function bindEvents() {
 }
 
 async function boot() {
+  if (isStandaloneApp()) setInstallButtonsVisible(false);
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
   bindEvents();
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }

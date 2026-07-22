@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#07111f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ParisPromax" />
   <meta name="description" content="Quinté par pays, pronostics hippiques commentés et sélection finale Podium + 2." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://parispromax-backend.onrender.com/" />
@@ -15,7 +19,9 @@
   <meta name="twitter:description" content="Quinté par pays, analyses commentées et pronostic final Podium + 2." />
   <meta name="twitter:image" content="https://parispromax-backend.onrender.com/og-v2.png" />
   <link rel="icon" href="/assets/logo-emblem.png" />
-  <link rel="stylesheet" href="/styles.css?v=20260722-3" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
+  <link rel="stylesheet" href="/styles.css?v=20260722-4" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -35,6 +41,7 @@
       <a href="#abonnements">Abonnements</a>
     </nav>
     <div class="header-actions">
+      <button class="button button-install" type="button" data-install-app>Installer</button>
       <button class="button button-ghost" type="button" data-open-auth="login">Connexion</button>
       <button class="button button-primary" type="button" data-open-auth="register">Créer un compte</button>
       <button class="button button-primary hidden" id="account-button" type="button">Mon espace</button>
@@ -43,7 +50,7 @@
   </header>
 
   <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
-    <a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#securite">Sécurité</a>
+    <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#securite">Sécurité</a>
   </nav>
 
   <main>
@@ -54,7 +61,7 @@
         <p class="hero-lead">ParisPromax réunit les partants, les cotes, la forme et notre analyse IA dans une interface claire, rapide et responsable.</p>
         <div class="hero-actions">
           <a class="button button-primary button-large" href="#courses">Voir les courses du jour <span aria-hidden="true">→</span></a>
-          <button class="button button-outline button-large" type="button" data-open-auth="register">Essayer ParisPromax</button>
+          <button class="button button-outline button-large" type="button" data-install-app>Installer l'application</button>
           <a class="button button-android button-large" href="/download/android">Télécharger sur Android <span aria-hidden="true">↓</span></a>
         </div>
         <div class="trust-row" aria-label="Engagements ParisPromax">
@@ -220,6 +227,15 @@
     <button class="button button-primary button-full" id="continue-login" type="button">Continuer vers la connexion</button>
   </dialog>
 
+  <dialog id="install-dialog" class="modal modal-compact">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+    <span class="install-icon" aria-hidden="true">↓</span>
+    <h2 id="install-dialog-title">Installer ParisPromax</h2>
+    <p id="install-dialog-intro">Installez ce site comme une application depuis le menu de votre navigateur.</p>
+    <ol class="install-steps" id="install-steps"></ol>
+    <button class="button button-primary button-full" type="button" data-close-modal>J'ai compris</button>
+  </dialog>
+
   <dialog id="payment-dialog" class="modal">
     <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
     <span class="section-kicker">PAIEMENT SÉCURISÉ</span><h2 id="payment-title">Activer votre accès</h2><p id="payment-summary">Sélectionnez votre opérateur Mobile Money.</p>
@@ -234,6 +250,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260722-2" defer></script>
+  <script src="/app.js?v=20260722-3" defer></script>
 </body>
 </html>
