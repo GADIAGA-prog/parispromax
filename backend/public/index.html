@@ -21,7 +21,7 @@
   <link rel="icon" href="/assets/logo-emblem.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260722-6" />
+  <link rel="stylesheet" href="/styles.css?v=20260722-7" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -45,12 +45,23 @@
       <button class="button button-install" type="button" data-install-app>Installer</button>
       <button class="button button-ghost" type="button" data-open-auth="login">Connexion</button>
       <button class="button button-primary" type="button" data-open-auth="register">Créer un compte</button>
+      <button class="notification-button hidden" type="button" data-open-notifications aria-label="Ouvrir les notifications" aria-haspopup="dialog" aria-controls="notification-dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+        <span class="notification-badge hidden" data-notification-badge>0</span>
+      </button>
       <button class="button button-primary hidden" id="account-button" type="button">Mon espace</button>
     </div>
     <button class="menu-button" id="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
   </header>
 
   <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
+    <div class="mobile-member-actions hidden" id="mobile-member-actions">
+      <button type="button" data-open-account>Mon espace</button>
+      <button class="mobile-notification-button" type="button" data-open-notifications aria-label="Ouvrir les notifications" aria-haspopup="dialog" aria-controls="notification-dialog">
+        <span aria-hidden="true">🔔</span> Notifications
+        <span class="notification-badge hidden" data-notification-badge>0</span>
+      </button>
+    </div>
     <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact et avis</a><a href="#securite">Sécurité</a>
   </nav>
 
@@ -283,6 +294,16 @@
     <button class="button button-primary button-full" type="button" data-close-modal>J'ai compris</button>
   </dialog>
 
+  <dialog id="notification-dialog" class="modal notification-dialog">
+    <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
+    <div class="notification-heading">
+      <span class="notification-heading-icon" aria-hidden="true">🔔</span>
+      <div><span class="section-kicker">ALERTES MEMBRE</span><h2>Notifications</h2><p>Retrouvez ici les informations importantes sur votre accès et les courses du jour.</p></div>
+    </div>
+    <div class="notification-list" id="notification-list" aria-live="polite"></div>
+    <button class="button button-ghost button-full" id="notification-read-all" type="button">Tout marquer comme lu</button>
+  </dialog>
+
   <dialog id="payment-dialog" class="modal">
     <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
     <span class="section-kicker">PAIEMENT SÉCURISÉ</span><h2 id="payment-title">Activer votre accès</h2><p id="payment-summary">Sélectionnez votre opérateur Mobile Money.</p>
@@ -297,6 +318,6 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260722-5" defer></script>
+  <script src="/app.js?v=20260722-6" defer></script>
 </body>
 </html>

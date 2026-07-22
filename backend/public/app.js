@@ -10,6 +10,7 @@ const state = {
   raceDate: null,
   nationalCountry: localStorage.getItem('ppm_quinte_country') || 'bf',
   me: null,
+  notifications: [],
   selectedRaceId: null,
   selectedPlan: null,
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
@@ -259,6 +260,7 @@ async function loadRaces() {
     state.raceDate = data.meta?.date || null;
     $('#program-kicker').textContent = state.raceDate ? `PROGRAMME DU ${dateLabel(state.raceDate).toUpperCase()}` : 'PROGRAMME DISPONIBLE';
     renderRaces();
+    buildMemberNotifications();
     updateHeroRace();
     await loadNationalSpotlight();
   } catch (error) {
@@ -292,6 +294,140 @@ function firstRace() {
     if (track.races?.length) return { track, race: track.races[0] };
   }
   return null;
+}
+
+function notificationStorageKey() {
+  const userId = state.me?.user?.id;
+  return userId ? `ppm_notifications_seen:${userId}` : '';
+}
+
+function seenNotificationIds() {
+  const key = notificationStorageKey();
+  if (!key) return new Set();
+  try {
+    const ids = JSON.parse(localStorage.getItem(key) || '[]');
+    return new Set(Array.isArray(ids) ? ids.map(String) : []);
+  } catch (_) {
+    return new Set();
+  }
+}
+
+function buildMemberNotifications() {
+  if (!state.token || !state.me) {
+    state.notifications = [];
+    renderNotificationUi();
+    return;
+  }
+
+  const notifications = [];
+  const access = state.me.access || {};
+  if (access.hasAccess) {
+    const paidUntil = access.paidUntil ? new Date(access.paidUntil) : null;
+    const daysLeft = paidUntil && !Number.isNaN(paidUntil.getTime())
+      ? Math.ceil((paidUntil.getTime() - Date.now()) / 86400000)
+      : null;
+    const expiring = daysLeft != null && daysLeft <= 3;
+    notifications.push({
+      id: `access-active-${access.plan || 'active'}-${access.paidUntil || 'unlimited'}`,
+      icon: expiring ? '⏳' : '✓',
+      tone: expiring ? 'warning' : 'success',
+      title: expiring ? 'Votre accès expire bientôt' : 'Votre accès est actif',
+      message: paidUntil
+        ? `${access.plan ? `Formule ${access.plan} · ` : ''}valable jusqu’au ${dateLabel(access.paidUntil)}.`
+        : 'Vos pronostics complets sont disponibles.',
+      target: '#espace',
+      action: 'Voir mon espace',
+    });
+  } else {
+    notifications.push({
+      id: 'access-required',
+      icon: '!',
+      tone: 'warning',
+      title: 'Accès aux pronostics limité',
+      message: 'Activez une formule pour consulter les analyses et le pronostic final Podium + 2.',
+      target: '#abonnements',
+      action: 'Voir les abonnements',
+    });
+  }
+
+  const featured = firstRace();
+  if (featured) {
+    const { track, race } = featured;
+    notifications.push({
+      id: `race-${state.raceDate || 'today'}-${race.id}`,
+      icon: race.isQuinte ? 'Q+' : '🏇',
+      tone: 'success',
+      title: race.isQuinte ? 'Le Quinté+ du jour est disponible' : 'La course principale est disponible',
+      message: `${track.name} · ${race.name}${race.time ? ` · départ ${race.time}` : ''}.`,
+      target: '#courses',
+      action: 'Voir la course',
+      raceId: race.id,
+    });
+  }
+
+  state.notifications = notifications;
+  renderNotificationUi();
+}
+
+function renderNotificationUi() {
+  const loggedIn = Boolean(state.token && state.me);
+  $$('[data-open-notifications]').forEach((button) => button.classList.toggle('hidden', !loggedIn));
+  $('#mobile-member-actions')?.classList.toggle('hidden', !loggedIn);
+
+  const seen = seenNotificationIds();
+  const unreadCount = loggedIn ? state.notifications.filter((item) => !seen.has(item.id)).length : 0;
+  $$('[data-notification-badge]').forEach((badge) => {
+    badge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
+    badge.classList.toggle('hidden', unreadCount === 0);
+  });
+  $$('[data-open-notifications]').forEach((button) => {
+    button.setAttribute('aria-label', unreadCount
+      ? `Ouvrir les notifications, ${unreadCount} non lue${unreadCount > 1 ? 's' : ''}`
+      : 'Ouvrir les notifications');
+  });
+
+  const list = $('#notification-list');
+  if (!list) return;
+  if (!loggedIn || !state.notifications.length) {
+    list.innerHTML = '<div class="notification-empty">Aucune notification pour le moment.</div>';
+  } else {
+    list.innerHTML = state.notifications.map((item) => {
+      const unread = !seen.has(item.id);
+      return `<article class="notification-item ${escapeHtml(item.tone)} ${unread ? 'unread' : ''}">
+        <span class="notification-item-icon" aria-hidden="true">${escapeHtml(item.icon)}</span>
+        <div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.message)}</p>
+          <button type="button" data-notification-id="${escapeHtml(item.id)}" data-notification-target="${escapeHtml(item.target)}" ${item.raceId ? `data-notification-race="${escapeHtml(item.raceId)}"` : ''}>${escapeHtml(item.action)} →</button>
+        </div>
+      </article>`;
+    }).join('');
+  }
+  const readAll = $('#notification-read-all');
+  if (readAll) readAll.disabled = unreadCount === 0;
+  $$('[data-notification-id]', list).forEach((button) => button.addEventListener('click', async () => {
+    markNotificationsRead([button.dataset.notificationId]);
+    closeDialogs();
+    const raceId = button.dataset.notificationRace;
+    if (raceId) await selectRace(raceId);
+    const target = $(button.dataset.notificationTarget);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+}
+
+function markNotificationsRead(ids = state.notifications.map((item) => item.id)) {
+  const key = notificationStorageKey();
+  if (!key) return;
+  const seen = seenNotificationIds();
+  ids.forEach((id) => seen.add(String(id)));
+  try { localStorage.setItem(key, JSON.stringify([...seen].slice(-100))); }
+  catch (_) { /* The notification centre still works without local persistence. */ }
+  renderNotificationUi();
+}
+
+function openNotifications() {
+  buildMemberNotifications();
+  $('#mobile-nav').classList.add('hidden');
+  $('#menu-button').setAttribute('aria-expanded', 'false');
+  openDialog('#notification-dialog');
 }
 
 function countryDetails(code) {
@@ -531,6 +667,7 @@ function renderSession() {
   $$('[data-open-auth]').forEach((button) => button.classList.toggle('hidden', loggedIn));
   $('#account-button').classList.toggle('hidden', !loggedIn);
   $('#espace').classList.toggle('hidden', !loggedIn);
+  buildMemberNotifications();
   if (!loggedIn) return;
   const { user, access, referral } = state.me;
   $('#account-title').textContent = `Bienvenue, ${user.firstName || 'dans votre espace'}.`;
@@ -751,6 +888,12 @@ async function submitReviewForm(form) {
 function bindEvents() {
   $$('[data-install-app]').forEach((button) => button.addEventListener('click', requestAppInstallation));
   $$('[data-open-auth]').forEach((button) => button.addEventListener('click', () => openAuth(button.dataset.openAuth)));
+  $$('[data-open-notifications]').forEach((button) => button.addEventListener('click', openNotifications));
+  $$('[data-open-account]').forEach((button) => button.addEventListener('click', () => {
+    window.location.hash = 'espace';
+    $('#mobile-nav').classList.add('hidden');
+    $('#menu-button').setAttribute('aria-expanded', 'false');
+  }));
   $$('[data-auth-tab]').forEach((button) => button.addEventListener('click', () => switchAuthTab(button.dataset.authTab)));
   $$('[data-close-modal]').forEach((button) => button.addEventListener('click', () => button.closest('dialog').close()));
   $$('dialog').forEach((dialog) => dialog.addEventListener('click', (event) => {
@@ -786,6 +929,7 @@ function bindEvents() {
   });
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });
+  $('#notification-read-all').addEventListener('click', () => markNotificationsRead());
   $('#copy-referral').addEventListener('click', async () => {
     const code = $('#referral-code').textContent;
     if (code && code !== '—') { await navigator.clipboard.writeText(code); toast('Code copié'); }
