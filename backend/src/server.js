@@ -18,6 +18,7 @@ const legalRoutes = require('./routes/legal');
 const feedbackRoutes = require('./routes/feedback');
 const { backfillReferralCodes } = require('./services/referral');
 const { getProvider } = require('./services/paymentProvider');
+const { canonicalRedirectTarget } = require('./services/canonicalWeb');
 
 const app = express();
 const publicDir = path.join(__dirname, '..', 'public');
@@ -98,7 +99,14 @@ app.get('/health', async (_req, res) => {
 
 // Public Web portal: same-origin API access keeps authentication and payment
 // flows simple while the mobile app continues using the exact same backend.
-app.get('/', (_req, res) => {
+app.get('/', (req, res) => {
+  const redirectTarget = canonicalRedirectTarget(req.hostname, config.webBaseUrl);
+  if (redirectTarget) {
+    // Keep Render as the Android/API endpoint, but never present its technical
+    // hostname as a second public website.
+    res.set('Cache-Control', 'no-store');
+    return res.redirect(308, redirectTarget);
+  }
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 

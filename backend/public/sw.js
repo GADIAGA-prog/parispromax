@@ -1,9 +1,9 @@
-const CACHE_NAME = 'parispromax-shell-20260722-10';
+const CACHE_NAME = 'parispromax-shell-20260722-11';
 const CORE_ASSETS = [
   '/',
   '/manifest.webmanifest',
   '/styles.css?v=20260722-12',
-  '/app.js?v=20260722-9',
+  '/app.js?v=20260722-10',
   '/assets/logo-emblem.png',
   '/assets/pwa-icon-192.png',
   '/assets/pwa-icon-512.png',

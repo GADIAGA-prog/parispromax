@@ -101,6 +101,9 @@ const config = {
     webhookSecret: process.env.YENGAPAY_WEBHOOK_SECRET || '',
   },
   publicBaseUrl: process.env.PUBLIC_BASE_URL || 'http://localhost:4000',
+  // Public website shown to visitors. PUBLIC_BASE_URL may deliberately remain
+  // the technical Render API URL because payment providers call it directly.
+  webBaseUrl: process.env.WEB_BASE_URL || 'https://www.parispromax.com',
   cronToken: process.env.CRON_TOKEN || '',
   // Bearer token the Python ML daemon uses to push predictions / read NP.
   // Falls back to CRON_TOKEN so a single secret can cover both integrations.

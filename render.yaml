@@ -38,6 +38,8 @@ services:
         value: "4000"
       - key: CORS_ORIGINS
         value: https://parispromax.com,https://www.parispromax.com,https://parispromax-backend.onrender.com
+      - key: WEB_BASE_URL
+        value: https://www.parispromax.com
       # NE JAMAIS mettre "true" en production : l'API renverrait le code OTP
       # dans la réponse, permettant de se connecter avec n'importe quel numéro.
       - key: OTP_DEV_MODE

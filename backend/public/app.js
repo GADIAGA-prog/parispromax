@@ -28,6 +28,13 @@ const FALLBACK_COUNTRIES = [
 ];
 
 let deferredInstallPrompt = null;
+const CANONICAL_WEB_ORIGIN = 'https://www.parispromax.com';
+
+function publicWebOrigin() {
+  const current = new URL(window.location.origin);
+  const legacyHosts = new Set(['parispromax.com', 'parispromax-backend.onrender.com']);
+  return legacyHosts.has(current.hostname.toLowerCase()) ? CANONICAL_WEB_ORIGIN : current.origin;
+}
 
 function isStandaloneApp() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -124,7 +131,7 @@ function siteSharePayload() {
   return {
     title: 'ParisPromax',
     text: 'Découvrez ParisPromax : Quinté par pays, pronostics hippiques commentés et sélection finale Podium + 2.',
-    url: new URL('/', window.location.origin).href,
+    url: new URL('/', publicWebOrigin()).href,
   };
 }
 
@@ -189,7 +196,7 @@ function normalizeReferralCodeClient(value) {
 }
 
 function referralUrl(code) {
-  const url = new URL('/', window.location.origin);
+  const url = new URL('/', publicWebOrigin());
   url.searchParams.set('ref', normalizeReferralCodeClient(code));
   return url.href;
 }
@@ -381,7 +388,10 @@ async function api(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeout || 30000);
   try {
-    const response = await fetch(path, { ...options, headers, signal: controller.signal });
+    // Old installed/cached copies can still run under the apex or Render host.
+    // Calling www directly avoids a cross-host redirect that strips the JWT.
+    const endpoint = new URL(path, `${publicWebOrigin()}/`).href;
+    const response = await fetch(endpoint, { ...options, headers, signal: controller.signal });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const error = new Error(data.error || `Erreur ${response.status}`);

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function loadWebFunctions(search = '') {
+function loadWebFunctions(search = '', origin = 'https://www.parispromax.com') {
   const appPath = path.join(__dirname, '..', 'public', 'app.js');
   const source = fs.readFileSync(appPath, 'utf8').replace(/\nboot\(\);\s*$/, '\n');
   const storage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
@@ -17,12 +17,12 @@ function loadWebFunctions(search = '') {
     console,
     document,
     window: {
-      location: { origin: 'https://www.parispromax.com', search },
+      location: { origin, search },
       matchMedia: () => ({ matches: false }),
       addEventListener: () => {},
       navigator: {},
     },
-    location: { origin: 'https://www.parispromax.com', search },
+    location: { origin, search },
     navigator: {},
     sessionStorage: storage,
     localStorage: storage,
@@ -57,4 +57,19 @@ test('la chatbox dirige une difficulté de connexion vers le bon parcours', () =
 test('une erreur serveur de connexion reçoit un message utile', () => {
   const web = loadWebFunctions();
   assert.match(web.loginErrorMessage({ status: 500 }), /temporairement indisponible/);
+});
+
+test('les anciennes adresses utilisent directement le domaine www pour les API', () => {
+  assert.equal(
+    loadWebFunctions('', 'https://parispromax.com').publicWebOrigin(),
+    'https://www.parispromax.com'
+  );
+  assert.equal(
+    loadWebFunctions('', 'https://parispromax-backend.onrender.com').publicWebOrigin(),
+    'https://www.parispromax.com'
+  );
+  assert.equal(
+    loadWebFunctions('', 'http://localhost:4000').publicWebOrigin(),
+    'http://localhost:4000'
+  );
 });
