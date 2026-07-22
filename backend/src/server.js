@@ -19,6 +19,7 @@ const feedbackRoutes = require('./routes/feedback');
 const { backfillReferralCodes } = require('./services/referral');
 const { getProvider } = require('./services/paymentProvider');
 const { canonicalRedirectTarget } = require('./services/canonicalWeb');
+const { browserOriginAllowed } = require('./services/corsOrigins');
 
 const app = express();
 const publicDir = path.join(__dirname, '..', 'public');
@@ -53,7 +54,7 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || config.corsOrigins.length === 0 || config.corsOrigins.includes(origin)) {
+      if (browserOriginAllowed(origin, config.corsOrigins)) {
         return cb(null, true);
       }
       return cb(new Error('Origine non autorisée par CORS'));
