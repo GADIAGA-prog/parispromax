@@ -119,6 +119,67 @@ function safeHttpUrl(value) {
   }
 }
 
+function siteSharePayload() {
+  return {
+    title: 'ParisPromax',
+    text: 'Découvrez ParisPromax : Quinté par pays, pronostics hippiques commentés et sélection finale Podium + 2.',
+    url: new URL('/', window.location.origin).href,
+  };
+}
+
+function prepareSiteShareLinks() {
+  const payload = siteSharePayload();
+  const links = {
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${payload.text} ${payload.url}`)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(payload.url)}&text=${encodeURIComponent(payload.text)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(payload.url)}`,
+  };
+  $$('[data-share-platform]').forEach((link) => {
+    link.href = links[link.dataset.sharePlatform] || payload.url;
+  });
+}
+
+function showShareMessage(message) {
+  const node = $('#share-message');
+  if (!node) return;
+  node.textContent = message;
+  clearTimeout(showShareMessage.timer);
+  showShareMessage.timer = setTimeout(() => { node.textContent = ''; }, 3200);
+}
+
+async function copySiteLink() {
+  const { url } = siteSharePayload();
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch (_) {
+    const field = document.createElement('textarea');
+    field.value = url;
+    field.setAttribute('readonly', '');
+    field.style.position = 'fixed';
+    field.style.opacity = '0';
+    document.body.appendChild(field);
+    field.select();
+    document.execCommand('copy');
+    field.remove();
+  }
+  showShareMessage('Lien ParisPromax copié. Vous pouvez maintenant le partager.');
+  toast('Lien du site copié');
+}
+
+async function shareSite() {
+  const payload = siteSharePayload();
+  if (navigator.share) {
+    try {
+      await navigator.share(payload);
+      showShareMessage('Merci d’avoir partagé ParisPromax.');
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+    }
+  }
+  await copySiteLink();
+}
+
 async function api(path, options = {}) {
   const headers = { Accept: 'application/json', ...(options.headers || {}) };
   if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -886,6 +947,7 @@ async function submitReviewForm(form) {
 }
 
 function bindEvents() {
+  prepareSiteShareLinks();
   $$('[data-install-app]').forEach((button) => button.addEventListener('click', requestAppInstallation));
   $$('[data-open-auth]').forEach((button) => button.addEventListener('click', () => openAuth(button.dataset.openAuth)));
   $$('[data-open-notifications]').forEach((button) => button.addEventListener('click', openNotifications));
@@ -930,6 +992,8 @@ function bindEvents() {
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });
   $('#notification-read-all').addEventListener('click', () => markNotificationsRead());
+  $('#native-share').addEventListener('click', shareSite);
+  $('#copy-site-link').addEventListener('click', copySiteLink);
   $('#copy-referral').addEventListener('click', async () => {
     const code = $('#referral-code').textContent;
     if (code && code !== '—') { await navigator.clipboard.writeText(code); toast('Code copié'); }
