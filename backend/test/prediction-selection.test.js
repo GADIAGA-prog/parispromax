@@ -22,11 +22,13 @@ test('fige podium + 2 pour une arrivée de trois chevaux', () => {
   assert.equal(new Set(snapshot.topPicks.map((pick) => pick.number)).size, 5);
 });
 
-test('fige quinté + 2 pour une arrivée de cinq chevaux', () => {
+test('garde podium + 2 même pour une course Quinté', () => {
   const snapshot = buildPredictionSnapshot(picks(), { name: 'Quinté du jour', raw: '{}' }, 5);
 
-  assert.equal(snapshot.groups.format.places, 5);
-  assert.equal(snapshot.groups.selectionSize, 7);
-  assert.equal(snapshot.topPicks.length, 7);
+  assert.equal(snapshot.groups.format.places, 3);
+  assert.equal(snapshot.groups.format.label, 'Podium + 2');
+  assert.equal(snapshot.groups.format.raceLabel, 'Quinté');
+  assert.equal(snapshot.groups.selectionSize, 5);
+  assert.equal(snapshot.topPicks.length, 5);
   assert.deepEqual(snapshot.groups.couple.map((pick) => pick.number), [1, 2]);
 });

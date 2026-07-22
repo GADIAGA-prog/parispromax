@@ -21,15 +21,14 @@ function predictionFormat(race) {
   return { label: 'Podium', places: 3 };
 }
 
-// Pronostic publié : nombre de chevaux à l'arrivée + 2. Le couplé répète la
-// base dans son affichage, mais la sélection ne compte chaque cheval qu'une fois.
-function groupPicks(picks, race, placesOverride = null) {
+// Pronostic publié : un podium attendu + 2 compléments, soit cinq chevaux au
+// maximum. Le format de la course reste exposé à titre de contexte, mais ne
+// modifie plus la taille de la sélection finale.
+function groupPicks(picks, race, _placesOverride = null) {
   const sorted = (picks || []).slice().sort((a, b) => (a.rank || 999) - (b.rank || 999));
-  const detected = predictionFormat(race);
-  const format = Number(placesOverride) > 0
-    ? { ...detected, places: Number(placesOverride) }
-    : detected;
-  const selectionSize = Math.min(sorted.length, format.places + 2);
+  const raceFormat = predictionFormat(race);
+  const format = { label: 'Podium + 2', places: 3, raceLabel: raceFormat.label };
+  const selectionSize = Math.min(sorted.length, 5);
   const bases = sorted.slice(0, Math.min(1, selectionSize));
   const used = new Set(bases.map((p) => p.number));
   const couplePartner = sorted.find((p) => !used.has(p.number)) || null;

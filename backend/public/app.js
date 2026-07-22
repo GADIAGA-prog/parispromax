@@ -7,6 +7,8 @@ const state = {
   questions: [],
   plans: [],
   racetracks: [],
+  raceDate: null,
+  nationalCountry: localStorage.getItem('ppm_quinte_country') || 'bf',
   me: null,
   selectedRaceId: null,
   selectedPlan: null,
@@ -32,6 +34,16 @@ function dateLabel(value) {
   return Number.isNaN(date.getTime())
     ? String(value)
     : new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+}
+
+function safeHttpUrl(value) {
+  if (!value) return '';
+  try {
+    const url = new URL(value, window.location.origin);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+  } catch (_) {
+    return '';
+  }
 }
 
 async function api(path, options = {}) {
@@ -123,6 +135,14 @@ function renderCountrySelects() {
     `<option value="${escapeHtml(country.code)}">${escapeHtml(country.flag || '')} ${escapeHtml(country.name)} (${escapeHtml(country.dial)})</option>`
   ).join('');
   $$('.country-select').forEach((select) => { select.innerHTML = options; });
+  if (!state.countries.some((country) => country.code === state.nationalCountry)) {
+    state.nationalCountry = state.countries[0]?.code || 'bf';
+  }
+  const nationalSelect = $('#quinte-country');
+  nationalSelect.innerHTML = state.countries.map((country) =>
+    `<option value="${escapeHtml(country.code)}">${escapeHtml(country.flag || '')} ${escapeHtml(country.name)}</option>`
+  ).join('');
+  nationalSelect.value = state.nationalCountry;
 }
 
 function renderQuestions() {
@@ -153,8 +173,11 @@ async function loadRaces() {
   try {
     const data = await api('/races', { auth: false });
     state.racetracks = data.racetracks || [];
+    state.raceDate = data.meta?.date || null;
+    $('#program-kicker').textContent = state.raceDate ? `PROGRAMME DU ${dateLabel(state.raceDate).toUpperCase()}` : 'PROGRAMME DISPONIBLE';
     renderRaces();
     updateHeroRace();
+    await loadNationalSpotlight();
   } catch (error) {
     list.innerHTML = `<div class="empty-state"><p>${escapeHtml(error.message)}</p></div>`;
   }
@@ -170,7 +193,7 @@ function renderRaces() {
     <div class="track-label">${escapeHtml(track.name)}</div>
     ${(track.races || []).map((race) => `<button class="race-item ${race.id === state.selectedRaceId ? 'active' : ''}" type="button" data-race-id="${escapeHtml(race.id)}">
       <span class="race-time">${escapeHtml(race.time || `C${race.number || ''}`)}</span>
-      <span><strong>${escapeHtml(race.name)}</strong><small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants</small></span>
+      <span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong><small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants</small></span>
       <span class="race-arrow">›</span>
     </button>`).join('')}
   `).join('');
@@ -179,9 +202,62 @@ function renderRaces() {
 
 function firstRace() {
   for (const track of state.racetracks) {
+    const quinte = track.races?.find((race) => race.isQuinte);
+    if (quinte) return { track, race: quinte };
+  }
+  for (const track of state.racetracks) {
     if (track.races?.length) return { track, race: track.races[0] };
   }
   return null;
+}
+
+function countryDetails(code) {
+  return state.countries.find((country) => country.code === code) || { code, name: String(code || '').toUpperCase(), flag: '🌍' };
+}
+
+function fallbackQuinte() {
+  for (const track of state.racetracks) {
+    const race = track.races?.find((item) => item.isQuinte);
+    if (race) return { ...race, track: track.name };
+  }
+  return null;
+}
+
+async function loadNationalSpotlight() {
+  const node = $('#national-race');
+  const country = countryDetails(state.nationalCountry);
+  node.innerHTML = '<div class="skeleton-line"></div><div class="skeleton-line"></div>';
+  try {
+    const data = await api(`/races/national?country=${encodeURIComponent(state.nationalCountry)}`, { auth: false });
+    const nationalRace = data.pick?.race || null;
+    const race = nationalRace || fallbackQuinte();
+    if (!race) {
+      node.innerHTML = `<div class="national-empty"><strong>${escapeHtml(country.flag)} Sélection ${escapeHtml(country.name)}</strong><p>Le Quinté national est en cours de préparation. Revenez dans quelques instants.</p></div>`;
+      return;
+    }
+    const isNational = Boolean(nationalRace);
+    const journalUrl = safeHttpUrl(data.pick?.journalUrl);
+    node.innerHTML = `
+      <div class="quinte-seal" aria-hidden="true">Q<span>+</span></div>
+      <div class="national-main">
+        <span class="national-status">${escapeHtml(country.flag)} ${isNational ? `QUINTÉ ${country.name.toUpperCase()}` : 'PROGRAMME INTERNATIONAL'} · ${escapeHtml(dateLabel(data.date || race.date))}</span>
+        <h4>${escapeHtml(race.name)}</h4>
+        <p>${[race.track, race.number, race.time, race.distance, race.type || race.discipline].filter(Boolean).map(escapeHtml).join(' · ')}</p>
+        <div class="national-tags"><span>${escapeHtml(data.pick?.betType || (race.isQuinte ? 'Quinté+' : 'Course du jour'))}</span><span>${escapeHtml(race.runners || 0)} partants</span><span>Pronostic final : 5 chevaux</span></div>
+      </div>
+      <div class="national-actions">
+        <button class="button button-primary" type="button" data-national-race="${escapeHtml(race.id)}">Analyser cette course <span>→</span></button>
+        ${journalUrl ? `<a class="journal-link" href="${escapeHtml(journalUrl)}" target="_blank" rel="noopener noreferrer">Journal hippique ↗</a>` : ''}
+        ${!isNational ? '<small>La sélection nationale sera affichée dès sa validation.</small>' : '<small>Course officielle mise en avant pour votre pays.</small>'}
+      </div>`;
+    const button = $('[data-national-race]', node);
+    if (button) button.addEventListener('click', async () => {
+      await selectRace(button.dataset.nationalRace);
+      $('.race-workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  } catch (error) {
+    node.innerHTML = `<div class="national-empty"><strong>Programme momentanément indisponible</strong><p>${escapeHtml(error.message)}</p></div>`;
+  }
 }
 
 async function updateHeroRace() {
@@ -229,11 +305,76 @@ async function selectRace(id) {
   }
 }
 
-function predictionMarkup(prediction, error) {
+function enrichPick(pick, horses) {
+  if (!pick) return null;
+  const horse = horses.find((item) => String(item.number) === String(pick.number)) || {};
+  return { ...horse, ...pick, odds: pick.odds ?? horse.odds, form: pick.form || horse.form };
+}
+
+function pickComment(role, pick) {
+  if (!pick) return '';
+  const score = Number(pick.aiScore);
+  const podium = Number(pick.probaPodium);
+  const facts = [];
+  if (Number.isFinite(score) && score > 0) facts.push(`indice IA ${Math.round(score)}/100`);
+  if (Number.isFinite(podium) && podium > 0) facts.push(`${Math.round(podium * 100)} % estimés pour le podium`);
+  if (pick.odds != null && Number.isFinite(Number(pick.odds))) facts.push(`cote ${Number(pick.odds).toLocaleString('fr-FR')}`);
+  if (pick.form) facts.push(`forme ${pick.form}`);
+  const evidence = facts.length ? ` Repères disponibles : ${facts.join(', ')}.` : ' Les données disponibles invitent à garder une confiance mesurée.';
+  const intros = {
+    base: 'Point d’appui principal du modèle et premier cheval de la hiérarchie.',
+    favorite: 'Référence actuelle du marché ; ce statut décrit la cote et ne garantit pas le résultat.',
+    couple: 'Élément du duo recommandé autour de la base, choisi parmi les profils les mieux classés.',
+    chance: 'Profil régulier retenu pour consolider la sélection autour de la base.',
+    tocard: 'Profil plus spéculatif : potentiel intéressant, mais niveau de risque supérieur.',
+    tip: pick.valueBet ? 'Signal de valeur détecté entre le classement du modèle et la cote.' : 'Complément à surveiller pour finaliser le Podium + 2.',
+  };
+  return `${intros[role] || 'Profil retenu dans la synthèse.'}${evidence}`;
+}
+
+function compactHorse(pick) {
+  if (!pick) return '';
+  return `<span class="compact-horse"><b>${escapeHtml(pick.number)}</b><span><strong>${escapeHtml(pick.name || `N° ${pick.number}`)}</strong><small>${pick.odds != null ? `Cote ${escapeHtml(pick.odds)}` : 'Cote non disponible'}</small></span></span>`;
+}
+
+function roleCard(label, subtitle, items, role, tone = '') {
+  const available = (items || []).filter(Boolean);
+  return `<article class="analysis-role ${tone}"><div class="role-head"><span>${escapeHtml(label)}</span><small>${escapeHtml(subtitle)}</small></div>
+    ${available.length ? available.map((pick) => `<div class="role-horse">${compactHorse(pick)}<p>${escapeHtml(pickComment(role, pick))}</p></div>`).join('') : '<p class="role-empty">Aucun profil ne réunit assez de signaux pour recevoir cette étiquette aujourd’hui.</p>'}
+  </article>`;
+}
+
+function predictionMarkup(prediction, error, detail) {
   if (prediction?.topPicks?.length) {
-    return `<section class="prediction-block"><div class="prediction-title"><h4>Pronostic ParisPromax</h4><span>${escapeHtml((prediction.source || 'IA').toUpperCase())}</span></div><div class="prediction-picks">
-      ${prediction.topPicks.slice(0, 7).map((pick) => `<div class="prediction-pick"><b>${escapeHtml(pick.number)}</b><span>${escapeHtml(pick.name)}<small>Score ${Math.round(Number(pick.aiScore || 0))}/100</small></span></div>`).join('')}
-    </div></section>`;
+    const horses = detail?.horses || [];
+    const groups = prediction.groups || {};
+    const enrich = (pick) => enrichPick(pick, horses);
+    const selectedSource = groups.selected?.length ? groups.selected : prediction.topPicks;
+    const selected = selectedSource.slice(0, 5).map(enrich).filter(Boolean);
+    const base = (groups.bases || selected.slice(0, 1)).map(enrich);
+    const couple = (groups.couple || selected.slice(0, 2)).map(enrich);
+    const chances = (groups.chances || selected.slice(2, 4)).map(enrich);
+    const tocards = (groups.tocards || groups.outsiders || []).map(enrich);
+    const marketFavorite = horses
+      .filter((horse) => !horse.nonPartant && Number(horse.odds) > 1)
+      .sort((a, b) => Number(a.odds) - Number(b.odds))[0];
+    const tip = enrich(selected.find((pick) => pick.valueBet) || groups.regret || selected[4]);
+    const finalLabels = ['1er podium', '2e podium', '3e podium', 'Complément 1', 'Complément 2'];
+    return `<section class="prediction-block">
+      <div class="prediction-title"><div><small>ANALYSE COMMENTÉE</small><h4>Pronostic ParisPromax</h4></div><span>${prediction.source === 'ltr' ? 'MODÈLE IA' : 'ANALYSE IA'}</span></div>
+      <div class="final-verdict"><div><span>PRONOSTIC FINAL</span><h5>Podium + 2</h5><p>Une synthèse resserrée à cinq chevaux, classés par ordre de préférence.</p></div><div class="final-five">
+        ${selected.map((pick, index) => `<div class="final-pick ${index < 3 ? 'podium' : 'complement'}"><small>${finalLabels[index]}</small><b>${escapeHtml(pick.number)}</b><span>${escapeHtml(pick.name)}</span></div>`).join('')}
+      </div></div>
+      <div class="analysis-grid">
+        ${roleCard('Base', 'Point d’appui', base, 'base', 'role-base')}
+        ${roleCard('Favori', 'Lecture du marché', marketFavorite ? [enrich(marketFavorite)] : [], 'favorite', 'role-favorite')}
+        ${roleCard('Couplé', 'Duo recommandé', couple, 'couple', 'role-couple')}
+        ${roleCard('Chances régulières', 'Profils solides', chances, 'chance', 'role-chance')}
+        ${roleCard('Tocard', 'Risque assumé', tocards, 'tocard', 'role-tocard')}
+        ${roleCard('Tuyau', 'Signal à suivre', tip ? [tip] : [], 'tip', 'role-tip')}
+      </div>
+      <p class="analysis-disclaimer">Analyse statistique informative. Les commentaires expliquent les données disponibles et ne constituent jamais une garantie de résultat.</p>
+    </section>`;
   }
   if (state.token && error?.status === 402) {
     return '<section class="prediction-block locked-prediction"><h4>Accès complet requis</h4><p>Choisissez une formule pour afficher le pronostic détaillé de cette course.</p><a class="button button-primary" href="#abonnements">Voir les formules</a></section>';
@@ -245,7 +386,7 @@ function predictionMarkup(prediction, error) {
 function renderRaceDetail(context, detail, prediction, predictionError) {
   const horses = detail.horses || [];
   $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml(context?.track?.name || detail.track || 'COURSE')}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><span class="race-badge">${horses.length} PARTANTS</span></div>
-    ${predictionMarkup(prediction, predictionError)}
+    ${predictionMarkup(prediction, predictionError, detail)}
     <div class="table-wrap"><table class="horse-table"><thead><tr><th>N°</th><th>Cheval</th><th>Jockey / entraîneur</th><th>Forme</th><th>Cote</th></tr></thead><tbody>
       ${horses.map((horse) => `<tr><td><span class="horse-num">${escapeHtml(horse.number)}</span></td><td><span class="horse-name">${escapeHtml(horse.name)}</span>${horse.nonPartant ? '<span class="horse-sub">Non-partant</span>' : ''}</td><td><span>${escapeHtml(horse.jockey || '—')}</span><span class="horse-sub">${escapeHtml(horse.trainer || '')}</span></td><td>${escapeHtml(horse.form || '—')}</td><td class="odds">${horse.odds != null ? escapeHtml(horse.odds) : '—'}</td></tr>`).join('')}
     </tbody></table></div>`;
@@ -491,6 +632,11 @@ function bindEvents() {
   $('#continue-login').addEventListener('click', () => { closeDialogs(); openAuth('login'); });
   $('#payment-form').addEventListener('submit', (event) => { event.preventDefault(); submitPayment(event.currentTarget); });
   $('#refresh-races').addEventListener('click', loadRaces);
+  $('#quinte-country').addEventListener('change', (event) => {
+    state.nationalCountry = event.target.value;
+    localStorage.setItem('ppm_quinte_country', state.nationalCountry);
+    loadNationalSpotlight();
+  });
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });
   $('#copy-referral').addEventListener('click', async () => {

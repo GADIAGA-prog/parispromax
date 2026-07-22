@@ -54,8 +54,8 @@ export default function RaceInsightsCard({ race, advanced = false }) {
       {insights.bases.map((horse) => <HorseLine key={horse.number} horse={horse} accent={COLORS.accent} />)}
 
       <View style={styles.divider} />
-      <Text style={styles.sectionTitle}>Sélection {insights.format.label} en {insights.selectionSize}</Text>
-      <Text style={styles.help}>Nombre de chevaux à l’arrivée + 2 chevaux de couverture.</Text>
+      <Text style={styles.sectionTitle}>Pronostic final · {insights.format.label}</Text>
+      <Text style={styles.help}>Le podium attendu + 2 chevaux complémentaires, soit 5 chevaux au maximum.</Text>
       <Group title="Couplé recommandé" horses={insights.couple} color={COLORS.accent} />
       <Group title="Chances régulières" horses={insights.chances} color={COLORS.info} />
       <Group title="Tocard" horses={insights.tocards} color={COLORS.gold} />

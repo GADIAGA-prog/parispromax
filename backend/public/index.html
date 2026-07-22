@@ -4,16 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#07111f" />
-  <meta name="description" content="ParisPromax transforme les données hippiques en analyses claires, pronostics IA et suivi des cotes." />
+  <meta name="description" content="Quinté par pays, pronostics hippiques commentés et sélection finale Podium + 2." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://parispromax-backend.onrender.com/" />
   <meta property="og:title" content="ParisPromax — L'analyse hippique, plus claire" />
-  <meta property="og:description" content="Courses, cotes et pronostics IA dans une interface claire et responsable." />
-  <meta property="og:image" content="https://parispromax-backend.onrender.com/og.png" />
+  <meta property="og:description" content="Quinté par pays, analyses commentées et pronostic final Podium + 2." />
+  <meta property="og:image" content="https://parispromax-backend.onrender.com/og-v2.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ParisPromax — L'analyse hippique, plus claire" />
-  <meta name="twitter:description" content="Courses, cotes et pronostics IA dans une interface claire et responsable." />
-  <meta name="twitter:image" content="https://parispromax-backend.onrender.com/og.png" />
+  <meta name="twitter:description" content="Quinté par pays, analyses commentées et pronostic final Podium + 2." />
+  <meta name="twitter:image" content="https://parispromax-backend.onrender.com/og-v2.png" />
   <link rel="icon" href="/assets/logo-emblem.png" />
   <link rel="stylesheet" href="/styles.css" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
@@ -28,10 +28,11 @@
       <span><strong>PARISPRO</strong>MAX<small>Pronostics IA · Courses PMU</small></span>
     </a>
     <nav class="desktop-nav" aria-label="Navigation principale">
+      <a href="#quinte-pays">Quinté par pays</a>
       <a href="#courses">Courses</a>
+      <a href="#guide">Guide</a>
       <a href="#methode">Méthode</a>
       <a href="#abonnements">Abonnements</a>
-      <a href="#securite">Sécurité</a>
     </nav>
     <div class="header-actions">
       <button class="button button-ghost" type="button" data-open-auth="login">Connexion</button>
@@ -42,13 +43,13 @@
   </header>
 
   <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
-    <a href="#courses">Courses</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#securite">Sécurité</a>
+    <a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#securite">Sécurité</a>
   </nav>
 
   <main>
     <section class="hero section" id="accueil">
       <div class="hero-copy reveal">
-        <div class="eyebrow"><span></span> Données actualisées · Lecture simple</div>
+        <div class="eyebrow"><span></span> Données vérifiées · Lecture simple</div>
         <h1>Comprenez la course.<br /><em>Décidez avec méthode.</em></h1>
         <p class="hero-lead">ParisPromax réunit les partants, les cotes, la forme et notre analyse IA dans une interface claire, rapide et responsable.</p>
         <div class="hero-actions">
@@ -78,15 +79,26 @@
     <section class="proof-strip" aria-label="Points forts">
       <div><strong>24/7</strong><span>Accès Web et mobile</span></div>
       <div><strong>IA + données</strong><span>Une lecture structurée</span></div>
-      <div><strong>Temps réel</strong><span>Cotes et résultats</span></div>
+      <div><strong>Suivi</strong><span>Cotes et résultats</span></div>
       <div><strong>100 %</strong><span>Transparent et informatif</span></div>
     </section>
 
     <section class="section race-section" id="courses">
       <div class="section-heading reveal">
-        <div><span class="section-kicker">PROGRAMME DU JOUR</span><h2>Les courses, sans le bruit.</h2></div>
+        <div><span class="section-kicker" id="program-kicker">PROGRAMME DISPONIBLE</span><h2>Les courses, sans le bruit.</h2></div>
         <p>Choisissez une réunion pour consulter les partants et les cotes. Les pronostics détaillés sont visibles avec un accès actif.</p>
       </div>
+
+      <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
+        <div class="national-spotlight-head">
+          <div><span class="spotlight-label"><i></i> LE RENDEZ-VOUS NATIONAL</span><h3>Quinté du jour par pays</h3></div>
+          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du Quinté"></select></label>
+        </div>
+        <div id="national-race" class="national-race-content">
+          <div class="skeleton-line"></div><div class="skeleton-line"></div>
+        </div>
+      </article>
+
       <div class="race-workspace reveal">
         <aside class="race-sidebar">
           <div class="sidebar-head"><strong>Réunions</strong><button type="button" id="refresh-races" aria-label="Actualiser les courses">↻</button></div>
@@ -95,6 +107,21 @@
         <article class="race-detail" id="race-detail" aria-live="polite">
           <div class="empty-state"><div class="empty-mark">PPM</div><h3>Sélectionnez une course</h3><p>Le détail des partants, les cotes et l'analyse apparaîtront ici.</p></div>
         </article>
+      </div>
+    </section>
+
+    <section class="section guide-section" id="guide">
+      <div class="section-heading reveal">
+        <div><span class="section-kicker">GUIDE DE LECTURE</span><h2>Chaque cheval a un rôle clair.</h2></div>
+        <p>Les catégories expliquent la construction du pronostic. La sélection finale reste toujours limitée à cinq chevaux : le podium attendu, plus deux compléments.</p>
+      </div>
+      <div class="guide-grid">
+        <article class="guide-card reveal"><span>01</span><h3>Base</h3><p>Le point d’appui principal du modèle, retenu en tête de la hiérarchie.</p></article>
+        <article class="guide-card reveal delay-one"><span>02</span><h3>Favori</h3><p>Le cheval le plus soutenu par le marché selon la cote disponible.</p></article>
+        <article class="guide-card reveal delay-two"><span>03</span><h3>Couplé</h3><p>La base associée au meilleur partenaire pour composer un duo cohérent.</p></article>
+        <article class="guide-card reveal"><span>04</span><h3>Chances régulières</h3><p>Des profils solides pour compléter le podium et sécuriser la lecture.</p></article>
+        <article class="guide-card reveal delay-one"><span>05</span><h3>Tocard</h3><p>Un profil à cote élevée, plus risqué, retenu uniquement si les signaux convergent.</p></article>
+        <article class="guide-card reveal delay-two"><span>06</span><h3>Tuyau</h3><p>Un signal de valeur ou un complément à surveiller, toujours expliqué.</p></article>
       </div>
     </section>
 

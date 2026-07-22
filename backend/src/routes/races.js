@@ -38,7 +38,11 @@ function parisStartIso(date, time) {
 
 // GET /races — list of today's (latest) races, grouped by track. Public.
 router.get('/', async (req, res) => {
-  const date = req.query.date;
+  let date = req.query.date;
+  if (!date) {
+    const latest = await prisma.race.findFirst({ orderBy: { date: 'desc' }, select: { date: true } });
+    date = latest?.date;
+  }
   const where = date ? { date } : {};
   const races = await prisma.race.findMany({
     where,
@@ -75,7 +79,7 @@ router.get('/', async (req, res) => {
       runners: (full.horses || []).length,
     });
   }
-  res.json({ racetracks: Object.values(byTrack) });
+  res.json({ meta: { date: date || null }, racetracks: Object.values(byTrack) });
 });
 
 // GET /races/full — complete dataset (tracks -> races -> horses) in the app's

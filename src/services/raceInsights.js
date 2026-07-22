@@ -68,11 +68,12 @@ function tipReasons(horse) {
 }
 
 export function buildRaceInsights(race) {
-  const format = detectBetFormat(race);
+  const raceFormat = detectBetFormat(race);
+  const format = { label: 'Podium + 2', places: 3, raceLabel: raceFormat.label };
   const sorted = [...(race?.horses || [])]
     .filter((horse) => horse && horse.nonPartant !== true)
     .sort((a, b) => number(a.rank, 999) - number(b.rank, 999) || number(b.aiScore) - number(a.aiScore));
-  const selectionSize = Math.min(sorted.length, format.places + 2);
+  const selectionSize = Math.min(sorted.length, 5);
   const confidence = confidenceFor(sorted);
   const bases = sorted.slice(0, Math.min(1, selectionSize));
   const used = new Set(bases.map((horse) => horse.number));
@@ -101,8 +102,8 @@ export function buildRaceInsights(race) {
   tocards.forEach((horse) => used.add(horse.number));
   let regret = reserveForRegret ? sorted.find((horse) => !used.has(horse.number)) || null : null;
 
-  // La combinaison contient exactement le nombre à l'arrivée + 2, dans la
-  // limite du nombre réel de partants, sans compter deux fois la base du couplé.
+  // La combinaison contient le podium attendu + 2 compléments, dans la limite
+  // du nombre réel de partants, sans compter deux fois la base du couplé.
   const selected = [...bases, ...(couplePartner ? [couplePartner] : []), ...chances, ...tocards];
   if (regret && selected.length < selectionSize) selected.push(regret);
   while (selected.length < selectionSize) {
