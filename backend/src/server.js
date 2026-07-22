@@ -58,7 +58,10 @@ app.use(
 
 // NOTE: payment webhook needs the raw-ish body but we use JSON/urlencoded per route.
 app.use(express.json({ limit: '200kb' }));
-app.use(express.static(publicDir, { index: false, maxAge: config.isProd ? '1h' : 0 }));
+// The HTML, JavaScript and CSS are deployed together. Revalidate public assets
+// on every visit so a browser never combines a new page with an hour-old app
+// bundle (which otherwise leaves new modules stuck on their loading skeletons).
+app.use(express.static(publicDir, { index: false, maxAge: 0 }));
 
 app.get('/health', async (_req, res) => {
   const provider = config.payments.provider;
