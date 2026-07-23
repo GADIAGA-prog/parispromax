@@ -19,8 +19,8 @@ services:
     plan: starter
     rootDir: backend
     buildCommand: npm ci && npm run build:prod
-    # Le script applique `db push` pendant le build, toujours sans
-    # --accept-data-loss, conformément au pipeline déjà en production.
+    # La génération du client ne dépend pas de PostgreSQL. Toute synchronisation
+    # de schéma se fait séparément avec `npm run db:sync:prod`.
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
