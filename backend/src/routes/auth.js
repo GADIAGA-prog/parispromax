@@ -20,8 +20,9 @@ const {
 
 const router = express.Router();
 const { ensureReferralCode, normalizeReferralCode } = require('../services/referral');
-const { availableProviders } = require('../services/paymentProvider');
-const { countriesForProviderIds } = require('../services/paymentCountries');
+const { normalizeRegistrationCountry } = require('../services/registrationCountries');
+const { isUniqueConstraintOn } = require('../services/prismaErrors');
+const { internationalPhone } = require('../services/phone');
 const {
   RECOVERY_QUESTIONS,
   cleanText,
@@ -31,19 +32,14 @@ const {
 } = require('../services/accountRecovery');
 const { sendRecoveryRequestEmail } = require('../services/recoveryEmail');
 
-function normalizePhone(raw) {
-  return String(raw || '').replace(/[^\d+]/g, '');
+function normalizePhone(raw, country) {
+  return internationalPhone(raw, country);
 }
 
-// Pays couverts par au moins un prestataire réellement actif sur ce déploiement.
-// La même source alimente le sélecteur de pays de l'application.
-function supportedCountries() {
-  const providerIds = availableProviders().map((provider) => provider.id);
-  return new Set(countriesForProviderIds(providerIds).map((country) => country.code));
-}
+// Registration follows the commercial country catalogue. Payment-provider
+// availability is evaluated later, when the member actually starts a payment.
 function normalizeCountry(raw) {
-  const c = String(raw || '').trim().toLowerCase();
-  return supportedCountries().has(c) ? c : null;
+  return normalizeRegistrationCountry(raw);
 }
 
 // Anti-abuse limits on OTP generation (per phone number).
@@ -91,9 +87,9 @@ function validPassword(pw) {
 // Crée le compte (ou pose le mot de passe d'un ancien compte OTP sans mot de
 // passe) et retourne un JWT — l'utilisateur est connecté immédiatement.
 router.post('/register', ipLimitLogin, async (req, res) => {
-  const phone = normalizePhone(req.body.phone);
+  const phone = normalizePhone(req.body.phone, req.body.country);
   const password = req.body.password;
-  if (phone.length < 8 || phone.length > 16) {
+  if (!phone || phone.length < 8 || phone.length > 16) {
     return res.status(400).json({ error: 'Numéro invalide' });
   }
   if (!validPassword(password)) {
@@ -112,7 +108,7 @@ router.post('/register', ipLimitLogin, async (req, res) => {
 
   const country = normalizeCountry(req.body.country);
   if (!country) {
-    return res.status(400).json({ error: 'Pays non pris en charge par les moyens de paiement actifs' });
+    return res.status(400).json({ error: 'Pays non pris en charge par ParisPromax' });
   }
   const referralCode = normalizeReferralCode(req.body.referralCode);
   const sponsor = referralCode ? await prisma.user.findUnique({ where: { referralCode } }) : null;
@@ -145,20 +141,30 @@ router.post('/register', ipLimitLogin, async (req, res) => {
     });
   } else {
     isNew = true;
-    user = await prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
-        data: {
-          phone,
-          passwordHash: hashPassword(password),
-          recoveryCodeHash: hashRecoveryCode(recoveryCode),
-          country,
-          ...profileData,
-        },
+    try {
+      user = await prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            phone,
+            passwordHash: hashPassword(password),
+            recoveryCodeHash: hashRecoveryCode(recoveryCode),
+            country,
+            ...profileData,
+          },
+        });
+        await ensureReferralCode(created.id, tx);
+        if (sponsor) await tx.referral.create({ data: { sponsorId: sponsor.id, referredId: created.id } });
+        return tx.user.findUnique({ where: { id: created.id } });
       });
-      await ensureReferralCode(created.id, tx);
-      if (sponsor) await tx.referral.create({ data: { sponsorId: sponsor.id, referredId: created.id } });
-      return tx.user.findUnique({ where: { id: created.id } });
-    });
+    } catch (error) {
+      // Two simultaneous registrations can both pass the initial lookup. The
+      // database remains the source of truth; map the phone uniqueness race to
+      // a normal client conflict instead of exposing an internal error.
+      if (isUniqueConstraintOn(error, 'phone')) {
+        return res.status(409).json({ error: 'Ce numéro a déjà un compte. Connectez-vous.' });
+      }
+      throw error;
+    }
   }
 
   if (!user.referralCode) {
@@ -236,7 +242,7 @@ router.get('/recovery-questions', (_req, res) => {
 // never returned. Rate-limited to reduce account-enumeration attempts.
 router.post('/recovery-question', ipLimitRecovery, async (req, res) => {
   const phone = normalizePhone(req.body.phone);
-  if (phone.length < 8 || phone.length > 16) {
+  if (!phone || phone.length < 8 || phone.length > 16) {
     return res.status(400).json({ error: 'Numéro invalide' });
   }
   const user = await prisma.user.findUnique({
@@ -310,7 +316,7 @@ router.post('/reset-password-security', ipLimitRecovery, async (req, res) => {
 // The destination and SMTP details never appear in the response or mobile app.
 router.post('/recovery-request', ipLimitRecovery, async (req, res) => {
   const phone = normalizePhone(req.body.phone);
-  if (phone.length < 8 || phone.length > 16) {
+  if (!phone || phone.length < 8 || phone.length > 16) {
     return res.status(400).json({ error: 'Numéro invalide' });
   }
   const claimedFirstName = cleanText(req.body.firstName, 80);
@@ -363,7 +369,7 @@ router.post('/recovery-request', ipLimitRecovery, async (req, res) => {
 
 // POST /auth/login  { phone, password }
 router.post('/login', ipLimitLogin, async (req, res) => {
-  const phone = normalizePhone(req.body.phone);
+  const phone = normalizePhone(req.body.phone, req.body.country);
   const password = req.body.password;
   if (!phone || typeof password !== 'string') {
     return res.status(400).json({ error: 'Champs manquants' });
@@ -411,7 +417,7 @@ router.post('/login', ipLimitLogin, async (req, res) => {
 // Generates an OTP, stores it HASHED, "sends" it (dev: returned + logged).
 router.post('/request-otp', ipLimitRequest, async (req, res) => {
   const phone = normalizePhone(req.body.phone);
-  if (phone.length < 8 || phone.length > 16) {
+  if (!phone || phone.length < 8 || phone.length > 16) {
     return res.status(400).json({ error: 'Numéro invalide' });
   }
 
@@ -457,7 +463,7 @@ router.post('/request-otp', ipLimitRequest, async (req, res) => {
 // Verifies the code, creates the user if new, returns a JWT + profile.
 // Brute-force hardened: the active code dies after OTP_MAX_ATTEMPTS bad guesses.
 router.post('/verify-otp', ipLimitVerify, async (req, res) => {
-  const phone = normalizePhone(req.body.phone);
+  const phone = normalizePhone(req.body.phone, req.body.country);
   const code = String(req.body.code || '').trim();
   if (!phone || !/^\d{4,8}$/.test(code)) {
     return res.status(400).json({ error: 'Champs manquants' });

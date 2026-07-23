@@ -20,6 +20,8 @@ const { backfillReferralCodes } = require('./services/referral');
 const { getProvider } = require('./services/paymentProvider');
 const { canonicalRedirectTarget } = require('./services/canonicalWeb');
 const { browserOriginAllowed } = require('./services/corsOrigins');
+const { livenessCheck, readinessCheck } = require('./services/healthCheck');
+const { isTransientDatabaseError } = require('./services/prismaErrors');
 
 const app = express();
 const publicDir = path.join(__dirname, '..', 'public');
@@ -69,33 +71,23 @@ app.use(express.json({ limit: '200kb' }));
 // bundle (which otherwise leaves new modules stuck on their loading skeletons).
 app.use(express.static(publicDir, { index: false, maxAge: 0 }));
 
-app.get('/health', async (_req, res) => {
-  const provider = config.payments.provider;
-  const configured = getProvider(provider).isConfigured();
-  const mode = config[provider]?.mode || null;
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    const ready = configured || config.allowMock;
-    res.status(ready ? 200 : 503).json({
-      ok: ready,
-      service: 'parispromax-backend',
-      revision: process.env.RENDER_GIT_COMMIT
-        ? process.env.RENDER_GIT_COMMIT.slice(0, 7)
-        : null,
-      database: 'up',
-      paymentProvider: provider,
-      paymentMode: mode, // sandbox | live (non-secret, for diagnostics)
-      payments: configured ? 'configured' : config.allowMock ? 'mock' : 'unavailable',
-      time: new Date().toISOString(),
-    });
-  } catch (error) {
-    res.status(503).json({
-      ok: false,
-      service: 'parispromax-backend',
-      database: 'down',
-      time: new Date().toISOString(),
-    });
-  }
+// Render liveness: never depend on PostgreSQL, Redis or a payment provider.
+app.get('/health', (_req, res) => {
+  const result = livenessCheck({
+    revision: process.env.RENDER_GIT_COMMIT,
+  });
+  res.status(result.statusCode).json(result.body);
+});
+
+// Operational diagnostics: callers can verify PostgreSQL and payment readiness.
+app.get('/ready', async (_req, res) => {
+  const result = await readinessCheck({
+    prisma,
+    config,
+    getProvider,
+    revision: process.env.RENDER_GIT_COMMIT,
+  });
+  res.status(result.statusCode).json(result.body);
 });
 
 // Public Web portal: same-origin API access keeps authentication and payment
@@ -135,20 +127,29 @@ app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
+  if (isTransientDatabaseError(err)) {
+    return res.status(503).json({
+      error: 'Base de données temporairement indisponible. Réessayez dans un instant.',
+    });
+  }
   res.status(500).json({ error: 'Erreur serveur' });
 });
 
-// M3 — serveur HTTP (permet d'attacher socket.io). Le temps réel + le worker IA
-// ne s'activent QUE si REDIS_URL est configuré (la prod actuelle reste intacte).
+// M3 — serveur HTTP (permet d'attacher socket.io). Redis reste optionnel :
+// l'écoute HTTP commence avant sa sonde et demeure disponible s'il est en panne.
 const server = http.createServer(app);
-let realtimeOn = false;
-if (process.env.REDIS_URL) {
+
+async function startOptionalRealtime() {
+  if (!process.env.REDIS_URL) return;
   try {
+    const worker = await require('./services/queue').startPredictionWorker();
+    if (!worker) return;
     require('./services/realtime').initRealtime(server);
-    require('./services/queue').startPredictionWorker();
-    realtimeOn = true;
+    console.log('[realtime] socket.io + IA worker ON');
   } catch (e) {
-    console.error('[realtime] init failed (deps installées ?):', e.message);
+    // Redis/BullMQ ne doit jamais empêcher l'API, l'authentification ou la santé
+    // applicative de répondre.
+    console.error('[realtime] optional init failed:', e.message);
   }
 }
 
@@ -164,5 +165,10 @@ server.listen(config.port, () => {
     }`
   );
   console.log(`   OTP:      ${config.otpDevMode ? 'DEV (codes returned in API)' : 'SMS provider'}`);
-  console.log(`   Realtime: ${realtimeOn ? 'socket.io + IA worker ON' : 'off (no REDIS_URL)'}\n`);
+  console.log(
+    `   Realtime: ${
+      process.env.REDIS_URL ? 'Redis probe in progress (HTTP independent)' : 'off (no REDIS_URL)'
+    }\n`
+  );
+  void startOptionalRealtime();
 });

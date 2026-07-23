@@ -6,9 +6,8 @@
 
 databases:
   - name: parispromax-db
-    # Le Postgres gratuit expire le 30/07/2026. La montée vers un plan
-    # persistant doit être décidée manuellement dans Render.
-    plan: free
+    # Instance persistante déjà activée dans Render.
+    plan: basic-256mb
     databaseName: parispromax
     user: parispromax
 
@@ -16,13 +15,12 @@ services:
   - type: web
     name: parispromax-backend
     runtime: node
-    # Le plan gratuit peut s'endormir ; conserver `free` évite toute facturation
-    # déclenchée automatiquement par une synchronisation du Blueprint.
-    plan: free
+    # Instance payante toujours active, sans mise en veille.
+    plan: starter
     rootDir: backend
     buildCommand: npm ci && npm run build:prod
-    # Le plan free ne prend pas en charge preDeployCommand. Le script applique
-    # donc `db push` pendant le build, toujours sans --accept-data-loss.
+    # Le script applique `db push` pendant le build, toujours sans
+    # --accept-data-loss, conformément au pipeline déjà en production.
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
@@ -208,8 +206,8 @@ services:
   - type: web
     name: parispromax-ia
     runtime: docker
-    # Conserver le plan gratuit existant ; les cold starts restent possibles.
-    plan: free
+    # Instance IA payante toujours active.
+    plan: starter
     rootDir: ml
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
@@ -230,8 +228,8 @@ services:
 # renseignez REDIS_URL (Internal URL) à la main sur les 2 services.
   - type: redis
     name: parispromax-redis
-    # Conserver le Key Value gratuit existant.
-    plan: free
+    # Instance Key Value payante utilisée par le cache et BullMQ.
+    plan: starter
     ipAllowList: []
     # BullMQ exige noeviction afin qu'une tache en file ne soit jamais supprimee
     # silencieusement lorsque la memoire du Key Value est pleine.

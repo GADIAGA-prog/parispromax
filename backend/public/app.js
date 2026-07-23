@@ -449,8 +449,16 @@ function normalizePhone(raw, countryCode) {
   if (source.startsWith('+')) return `+${source.slice(1).replace(/\D/g, '')}`;
   let digits = source.replace(/\D/g, '');
   if (!country) return digits;
-  if (!country.keepLeadingZero) digits = digits.replace(/^0/, '');
   const dial = String(country.dial || '').replace(/\D/g, '');
+  const nationalLength = Number(country.nationalLength);
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  const hasExpectedInternationalLength = Number.isFinite(nationalLength)
+    ? digits.length === dial.length + nationalLength
+    : digits.startsWith(dial);
+  if (dial && digits.startsWith(dial) && hasExpectedInternationalLength) {
+    return `+${digits}`;
+  }
+  if (!country.keepLeadingZero) digits = digits.replace(/^0/, '');
   return `+${dial}${digits}`;
 }
 
@@ -881,19 +889,12 @@ function renderRaceDetail(context, detail, prediction, predictionError) {
 async function login(form) {
   const data = Object.fromEntries(new FormData(form));
   const phone = normalizePhone(data.phone, data.country);
-  const options = {
+  const result = await api('/auth/login', {
     auth: false,
     method: 'POST',
     body: JSON.stringify({ phone, password: data.password, country: data.country }),
     timeout: 60000,
-  };
-  let result;
-  try {
-    result = await api('/auth/login', options);
-  } catch (error) {
-    if (error.status < 500) throw error;
-    result = await api('/auth/login', options);
-  }
+  });
   state.token = result.token;
   sessionStorage.setItem('ppm_web_token', state.token);
   await refreshMe();

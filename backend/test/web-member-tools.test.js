@@ -39,6 +39,13 @@ function loadWebFunctions(search = '', origin = 'https://www.parispromax.com') {
   return context;
 }
 
+function loadPhoneNormalizer(countries) {
+  const web = loadWebFunctions();
+  web.__testCountries = countries;
+  vm.runInContext('state.countries = __testCountries', web);
+  return web.normalizePhone;
+}
+
 test('le lien de parrainage intègre un code normalisé', () => {
   const web = loadWebFunctions();
   assert.equal(
@@ -72,4 +79,35 @@ test('les anciennes adresses utilisent directement le domaine www pour les API',
     loadWebFunctions('', 'http://localhost:4000').publicWebOrigin(),
     'http://localhost:4000'
   );
+});
+
+test("un numéro avec l'indicatif sans signe plus n'est pas préfixé deux fois", () => {
+  const normalizePhone = loadPhoneNormalizer([
+    { code: 'bf', dial: '+226', nationalLength: 8 },
+  ]);
+
+  assert.equal(normalizePhone('22676251570', 'bf'), '+22676251570');
+  assert.equal(normalizePhone('00226 76 25 15 70', 'bf'), '+22676251570');
+});
+
+test('les formats international et national restent normalisés en E.164', () => {
+  const normalizePhone = loadPhoneNormalizer([
+    { code: 'bf', dial: '+226', nationalLength: 8 },
+    { code: 'ci', dial: '+225', nationalLength: 10, keepLeadingZero: true },
+  ]);
+
+  assert.equal(normalizePhone('+226 76 25 15 70', 'bf'), '+22676251570');
+  assert.equal(normalizePhone('76 25 15 70', 'bf'), '+22676251570');
+  assert.equal(normalizePhone('076251570', 'bf'), '+22676251570');
+  assert.equal(normalizePhone('07 12 34 56 78', 'ci'), '+2250712345678');
+  assert.equal(normalizePhone('2250712345678', 'ci'), '+2250712345678');
+});
+
+test('la connexion envoie une seule requête, même en cas de réponse serveur 5xx', () => {
+  const web = loadWebFunctions();
+  const loginSource = web.login.toString();
+  const authCalls = loginSource.match(/api\(['"]\/auth\/login['"]/g) || [];
+
+  assert.equal(authCalls.length, 1);
+  assert.doesNotMatch(loginSource, /catch\s*\(/);
 });
