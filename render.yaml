@@ -19,10 +19,12 @@ services:
     plan: starter
     rootDir: backend
     buildCommand: npm ci && npm run build:prod
-    # La génération du client ne dépend pas de PostgreSQL. Toute synchronisation
-    # de schéma se fait séparément avec `npm run db:sync:prod`.
+    # Le build reste indépendant de PostgreSQL. Le service payant exécute la
+    # synchronisation compatible juste avant de basculer le nouveau déploiement.
+    preDeployCommand: npm run db:sync:prod
     startCommand: npm run start
-    healthCheckPath: /health
+    healthCheckPath: /ready
+    autoDeployTrigger: checksPass
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -32,6 +34,8 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
+      - key: ACCESS_TOKEN_TTL
+        value: 7d
       - key: PORT
         value: "4000"
       - key: CORS_ORIGINS
@@ -210,7 +214,7 @@ services:
     plan: starter
     rootDir: ml
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /health
+    healthCheckPath: /ready
     envVars:
       - key: PPM_MODEL_PATH
         value: /app/model/model.cbm

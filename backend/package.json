@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
+    "test": "node --test \"test/*.test.js\"",
     "ingest": "node src/jobs/ingest.js",
     "scrape": "node ../src/backend-scraper/scraper.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "gen:prod-schema": "node scripts/gen-prod-schema.js",
     "build:prod": "node scripts/gen-prod-schema.js && prisma generate --schema=prisma/schema.production.prisma",
+    "check:prod": "node scripts/gen-prod-schema.js && node scripts/validate-prod-schema.js",
     "db:sync:prod": "node scripts/gen-prod-schema.js && prisma db push --schema=prisma/schema.production.prisma --skip-generate",
     "pawapay:test": "node scripts/test-pawapay.js"
   },

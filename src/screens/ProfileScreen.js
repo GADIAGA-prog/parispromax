@@ -6,7 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { sendTestNotification } from '../services/NotificationService';
+import { initNotifications, sendTestNotification } from '../services/NotificationService';
 import { LEGAL_URLS } from '../services/legal';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
@@ -70,7 +70,9 @@ export default function ProfileScreen({ navigation }) {
           <Pressable
             style={styles.shareButton}
             disabled={!referral?.code}
-            onPress={() => Share.share({ message: `Rejoins ParisPromax avec mon code ${referral.code} et profite de jusqu’à ${referral.discountPercent}% de réduction sur ton premier paiement (hors formule à 200 XOF).` })}
+            onPress={() => Share.share({
+              message: `Rejoins ParisPromax avec mon code ${referral.code} : https://www.parispromax.com/?ref=${encodeURIComponent(referral.code)}\nProfite de jusqu’à ${referral.discountPercent}% de réduction sur ton premier paiement (hors formule à 200 XOF).`,
+            })}
           >
             <Ionicons name="share-social" size={18} color="#06251c" />
             <Text style={styles.shareText}>Partager mon code</Text>
@@ -146,14 +148,17 @@ export default function ProfileScreen({ navigation }) {
         <Pressable
           style={styles.action}
           onPress={async () => {
-            const ok = await sendTestNotification();
-            if (!ok) {
+            const granted = await initNotifications();
+            if (!granted) {
               Alert.alert('Notifications', "Disponibles dans l'app installée (APK). Indisponibles dans Expo Go.");
+              return;
             }
+            await sendTestNotification();
+            Alert.alert('Notifications activées', 'Vous recevrez une alerte quotidienne. Une notification test arrivera dans quelques secondes.');
           }}
         >
           <Ionicons name="notifications" size={20} color={COLORS.accent} />
-          <Text style={styles.actionText}>Tester une notification</Text>
+          <Text style={styles.actionText}>Activer les notifications</Text>
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
 

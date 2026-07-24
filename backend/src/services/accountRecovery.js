@@ -47,16 +47,19 @@ function validateRegistrationProfile(body, now = new Date()) {
     return { ok: false, error: 'ParisPromax est réservé aux personnes majeures' };
   }
   if (birthPlace.length < 2) return { ok: false, error: 'Lieu de naissance requis' };
-  if (!QUESTION_BY_ID.has(recoveryQuestion)) {
-    return { ok: false, error: 'Question de récupération invalide' };
-  }
-  if (recoveryAnswer.length < 2) {
-    return { ok: false, error: 'Réponse de récupération trop courte' };
-  }
+  const hasLegacyRecoveryAnswer =
+    QUESTION_BY_ID.has(recoveryQuestion) && recoveryAnswer.length >= 2;
 
   return {
     ok: true,
-    data: { firstName, lastName, birthDate, birthPlace, recoveryQuestion, recoveryAnswer },
+    data: {
+      firstName,
+      lastName,
+      birthDate,
+      birthPlace,
+      recoveryQuestion: hasLegacyRecoveryAnswer ? recoveryQuestion : null,
+      recoveryAnswer: hasLegacyRecoveryAnswer ? recoveryAnswer : null,
+    },
   };
 }
 

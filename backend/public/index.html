@@ -19,10 +19,10 @@
   <meta name="twitter:title" content="ParisPromax — L'analyse hippique, plus claire" />
   <meta name="twitter:description" content="Quinté par pays, analyses commentées et pronostic final Podium + 2." />
   <meta name="twitter:image" content="https://www.parispromax.com/og-v2.png" />
-  <link rel="icon" href="/assets/logo-emblem.png" />
+  <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260722-12" />
+  <link rel="stylesheet" href="/styles.css?v=20260724-1" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -31,7 +31,7 @@
 
   <header class="site-header">
     <a class="brand" href="#accueil" aria-label="ParisPromax, accueil">
-      <img src="/assets/logo-emblem.png" alt="" width="48" height="48" />
+      <img src="/assets/logo-emblem-128.png" alt="" width="48" height="48" />
       <span><strong>PARISPRO</strong>MAX<small>Pronostics IA · Courses PMU</small></span>
     </a>
     <nav class="desktop-nav" aria-label="Navigation principale">
@@ -271,14 +271,14 @@
   </main>
 
   <footer>
-    <div class="footer-brand"><img src="/assets/logo-emblem.png" alt="" width="44" height="44" /><div><strong>PARISPROMAX</strong><span>L'analyse hippique, plus claire.</span></div></div>
+    <div class="footer-brand"><img src="/assets/logo-emblem-128.png" alt="" width="44" height="44" /><div><strong>PARISPROMAX</strong><span>L'analyse hippique, plus claire.</span></div></div>
     <div class="footer-links"><a href="https://t.me/ParisPromaxOfficiel" target="_blank" rel="noopener noreferrer">Canal Telegram ↗</a><a href="https://www.facebook.com/parispromax" target="_blank" rel="noopener noreferrer">Facebook ↗</a><a href="/download/android">Télécharger Android</a><a href="#contact">Nous contacter</a><a href="#contact">Donner un avis</a><a href="/legal/privacy">Confidentialité</a><a href="/legal/terms">Conditions</a><a href="/legal/responsible-gambling">Jeu responsable</a><a href="/legal/account-deletion">Supprimer mon compte</a></div>
     <p>ParisPromax ne permet pas de parier, ne collecte aucune mise et ne garantit aucun gain. Service réservé aux personnes majeures.</p>
   </footer>
 
   <dialog id="auth-dialog" class="modal">
     <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
-    <div class="modal-brand"><img src="/assets/logo-emblem.png" alt="" width="56" height="56" /><div><strong>ParisPromax</strong><span>Votre espace d'analyse</span></div></div>
+    <div class="modal-brand"><img src="/assets/logo-emblem-128.png" alt="" width="56" height="56" /><div><strong>ParisPromax</strong><span>Votre espace d'analyse</span></div></div>
     <div class="auth-tabs" role="tablist"><button type="button" data-auth-tab="login" class="active">Connexion</button><button type="button" data-auth-tab="register">Créer un compte</button></div>
 
     <form id="login-form" class="form-stack">
@@ -295,8 +295,6 @@
       <label>Pays<select name="country" class="country-select" required></select></label>
       <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" required /></label>
       <label>Mot de passe<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
-      <label>Question de récupération<select name="recoveryQuestion" id="recovery-question" required></select></label>
-      <label>Votre réponse<input name="recoveryAnswer" autocomplete="off" required minlength="2" /></label>
       <label>Code de parrainage <small>(facultatif)</small><input name="referralCode" autocomplete="off" /></label>
       <label class="check-label"><input name="adult" type="checkbox" required /> <span>Je confirme avoir au moins 18 ans et accepter les conditions d'utilisation.</span></label>
       <button class="button button-primary button-full" type="submit">Valider mon inscription <span>→</span></button>
@@ -313,19 +311,18 @@
 
   <dialog id="password-recovery-dialog" class="modal modal-compact password-recovery-dialog">
     <button class="modal-close" type="button" data-close-modal aria-label="Fermer">×</button>
-    <span class="section-kicker">RÉCUPÉRATION SÉCURISÉE</span><h2>Réinitialiser le mot de passe</h2><p>Identifiez votre compte, puis répondez à votre question de sécurité.</p>
+    <span class="section-kicker">RÉCUPÉRATION SÉCURISÉE</span><h2>Réinitialiser le mot de passe</h2><p>Utilisez le code personnel remis lors de votre inscription.</p>
     <form id="recovery-identify-form" class="form-stack">
       <label>Pays<select name="country" class="country-select" required></select></label>
       <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" placeholder="Ex. 70 XX XX XX" required /></label>
       <button class="button button-primary button-full" type="submit">Continuer</button>
     </form>
     <form id="recovery-reset-form" class="form-stack hidden">
-      <div class="security-question-box"><small>Votre question</small><strong id="recovery-question-label">—</strong></div>
-      <label>Date de naissance<input name="birthDate" type="date" required /></label>
-      <label>Votre réponse<input name="answer" autocomplete="off" required minlength="2" /></label>
+      <label>Code de récupération<input name="recoveryCode" autocomplete="off" required minlength="8" maxlength="14" placeholder="XXXX-XXXX-XXXX" /></label>
       <label>Nouveau mot de passe<input name="newPassword" type="password" autocomplete="new-password" required minlength="8" /></label>
       <button class="button button-primary button-full" type="submit">Changer mon mot de passe</button>
       <button class="auth-help-button" id="restart-recovery" type="button">Utiliser un autre numéro</button>
+      <a class="auth-help-button" href="#contact" data-close-modal>Code perdu ? Contacter l’assistance</a>
     </form>
     <p class="form-message" id="password-recovery-message" role="status"></p>
   </dialog>
@@ -372,6 +369,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260722-10" defer></script>
+  <script src="/app.js?v=20260724-1" defer></script>
 </body>
 </html>

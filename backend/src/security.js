@@ -21,13 +21,13 @@ function genOtpCode() {
 }
 
 // Code de récupération lisible (reset de mot de passe SANS SMS/email) :
-// 8 caractères sans ambiguïté (pas de 0/O/1/I/L), format XXXX-XXXX.
+// 12 caractères sans ambiguïté (pas de 0/O/1/I/L), format XXXX-XXXX-XXXX.
 const RECOVERY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function genRecoveryCode() {
   let s = '';
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 12; i++) {
     s += RECOVERY_ALPHABET[crypto.randomInt(RECOVERY_ALPHABET.length)];
-    if (i === 3) s += '-';
+    if (i === 3 || i === 7) s += '-';
   }
   return s;
 }
@@ -35,7 +35,9 @@ function genRecoveryCode() {
 // Normalise un code saisi par l'utilisateur (espaces/tirets/casse tolérés).
 function normalizeRecoveryCode(raw) {
   const s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  return s.length === 8 ? `${s.slice(0, 4)}-${s.slice(4)}` : null;
+  if (s.length === 8) return `${s.slice(0, 4)}-${s.slice(4)}`;
+  if (s.length === 12) return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
+  return null;
 }
 
 // --- Password hashing (scrypt, built-in — no extra dependency) ---------------
@@ -106,6 +108,7 @@ function verifyRecoveryAnswer(answer, stored) {
 // Minimal in-memory sliding-window rate limiter (single-instance deploys).
 // Usage: app.post('/x', rateLimit({ windowMs: 600000, max: 30 }), handler)
 function rateLimit({ windowMs, max, keyFn }) {
+  const { incrementWindow } = require('./services/securityStore');
   const hits = new Map(); // key -> [timestamps]
   // Periodic cleanup so the map never grows unbounded.
   const cleaner = setInterval(() => {
@@ -118,8 +121,20 @@ function rateLimit({ windowMs, max, keyFn }) {
   }, Math.max(windowMs, 60 * 1000));
   if (cleaner.unref) cleaner.unref();
 
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const key = keyFn ? keyFn(req) : req.ip || 'unknown';
+    const distributedCount = await incrementWindow(
+      `http:${req.baseUrl || 'root'}:${req.path || 'request'}`,
+      key,
+      windowMs
+    );
+    if (distributedCount != null) {
+      if (distributedCount > max) {
+        return res.status(429).json({ error: 'Trop de requêtes. Réessayez plus tard.' });
+      }
+      return next();
+    }
+
     const now = Date.now();
     const cutoff = now - windowMs;
     const arr = (hits.get(key) || []).filter((t) => t > cutoff);

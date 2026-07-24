@@ -4,7 +4,6 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const state = {
   token: sessionStorage.getItem('ppm_web_token') || '',
   countries: [],
-  questions: [],
   plans: [],
   racetracks: [],
   raceDate: null,
@@ -285,21 +284,15 @@ function openPasswordRecovery() {
 async function identifyRecoveryAccount(form) {
   const data = Object.fromEntries(new FormData(form));
   const phone = normalizePhone(data.phone, data.country);
-  const result = await api('/auth/recovery-question', {
-    auth: false,
-    method: 'POST',
-    body: JSON.stringify({ phone }),
-  });
   state.recovery = { phone, country: data.country };
-  $('#recovery-question-label').textContent = result.question;
   form.classList.add('hidden');
   $('#recovery-reset-form').classList.remove('hidden');
-  setMessage('#password-recovery-message', 'Question de sécurité trouvée.', true);
+  setMessage('#password-recovery-message', 'Saisissez votre code de récupération.', true);
 }
 
 async function resetPasswordWithSecurity(form) {
   const data = Object.fromEntries(new FormData(form));
-  const result = await api('/auth/reset-password-security', {
+  const result = await api('/auth/reset-password', {
     auth: false,
     method: 'POST',
     body: JSON.stringify({ phone: state.recovery.phone, ...data }),
@@ -463,16 +456,13 @@ function normalizePhone(raw, countryCode) {
 }
 
 async function loadCatalogs() {
-  const [countryData, questionData, planData] = await Promise.all([
+  const [countryData, planData] = await Promise.all([
     api('/payments/countries', { auth: false }),
-    api('/auth/recovery-questions', { auth: false }),
     api('/plans', { auth: false }),
   ]);
   state.countries = countryData.countries || [];
-  state.questions = questionData.questions || [];
   state.plans = planData.plans || [];
   renderCountrySelects();
-  renderQuestions();
   renderPlans();
 }
 
@@ -500,12 +490,6 @@ function renderCountryMarquee() {
     `<span class="country-marquee-item" role="listitem"><span class="country-marquee-flag">${escapeHtml(country.flag || '🌍')}</span>${escapeHtml(country.name)}</span>`
   ).join('');
   track.innerHTML = `<div class="country-marquee-group" role="list">${items}</div><div class="country-marquee-group" aria-hidden="true">${items}</div>`;
-}
-
-function renderQuestions() {
-  $('#recovery-question').innerHTML = state.questions.map((question) =>
-    `<option value="${escapeHtml(question.id)}">${escapeHtml(question.label)}</option>`
-  ).join('');
 }
 
 function renderPlans() {
@@ -1275,6 +1259,9 @@ async function boot() {
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }
   await Promise.all([loadRaces(), refreshMe(), loadReviewSummary()]);
   applyReferralInvitation();
+  const requestedAuth = new URLSearchParams(window.location.search).get('auth');
+  if (!state.token && requestedAuth === 'register') openAuth('register');
+  if (!state.token && requestedAuth === 'login') openAuth('login');
 }
 
 boot();

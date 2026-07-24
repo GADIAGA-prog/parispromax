@@ -13,12 +13,28 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_DISTRIBUTION_CHANNEL": "direct"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production-apk": {
+      "distribution": "internal",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DISTRIBUTION_CHANNEL": "direct"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DISTRIBUTION_CHANNEL": "play"
+      },
       "android": {
         "buildType": "app-bundle"
       }

@@ -21,6 +21,7 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from ltr_features import build_features, FEATURES
@@ -125,8 +126,29 @@ def _harville_podium(p: np.ndarray) -> np.ndarray:
 
 @app.get("/health")
 def health():
-    ok = os.path.exists(MODEL_PATH)
-    return {"ok": ok, "model": MODEL_PATH, "loaded": _model is not None}
+    return {"ok": True, "service": "parispromax-ia"}
+
+
+@app.get("/ready")
+def ready():
+    if not os.path.exists(MODEL_PATH):
+        return JSONResponse(
+            status_code=503,
+            content={"ok": False, "model": MODEL_PATH, "error": "model_missing"},
+        )
+    try:
+        _load_model()
+    except Exception as exc:  # noqa: BLE001 - readiness must report corrupt artifacts
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ok": False,
+                "model": MODEL_PATH,
+                "error": "model_load_failed",
+                "detail": type(exc).__name__,
+            },
+        )
+    return {"ok": True, "model": MODEL_PATH, "loaded": True}
 
 
 @app.post("/predict")

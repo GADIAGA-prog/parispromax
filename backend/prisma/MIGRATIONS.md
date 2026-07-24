@@ -12,8 +12,8 @@ La base Render existante a été créée et synchronisée historiquement avec
 `prisma db push`. Pour préserver cet historique sans baseline destructive :
 
 1. `npm run build:prod` génère le client PostgreSQL ;
-2. le plan Render gratuit, qui ne prend pas en charge `preDeployCommand`,
-   exécute ensuite `prisma db push` dans le même build ;
+2. le service Render payant exécute `npm run db:sync:prod` avec
+   `preDeployCommand`, avant le basculement du nouveau déploiement ;
 3. Prisma compare la base PostgreSQL réelle au schéma généré et applique
    uniquement les changements compatibles ;
 4. aucune option `--accept-data-loss` n'est autorisée.
@@ -28,8 +28,9 @@ récupération tous nullables sur `User`, ainsi que la table
 anciens utilisateurs peuvent continuer à utiliser leur mot de passe et leur
 code, puis compléter leur récupération via l'assistance si nécessaire.
 
-Sur un futur plan Render payant, déplacer `npm run db:sync:prod` vers
-`preDeployCommand` permettra de séparer compilation et migration.
+La modification du 24 juillet 2026 ajoute `User.authVersion` avec une valeur
+par défaut à zéro. Une réinitialisation de mot de passe incrémente cette valeur
+et invalide ainsi les anciens jetons sans supprimer le compte.
 
 Une conversion future vers `prisma migrate deploy` exigera d'abord une baseline
 PostgreSQL explicite sur une copie de la production. Il ne faut pas réutiliser

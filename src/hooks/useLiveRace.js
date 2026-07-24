@@ -1,25 +1,28 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import { API_URL } from '../services/api';
+import { API_URL, getToken } from '../services/api';
 
-// ---------------------------------------------------------------------------
-// MODULE 3 — Temps réel côté Expo.
-//
-// S'abonne à une course et reçoit en PUSH (sans rafraîchir) :
-//   - les changements de cotes ('odds:update'),
-//   - les nouveaux pronostics IA ('predictions:update').
-// La connexion socket est partagée (singleton) pour toute l'app.
-// ---------------------------------------------------------------------------
-
+// The socket is authenticated with the same encrypted token as REST requests.
+// A changed token creates a fresh connection so a logout/login can never reuse
+// another member's rooms.
 let socket = null;
-function getSocket() {
-  if (!socket) {
-    socket = io(API_URL, { transports: ['websocket'], autoConnect: true });
-  }
+let socketToken = null;
+
+async function getSocket() {
+  const token = await getToken();
+  if (!token) return null;
+  if (socket && socketToken === token) return socket;
+  if (socket) socket.disconnect();
+
+  socketToken = token;
+  socket = io(API_URL, {
+    transports: ['websocket'],
+    autoConnect: true,
+    auth: { token },
+  });
   return socket;
 }
 
-// Retourne { predictions, odds, connected } pour une course donnée.
 export function useLiveRace(externalId) {
   const [predictions, setPredictions] = useState(null);
   const [odds, setOdds] = useState(null);
@@ -27,30 +30,44 @@ export function useLiveRace(externalId) {
 
   useEffect(() => {
     if (!externalId) return undefined;
-    const s = getSocket();
+    let active = true;
+    let activeSocket = null;
 
     const onConnect = () => {
+      if (!active || !activeSocket) return;
       setConnected(true);
-      s.emit('subscribe:race', externalId);
+      activeSocket.emit('subscribe:race', externalId);
     };
-    const onPred = (msg) => {
-      if (msg && msg.race_id === externalId) setPredictions(msg.predictions || msg);
+    const onDisconnect = () => active && setConnected(false);
+    const onPredictions = (message) => {
+      if (active && message?.race_id === externalId) {
+        setPredictions(message.predictions || message);
+      }
     };
-    const onOdds = (msg) => {
-      if (msg && msg.race_id === externalId) setOdds(msg.odds || msg);
+    const onOdds = (message) => {
+      if (active && message?.race_id === externalId) {
+        setOdds(message.odds || message);
+      }
     };
 
-    s.on('connect', onConnect);
-    s.on('disconnect', () => setConnected(false));
-    s.on('predictions:update', onPred);
-    s.on('odds:update', onOdds);
-    if (s.connected) onConnect();
+    getSocket().then((instance) => {
+      if (!active || !instance) return;
+      activeSocket = instance;
+      instance.on('connect', onConnect);
+      instance.on('disconnect', onDisconnect);
+      instance.on('predictions:update', onPredictions);
+      instance.on('odds:update', onOdds);
+      if (instance.connected) onConnect();
+    });
 
     return () => {
-      s.emit('unsubscribe:race', externalId);
-      s.off('connect', onConnect);
-      s.off('predictions:update', onPred);
-      s.off('odds:update', onOdds);
+      active = false;
+      if (!activeSocket) return;
+      activeSocket.emit('unsubscribe:race', externalId);
+      activeSocket.off('connect', onConnect);
+      activeSocket.off('disconnect', onDisconnect);
+      activeSocket.off('predictions:update', onPredictions);
+      activeSocket.off('odds:update', onOdds);
     };
   }, [externalId]);
 

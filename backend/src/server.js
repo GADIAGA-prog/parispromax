@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   res.set(
     'Content-Security-Policy',
     "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; " +
-      "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+      "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
   );
   if (config.isProd) {
     res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -59,7 +59,10 @@ app.use(
       if (browserOriginAllowed(origin, config.corsOrigins)) {
         return cb(null, true);
       }
-      return cb(new Error('Origine non autorisée par CORS'));
+      const error = new Error('Origine non autorisée par CORS');
+      error.status = 403;
+      error.code = 'CORS_NOT_ALLOWED';
+      return cb(error);
     },
   })
 );
@@ -127,6 +130,9 @@ app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
+  if (err?.code === 'CORS_NOT_ALLOWED') {
+    return res.status(403).json({ error: 'Origine non autorisée' });
+  }
   if (isTransientDatabaseError(err)) {
     return res.status(503).json({
       error: 'Base de données temporairement indisponible. Réessayez dans un instant.',

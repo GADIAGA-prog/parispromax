@@ -131,15 +131,6 @@ export const api = {
       body: { phone, recoveryCode, newPassword },
       timeout: 60000,
     }),
-  recoveryQuestions: () => request('/auth/recovery-questions'),
-  recoveryQuestion: (phone) =>
-    request('/auth/recovery-question', { method: 'POST', body: { phone } }),
-  resetPasswordSecurity: (phone, birthDate, answer, newPassword) =>
-    request('/auth/reset-password-security', {
-      method: 'POST',
-      body: { phone, birthDate, answer, newPassword },
-      timeout: 60000,
-    }),
   requestRecoverySupport: (payload) =>
     request('/auth/recovery-request', { method: 'POST', body: payload }),
   newRecoveryCode: () => request('/me/recovery-code', { method: 'POST', auth: true }),

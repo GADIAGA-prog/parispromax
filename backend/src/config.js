@@ -17,8 +17,14 @@ const config = {
   // incorrectly on a production service.
   allowMock:
     isSqliteDev && !isProd && String(process.env.ALLOW_MOCK_PAYMENTS || 'true') !== 'false',
-  corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
+  corsOrigins: (
+    process.env.CORS_ORIGINS ||
+    (isProdLike
+      ? 'https://parispromax.com,https://www.parispromax.com,https://parispromax-backend.onrender.com'
+      : '')
+  ).split(',').map((s) => s.trim()).filter(Boolean),
   jwtSecret: String(process.env.JWT_SECRET || '').trim() || 'dev-secret-change-me',
+  accessTokenTtl: process.env.ACCESS_TOKEN_TTL || '7d',
   otpTtlMinutes: Number(process.env.OTP_TTL_MINUTES) || 5,
   // OTP dev mode returns the code in the API response (no SMS). It MUST never
   // default to on outside the local SQLite dev DB, otherwise anyone could log

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +49,8 @@ const PERKS = [
   'Tuyaux utiles : déferrage, associations et chevaux à surveiller',
   'Alertes de départ et résultats officiels vérifiés',
 ];
+const IS_PLAY_DISTRIBUTION =
+  Platform.OS === 'android' && process.env.EXPO_PUBLIC_DISTRIBUTION_CHANNEL === 'play';
 
 export default function PaywallScreen({ navigation }) {
   const { refreshAccess, country, phone, referral } = useAuth();
@@ -331,6 +334,45 @@ export default function PaywallScreen({ navigation }) {
       setProcessing(false);
     }
   };
+
+  if (IS_PLAY_DISTRIBUTION) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.hero}>
+            <Ionicons name="diamond" size={36} color={COLORS.gold} />
+            <Text style={styles.title}>Votre accès ParisPromax</Text>
+            <Text style={styles.subtitle}>Consultez ici l’état de votre abonnement.</Text>
+          </View>
+          <View style={styles.perks}>
+            {PERKS.map((perk) => (
+              <View key={perk} style={styles.perkRow}>
+                <Ionicons name="checkmark-circle" size={16} color={COLORS.accent} />
+                <Text style={styles.perkText}>{perk}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.payInfo}>
+            <Ionicons name="information-circle-outline" size={20} color={COLORS.accent} />
+            <Text style={styles.payInfoText}>
+              La gestion des abonnements n’est pas disponible dans cette version distribuée par Google Play.
+              Votre accès existant reste utilisable après connexion.
+            </Text>
+          </View>
+          <Pressable
+            style={styles.payBtn}
+            onPress={async () => {
+              await refreshAccess();
+              Alert.alert('Accès actualisé', 'Le statut de votre abonnement a été vérifié.');
+            }}
+          >
+            <Ionicons name="refresh" size={18} color="#06251c" />
+            <Text style={styles.payText}>Actualiser mon accès</Text>
+          </Pressable>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>

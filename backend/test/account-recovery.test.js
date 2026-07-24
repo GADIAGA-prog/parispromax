@@ -23,6 +23,18 @@ test('valide un profil majeur et une question autorisée', () => {
   assert.match(questionLabel(result.data.recoveryQuestion), /première école/);
 });
 
+test('valide un profil majeur sans question secrète', () => {
+  const result = validateRegistrationProfile({
+    firstName: 'Awa',
+    lastName: 'Ouédraogo',
+    birthDate: '1990-02-28',
+    birthPlace: 'Ouagadougou',
+  }, now);
+  assert.equal(result.ok, true);
+  assert.equal(result.data.recoveryQuestion, null);
+  assert.equal(result.data.recoveryAnswer, null);
+});
+
 test('refuse un mineur et une date impossible', () => {
   const minor = validateRegistrationProfile({
     firstName: 'Awa',

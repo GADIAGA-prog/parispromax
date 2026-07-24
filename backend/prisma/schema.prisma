@@ -23,6 +23,7 @@ model User {
   recoveryCodeHash String?     // SHA-256 du code de récupération (reset autonome sans SMS/email)
   recoveryQuestion String?     // identifier from the server-side allow-list
   recoveryAnswerHash String?   // salted scrypt; the answer is never stored in plaintext
+  authVersion   Int            @default(0) // incremented to revoke every previously issued JWT
   country       String?        // ISO2 (bf, ci, sn, tg, bj, ne, gn, ml) for payments
   trialStartedAt DateTime?
   createdAt     DateTime       @default(now())

@@ -1,25 +1,43 @@
 const jwt = require('jsonwebtoken');
 const config = require('./config');
+const prisma = require('./db');
 const { safeEqual } = require('./security');
 
 // Sign a JWT for a user.
 function signToken(user) {
-  return jwt.sign({ sub: user.id, phone: user.phone }, config.jwtSecret, {
-    expiresIn: '30d',
+  return jwt.sign({
+    sub: user.id,
+    phone: user.phone,
+    ver: Number(user.authVersion) || 0,
+  }, config.jwtSecret, {
+    expiresIn: config.accessTokenTtl,
   });
 }
 
-// Express middleware: require a valid Bearer token. Attaches req.userId.
-function requireAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'Token manquant' });
+async function authenticateToken(token) {
+  if (!token) throw new Error('missing token');
+  const payload = jwt.verify(token, config.jwtSecret);
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    select: { id: true, phone: true, authVersion: true },
+  });
+  if (!user) throw new Error('unknown user');
+  if ((Number(payload.ver) || 0) !== (Number(user.authVersion) || 0)) {
+    throw new Error('revoked token');
+  }
+  return { userId: user.id, phone: user.phone, payload };
+}
+
+// Express middleware: require a valid, non-revoked Bearer token.
+async function requireAuth(req, res, next) {
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   try {
-    const payload = jwt.verify(token, config.jwtSecret);
-    req.userId = payload.sub;
-    req.userPhone = payload.phone;
-    next();
-  } catch (e) {
+    const identity = await authenticateToken(token);
+    req.userId = identity.userId;
+    req.userPhone = identity.phone;
+    return next();
+  } catch {
     return res.status(401).json({ error: 'Token invalide' });
   }
 }
@@ -47,4 +65,4 @@ function requireAdmin(req, res, next) {
   return res.status(401).send('Authentification requise');
 }
 
-module.exports = { signToken, requireAuth, requireAdmin };
+module.exports = { signToken, authenticateToken, requireAuth, requireAdmin };

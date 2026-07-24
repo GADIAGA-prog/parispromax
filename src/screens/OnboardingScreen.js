@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 import { useSettings } from '../context/SettingsContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
@@ -30,6 +31,8 @@ const SLIDES = [
   },
 ];
 
+const SIGNUP_URL = 'https://www.parispromax.com/?auth=register';
+
 export default function OnboardingScreen() {
   const { width } = useWindowDimensions();
   const { completeOnboarding } = useSettings();
@@ -47,6 +50,10 @@ export default function OnboardingScreen() {
   };
 
   const isLast = index === SLIDES.length - 1;
+  const startRegistration = async () => {
+    await completeOnboarding();
+    await WebBrowser.openBrowserAsync(SIGNUP_URL);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -79,8 +86,8 @@ export default function OnboardingScreen() {
         <Pressable onPress={completeOnboarding} hitSlop={10}>
           <Text style={styles.skip}>Passer</Text>
         </Pressable>
-        <Pressable style={styles.next} onPress={() => (isLast ? completeOnboarding() : goTo(index + 1))}>
-          <Text style={styles.nextText}>{isLast ? 'Commencer' : 'Suivant'}</Text>
+        <Pressable style={styles.next} onPress={() => (isLast ? startRegistration() : goTo(index + 1))}>
+          <Text style={styles.nextText}>{isLast ? 'Créer mon compte' : 'Suivant'}</Text>
           <Ionicons name="arrow-forward" size={18} color="#06251c" />
         </Pressable>
       </View>

@@ -32,7 +32,11 @@ test('le liveness reste local et répond sans dépendance externe', () => {
 
 test('le readiness reste prêt si PostgreSQL fonctionne et le paiement est non configuré', async () => {
   const result = await readinessCheck({
-    prisma: { $queryRaw: async () => 1 },
+    prisma: {
+      $queryRaw: async () => 1,
+      user: { findFirst: async () => null },
+      recoveryRequest: { findFirst: async () => null },
+    },
     config: makeConfig(),
     getProvider: () => ({ isConfigured: () => false }),
     revision: 'abcdef123456',
@@ -45,6 +49,7 @@ test('le readiness reste prêt si PostgreSQL fonctionne et le paiement est non c
     service: 'parispromax-backend',
     revision: 'abcdef1',
     database: 'up',
+    schema: 'ready',
     paymentProvider: 'yengapay',
     paymentMode: 'live',
     payments: 'unavailable',
@@ -69,6 +74,7 @@ test('le readiness reste indisponible si PostgreSQL ne répond pas', async () =>
     ok: false,
     service: 'parispromax-backend',
     database: 'down',
+    schema: 'unavailable',
     time: fixedTime.toISOString(),
   });
 });

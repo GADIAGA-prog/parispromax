@@ -6,10 +6,11 @@ const { scrapeProgramme } = require('../jobs/scrape');
 const { buildPredictionSnapshot } = require('../services/predictionSelection');
 const { availableProviders } = require('../services/paymentProvider');
 const { countriesForProviderIds } = require('../services/paymentCountries');
+const { rateLimit } = require('../security');
 
 const router = express.Router();
 
-router.use(requireAdmin);
+router.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 120 }), requireAdmin);
 
 // POST /admin/api/ingest — load races from the bundled live_races.json into the
 // DB and compute predictions. One-click population from the back-office (no
@@ -261,6 +262,7 @@ router.post('/api/reset-password', express.json(), async (req, res) => {
       data: {
         passwordHash: hashPassword(newPassword),
         recoveryCodeHash: hashRecoveryCode(recoveryCode),
+        authVersion: { increment: 1 },
       },
     });
   } catch {

@@ -88,7 +88,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.subtitle}>Hippodromes · Courses PMU</Text>
           </View>
           <Image
-            source={require('../../assets/logo-emblem.png')}
+            source={require('../../assets/logo-emblem-app.png')}
             style={styles.headerLogo}
             resizeMode="contain"
           />
@@ -155,7 +155,9 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.offline}>
           <Ionicons name="cloud-offline" size={14} color={COLORS.gold} />
           <Text style={styles.offlineText}>
-            Mode hors-ligne — données {source === 'cache' ? 'en cache' : 'locales'}
+            {source === 'cache'
+              ? 'Mode hors-ligne — dernières données vérifiées en cache'
+              : 'Mode hors-ligne — aucune donnée de course vérifiée disponible'}
           </Text>
         </View>
       )}

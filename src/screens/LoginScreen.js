@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import api from '../services/api';
@@ -30,6 +31,7 @@ const DEFAULT_RECOVERY_QUESTIONS = [
   { id: 'childhood_district', label: "Dans quel quartier avez-vous grandi ?" },
   { id: 'first_teacher', label: 'Quel était le prénom de votre premier enseignant ?' },
 ];
+const SIGNUP_URL = 'https://www.parispromax.com/?auth=register';
 
 function normalizeBirthDateInput(raw) {
   const value = String(raw || '').trim();
@@ -40,12 +42,10 @@ function normalizeBirthDateInput(raw) {
 
 // Connexion par numéro + MOT DE PASSE (aucun SMS ni email). Le reset de mot de
 // passe est autonome : un CODE DE RÉCUPÉRATION est remis à l'inscription.
-export default function LoginScreen({ route }) {
+export default function LoginScreen() {
   const { login, adoptSession } = useAuth();
   const { completeOnboarding } = useSettings();
-  const [mode, setMode] = useState(
-    route?.params?.initialMode === 'register' ? 'register' : 'login'
-  ); // 'login' | 'register' | 'reset'
+  const [mode, setMode] = useState('login'); // 'login' | 'reset'
   const [countries, setCountries] = useState(DEFAULT_PAYMENT_COUNTRIES);
   const [countryCode, setCountryCode] = useState('bf');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -62,7 +62,6 @@ export default function LoginScreen({ route }) {
   const [questionPickerOpen, setQuestionPickerOpen] = useState(false);
   const [recoveryAnswer, setRecoveryAnswer] = useState('');
   const [resetMethod, setResetMethod] = useState('code'); // code | question | support
-  const [accountQuestion, setAccountQuestion] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
@@ -95,16 +94,6 @@ export default function LoginScreen({ route }) {
         ));
       })
       .catch(() => {});
-    api.recoveryQuestions()
-      .then((data) => {
-        const list = Array.isArray(data?.questions) ? data.questions : [];
-        if (cancelled || !list.length) return;
-        setRecoveryQuestions(list);
-        setRecoveryQuestion((current) => (
-          list.some((question) => question.id === current) ? current : list[0].id
-        ));
-      })
-      .catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
@@ -134,18 +123,8 @@ export default function LoginScreen({ route }) {
       }
     }
     if (isReset && resetMethod === 'code' && resetCode.replace(/[^a-zA-Z0-9]/g, '').length < 8) {
-      setError('Entrez votre code de récupération (8 caractères).');
+      setError('Entrez votre code de récupération (8 ou 12 caractères).');
       return;
-    }
-    if (isReset && resetMethod === 'question') {
-      if (!accountQuestion) {
-        setError("Chargez d'abord la question associée au compte.");
-        return;
-      }
-      if (!normalizedBirthDate || recoveryAnswer.trim().length < 2) {
-        setError('Date de naissance et réponse secrète requises.');
-        return;
-      }
     }
     if (password.length < 8) {
       setError('Mot de passe : 8 caractères minimum.');
@@ -171,14 +150,7 @@ export default function LoginScreen({ route }) {
         await completeOnboarding();
         setRecovery({ code: res.recoveryCode, next: 'login' });
       } else if (isReset) {
-        const res = resetMethod === 'question'
-          ? await api.resetPasswordSecurity(
-            normalizedPhone,
-            normalizedBirthDate,
-            recoveryAnswer,
-            password
-          )
-          : await api.resetPassword(normalizedPhone, resetCode, password);
+        const res = await api.resetPassword(normalizedPhone, resetCode, password);
         setRecovery({ code: res.recoveryCode, next: 'session', session: res });
       } else {
         await login(normalizedPhone, password, countryCode);
@@ -190,11 +162,9 @@ export default function LoginScreen({ route }) {
         setError('Ce numéro a déjà un compte. Passez sur « Connexion ».');
       } else if (e.status === 401) {
         setError(
-          isReset && resetMethod === 'question'
-            ? 'Date de naissance ou réponse secrète incorrecte.'
-            : isReset
-              ? 'Numéro ou code de récupération incorrect.'
-              : 'Numéro ou mot de passe incorrect.'
+          isReset
+            ? 'Numéro ou code de récupération incorrect.'
+            : 'Numéro ou mot de passe incorrect.'
         );
       } else if (e.status === 429) {
         setError('Trop de tentatives. Réessayez dans quelques minutes.');
@@ -221,25 +191,6 @@ export default function LoginScreen({ route }) {
       return;
     }
     if (session) await adoptSession(session);
-  };
-
-  const loadAccountQuestion = async () => {
-    const normalizedPhone = fullPhone();
-    if (!normalizedPhone) {
-      setError("Entrez d'abord le numéro de téléphone du compte.");
-      return;
-    }
-    setBusy(true);
-    try {
-      setError('');
-      const result = await api.recoveryQuestion(normalizedPhone);
-      setAccountQuestion(result.question || '');
-    } catch (e) {
-      setAccountQuestion('');
-      setError(e.message || "Question de récupération indisponible pour ce compte.");
-    } finally {
-      setBusy(false);
-    }
   };
 
   const submitSupportRequest = async () => {
@@ -354,7 +305,7 @@ export default function LoginScreen({ route }) {
         >
         <View style={styles.logoWrap}>
           <Image
-            source={require('../../assets/logo-emblem.png')}
+            source={require('../../assets/logo-emblem-app.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -368,19 +319,16 @@ export default function LoginScreen({ route }) {
             <Text style={styles.resetTitle}>🔑 Réinitialiser le mot de passe</Text>
           ) : (
             <View style={styles.tabs}>
-              {[
-                { key: 'login', label: 'Connexion' },
-                { key: 'register', label: 'Créer un compte' },
-              ].map((t) => (
-                <Pressable
-                  key={t.key}
-                  style={[styles.tab, mode === t.key && styles.tabActive]}
-                  onPress={() => { setMode(t.key); setError(''); }}
-                  disabled={busy}
-                >
-                  <Text style={[styles.tabText, mode === t.key && styles.tabTextActive]}>{t.label}</Text>
-                </Pressable>
-              ))}
+              <View style={[styles.tab, styles.tabActive]}>
+                <Text style={[styles.tabText, styles.tabTextActive]}>Connexion</Text>
+              </View>
+              <Pressable
+                style={styles.tab}
+                onPress={() => WebBrowser.openBrowserAsync(SIGNUP_URL)}
+                disabled={busy}
+              >
+                <Text style={styles.tabText}>Créer un compte</Text>
+              </Pressable>
             </View>
           )}
 
@@ -453,7 +401,6 @@ export default function LoginScreen({ route }) {
               <View style={styles.tabs}>
                 {[
                   { key: 'code', label: 'Code' },
-                  { key: 'question', label: 'Question' },
                   { key: 'support', label: 'Assistance' },
                 ].map((item) => (
                   <Pressable
@@ -463,7 +410,6 @@ export default function LoginScreen({ route }) {
                       setResetMethod(item.key);
                       setError('');
                       setNotice('');
-                      setAccountQuestion('');
                       setRecoveryAnswer('');
                     }}
                     disabled={busy}
@@ -482,61 +428,16 @@ export default function LoginScreen({ route }) {
                     <Ionicons name="key" size={18} color={COLORS.textMuted} />
                     <TextInput
                       style={[styles.input, { letterSpacing: 2 }]}
-                      placeholder="XXXX-XXXX"
+                      placeholder="XXXX-XXXX-XXXX"
                       placeholderTextColor={COLORS.textFaint}
                       autoCapitalize="characters"
                       autoCorrect={false}
                       value={resetCode}
                       onChangeText={setResetCode}
-                      maxLength={9}
+                      maxLength={14}
                       editable={!busy}
                     />
                   </View>
-                </>
-              )}
-
-              {resetMethod === 'question' && (
-                <>
-                  <Pressable
-                    style={styles.secondaryButton}
-                    onPress={loadAccountQuestion}
-                    disabled={busy}
-                  >
-                    <Ionicons name="help-circle-outline" size={18} color={COLORS.accent} />
-                    <Text style={styles.secondaryButtonText}>Afficher ma question secrète</Text>
-                  </Pressable>
-                  {!!accountQuestion && (
-                    <>
-                      <Text style={styles.questionCard}>{accountQuestion}</Text>
-                      <Text style={styles.label}>Votre réponse</Text>
-                      <View style={styles.inputRow}>
-                        <Ionicons name="shield-checkmark-outline" size={18} color={COLORS.textMuted} />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Réponse secrète"
-                          placeholderTextColor={COLORS.textFaint}
-                          value={recoveryAnswer}
-                          onChangeText={setRecoveryAnswer}
-                          maxLength={100}
-                          editable={!busy}
-                        />
-                      </View>
-                      <Text style={[styles.label, { marginTop: SPACING.md }]}>Date de naissance</Text>
-                      <View style={styles.inputRow}>
-                        <Ionicons name="calendar-outline" size={18} color={COLORS.textMuted} />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="JJ/MM/AAAA"
-                          placeholderTextColor={COLORS.textFaint}
-                          keyboardType="numbers-and-punctuation"
-                          value={birthDate}
-                          onChangeText={setBirthDate}
-                          maxLength={10}
-                          editable={!busy}
-                        />
-                      </View>
-                    </>
-                  )}
                 </>
               )}
 

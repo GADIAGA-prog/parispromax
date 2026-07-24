@@ -24,6 +24,19 @@ async function readinessCheck({ prisma, config, getProvider, revision, now = () 
 
   try {
     await prisma.$queryRaw`SELECT 1`;
+    // A database can accept connections while still missing a column from the
+    // deployed Prisma schema. Exercise the tables used by signup/login so
+    // readiness fails before a broken release receives traffic.
+    await prisma.user.findFirst({
+      select: {
+        id: true,
+        phone: true,
+        passwordHash: true,
+        recoveryCodeHash: true,
+        authVersion: true,
+      },
+    });
+    await prisma.recoveryRequest.findFirst({ select: { id: true, status: true } });
     return {
       statusCode: 200,
       body: {
@@ -31,6 +44,7 @@ async function readinessCheck({ prisma, config, getProvider, revision, now = () 
         service: 'parispromax-backend',
         revision: revision ? revision.slice(0, 7) : null,
         database: 'up',
+        schema: 'ready',
         paymentProvider: provider,
         paymentMode: mode,
         payments: configured ? 'configured' : config.allowMock ? 'mock' : 'unavailable',
@@ -44,6 +58,7 @@ async function readinessCheck({ prisma, config, getProvider, revision, now = () 
         ok: false,
         service: 'parispromax-backend',
         database: 'down',
+        schema: 'unavailable',
         time: now().toISOString(),
       },
     };
