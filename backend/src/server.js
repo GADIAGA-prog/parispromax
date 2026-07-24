@@ -130,6 +130,9 @@ app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
+  if (err?.type === 'entity.parse.failed' && err?.status === 400) {
+    return res.status(400).json({ error: 'Corps JSON invalide' });
+  }
   if (err?.code === 'CORS_NOT_ALLOWED') {
     return res.status(403).json({ error: 'Origine non autorisée' });
   }
