@@ -22,6 +22,10 @@ const { canonicalRedirectTarget } = require('./services/canonicalWeb');
 const { browserOriginAllowed } = require('./services/corsOrigins');
 const { livenessCheck, readinessCheck } = require('./services/healthCheck');
 const { isTransientDatabaseError } = require('./services/prismaErrors');
+const {
+  createCspNonce,
+  buildContentSecurityPolicy,
+} = require('./services/contentSecurityPolicy');
 
 const app = express();
 const publicDir = path.join(__dirname, '..', 'public');
@@ -35,15 +39,13 @@ app.disable('x-powered-by');
 
 // Minimal security headers (helmet-lite, no extra dependency).
 app.use((req, res, next) => {
+  const cspNonce = createCspNonce();
+  res.locals.cspNonce = cspNonce;
   res.set('X-Content-Type-Options', 'nosniff');
   res.set('X-Frame-Options', 'DENY');
   res.set('Referrer-Policy', 'no-referrer');
   res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-  res.set(
-    'Content-Security-Policy',
-    "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; " +
-      "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
-  );
+  res.set('Content-Security-Policy', buildContentSecurityPolicy(cspNonce));
   if (config.isProd) {
     res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
