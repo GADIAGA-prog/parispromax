@@ -16,17 +16,21 @@ test('les cinq opérateurs Burkina sont exposés avec le bon parcours OTP', () =
 
   assert.equal(yengapay.requiresOtp('bf', 'ORANGE'), true);
   assert.equal(yengapay.requiresOtp('bf', 'TELECEL'), true);
-  assert.equal(yengapay.requiresOtpRequest('MOOV'), false);
+  assert.equal(yengapay.requiresOtpRequest('MOOV'), true);
   assert.equal(yengapay.requiresOtpRequest('CORISM'), true);
   assert.equal(yengapay.requiresOtpRequest('SANKM'), true);
   assert.equal(yengapay.requiresOtpRequest('ORANGE'), false);
   assert.equal(yengapay.requiresOtpRequest('TELECEL'), false);
+  assert.equal(
+    yengapay.operatorDetailsForCountry('bf').find(({ code }) => code === 'MOOV')?.otpMode,
+    'server'
+  );
 });
 
 test('les canaux YengaPay documentés en Côte d’Ivoire sont proposés', () => {
   assert.deepEqual(yengapay.operatorsForCountry('ci'), ['ORANGE', 'MOOV', 'MTN']);
   assert.equal(yengapay.requiresOtp('ci', 'ORANGE'), true);
-  assert.equal(yengapay.requiresOtp('ci', 'MOOV'), false);
+  assert.equal(yengapay.requiresOtp('ci', 'MOOV'), true);
   assert.equal(yengapay.requiresOtp('ci', 'MTN'), false);
 });
 

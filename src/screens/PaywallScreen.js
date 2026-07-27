@@ -31,7 +31,7 @@ function yengaPaymentHelp(country, operator, amount) {
     return `Appuyez sur « Recevoir le code OTP ». ${op === 'CORISM' ? 'Coris Money' : 'Sank Money'} enverra ensuite le code par SMS au numéro indiqué.`;
   }
   if (op === 'MOOV') {
-    return 'Aucun OTP à saisir dans ParisPromax : validez la demande Moov Money reçue sur votre téléphone.';
+    return 'Appuyez sur « Recevoir le code OTP ». Moov Money enverra ensuite le code par SMS au numéro indiqué. Ne saisissez jamais votre code PIN secret.';
   }
   if (op === 'TELECEL') {
     return 'Générez votre code de paiement depuis le menu ou l’application Telecel Money, puis saisissez cet OTP ici. Ne saisissez jamais votre code PIN secret.';

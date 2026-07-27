@@ -496,8 +496,8 @@ router.get('/yengapay/operators', (req, res) => {
 });
 
 // POST /payments/yengapay/mobile (auth) — YengaPay direct Mobile Money flow.
-// Orange/Telecel use a customer-generated OTP. Coris/Sank ask YengaPay to send
-// the OTP first. Moov/MTN use a push confirmation. The app never receives or
+// Orange/Telecel use a customer-generated OTP. Moov/Coris/Sank ask YengaPay to
+// send the OTP first. MTN uses a push confirmation. The app never receives or
 // stores a Mobile Money PIN.
 router.post('/yengapay/mobile', requireAuth, paymentWriteLimit, async (req, res) => {
   let payment = null;

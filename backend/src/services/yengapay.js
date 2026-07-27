@@ -43,10 +43,10 @@ const OPERATOR_NAMES = {
 };
 
 // Current direct-payment guide:
-// - CORISM/SANKM: request the OTP from YengaPay, then call /pay with it.
+// - MOOV/CORISM/SANKM: request the OTP from YengaPay, then call /pay with it.
 // - ORANGE/TELECEL: the customer obtains the OTP, then /pay is called directly.
-// - MOOV/MTN: push validation on the customer's phone, no OTP field here.
-const SERVER_OTP_OPERATORS = new Set(['CORISM', 'SANKM']);
+// - MTN: push validation on the customer's phone, no OTP field here.
+const SERVER_OTP_OPERATORS = new Set(['MOOV', 'CORISM', 'SANKM']);
 const CUSTOMER_OTP_OPERATORS = new Set(['ORANGE', 'TELECEL']);
 
 function normalizeOperatorCode(operator) {
