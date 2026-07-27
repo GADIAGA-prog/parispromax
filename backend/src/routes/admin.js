@@ -292,7 +292,10 @@ router.post('/api/backfill-runners', async (_req, res) => {
 
 // HTML dashboard.
 router.get('/', async (_req, res) => {
-  res.type('html').send(DASHBOARD_HTML);
+  res
+    .set('Cache-Control', 'no-store')
+    .type('html')
+    .send(DASHBOARD_HTML.replace('{{CSP_NONCE}}', res.locals.cspNonce || ''));
 });
 
 const PICK_COUNTRY_OPTIONS = pickCountryCatalog()
@@ -337,15 +340,15 @@ const DASHBOARD_HTML = `<!doctype html>
   <div class="cards" id="stats"></div>
   <div class="filters">
     <label>Filtrer : </label>
-    <select id="statusFilter" onchange="load()">
+    <select id="statusFilter">
       <option value="">Tous</option>
       <option value="success">Réussis</option>
       <option value="pending">En attente</option>
       <option value="failed">Échoués</option>
     </select>
-    <button onclick="load()">↻ Rafraîchir</button>
-    <button id="scrapeBtn" onclick="scrape()" style="background:#10b981;color:#06251c;font-weight:800">🏇 Scraper les courses du jour</button>
-    <button onclick="ingest()">⬇ Charger la démo</button>
+    <button id="refreshBtn">↻ Rafraîchir</button>
+    <button id="scrapeBtn" style="background:#10b981;color:#06251c;font-weight:800">🏇 Scraper les courses du jour</button>
+    <button id="ingestBtn">⬇ Charger la démo</button>
     <span id="ingestMsg" class="muted"></span>
   </div>
   <div class="card" style="margin-bottom:24px">
@@ -357,7 +360,7 @@ const DASHBOARD_HTML = `<!doctype html>
       <input id="supportPhone" autocomplete="off" placeholder="Téléphone, ex. +22670000000" style="width:230px"/>
       <input id="supportPassword" type="password" autocomplete="new-password" placeholder="Mot de passe temporaire (12 car. min.)" style="width:280px"/>
       <input id="supportRequestId" type="hidden"/>
-      <button onclick="resetSupportPassword()" style="background:#10b981;color:#06251c;font-weight:800">Réinitialiser</button>
+      <button id="resetSupportBtn" style="background:#10b981;color:#06251c;font-weight:800">Réinitialiser</button>
     </div>
     <div id="supportMsg" class="muted" style="margin:10px 0 0"></div>
     <div id="recoveryRequests" style="margin-top:14px"></div>
@@ -371,7 +374,7 @@ const DASHBOARD_HTML = `<!doctype html>
       <select id="npRace" style="max-width:340px"><option>Chargement des courses…</option></select>
       <input id="npBet" placeholder="Pari (ex. Quarté)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:130px"/>
       <input id="npJournal" placeholder="URL du journal (PDF)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:260px"/>
-      <button onclick="savePick()" style="background:#10b981;color:#06251c;font-weight:800">💾 Enregistrer</button>
+      <button id="savePickBtn" style="background:#10b981;color:#06251c;font-weight:800">💾 Enregistrer</button>
     </div>
     <div id="npList" class="muted" style="margin-top:10px"></div>
   </div>
@@ -380,40 +383,74 @@ const DASHBOARD_HTML = `<!doctype html>
     <tbody id="rows"><tr><td colspan="6">Chargement…</td></tr></tbody>
   </table>
 </div>
-<script>
+<script nonce="{{CSP_NONCE}}">
   document.getElementById('now').textContent = new Date().toLocaleString('fr-FR');
   function fmt(n){return Number(n).toLocaleString('fr-FR')}
   function esc(v){return String(v == null ? '' : v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  async function fetchJson(url, options = {}){
+    const controller = new AbortController();
+    const {timeoutMs = 15000, ...fetchOptions} = options;
+    const timeout = setTimeout(()=>controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, {...fetchOptions, signal: controller.signal});
+      const data = await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error || ('Erreur HTTP '+response.status));
+      return data;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Le serveur met trop de temps à répondre. Réessayez.');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
   let recoveryRequestById = {};
+  let loadInFlight = false;
   async function load(){
+    if (loadInFlight) return;
+    loadInFlight = true;
     const s = document.getElementById('statusFilter').value;
-    const [stats, pay] = await Promise.all([
-      fetch('/admin/api/stats').then(r=>r.json()),
-      fetch('/admin/api/payments'+(s?('?status='+s):'')).then(r=>r.json())
-    ]);
-    document.getElementById('stats').innerHTML = [
-      ['Revenu (XOF)', fmt(stats.revenue), 'accent'],
-      ['Paiements réussis', stats.success, 'accent'],
-      ['En attente', stats.pending, 'gold'],
-      ['Échoués', stats.failed, 'danger'],
-      ['Abonnés actifs', stats.activeSubs, ''],
-      ['Utilisateurs', stats.users, ''],
-    ].map(([l,v,c])=>'<div class="card"><div class="label">'+l+'</div><div class="value '+c+'">'+v+'</div></div>').join('');
-    document.getElementById('rows').innerHTML = (pay.payments||[]).map(p=>
-      '<tr><td>'+new Date(p.createdAt).toLocaleString('fr-FR')+'</td>'+
-      '<td>'+(p.user?p.user.phone:'—')+'</td>'+
-      '<td><code>'+p.transactionId+'</code></td>'+
-      '<td>'+fmt(p.amount)+' '+p.currency+'</td>'+
-      '<td>'+(p.method||'—')+'</td>'+
-      '<td><span class="badge s-'+p.status+'">'+p.status+'</span></td></tr>'
-    ).join('') || '<tr><td colspan="6">Aucun paiement</td></tr>';
+    try {
+      const [statsResult, payResult] = await Promise.allSettled([
+        fetchJson('/admin/api/stats'),
+        fetchJson('/admin/api/payments'+(s?('?status='+encodeURIComponent(s)):''))
+      ]);
+      if (statsResult.status === 'fulfilled') {
+        const stats = statsResult.value;
+        document.getElementById('stats').innerHTML = [
+          ['Revenu (XOF)', fmt(stats.revenue), 'accent'],
+          ['Paiements réussis', stats.success, 'accent'],
+          ['En attente', stats.pending, 'gold'],
+          ['Échoués', stats.failed, 'danger'],
+          ['Abonnés actifs', stats.activeSubs, ''],
+          ['Utilisateurs', stats.users, ''],
+        ].map(([l,v,c])=>'<div class="card"><div class="label">'+l+'</div><div class="value '+c+'">'+v+'</div></div>').join('');
+      } else {
+        document.getElementById('stats').innerHTML = '<div class="card danger">Statistiques indisponibles : '+esc(statsResult.reason.message)+'</div>';
+      }
+      if (payResult.status === 'fulfilled') {
+        const pay = payResult.value;
+        document.getElementById('rows').innerHTML = (pay.payments||[]).map(p=>
+          '<tr><td>'+esc(new Date(p.createdAt).toLocaleString('fr-FR'))+'</td>'+
+          '<td>'+esc(p.user?p.user.phone:'—')+'</td>'+
+          '<td><code>'+esc(p.transactionId)+'</code></td>'+
+          '<td>'+esc(fmt(p.amount))+' '+esc(p.currency)+'</td>'+
+          '<td>'+esc(p.method||'—')+'</td>'+
+          '<td><span class="badge s-'+esc(p.status)+'">'+esc(p.status)+'</span></td></tr>'
+        ).join('') || '<tr><td colspan="6">Aucun paiement</td></tr>';
+      } else {
+        document.getElementById('rows').innerHTML = '<tr><td colspan="6" class="danger">Paiements indisponibles : '+esc(payResult.reason.message)+'</td></tr>';
+      }
+    } finally {
+      loadInFlight = false;
+    }
   }
   async function ingest(){
     const msg = document.getElementById('ingestMsg');
     msg.textContent = '⏳ Ingestion démo…';
     try {
-      const r = await fetch('/admin/api/ingest', { method: 'POST' });
-      const d = await r.json();
+      const d = await fetchJson('/admin/api/ingest', { method: 'POST', timeoutMs: 120000 });
       msg.textContent = d.ok ? ('✅ '+d.count+' courses (démo) ingérées') : ('❌ '+(d.error||'erreur'));
     } catch(e){ msg.textContent = '❌ '+e.message; }
     load();
@@ -425,8 +462,7 @@ const DASHBOARD_HTML = `<!doctype html>
     btn.disabled = true;
     msg.textContent = '⏳ Scraping des vraies courses du jour… (peut prendre 1-2 min)';
     try {
-      const r = await fetch('/admin/api/scrape', { method: 'POST' });
-      const d = await r.json();
+      const d = await fetchJson('/admin/api/scrape', { method: 'POST', timeoutMs: 120000 });
       msg.textContent = d.ok ? ('✅ '+d.count+' vraies courses ('+d.hippodromes+' hippodromes) le '+d.date) : ('❌ '+(d.error||'erreur'));
     } catch(e){ msg.textContent = '❌ '+e.message; }
     finally { btn.disabled = false; }
@@ -444,12 +480,11 @@ const DASHBOARD_HTML = `<!doctype html>
     if (!confirm('Identité vérifiée par référence de paiement pour '+phone+' ?')) return;
     msg.textContent = '⏳ Réinitialisation…';
     try {
-      const r = await fetch('/admin/api/reset-password', {
+      const d = await fetchJson('/admin/api/reset-password', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({phone, newPassword, requestId}),
       });
-      const d = await r.json();
       if (!d.ok) throw new Error(d.error || 'Erreur');
       msg.textContent = '✅ Compte réinitialisé. Nouveau code de récupération : '+d.recoveryCode+' — transmettez-le séparément et demandez au client de le conserver.';
       document.getElementById('supportPassword').value = '';
@@ -468,7 +503,7 @@ const DASHBOARD_HTML = `<!doctype html>
   }
   async function loadRecoveryRequests(){
     try {
-      const data = await fetch('/admin/api/recovery-requests').then(r=>r.json());
+      const data = await fetchJson('/admin/api/recovery-requests');
       const items = data.requests || [];
       recoveryRequestById = Object.fromEntries(items.map(item=>[item.id,item]));
       document.getElementById('recoveryRequests').innerHTML = items.length ? items.map(item=>{
@@ -480,7 +515,7 @@ const DASHBOARD_HTML = `<!doctype html>
           ', '+esc(item.claimedBirthDate)+', '+esc(item.claimedBirthPlace)+' · Paiement : '+esc(item.paymentReference||'non fourni')+'</span><br/>'+
           '<span class="muted" style="margin:0">Compte : '+esc(stored.firstName||'—')+' '+esc(stored.lastName||'—')+
           ', '+esc(stored.birthDate||'—')+', '+esc(stored.birthPlace||'—')+'</span> '+
-          '<button onclick="selectRecoveryRequest(\''+item.id+'\')">Traiter</button></div>';
+          '<button class="recovery-select" data-recovery-id="'+esc(item.id)+'">Traiter</button></div>';
       }).join('') : '<span class="muted" style="margin:0">Aucune demande en attente.</span>';
     } catch(e) {
       document.getElementById('recoveryRequests').textContent = 'Impossible de charger les demandes.';
@@ -488,10 +523,14 @@ const DASHBOARD_HTML = `<!doctype html>
   }
   const FLAGS = ${JSON.stringify(PICK_FLAGS)};
   async function loadPicks(){
+    const sel = document.getElementById('npRace');
     try {
-      // Courses du jour pour le sélecteur.
-      const d = await fetch('/races').then(r=>r.json());
-      const sel = document.getElementById('npRace');
+      const [racesResult, picksResult] = await Promise.allSettled([
+        fetchJson('/races'),
+        fetchJson('/admin/api/national-picks')
+      ]);
+      if (racesResult.status === 'rejected') throw racesResult.reason;
+      const d = racesResult.value;
       sel.innerHTML = '';
       (d.racetracks||[]).forEach(t=>(t.races||[]).forEach(r=>{
         const o = document.createElement('option');
@@ -499,12 +538,18 @@ const DASHBOARD_HTML = `<!doctype html>
         o.textContent = t.name+' '+(r.number||'')+' — '+r.name+(r.time?(' ('+r.time+')'):'');
         sel.appendChild(o);
       }));
-      // Picks déjà enregistrés.
-      const p = await fetch('/admin/api/national-picks').then(r=>r.json());
+      if (!sel.options.length) {
+        sel.innerHTML = '<option value="">Aucune course disponible</option>';
+      }
+      if (picksResult.status === 'rejected') throw picksResult.reason;
+      const p = picksResult.value;
       document.getElementById('npList').innerHTML = (p.picks||[]).length
-        ? p.picks.map(x=>(FLAGS[x.country]||x.country)+' '+x.country.toUpperCase()+' → <code>'+x.externalId+'</code> '+(x.betType||'')+(x.journalUrl?' · <a href="'+x.journalUrl+'" target="_blank" style="color:#10b981">journal</a>':'')).join('  ·  ')
+        ? p.picks.map(x=>esc(FLAGS[x.country]||x.country)+' '+esc(x.country.toUpperCase())+' → <code>'+esc(x.externalId)+'</code> '+esc(x.betType||'')+(x.journalUrl?' · <a href="'+esc(x.journalUrl)+'" target="_blank" rel="noopener" style="color:#10b981">journal</a>':'')).join('  ·  ')
         : 'Aucune course désignée pour aujourd\\'hui.';
-    } catch(e) { /* silencieux */ }
+    } catch(e) {
+      sel.innerHTML = '<option value="">Chargement impossible</option>';
+      document.getElementById('npList').textContent = e.message;
+    }
   }
   async function savePick(){
     const body = {
@@ -513,11 +558,24 @@ const DASHBOARD_HTML = `<!doctype html>
       betType: document.getElementById('npBet').value,
       journalUrl: document.getElementById('npJournal').value,
     };
-    const r = await fetch('/admin/api/national-pick', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const d = await r.json();
-    alert(d.ok ? '✅ Course du jour enregistrée' : ('❌ '+(d.error||'erreur')));
-    loadPicks();
+    try {
+      const d = await fetchJson('/admin/api/national-pick', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      alert(d.ok ? '✅ Course du jour enregistrée' : ('❌ '+(d.error||'erreur')));
+      loadPicks();
+    } catch(e) {
+      alert('❌ '+e.message);
+    }
   }
+  document.getElementById('statusFilter').addEventListener('change', load);
+  document.getElementById('refreshBtn').addEventListener('click', load);
+  document.getElementById('scrapeBtn').addEventListener('click', scrape);
+  document.getElementById('ingestBtn').addEventListener('click', ingest);
+  document.getElementById('resetSupportBtn').addEventListener('click', resetSupportPassword);
+  document.getElementById('savePickBtn').addEventListener('click', savePick);
+  document.getElementById('recoveryRequests').addEventListener('click', event=>{
+    const button = event.target.closest('.recovery-select');
+    if (button) selectRecoveryRequest(button.dataset.recoveryId);
+  });
   load();
   loadPicks();
   loadRecoveryRequests();
