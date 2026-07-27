@@ -72,6 +72,7 @@ a { color: inherit; }
 .mobile-nav { position: fixed; z-index: 25; top: 76px; inset-inline: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel-solid); box-shadow: var(--shadow); }
 .mobile-nav a, .mobile-nav button { display: block; width: 100%; padding: 12px; border: 0; color: var(--muted); background: transparent; text-align: left; text-decoration: none; cursor: pointer; }
 .mobile-nav button { color: var(--green); font-weight: 850; }
+.mobile-nav .mobile-signup-cta { margin-bottom: 6px; color: #03261b; border: 1px solid rgba(45, 226, 160, .55); border-radius: 11px; background: linear-gradient(135deg, #38eaae, #20cc91); text-align: center; box-shadow: 0 10px 24px rgba(45, 226, 160, .14); }
 .mobile-member-actions { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; margin-bottom:6px; padding-bottom:10px; border-bottom:1px solid var(--line); }
 .mobile-member-actions button { border:1px solid rgba(45,226,160,.2); border-radius:11px; background:rgba(45,226,160,.05); }
 .mobile-member-actions .mobile-notification-button { position:relative; width:auto; display:flex; align-items:center; justify-content:center; gap:7px; color:#c8d7e8; border-color:rgba(54,163,255,.24); background:rgba(54,163,255,.06); }
