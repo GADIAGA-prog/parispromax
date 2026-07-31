@@ -166,6 +166,20 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <View>
+            <View style={styles.raceVisualRow}>
+              <View style={styles.raceVisualCard}>
+                <Image source={require('../../assets/race-flat.jpg')} style={styles.raceVisualImage} />
+                <View style={styles.raceVisualShade}>
+                  <Text style={styles.raceVisualLabel}>COURSES DE PLAT</Text>
+                </View>
+              </View>
+              <View style={styles.raceVisualCard}>
+                <Image source={require('../../assets/race-harness.jpg')} style={styles.raceVisualImage} />
+                <View style={styles.raceVisualShade}>
+                  <Text style={styles.raceVisualLabel}>TROT ATTELÉ</Text>
+                </View>
+              </View>
+            </View>
             <View style={styles.sectionLabelRow}>
               <View>
                 <Text style={styles.sectionKicker}>JEU NATIONAL DU JOUR</Text>
@@ -339,4 +353,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
   },
   emptyText: { color: COLORS.textMuted, textAlign: 'center', fontSize: FONT.sm, lineHeight: 20 },
+  raceVisualRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  },
+  raceVisualCard: {
+    flex: 1,
+    height: 126,
+    overflow: 'hidden',
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+  },
+  raceVisualImage: { width: '100%', height: '100%' },
+  raceVisualShade: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    left: 0,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 9,
+    backgroundColor: 'rgba(6, 37, 28, 0.72)',
+  },
+  raceVisualLabel: { color: COLORS.white, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
 });

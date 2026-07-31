@@ -115,7 +115,7 @@ export default function QuintePlusScreen({ navigation }) {
         {/* Hero combination */}
         <LockCard locked={isLocked} onUnlockPress={goPaywall} label="Combinaison Quinté+ verrouillée">
           <View style={styles.hero}>
-            <Text style={styles.heroLabel}>🏆 Combinaison IA recommandée</Text>
+            <Text style={styles.heroLabel}>Combinaison recommandée</Text>
             <View style={styles.comboRow}>
               {selection.map((h, i) => (
                 <React.Fragment key={h.number}>
@@ -131,7 +131,7 @@ export default function QuintePlusScreen({ navigation }) {
               <View style={[styles.confFill, { width: `${avgScore}%` }]} />
             </View>
             <Text style={styles.confText}>
-              Indice de confiance IA : {avgScore}/100 · {confidenceLabel(avgScore)}
+              Indice de confiance : {avgScore}/100 · {confidenceLabel(avgScore)}
             </Text>
           </View>
         </LockCard>

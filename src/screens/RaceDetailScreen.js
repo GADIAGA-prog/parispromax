@@ -120,11 +120,11 @@ export default function RaceDetailScreen({ route, navigation }) {
         ) : null}
 
         {/* AI prediction summary — locked behind paywall when trial expired */}
-        <Text style={styles.sectionTitle}>🤖 Pronostics IA</Text>
+        <Text style={styles.sectionTitle}>Pronostics ParisPromax</Text>
         <LockCard
           locked={isLocked}
           onUnlockPress={goPaywall}
-          label="Pronostics IA verrouillés"
+          label="Pronostics détaillés verrouillés"
         >
           <RaceInsightsCard race={shown} advanced={isSmart} game={nationalGame} />
         </LockCard>
@@ -139,7 +139,7 @@ export default function RaceDetailScreen({ route, navigation }) {
 
         {isLocked && (
           <Text style={styles.lockedHint}>
-            🔒 Badges IA, scores et chronos masqués — abonnez-vous pour tout voir.
+            Indices, profils et chronos masqués — abonnez-vous pour tout voir.
           </Text>
         )}
       </ScrollView>

@@ -56,7 +56,7 @@ export default function HorseCard({ horse, showAI = true }) {
           <Text style={styles.odds}>{horse.odds != null ? horse.odds.toFixed(1) : '—'}</Text>
           {showAI && horse.aiScore != null && (
             <View style={styles.scorePill}>
-              <Ionicons name="sparkles" size={11} color={COLORS.accent} />
+              <Ionicons name="speedometer-outline" size={11} color={COLORS.accent} />
               <Text style={styles.scoreText}>{Math.round(horse.aiScore)}</Text>
             </View>
           )}
@@ -65,7 +65,7 @@ export default function HorseCard({ horse, showAI = true }) {
 
       {showAI && horse.aiScore != null && (
         <Text style={styles.confidence}>
-          IA : {confidenceLabel(horse.aiScore)}
+          Indice : {confidenceLabel(horse.aiScore)}
           {horse.probaGagnant != null ? `   ·   Gagnant ${Math.round(horse.probaGagnant * 100)}%` : ''}
           {horse.probaPodium != null ? `   ·   Podium ${Math.round(horse.probaPodium * 100)}%` : ''}
         </Text>

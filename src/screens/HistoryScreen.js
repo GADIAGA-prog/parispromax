@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
@@ -67,12 +67,19 @@ export default function HistoryScreen() {
         </Pressable>
       </View>
 
+      <View style={styles.resultsVisual}>
+        <Image source={require('../../assets/race-finish.jpg')} style={styles.resultsVisualImage} />
+        <View style={styles.resultsVisualShade}>
+          <Text style={styles.resultsVisualLabel}>ARRIVÉES OFFICIELLES</Text>
+        </View>
+      </View>
+
       {/* Real success-rate banner */}
       <View style={styles.rateBanner}>
         <Ionicons name="trending-up" size={20} color="#06251c" />
         {stat && stat.rate != null ? (
           <Text style={styles.rateText}>
-            Taux de réussite IA : {stat.rate}% ({stat.sampleSize} courses)
+            Taux de réussite : {stat.rate}% ({stat.sampleSize} courses)
           </Text>
         ) : (
           <Text style={styles.rateText}>Taux de réussite : en cours de mesure</Text>
@@ -111,7 +118,7 @@ export default function HistoryScreen() {
                   <Text style={styles.meta}>{item.track} · {item.date}</Text>
                 </View>
                 {item.aiHit ? (
-                  <View style={styles.win}><Text style={styles.winText}>✅ PRONO IA GAGNANT</Text></View>
+                  <View style={styles.win}><Text style={styles.winText}>PRONOSTIC PLACÉ</Text></View>
                 ) : (
                   <View style={styles.miss}><Text style={styles.missText}>Non placé</Text></View>
                 )}
@@ -120,7 +127,7 @@ export default function HistoryScreen() {
               {/* Our AI prediction */}
               {predictions.length > 0 && (
                 <View style={styles.line}>
-                  <Text style={styles.lineLabel}>🤖 Pronostic IA</Text>
+                  <Text style={styles.lineLabel}>Pronostic</Text>
                   <View style={styles.chips}>
                     {predictions.map((p, index) => {
                       const hit = podium.includes(p.number);
@@ -199,4 +206,28 @@ const styles = StyleSheet.create({
   chipTextHit: { color: COLORS.success },
   chipWin: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   chipTextWin: { color: '#06251c' },
+  resultsVisual: {
+    height: 150,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    overflow: 'hidden',
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+  },
+  resultsVisualImage: { width: '100%', height: '100%' },
+  resultsVisualShade: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    left: 0,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(6, 37, 28, 0.72)',
+  },
+  resultsVisualLabel: {
+    color: COLORS.white,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
 });

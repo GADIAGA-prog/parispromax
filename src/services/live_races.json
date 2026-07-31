@@ -125,10 +125,10 @@
     }
   ],
   "history": [
-    { "id": "h1", "date": "2026-06-29", "track": "Vincennes", "race": "Quinté+ Prix d'Été", "winners": [4, 7, 1, 9, 3], "aiHit": true, "comment": "Combinaison IA validée — 4 chevaux sur 5 dans le bon ordre." },
-    { "id": "h2", "date": "2026-06-28", "track": "ParisLongchamp", "race": "Prix Maurice de Gheest", "winners": [2, 5, 8], "aiHit": true, "comment": "TOP PRONO IA gagnant à 4.5." },
-    { "id": "h3", "date": "2026-06-27", "track": "Chantilly", "race": "Prix de Diane", "winners": [6, 1, 3], "aiHit": false, "comment": "Favori IA 3ème — Value Bet non placé." },
-    { "id": "h4", "date": "2026-06-26", "track": "Deauville", "race": "Prix Rothschild", "winners": [3, 2, 7, 5], "aiHit": true, "comment": "Value Bet IA gagnant à 9.0 — gros rapport." },
+    { "id": "h1", "date": "2026-06-29", "track": "Vincennes", "race": "Quinté+ Prix d'Été", "winners": [4, 7, 1, 9, 3], "aiHit": true, "comment": "Combinaison validée — 4 chevaux sur 5 dans le bon ordre." },
+    { "id": "h2", "date": "2026-06-28", "track": "ParisLongchamp", "race": "Prix Maurice de Gheest", "winners": [2, 5, 8], "aiHit": true, "comment": "Pronostic gagnant à 4.5." },
+    { "id": "h3", "date": "2026-06-27", "track": "Chantilly", "race": "Prix de Diane", "winners": [6, 1, 3], "aiHit": false, "comment": "Favori 3ème — profil de valeur non placé." },
+    { "id": "h4", "date": "2026-06-26", "track": "Deauville", "race": "Prix Rothschild", "winners": [3, 2, 7, 5], "aiHit": true, "comment": "Profil de valeur gagnant à 9.0 — gros rapport." },
     { "id": "h5", "date": "2026-06-25", "track": "Vincennes", "race": "Quinté+ Prix de Cornulier", "winners": [1, 4, 2, 6, 8], "aiHit": true, "comment": "Record Chrono confirmé — TOP PRONO 1er." }
   ]
 }

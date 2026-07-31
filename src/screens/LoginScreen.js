@@ -310,7 +310,7 @@ export default function LoginScreen() {
             resizeMode="contain"
           />
           <Text style={styles.brand}>PARISPROMAX</Text>
-          <Text style={styles.tagline}>Pronostics IA · Courses PMU · Quinté+</Text>
+          <Text style={styles.tagline}>Pronostics hippiques · Courses PMU · Quinté+</Text>
         </View>
 
         <View style={styles.card}>

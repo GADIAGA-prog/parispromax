@@ -708,3 +708,64 @@ footer { color: #d7e1e6; background: #102734; }
   .course-type-nav a, .result-tabs button { flex: 1; padding-inline: 8px; }
   .contact-referral-actions { display: grid; grid-template-columns: 1fr 1fr; }
 }
+
+.race-showcase {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 0;
+  padding-bottom: 30px;
+}
+.race-showcase-card,
+.results-race-visual {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #d8e1e7;
+  border-radius: 22px;
+  background: #102734;
+  box-shadow: var(--shadow);
+}
+.race-showcase-card {
+  min-height: 250px;
+  color: #fff;
+  text-decoration: none;
+}
+.race-showcase-card::after,
+.results-race-visual::after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  background: linear-gradient(to bottom, transparent, rgba(8, 25, 34, .88));
+  pointer-events: none;
+}
+.race-showcase-card img,
+.results-race-visual img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform .35s ease;
+}
+.race-showcase-card:hover img { transform: scale(1.025); }
+.race-showcase-card > span,
+.results-race-visual figcaption {
+  position: absolute;
+  z-index: 1;
+  right: 22px;
+  bottom: 20px;
+  left: 22px;
+}
+.race-showcase-card small,
+.race-showcase-card strong { display: block; }
+.race-showcase-card small { color: #bcd6ca; font-size: 9px; font-weight: 900; letter-spacing: 1.4px; }
+.race-showcase-card strong { margin-top: 4px; font-size: 25px; }
+.results-race-visual { height: clamp(230px, 32vw, 390px); margin-bottom: 28px; }
+.results-race-visual figcaption { color: #fff; font-size: 14px; font-weight: 800; }
+
+@media (max-width: 760px) {
+  .race-showcase { grid-template-columns: 1fr; gap: 12px; padding-bottom: 18px; }
+  .race-showcase-card { min-height: 190px; border-radius: 17px; }
+  .race-showcase-card strong { font-size: 21px; }
+  .results-race-visual { height: 210px; margin-bottom: 22px; border-radius: 17px; }
+}

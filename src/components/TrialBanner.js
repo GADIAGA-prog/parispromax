@@ -25,7 +25,7 @@ export default function TrialBanner() {
   return (
     <View style={[styles.banner, styles.cta]}>
       <Text style={styles.text}>
-        🔒 Abonnez-vous pour débloquer tous les pronostics IA
+        Abonnez-vous pour débloquer tous les pronostics détaillés
       </Text>
     </View>
   );

@@ -1088,7 +1088,7 @@ function pickComment(role, pick) {
   const score = Number(pick.aiScore);
   const podium = Number(pick.probaPodium);
   const facts = [];
-  if (Number.isFinite(score) && score > 0) facts.push(`indice IA ${Math.round(score)}/100`);
+  if (Number.isFinite(score) && score > 0) facts.push(`indice de forme ${Math.round(score)}/100`);
   if (Number.isFinite(podium) && podium > 0) facts.push(`${Math.round(podium * 100)} % estimés pour le podium`);
   if (pick.odds != null && Number.isFinite(Number(pick.odds))) facts.push(`cote ${Number(pick.odds).toLocaleString('fr-FR')}`);
   if (pick.form) facts.push(`forme ${pick.form}`);
@@ -1133,7 +1133,7 @@ function predictionMarkup(prediction, error, detail) {
     const tip = enrich(selected.find((pick) => pick.valueBet) || groups.regret || selected[4]);
     const finalLabels = ['1er podium', '2e podium', '3e podium', 'Complément 1', 'Complément 2'];
     return `<section class="prediction-block">
-      <div class="prediction-title"><div><small>ANALYSE COMMENTÉE</small><h4>Pronostic ParisPromax</h4></div><span>${prediction.source === 'ltr' ? 'MODÈLE IA' : 'ANALYSE IA'}</span></div>
+      <div class="prediction-title"><div><small>ANALYSE COMMENTÉE</small><h4>Pronostic ParisPromax</h4></div><span>${prediction.source === 'ltr' ? 'MODÈLE DE FORME' : 'DONNÉES DE COURSE'}</span></div>
       <div class="final-verdict"><div><span>PRONOSTIC FINAL</span><h5>Podium + 2</h5><p>Une synthèse resserrée à cinq chevaux, classés par ordre de préférence.</p></div><div class="final-five">
         ${selected.map((pick, index) => `<div class="final-pick ${index < 3 ? 'podium' : 'complement'}"><small>${finalLabels[index]}</small><b>${escapeHtml(pick.number)}</b><span>${escapeHtml(pick.name)}</span></div>`).join('')}
       </div></div>

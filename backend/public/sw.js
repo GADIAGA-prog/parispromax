@@ -1,12 +1,15 @@
-const CACHE_NAME = 'parispromax-shell-20260731-6';
+const CACHE_NAME = 'parispromax-shell-20260731-7';
 const CORE_ASSETS = [
   '/',
   '/manifest.webmanifest',
-  '/styles.css?v=20260731-6',
-  '/app.js?v=20260731-6',
+  '/styles.css?v=20260731-7',
+  '/app.js?v=20260731-7',
   '/assets/logo-emblem-128.png',
   '/assets/pwa-icon-192.png',
   '/assets/pwa-icon-512.png',
+  '/assets/race-flat.jpg',
+  '/assets/race-harness.jpg',
+  '/assets/race-finish.jpg',
 ];
 
 self.addEventListener('install', (event) => {

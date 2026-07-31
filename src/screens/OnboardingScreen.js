@@ -15,9 +15,9 @@ import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 const SLIDES = [
   {
-    icon: 'sparkles',
-    title: 'Pronostics IA',
-    text: "Notre intelligence artificielle analyse forme, cotes et chronos pour vous livrer les TOP PRONOS, Value Bets et Records Chrono de chaque course PMU.",
+    icon: 'podium-outline',
+    title: 'Pronostics détaillés',
+    text: "Les données de forme, les cotes et les chronos sont regroupés pour présenter les chevaux à suivre dans chaque course PMU.",
   },
   {
     icon: 'cloud-offline',

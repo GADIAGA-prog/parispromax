@@ -52,14 +52,14 @@ function confidenceFor(horses) {
   const reasons = [];
   reasons.push(gap >= 8 ? 'favoris nettement différenciés' : 'course assez ouverte');
   reasons.push(completeness >= 0.65 ? 'données solides' : 'données encore partielles');
-  if (marketLeader) reasons.push(agreement ? 'IA et marché concordants' : 'désaccord IA/marché');
+  if (marketLeader) reasons.push(agreement ? 'forme et marché concordants' : 'écart entre forme et marché');
   const label = stars >= 4 ? 'Course lisible' : stars === 3 ? 'Confiance mesurée' : 'Risque de surprise';
   return { stars, label, reasons };
 }
 
 function tipReasons(horse) {
   const reasons = [];
-  if (horse.backendValueBet || hasBadge(horse, BADGES.VALUE.key)) reasons.push('valeur détectée par l’IA');
+  if (horse.backendValueBet || hasBadge(horse, BADGES.VALUE.key)) reasons.push('profil intéressant selon les données');
   if (horse.deferrage) reasons.push(`configuration ${horse.deferrage}`);
   if (number(horse.coteOpen) > number(horse.odds) * 1.15) reasons.push('cote en baisse');
   if (number(horse.odds) >= 6 && number(horse.probaPodium) >= 0.22) reasons.push('podium supérieur à sa popularité');

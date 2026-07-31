@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 export const DISCLAIMER_TEXT =
-  "Les pronostics sont générés par une intelligence artificielle à titre informatif et ne garantissent aucun gain. Les paris comportent des risques — jouez avec modération.";
+  "Les pronostics reposent sur une analyse statistique à titre informatif et ne garantissent aucun gain. Les paris comportent des risques — jouez avec modération.";
 
-// Small legal disclaimer shown near AI predictions.
+// Small legal disclaimer shown near predictions.
 export default function Disclaimer({ compact = false }) {
   return (
     <View style={[styles.box, compact && styles.compact]}>

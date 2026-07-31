@@ -22,7 +22,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260731-6" />
+  <link rel="stylesheet" href="/styles.css?v=20260731-7" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -32,7 +32,7 @@
   <header class="site-header">
     <a class="brand" href="#accueil" aria-label="ParisPromax, accueil">
       <img src="/assets/logo-emblem-128.png" alt="" width="48" height="48" />
-      <span><strong>PARISPRO</strong>MAX<small>Pronostics IA · Courses PMU</small></span>
+      <span><strong>PARISPRO</strong>MAX<small>Pronostics hippiques · Courses PMU</small></span>
     </a>
     <nav class="desktop-nav" aria-label="Navigation principale">
       <a href="#courses-du-jour">Courses du jour</a>
@@ -101,7 +101,7 @@
         <div class="panel-topline"><span class="live-dot"></span><span id="hero-race-status">PROCHAINE ANALYSE</span><time id="hero-race-time">Aujourd'hui</time></div>
         <div class="hero-race-head">
           <div><small id="hero-track">Réunion principale</small><h2 id="hero-race">Course du jour</h2><p id="hero-meta">Chargement des données officielles…</p></div>
-          <div class="confidence"><span>Indice IA</span><strong>84</strong><small>/100</small></div>
+          <div class="confidence"><span>Indice forme</span><strong>84</strong><small>/100</small></div>
         </div>
         <div class="selection-preview" id="selection-preview">
           <div class="pick main-pick"><span>1</span><div><small>BASE</small><strong>Analyse en cours</strong></div><b>—</b></div>
@@ -112,9 +112,20 @@
       </div>
     </section>
 
+    <section class="race-showcase section" aria-label="Les disciplines hippiques">
+      <a class="race-showcase-card reveal" href="#quinte-pays">
+        <img src="/assets/race-flat.jpg" alt="Chevaux et jockeys pendant une course de plat" width="1600" height="900" loading="eager" />
+        <span><small>VITESSE ET ENDURANCE</small><strong>Courses de plat</strong></span>
+      </a>
+      <a class="race-showcase-card reveal delay-one" href="#ecd">
+        <img src="/assets/race-harness.jpg" alt="Chevaux au trot tirant des sulkys pendant une course attelée" width="1600" height="900" loading="lazy" />
+        <span><small>TACTIQUE ET RÉGULARITÉ</small><strong>Trot attelé</strong></span>
+      </a>
+    </section>
+
     <section class="proof-strip" aria-label="Points forts">
       <div><strong>24/7</strong><span>Accès Web et mobile</span></div>
-      <div><strong>IA + données</strong><span>Une lecture structurée</span></div>
+      <div><strong>Forme + données</strong><span>Une lecture structurée</span></div>
       <div><strong>Suivi</strong><span>Cotes et résultats</span></div>
       <div><strong>100 %</strong><span>Transparent et informatif</span></div>
     </section>
@@ -151,6 +162,10 @@
     </section>
 
     <section class="section results-section" id="resultats">
+      <figure class="results-race-visual reveal">
+        <img src="/assets/race-finish.jpg" alt="Trois chevaux franchissant la ligne d’arrivée" width="1600" height="900" loading="lazy" />
+        <figcaption>Arrivées officielles et comparaison avec le pronostic</figcaption>
+      </figure>
       <div class="section-heading reveal">
         <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Les résultats après chaque course.</h2></div>
         <p>Les arrivées publiées par la source officielle apparaissent automatiquement. Actualisation régulière, sans résultat provisoire.</p>
@@ -198,7 +213,7 @@
         <span class="section-kicker">ACCÈS COMPLET</span>
         <h2>Choisissez votre rythme.</h2>
         <p>Accès immédiat aux analyses complètes sur le Web et l'application mobile. Paiement prépayé, sans reconduction automatique.</p>
-        <ul><li>Pronostics IA structurés</li><li>Cotes et partants détaillés</li><li>Historique des résultats</li><li>Alertes avant le départ</li></ul>
+        <ul><li>Pronostics structurés</li><li>Cotes et partants détaillés</li><li>Historique des résultats</li><li>Alertes avant le départ</li></ul>
       </div>
       <div class="plans-grid reveal delay-one" id="plans-grid"><div class="plan-placeholder"></div><div class="plan-placeholder"></div></div>
     </section>
@@ -402,6 +417,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260731-6" defer></script>
+  <script src="/app.js?v=20260731-7" defer></script>
 </body>
 </html>

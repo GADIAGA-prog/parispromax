@@ -75,7 +75,7 @@ export async function scheduleMorningAlert() {
     return await Notifications.scheduleNotificationAsync({
       content: {
         title: '☀️ Pronostics du jour disponibles',
-        body: "Les pronostics IA et le Quinté+ du jour sont prêts. Bonne chance !",
+        body: "Les pronostics et le Quinté+ du jour sont prêts. Bonne chance !",
         data: { type: 'morning' },
       },
       trigger: {
@@ -100,7 +100,7 @@ export async function scheduleRaceUrgencyAlert(raceName, startDate) {
     return await Notifications.scheduleNotificationAsync({
       content: {
         title: '⏱️ Départ imminent !',
-        body: `${raceName} dans 15 min — vérifiez vos TOP PRONOS IA maintenant.`,
+        body: `${raceName} dans 15 min — vérifiez vos pronostics maintenant.`,
         data: { type: 'urgency', race: raceName },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: fireAt },

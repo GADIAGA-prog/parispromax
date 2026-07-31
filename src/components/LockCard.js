@@ -18,7 +18,7 @@ export default function LockCard({ locked, onUnlockPress, children, label }) {
         <Ionicons name="lock-closed" size={28} color={COLORS.gold} />
         <Text style={styles.title}>{label || 'Contenu VIP verrouillé'}</Text>
         <Text style={styles.subtitle}>
-          Abonnez-vous pour débloquer les pronostics IA, Value Bets & Chronos.
+          Abonnez-vous pour débloquer les pronostics détaillés, profils de valeur et chronos.
         </Text>
         <View style={styles.cta}>
           <Ionicons name="diamond" size={14} color="#06251c" />

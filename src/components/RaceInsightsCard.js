@@ -12,7 +12,7 @@ function HorseLine({ horse, accent = COLORS.text }) {
       <View style={{ flex: 1 }}>
         <Text style={styles.horseName}>{horse.name}</Text>
         <Text style={styles.horseMeta}>
-          IA {Math.round(horse.aiScore || 0)}/100
+          Indice {Math.round(horse.aiScore || 0)}/100
           {horse.probaPodium != null ? ` · podium ${Math.round(horse.probaPodium * 100)}%` : ''}
           {horse.odds != null ? ` · cote ${horse.odds}` : ''}
         </Text>
@@ -64,7 +64,7 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
     <View style={styles.card}>
       <View style={styles.summary}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.eyebrow}>SYNTHÈSE {advanced ? '· IA AVANCÉE' : ''}</Text>
+          <Text style={styles.eyebrow}>SYNTHÈSE {advanced ? '· ANALYSE DÉTAILLÉE' : ''}</Text>
           <Text style={styles.confidence}>{stars}</Text>
           <Text style={styles.confidenceLabel}>{insights.confidence.label}</Text>
           <Text style={styles.reason}>{insights.confidence.reasons.join(' · ')}</Text>
