@@ -830,6 +830,56 @@ footer { color: #d7e1e6; background: #102734; }
 .race-carousel-dots button.active { width: 24px; background: #fff; }
 .locked-prediction .race-carousel-bar { text-align: left; }
 
+.discipline-spotlight {
+  min-width: 112px;
+  padding: 12px 14px;
+  border: 1px solid rgba(45, 226, 160, .34);
+  border-radius: 14px;
+  background: rgba(45, 226, 160, .08);
+  text-align: center;
+}
+.discipline-spotlight span,
+.discipline-spotlight strong { display: block; }
+.discipline-spotlight span { color: #9fb2bd; font-size: 8px; font-weight: 900; letter-spacing: 1.2px; }
+.discipline-spotlight strong { margin-top: 5px; color: #fff; font-size: 14px; line-height: 1.1; }
+.race-discipline-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  margin: 0 0 5px;
+  padding: 4px 8px;
+  border: 1px solid #a9dfc9;
+  border-radius: 999px;
+  color: #08664a;
+  background: #e9f8f1;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: .75px;
+  line-height: 1;
+}
+.race-discipline-prominent {
+  margin: 9px 0 4px;
+  padding: 7px 11px;
+  border-color: #7fcdb4;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.race-item-main { min-width: 0; }
+.race-item-main .race-discipline-badge { margin-bottom: 5px; }
+.detail-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.detail-badges .race-badge,
+.detail-badges .race-discipline-badge { margin: 0; }
+.national-spotlight-head h2 {
+  color: #10232e;
+  font-size: clamp(32px, 4.2vw, 52px);
+  letter-spacing: -1.8px;
+}
+.course-type-nav a.active {
+  box-shadow: 0 8px 20px rgba(7, 88, 62, .18);
+}
+
+
 @media (max-width: 760px) {
   .hero-panel { display: block; margin-top: 26px; }
   .race-carousel-national { height: 190px; margin-block: 15px 18px; border-radius: 16px; }

@@ -403,13 +403,13 @@ function chatAnswer(question) {
     return { text: 'Les formules disponibles sont prépayées et sans reconduction automatique. Vous pouvez les consulter dans la section Abonnements.', label: 'Voir les abonnements', target: '#abonnements' };
   }
   if (/pronostic|course|quinte|cote|cheval/.test(normalized)) {
-    return { text: 'Les courses, cotes et analyses sont regroupées dans le programme du jour. Le pronostic final suit le format Podium + 2.', label: 'Voir les courses', target: '#courses' };
+    return { text: 'Les courses du jour, les partants, les cotes et les jeux proposés sont disponibles dans la même rubrique.', label: 'Voir les courses', target: '#courses' };
   }
   if (/paiement|mobile money|otp/.test(normalized)) {
     return { text: 'Choisissez une formule, puis suivez les instructions de l’opérateur affiché. Ne saisissez jamais votre code PIN Mobile Money sur ParisPromax.', label: 'Voir les formules', target: '#abonnements' };
   }
   if (/telegram|canal/.test(normalized)) {
-    return { text: 'Le canal Telegram officiel publie les actualités, programmes et analyses ParisPromax.', label: 'Rejoindre Telegram', target: 'https://t.me/ParisPromaxOfficiel', external: true };
+    return { text: 'Le canal Telegram officiel publie les programmes, les résultats et les nouvelles de ParisPromax.', label: 'Rejoindre Telegram', target: 'https://t.me/ParisPromaxOfficiel', external: true };
   }
   return { text: 'Je peux vous guider sur la connexion, le parrainage, les abonnements, les paiements et les pronostics. Pour une demande personnelle, contactez l’équipe.', label: 'Contacter ParisPromax', target: '#contact' };
 }
@@ -600,10 +600,10 @@ async function loadRaces() {
     if (ecdDescription) {
       const stake = data.profile?.unitStake
         ? ` Mise de base : ${formatFcfa(data.profile.unitStake)}.`
-        : ' Les mises sont affichées uniquement après validation de l’opérateur du pays.';
+        : ' Mise à confirmer.';
       const status = data.selectionMode === 'country-validated'
-        ? 'Programme validé pour votre pays.'
-        : 'Sélection ParisPromax provisoire en attendant le programme national.';
+        ? 'Courses proposées pour votre pays.'
+        : 'Courses ECD disponibles.';
       ecdDescription.textContent = `${status}${stake}`;
     }
     renderRaces();
@@ -614,6 +614,15 @@ async function loadRaces() {
   } finally {
     await loadNationalSpotlight();
   }
+}
+
+function raceDiscipline(race = {}) {
+  const raw = String(race.type || race.discipline || '').toLowerCase();
+  if (/attel|harness/.test(raw)) return 'TROT ATTELÉ';
+  if (/mont/.test(raw)) return 'TROT MONTÉ';
+  if (/haie|steeple|obstacle|cross/.test(raw)) return 'OBSTACLE';
+  if (/plat|flat/.test(raw)) return 'PLAT';
+  return raw ? raw.toUpperCase() : 'COURSE HIPPIQUE';
 }
 
 function renderRaces() {
@@ -631,7 +640,7 @@ function renderRaces() {
         : `<small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants${race.ecd?.variants?.length ? ` · ${escapeHtml(race.ecd.variants.map((variant) => variant.label).join(', '))}` : ''}</small>`;
       return `<button class="race-item ${race.id === state.selectedRaceId ? 'active' : ''}" type="button" data-race-id="${escapeHtml(race.id)}">
         <span class="race-time">${escapeHtml(race.time || `C${race.number || ''}`)}</span>
-        <span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong>${resultLabel}</span>
+        <span class="race-item-main"><span class="race-discipline-badge">${escapeHtml(raceDiscipline(race))}</span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong>${resultLabel}</span>
         <span class="race-arrow">${winners.length ? '✓' : '›'}</span>
       </button>`;
     }).join('')}
@@ -750,7 +759,7 @@ function buildMemberNotifications() {
       icon: '!',
       tone: 'warning',
       title: 'Accès aux pronostics limité',
-      message: 'Activez une formule pour consulter les analyses et le pronostic final Podium + 2.',
+      message: 'Activez une formule pour consulter les jeux complets et le pronostic Podium + 2.',
       target: '#abonnements',
       action: 'Voir les abonnements',
     });
@@ -865,8 +874,8 @@ function nationalProposalMarkup(game) {
   const grandCarnet = proposal?.grandCarnet;
   if (!grandCarnet?.horses?.length) {
     return `<section class="national-proposal national-proposal-pending">
-      <div><span>PROPOSITIONS DE JEUX</span><strong>Analyse en cours</strong></div>
-      <p>Les tickets Couplé et Grand Carnet apparaîtront dès que la hiérarchie de la course nationale sera validée.</p>
+      <div><span>PROPOSITIONS DE JEUX</span><strong>Pronostic en préparation</strong></div>
+      <p>Les tickets Couplé et Grand Carnet seront affichés dès que l’ordre des chevaux sera disponible.</p>
     </section>`;
   }
 
@@ -874,8 +883,8 @@ function nationalProposalMarkup(game) {
     .map((horse) => `<b title="${escapeHtml(horse.name)}">${escapeHtml(horse.number)}</b>`)
     .join('<i>–</i>');
   const sourceLabel = proposal.source === 'latest-analysis'
-    ? 'Hiérarchie ParisPromax actualisée'
-    : 'Classement provisoire selon le marché';
+    ? 'Pronostic ParisPromax à jour'
+    : 'Ordre provisoire selon les cotes';
   const budgetLine = (play) => play.cost != null
     ? `<span class="play-budget"><small>${escapeHtml(play.combinationsCount || 1)} combinaison${Number(play.combinationsCount) > 1 ? 's' : ''} × ${formatFcfa(play.stake)}</small><strong>${formatFcfa(play.cost)}</strong></span>`
     : '<span class="play-budget"><small>Mise opérateur</small><strong>À confirmer</strong></span>';
@@ -1075,14 +1084,15 @@ async function loadNationalSpotlight() {
       <div class="quinte-seal" aria-hidden="true">${gameSeal}</div>
       <div class="national-main">
         <span class="national-status">${escapeHtml(country.flag)} ${isNational ? escapeHtml(nationalLabel) : 'PROGRAMME INTERNATIONAL'} · ${escapeHtml(dateLabel(data.date || race.date))}</span>
+        <span class="race-discipline-badge race-discipline-prominent">${escapeHtml(raceDiscipline(race))}</span>
         <h4>${escapeHtml(race.name)}</h4>
         <p>${[race.track, race.number, race.time, race.distance, race.type || race.discipline].filter(Boolean).map(escapeHtml).join(' · ')}</p>
         <div class="national-tags"><span>${escapeHtml((isNational && game?.label) || data.pick?.betType || (race.isQuinte ? 'Quinté+' : 'Course du jour'))}</span><span>${escapeHtml(race.runners || 0)} partants</span>${gameTags}</div>
       </div>
       <div class="national-actions">
-        <button class="button button-primary" type="button" data-national-race="${escapeHtml(race.id)}">Analyser cette course <span>→</span></button>
+        <button class="button button-primary" type="button" data-national-race="${escapeHtml(race.id)}">Voir les partants et le pronostic <span>→</span></button>
         ${journalUrl ? `<a class="journal-link" href="${escapeHtml(journalUrl)}" target="_blank" rel="noopener noreferrer">Journal hippique ↗</a>` : ''}
-        ${!isNational ? '<small>La sélection nationale sera affichée dès sa validation.</small>' : '<small>Course officielle mise en avant pour votre pays.</small>'}
+        ${!isNational ? '<small>La sélection nationale sera affichée dès sa validation.</small>' : '<small>Course nationale retenue pour votre pays.</small>'}
       </div>
       ${gameGuide}`;
     setupGrandCarnetCalculator(game, node);
@@ -1103,8 +1113,9 @@ async function updateHeroRace() {
   $('#hero-track').textContent = first.track.name;
   $('#hero-race').textContent = first.race.name;
   $('#hero-race-time').textContent = first.race.time || 'Aujourd’hui';
-  $('#hero-meta').textContent = [first.race.distance, first.race.type, `${first.race.runners || 0} partants`].filter(Boolean).join(' · ');
-  $('#hero-race-status').textContent = first.race.isQuinte ? 'COURSE QUINTÉ+' : 'COURSE À ANALYSER';
+  $('#hero-meta').textContent = [first.race.distance, `${first.race.runners || 0} partants`].filter(Boolean).join(' · ');
+  $('#hero-race-status').textContent = first.race.isQuinte ? 'COURSE NATIONALE · QUINTÉ+' : 'COURSE DU JOUR';
+  $('#hero-discipline').textContent = raceDiscipline(first.race);
   try {
     const detail = await api(`/races/${encodeURIComponent(first.race.id)}`, { auth: false });
     const horses = (detail.horses || []).slice(0, 3);
@@ -1150,21 +1161,19 @@ function enrichPick(pick, horses) {
 
 function pickComment(role, pick) {
   if (!pick) return '';
-  const score = Number(pick.aiScore);
   const podium = Number(pick.probaPodium);
   const facts = [];
-  if (Number.isFinite(score) && score > 0) facts.push(`indice de forme ${Math.round(score)}/100`);
   if (Number.isFinite(podium) && podium > 0) facts.push(`${Math.round(podium * 100)} % estimés pour le podium`);
   if (pick.odds != null && Number.isFinite(Number(pick.odds))) facts.push(`cote ${Number(pick.odds).toLocaleString('fr-FR')}`);
   if (pick.form) facts.push(`forme ${pick.form}`);
-  const evidence = facts.length ? ` Repères disponibles : ${facts.join(', ')}.` : ' Les données disponibles invitent à garder une confiance mesurée.';
+  const evidence = facts.length ? ` À retenir : ${facts.join(', ')}.` : ' Consultez les partants et les cotes avant de jouer.';
   const intros = {
-    base: 'Point d’appui principal du modèle et premier cheval de la hiérarchie.',
-    favorite: 'Référence actuelle du marché ; ce statut décrit la cote et ne garantit pas le résultat.',
-    couple: 'Élément du duo recommandé autour de la base, choisi parmi les profils les mieux classés.',
-    chance: 'Profil régulier retenu pour consolider la sélection autour de la base.',
-    tocard: 'Profil plus spéculatif : potentiel intéressant, mais niveau de risque supérieur.',
-    tip: pick.valueBet ? 'Signal de valeur détecté entre le classement du modèle et la cote.' : 'Complément à surveiller pour finaliser le Podium + 2.',
+    base: 'Premier cheval retenu pour construire le jeu.',
+    favorite: 'Cheval le plus joué selon la cote disponible.',
+    couple: 'Cheval associé à la base pour former le duo.',
+    chance: 'Cheval retenu pour compléter le jeu.',
+    tocard: 'Cheval peu joué qui peut créer la surprise.',
+    tip: pick.valueBet ? 'Cheval intéressant au regard de sa cote.' : 'Cheval à surveiller pour compléter le Podium + 2.',
   };
   return `${intros[role] || 'Profil retenu dans la synthèse.'}${evidence}`;
 }
@@ -1198,8 +1207,8 @@ function predictionMarkup(prediction, error, detail) {
     const tip = enrich(selected.find((pick) => pick.valueBet) || groups.regret || selected[4]);
     const finalLabels = ['1er podium', '2e podium', '3e podium', 'Complément 1', 'Complément 2'];
     return `<section class="prediction-block">
-      <div class="prediction-title"><div><small>ANALYSE COMMENTÉE</small><h4>Pronostic ParisPromax</h4></div><span>${prediction.source === 'ltr' ? 'MODÈLE DE FORME' : 'DONNÉES DE COURSE'}</span></div>
-      <div class="final-verdict"><div><span>PRONOSTIC FINAL</span><h5>Podium + 2</h5><p>Une synthèse resserrée à cinq chevaux, classés par ordre de préférence.</p></div><div class="final-five">
+      <div class="prediction-title"><div><small>POURQUOI CES CHEVAUX</small><h4>Pronostic ParisPromax</h4></div><span>REPÈRES DE COURSE</span></div>
+      <div class="final-verdict"><div><span>PRONOSTIC FINAL</span><h5>Podium + 2</h5><p>Cinq chevaux classés par ordre de préférence.</p></div><div class="final-five">
         ${selected.map((pick, index) => `<div class="final-pick ${index < 3 ? 'podium' : 'complement'}"><small>${finalLabels[index]}</small><b>${escapeHtml(pick.number)}</b><span>${escapeHtml(pick.name)}</span></div>`).join('')}
       </div></div>
       <div class="analysis-grid">
@@ -1210,7 +1219,7 @@ function predictionMarkup(prediction, error, detail) {
         ${roleCard('Tocard', 'Risque assumé', tocards, 'tocard', 'role-tocard')}
         ${roleCard('Tuyau', 'Signal à suivre', tip ? [tip] : [], 'tip', 'role-tip')}
       </div>
-      <p class="analysis-disclaimer">Analyse statistique informative. Les commentaires expliquent les données disponibles et ne constituent jamais une garantie de résultat.</p>
+      <p class="analysis-disclaimer">Pronostic indicatif. Aucun gain n’est garanti.</p>
     </section>`;
   }
   if (state.token && error?.status === 402) {
@@ -1247,9 +1256,9 @@ function nationalStrategyMarkup(detail) {
   if (!game?.strategies?.length) return '';
   return `<section class="national-smart-play">
     <div>
-      <span>JEU INTELLIGENT · ${escapeHtml(game.countryName || '')}</span>
-      <h4>${escapeHtml(game.label)} : couverture calculée</h4>
-      <p>Le moteur adapte le nombre de chevaux au podium officiel du pays, sans inventer une mise non vérifiée.</p>
+      <span>JEUX DU JOUR · ${escapeHtml(game.countryName || '')}</span>
+      <h4>${escapeHtml(game.label)} : choisissez votre couverture</h4>
+      <p>Le nombre de chevaux, les combinaisons et la mise totale sont affichés pour chaque choix.</p>
     </div>
     <div class="national-smart-options">
       ${game.strategies.map((strategy) => `<span class="${strategy.id === 'coverage' ? 'recommended' : ''}">
@@ -1263,7 +1272,7 @@ function nationalStrategyMarkup(detail) {
 
 function renderRaceDetail(context, detail, prediction, predictionError) {
   const horses = detail.horses || [];
-  $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml(context?.track?.name || detail.track || 'COURSE')}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><span class="race-badge">${horses.length} PARTANTS</span></div>
+  $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml(context?.track?.name || detail.track || 'COURSE')}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><div class="detail-badges"><span class="race-discipline-badge race-discipline-prominent">${escapeHtml(raceDiscipline(detail))}</span><span class="race-badge">${horses.length} PARTANTS</span></div></div>
     ${officialResultMarkup(detail)}
     ${nationalStrategyMarkup(detail)}
     ${predictionMarkup(prediction, predictionError, detail)}
