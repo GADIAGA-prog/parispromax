@@ -2,7 +2,7 @@
   "id": "/",
   "name": "ParisPromax — Pronostics hippiques",
   "short_name": "ParisPromax",
-  "description": "Quinté par pays, pronostics hippiques commentés et sélection finale Podium + 2.",
+  "description": "Pronostics PMU du jour, Quinté, Quarté, Tiercé, couplés, Grand Carnet et résultats hippiques par pays.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "/?source=pwa",

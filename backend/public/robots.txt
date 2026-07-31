@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth/
+Disallow: /payments/
+Disallow: /feedback/
+Disallow: /health
+Disallow: /ready
+
+Sitemap: https://www.parispromax.com/sitemap.xml
+Host: www.parispromax.com
