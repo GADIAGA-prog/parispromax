@@ -34,7 +34,7 @@ export default function TrackCard({ track, onRacePress }) {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.name}>{track.name}</Text>
-          <Text style={styles.discipline}>{track.discipline}</Text>
+          <Text style={styles.discipline}>ECD · {track.discipline}</Text>
         </View>
         <View style={[styles.condition, { backgroundColor: cond.color }]}>
           <Ionicons name={cond.icon} size={13} color="#0f172a" />
@@ -69,6 +69,14 @@ export default function TrackCard({ track, onRacePress }) {
               {race.runners || race.horses?.length} partants
               {race.prize ? ` · ${Number(race.prize).toLocaleString('fr-FR')} €` : ''}
             </Text>
+            {!!race.ecd?.variants?.length && (
+              <Text style={styles.ecdMeta} numberOfLines={2}>
+                {race.ecd.variants.map((variant) => variant.label).join(' · ')}
+                {race.ecd.unitStake
+                  ? ` · dès ${Number(race.ecd.unitStake).toLocaleString('fr-FR')} FCFA`
+                  : ''}
+              </Text>
+            )}
             {state.label ? (
               <View style={[styles.stateBadge, styles[`badge_${state.kind}`]]}>
                 <Ionicons
@@ -162,7 +170,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   raceNumberText: {
-    color: COLORS.accent,
+    color: COLORS.white,
     fontWeight: '900',
     fontSize: FONT.sm,
   },
@@ -175,6 +183,13 @@ const styles = StyleSheet.create({
     color: COLORS.textFaint,
     fontSize: FONT.sm - 1,
     marginTop: 2,
+  },
+  ecdMeta: {
+    color: COLORS.accent,
+    fontSize: FONT.sm - 2,
+    fontWeight: '800',
+    lineHeight: 14,
+    marginTop: 4,
   },
   stateBadge: {
     flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4,

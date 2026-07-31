@@ -147,6 +147,10 @@ export const api = {
   races: (date) => request(`/races${date ? `?date=${date}` : ''}`),
   // Course PMU du jour du pays (Quarté LONAB…) + journal national.
   nationalRace: (country) => request(`/races/national?country=${encodeURIComponent(country || '')}`),
+  // Autres courses classées ECD selon le programme du pays.
+  ecdRaces: (country, date) => request(
+    `/races/ecd?country=${encodeURIComponent(country || '')}${date ? `&date=${encodeURIComponent(date)}` : ''}`
+  ),
   raceHistory: () => request('/races/history'),
   raceDetail: (externalId) => request(`/races/${externalId}`),
   prediction: (externalId) => request(`/races/${externalId}/prediction`, { auth: true }),

@@ -1,29 +1,29 @@
-// Centralized theme for PARISPROMAX — Dark / Blue brand (logo) + Emerald accent.
-// Optimized for readability on low-cost Android devices.
+// Neutral light theme: one strong brand color, one action color, and generous
+// contrast. This keeps dense race information readable on low-cost devices.
 
 export const COLORS = {
-  primary: '#0b2547', // Deep blue — headers, primary surfaces (matches the logo)
-  background: '#0f172a', // Slate 900 — app background
-  accent: '#10b981', // Emerald 500 — AI / highlights / CTAs (logo's green arrow)
+  primary: '#102f3d',
+  background: '#f4f6f8',
+  accent: '#087554',
 
   // Brand blue (from the logo) — logo backdrops, brand accents.
-  brand: '#2563eb', // Blue 600
-  brandDark: '#0b2547',
+  brand: '#166d8f',
+  brandDark: '#102f3d',
 
   // Supporting palette derived from the two base tones
-  surface: '#111c33', // Slightly lighter than background — cards
-  surfaceAlt: '#15213d',
-  border: '#1e293b',
+  surface: '#ffffff',
+  surfaceAlt: '#eef2f4',
+  border: '#dbe3e8',
 
-  text: '#f8fafc', // Near-white
-  textMuted: '#94a3b8', // Slate 400
-  textFaint: '#64748b',
+  text: '#18242c',
+  textMuted: '#5f6f79',
+  textFaint: '#7d8a92',
 
   // Semantic
-  gold: '#fbbf24', // Value bets / VIP
-  danger: '#ef4444',
-  success: '#22c55e',
-  info: '#38bdf8',
+  gold: '#b47a13',
+  danger: '#c83d3d',
+  success: '#16845f',
+  info: '#166d8f',
 
   // Track conditions
   trackHeavy: '#b45309', // Lourd
@@ -32,7 +32,7 @@ export const COLORS = {
 
   white: '#ffffff',
   black: '#000000',
-  overlay: 'rgba(15, 23, 42, 0.85)',
+  overlay: 'rgba(16, 47, 61, 0.72)',
 };
 
 export const SPACING = {

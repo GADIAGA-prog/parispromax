@@ -241,6 +241,22 @@ model NationalPick {
   @@index([date])
 }
 
+// Programme ECD commercialisé par pays. Plusieurs courses peuvent être
+// retenues le même jour ; l'ordre d'affichage est piloté par priority.
+model EcdPick {
+  id         String   @id @default(cuid())
+  date       String
+  country    String
+  externalId String
+  priority   Int      @default(0)
+  journalUrl String?
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  @@unique([date, country, externalId])
+  @@index([date, country])
+}
+
 model Prediction {
   id        String   @id @default(cuid())
   raceId    String

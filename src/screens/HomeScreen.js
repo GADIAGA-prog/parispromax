@@ -35,21 +35,24 @@ export default function HomeScreen({ navigation }) {
   // Course PMU du jour du pays de l'abonné (Quarté LONAB au Burkina…).
   const [national, setNational] = useState(null);
   const [nationalGame, setNationalGame] = useState(null);
+  const [ecdProfile, setEcdProfile] = useState(null);
+  const [ecdSelectionMode, setEcdSelectionMode] = useState(null);
 
   const fetchData = useCallback(async () => {
-    const { data, source: src, offline: off } = await loadRaces();
-    setTracks(data.racetracks || []);
+    const [{ data, source: src, offline: off }, nationalResult, ecdResult] = await Promise.all([
+      loadRaces(),
+      country ? api.nationalRace(country).catch(() => null) : Promise.resolve(null),
+      country ? api.ecdRaces(country).catch(() => null) : Promise.resolve(null),
+    ]);
     setSource(src);
     setOffline(off);
     const today = new Date().toISOString().slice(0, 10);
-    setNationalGame(country === 'bf' ? getNationalGame(country, today) : null);
-    try {
-      const n = country ? await api.nationalRace(country) : null;
-      setNational(n?.pick || null);
-      setNationalGame(n?.game || (country === 'bf' ? getNationalGame(country, n?.date || today) : null));
-    } catch (e) {
-      setNational(null); // hors-ligne : pas de bannière
-    }
+    const fallbackGame = country === 'bf' ? getNationalGame(country, today) : null;
+    setNational(nationalResult?.pick || null);
+    setNationalGame(nationalResult?.game || fallbackGame);
+    setTracks(ecdResult?.racetracks || data.racetracks || []);
+    setEcdProfile(ecdResult?.profile || null);
+    setEcdSelectionMode(ecdResult?.selectionMode || null);
   }, [country]);
 
   useEffect(() => {
@@ -88,6 +91,17 @@ export default function HomeScreen({ navigation }) {
         );
       }
     }
+    return onRacePress(
+      {
+        name: target.track,
+        condition: null,
+      },
+      {
+        ...target,
+        betType: national.betType || target.betType || null,
+      },
+      nationalGame
+    );
   };
 
   const fcfa = (eur) => `${Math.round((eur * 655.957) / 1000) * 1000}`.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -97,8 +111,8 @@ export default function HomeScreen({ navigation }) {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Programme du jour</Text>
-            <Text style={styles.subtitle}>Hippodromes · Courses PMU</Text>
+            <Text style={styles.title}>Aujourd'hui</Text>
+            <Text style={styles.subtitle}>Course nationale · ECD</Text>
           </View>
           <Image
             source={require('../../assets/logo-emblem-app.png')}
@@ -119,8 +133,8 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Programme du jour</Text>
-          <Text style={styles.subtitle}>Hippodromes · Courses PMU</Text>
+          <Text style={styles.title}>Aujourd'hui</Text>
+          <Text style={styles.subtitle}>Course nationale · ECD</Text>
         </View>
         <Pressable
           style={styles.subscribeBtn}
@@ -128,41 +142,12 @@ export default function HomeScreen({ navigation }) {
           accessibilityRole="button"
           accessibilityLabel={hasPaid ? 'Prolonger mon abonnement' : "S'abonner"}
         >
-          <Ionicons name="diamond" size={16} color="#06251c" />
+          <Ionicons name="diamond" size={16} color={COLORS.white} />
           <Text style={styles.subscribeText}>{hasPaid ? 'Prolonger' : "S'abonner"}</Text>
         </Pressable>
       </View>
 
       <TrialBanner />
-
-      {/* Course PMU du jour du pays (ex. Quarté LONAB -> Enghien C8) */}
-      {national?.race && (
-        <Pressable style={styles.national} onPress={openNationalRace}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.nationalTitle}>
-              {FLAGS[country] || '🏇'} {national.betType || 'Course du jour'} — {national.race.track}{' '}
-              {national.race.number}
-            </Text>
-            <Text style={styles.nationalSub} numberOfLines={1}>
-              {national.race.name}
-              {national.race.time ? ` · ${national.race.time}` : ''}
-              {national.race.prize ? ` · ${fcfa(national.race.prize)} F CFA` : ''}
-            </Text>
-          </View>
-          {national.journalUrl ? (
-            <Pressable
-              style={styles.journalBtn}
-              onPress={() => WebBrowser.openBrowserAsync(national.journalUrl)}
-              hitSlop={8}
-            >
-              <Ionicons name="newspaper" size={14} color="#06251c" />
-              <Text style={styles.journalText}>Journal</Text>
-            </Pressable>
-          ) : (
-            <Ionicons name="chevron-forward" size={18} color={COLORS.gold} />
-          )}
-        </Pressable>
-      )}
 
       {offline && (
         <View style={styles.offline}>
@@ -180,7 +165,58 @@ export default function HomeScreen({ navigation }) {
         keyExtractor={(t) => t.id}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          nationalGame ? <NationalGameCard game={nationalGame} /> : null
+          <View>
+            <View style={styles.sectionLabelRow}>
+              <View>
+                <Text style={styles.sectionKicker}>JEU NATIONAL DU JOUR</Text>
+                <Text style={styles.sectionTitle}>Pronostic et mise</Text>
+              </View>
+              <Text style={styles.countryBadge}>
+                {FLAGS[country] || '🏇'} {String(country || '').toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.nationalBundle}>
+              {national?.race && (
+                <Pressable style={styles.national} onPress={openNationalRace}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.nationalTitle}>
+                      {national.betType || 'Course du jour'} · {national.race.track} {national.race.number}
+                    </Text>
+                    <Text style={styles.nationalSub} numberOfLines={2}>
+                      {national.race.name}
+                      {national.race.time ? ` · ${national.race.time}` : ''}
+                      {national.race.prize ? ` · ${fcfa(national.race.prize)} F CFA` : ''}
+                    </Text>
+                  </View>
+                  {national.journalUrl ? (
+                    <Pressable
+                      style={styles.journalBtn}
+                      onPress={() => WebBrowser.openBrowserAsync(national.journalUrl)}
+                      hitSlop={8}
+                    >
+                      <Ionicons name="newspaper" size={14} color="#ffffff" />
+                      <Text style={styles.journalText}>Journal</Text>
+                    </Pressable>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={18} color={COLORS.accent} />
+                  )}
+                </Pressable>
+              )}
+              {nationalGame ? <NationalGameCard game={nationalGame} /> : null}
+            </View>
+            <View style={styles.ecdHeading}>
+              <Text style={styles.sectionKicker}>ECD · COURSES EN DIRECT</Text>
+              <Text style={styles.sectionTitle}>Courses proposées pour votre pays</Text>
+              <Text style={styles.ecdHelp}>
+                {ecdSelectionMode === 'country-validated'
+                  ? 'Programme national validé.'
+                  : 'Sélection provisoire ParisPromax.'}
+                {ecdProfile?.unitStake
+                  ? ` Mise de base : ${ecdProfile.unitStake.toLocaleString('fr-FR')} FCFA.`
+                  : ''}
+              </Text>
+            </View>
+          </View>
         }
         renderItem={({ item }) => (
           <TrackCard track={item} onRacePress={onRacePress} />
@@ -228,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
-  subscribeText: { color: '#06251c', fontSize: FONT.sm, fontWeight: '900' },
+  subscribeText: { color: COLORS.white, fontSize: FONT.sm, fontWeight: '900' },
   offline: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -245,27 +281,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: 'rgba(251,191,36,0.10)',
+    backgroundColor: '#F3F8F5',
     borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.45)',
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.sm,
+    borderColor: '#C9DED3',
     padding: SPACING.md,
     borderRadius: RADIUS.md,
   },
-  nationalTitle: { color: COLORS.gold, fontWeight: '900', fontSize: FONT.md },
+  nationalTitle: { color: COLORS.primary, fontWeight: '900', fontSize: FONT.md },
   nationalSub: { color: COLORS.textMuted, fontSize: FONT.sm - 1, marginTop: 2 },
   journalBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.gold,
+    backgroundColor: COLORS.accent,
     borderRadius: RADIUS.pill,
     paddingHorizontal: SPACING.md,
     paddingVertical: 6,
   },
-  journalText: { color: '#06251c', fontWeight: '900', fontSize: FONT.sm - 1 },
+  journalText: { color: '#ffffff', fontWeight: '900', fontSize: FONT.sm - 1 },
   list: { padding: SPACING.md, paddingBottom: SPACING.xxl, flexGrow: 1 },
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  sectionKicker: { color: COLORS.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  sectionTitle: { color: COLORS.text, fontSize: FONT.xl, fontWeight: '900', marginTop: 2 },
+  countryBadge: {
+    color: COLORS.primary,
+    backgroundColor: '#E8F3EE',
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 5,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  nationalBundle: {
+    padding: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface,
+    marginBottom: SPACING.xl,
+  },
+  ecdHeading: {
+    paddingHorizontal: 2,
+    paddingBottom: SPACING.md,
+  },
+  ecdHelp: { color: COLORS.textMuted, fontSize: FONT.sm - 1, lineHeight: 17, marginTop: 4 },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',

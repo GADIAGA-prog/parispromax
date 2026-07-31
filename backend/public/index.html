@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#07111f" />
+  <meta name="theme-color" content="#ffffff" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -22,7 +22,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260731-3" />
+  <link rel="stylesheet" href="/styles.css?v=20260731-5" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -35,13 +35,10 @@
       <span><strong>PARISPRO</strong>MAX<small>Pronostics IA · Courses PMU</small></span>
     </a>
     <nav class="desktop-nav" aria-label="Navigation principale">
-      <a href="#quinte-pays">Quinté par pays</a>
-      <a href="#courses">Courses</a>
+      <a href="#quinte-pays">Aujourd'hui</a>
+      <a href="#ecd">ECD</a>
       <a href="#resultats">Résultats</a>
-      <a href="#guide">Guide</a>
-      <a href="#methode">Méthode</a>
       <a href="#abonnements">Abonnements</a>
-      <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
       <button class="button button-install" type="button" data-install-app>Installer</button>
@@ -65,26 +62,30 @@
       </button>
     </div>
     <button class="mobile-signup-cta" type="button" data-open-auth="register">Créer un compte</button>
-    <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#resultats">Résultats</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact et avis</a><a href="#securite">Sécurité</a>
+    <a href="#quinte-pays">Aujourd'hui</a><a href="#ecd">ECD</a><a href="#resultats">Résultats</a><a href="#abonnements">Abonnements</a><a href="#guide">Comment jouer</a><a href="#contact">Aide et contact</a><button type="button" data-install-app>Installer l'application</button>
   </nav>
 
-  <div class="country-marquee" aria-label="Pays pris en charge par ParisPromax">
-    <div class="country-marquee-track" id="country-marquee-track">
-      <div class="country-marquee-group"><span class="country-marquee-item">Pays partenaires · Chargement…</span></div>
-    </div>
-  </div>
-
   <main>
+    <section class="section today-section">
+      <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
+        <div class="national-spotlight-head">
+          <div><span class="spotlight-label"><i></i> LE JEU NATIONAL DU JOUR</span><h2>Pronostic et mise, au même endroit</h2></div>
+          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du jeu national"></select></label>
+        </div>
+        <div id="national-race" class="national-race-content">
+          <div class="skeleton-line"></div><div class="skeleton-line"></div>
+        </div>
+      </article>
+    </section>
+
     <section class="hero section" id="accueil">
       <div class="hero-copy reveal">
-        <div class="eyebrow"><span></span> Données vérifiées · Lecture simple</div>
-        <h1>Comprenez la course.<br /><em>Décidez avec méthode.</em></h1>
-        <p class="hero-lead">ParisPromax réunit les partants, les cotes, la forme et notre analyse IA dans une interface claire, rapide et responsable.</p>
+        <div class="eyebrow"><span></span> Pronostics organisés · Budget visible</div>
+        <h1>Choisissez votre jeu.<br /><em>Voyez la mise immédiatement.</em></h1>
+        <p class="hero-lead">Course nationale, Couplés et Grand Carnet sont regroupés pour comparer les chevaux, les combinaisons et le budget avant de décider.</p>
         <div class="hero-actions">
-          <button class="button button-primary button-large" type="button" data-open-auth="register">Créer un compte <span aria-hidden="true">→</span></button>
-          <a class="button button-outline button-large" href="#courses">Voir les courses du jour</a>
-          <button class="button button-outline button-large" type="button" data-install-app>Installer l'application</button>
-          <a class="button button-android button-large" href="/download/android">Télécharger sur Android <span aria-hidden="true">↓</span></a>
+          <a class="button button-primary button-large" href="#quinte-pays">Voir le jeu du jour <span aria-hidden="true">→</span></a>
+          <button class="button button-outline button-large" type="button" data-open-auth="register">Créer un compte</button>
         </div>
         <div class="trust-row" aria-label="Engagements ParisPromax">
           <span>✓ Réservé aux 18+</span><span>✓ Aucun pari encaissé</span><span>✓ Paiement Mobile Money sécurisé</span>
@@ -127,25 +128,15 @@
       </div>
     </section>
 
-    <section class="section race-section" id="courses">
+    <section class="section race-section" id="ecd">
       <div class="section-heading reveal">
-        <div><span class="section-kicker" id="program-kicker">PROGRAMME DISPONIBLE</span><h2>Les courses, sans le bruit.</h2></div>
-        <p>Choisissez une réunion pour consulter les partants et les cotes. Les pronostics détaillés sont visibles avec un accès actif.</p>
+        <div><span class="section-kicker" id="program-kicker">PROGRAMME ECD</span><h2>Les autres courses proposées pour votre pays.</h2></div>
+        <p id="ecd-program-description">Programme ECD sélectionné par pays. Ouvrez une course pour consulter les partants, les variantes disponibles et le pronostic.</p>
       </div>
-
-      <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
-        <div class="national-spotlight-head">
-          <div><span class="spotlight-label"><i></i> LE RENDEZ-VOUS NATIONAL</span><h3>Jeu du jour par pays</h3></div>
-          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du jeu national"></select></label>
-        </div>
-        <div id="national-race" class="national-race-content">
-          <div class="skeleton-line"></div><div class="skeleton-line"></div>
-        </div>
-      </article>
 
       <div class="race-workspace reveal">
         <aside class="race-sidebar">
-          <div class="sidebar-head"><strong>Réunions</strong><button type="button" id="refresh-races" aria-label="Actualiser les courses">↻</button></div>
+          <div class="sidebar-head"><strong>Courses ECD</strong><button type="button" id="refresh-races" aria-label="Actualiser les courses">↻</button></div>
           <div id="race-list" class="race-list" aria-live="polite"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div>
         </aside>
         <article class="race-detail" id="race-detail" aria-live="polite">
@@ -386,6 +377,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260731-3" defer></script>
+  <script src="/app.js?v=20260731-5" defer></script>
 </body>
 </html>

@@ -90,5 +90,9 @@ test('propose les couplés et toutes les combinaisons du Grand Carnet national',
   assert.equal(proposal.grandCarnet.combinationsCount, 5);
   assert.equal(proposal.grandCarnet.combinations.length, 5);
   assert.equal(proposal.grandCarnet.cost, 1000);
+  assert.equal(proposal.couples[0].combinationsCount, 1);
+  assert.equal(proposal.couples[0].stake, 200);
+  assert.equal(proposal.couples[0].cost, 200);
+  assert.equal(proposal.plays.length, 5);
   assert.equal(listCombinations(candidates.slice(0, 6), 4).length, 15);
 });

@@ -35,10 +35,14 @@ function HorseNumbers({ horses, gold = false }) {
 
 export default function NationalGameCard({ game }) {
   const [expanded, setExpanded] = useState(true);
+  const [showRules, setShowRules] = useState(false);
+  const [selectedPlayIds, setSelectedPlayIds] = useState([]);
   const [selectedHorses, setSelectedHorses] = useState(String(game?.podium || 0));
 
   useEffect(() => {
     setSelectedHorses(String(game?.podium || 0));
+    setSelectedPlayIds([]);
+    setShowRules(false);
   }, [game?.podium]);
 
   const selectedCount = Number.parseInt(selectedHorses, 10);
@@ -51,6 +55,15 @@ export default function NationalGameCard({ game }) {
   }, [game?.podium, game?.stake, selectedCount]);
 
   if (!game) return null;
+
+  const togglePlay = (id) => {
+    setSelectedPlayIds((current) =>
+      current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
+    );
+  };
+  const selectedBudget = (game.proposal?.plays || [])
+    .filter((play) => selectedPlayIds.includes(play.id))
+    .reduce((sum, play) => sum + Number(play.cost || 0), 0);
 
   const changeHorseCount = (change) => {
     const current = Number.isInteger(selectedCount) ? selectedCount : game.podium;
@@ -71,10 +84,8 @@ export default function NationalGameCard({ game }) {
           <Ionicons name="flag" size={18} color="#06251c" />
         </View>
         <View style={styles.headingCopy}>
-          <Text style={styles.kicker}>
-            {game.verified ? 'RÈGLES VÉRIFIÉES' : 'FORMAT NATIONAL DU JOUR'} · {game.countryName?.toUpperCase()}
-          </Text>
-          <Text style={styles.title}>{game.label} du jour</Text>
+          <Text style={styles.kicker}>PRONOSTICS · BUDGET · {game.countryName?.toUpperCase()}</Text>
+          <Text style={styles.title}>{game.label} : choisissez votre jeu</Text>
           <Text style={styles.subtitle}>
             {game.podium} chevaux au podium · {game.stake
               ? `${formatFcfa(game.stake)} par combinaison`
@@ -105,18 +116,43 @@ export default function NationalGameCard({ game }) {
 
               <Text style={styles.sectionTitle}>Couplés proposés</Text>
               <View style={styles.coupleTickets}>
-                {(game.proposal.couples || []).map((ticket) => (
-                  <View key={ticket.id} style={styles.coupleTicket}>
-                    <Text style={styles.ticketLabel}>{ticket.label}</Text>
+                {(game.proposal.couples || []).map((ticket) => {
+                  const selected = selectedPlayIds.includes(ticket.id);
+                  return (
+                  <Pressable
+                    key={ticket.id}
+                    style={[styles.coupleTicket, selected && styles.playSelected]}
+                    onPress={() => togglePlay(ticket.id)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected }}
+                  >
+                    <View style={styles.playHeading}>
+                      <Text style={styles.ticketLabel}>{ticket.label}</Text>
+                      <Text style={[styles.chooseBadge, selected && styles.chooseBadgeSelected]}>
+                        {selected ? 'SÉLECTIONNÉ ✓' : 'CHOISIR'}
+                      </Text>
+                    </View>
                     <HorseNumbers horses={ticket.horses} />
                     <Text style={styles.ticketNames} numberOfLines={1}>
                       {(ticket.horses || []).map((horse) => horse.name).join(' · ')}
                     </Text>
-                  </View>
-                ))}
+                    <View style={styles.playCostRow}>
+                      <Text style={styles.playFormula}>
+                        {ticket.combinationsCount || 1} combinaison × {formatFcfa(ticket.stake)}
+                      </Text>
+                      <Text style={styles.playCost}>
+                        {ticket.cost != null ? formatFcfa(ticket.cost) : 'À confirmer'}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  );
+                })}
               </View>
 
-              <View style={styles.grandCarnetProposal}>
+              <View style={[
+                styles.grandCarnetProposal,
+                selectedPlayIds.includes('grand-carnet') && styles.playSelected,
+              ]}>
                 <View style={styles.grandCarnetHead}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.grandCarnetKicker}>GRAND CARNET {game.label?.toUpperCase()}</Text>
@@ -124,16 +160,34 @@ export default function NationalGameCard({ game }) {
                       {game.proposal.grandCarnet.selectedHorses} chevaux retenus
                     </Text>
                   </View>
-                  <Text style={styles.combinationBadge}>
-                    {game.proposal.grandCarnet.combinationsCount} comb.
-                  </Text>
+                  <Pressable
+                    style={[
+                      styles.chooseButton,
+                      selectedPlayIds.includes('grand-carnet') && styles.chooseButtonSelected,
+                    ]}
+                    onPress={() => togglePlay('grand-carnet')}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selectedPlayIds.includes('grand-carnet') }}
+                  >
+                    <Text style={[
+                      styles.chooseButtonText,
+                      selectedPlayIds.includes('grand-carnet') && styles.chooseButtonTextSelected,
+                    ]}>
+                      {selectedPlayIds.includes('grand-carnet') ? 'Sélectionné ✓' : 'Choisir'}
+                    </Text>
+                  </Pressable>
                 </View>
                 <HorseNumbers horses={game.proposal.grandCarnet.horses} gold />
-                <Text style={styles.grandCarnetBudget}>
-                  {game.proposal.grandCarnet.cost != null
-                    ? `Budget complet : ${formatFcfa(game.proposal.grandCarnet.cost)}`
-                    : 'Mise à confirmer auprès de l’opérateur national'}
-                </Text>
+                <View style={styles.playCostRow}>
+                  <Text style={styles.playFormula}>
+                    {game.proposal.grandCarnet.combinationsCount} combinaisons × {formatFcfa(game.proposal.grandCarnet.stake)}
+                  </Text>
+                  <Text style={styles.playCost}>
+                    {game.proposal.grandCarnet.cost != null
+                      ? formatFcfa(game.proposal.grandCarnet.cost)
+                      : 'À confirmer'}
+                  </Text>
+                </View>
                 <Text style={styles.combinationsTitle}>
                   Toutes les combinaisons
                 </Text>
@@ -146,6 +200,23 @@ export default function NationalGameCard({ game }) {
                   ))}
                 </View>
               </View>
+              <View style={styles.selectedBudget}>
+                <View>
+                  <Text style={styles.selectedBudgetLabel}>VOS CHOIX</Text>
+                  <Text style={styles.selectedBudgetCount}>
+                    {selectedPlayIds.length
+                      ? `${selectedPlayIds.length} jeu${selectedPlayIds.length > 1 ? 'x' : ''} sélectionné${selectedPlayIds.length > 1 ? 's' : ''}`
+                      : 'Aucun jeu sélectionné'}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.selectedBudgetLabel}>BUDGET TOTAL</Text>
+                  <Text style={styles.selectedBudgetTotal}>{formatFcfa(selectedBudget)}</Text>
+                </View>
+              </View>
+              <Text style={styles.budgetNotice}>
+                Le total additionne uniquement vos choix. ParisPromax ne collecte aucune mise.
+              </Text>
             </View>
           ) : (
             <View style={styles.proposalPending}>
@@ -157,6 +228,25 @@ export default function NationalGameCard({ game }) {
             </View>
           )}
 
+          <Pressable
+            style={styles.rulesToggle}
+            onPress={() => setShowRules((value) => !value)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showRules }}
+          >
+            <View>
+              <Text style={styles.rulesToggleKicker}>BESOIN D’ALLER PLUS LOIN ?</Text>
+              <Text style={styles.rulesToggleTitle}>Règles et calculateur Grand Carnet</Text>
+            </View>
+            <Ionicons
+              name={showRules ? 'chevron-up' : 'chevron-down'}
+              size={19}
+              color={COLORS.primary}
+            />
+          </Pressable>
+
+          {showRules && (
+            <View style={styles.rulesPanel}>
           {!!game.schedule?.length && (
             <>
               <Text style={styles.sectionTitle}>Calendrier des jeux</Text>
@@ -265,6 +355,8 @@ export default function NationalGameCard({ game }) {
               </View>
             </View>
           </View>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -351,7 +443,37 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
     backgroundColor: COLORS.surface,
   },
+  playSelected: {
+    borderColor: COLORS.accent,
+    borderWidth: 2,
+    backgroundColor: '#ecfdf5',
+  },
+  playHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  chooseBadge: {
+    color: COLORS.textMuted,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  chooseBadgeSelected: { color: COLORS.accent },
   ticketNames: { color: COLORS.textMuted, fontSize: 9, marginTop: 5 },
+  playCostRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
+  },
+  playFormula: { flex: 1, color: COLORS.textMuted, fontSize: 9, lineHeight: 13 },
+  playCost: { color: COLORS.primary, fontSize: FONT.md, fontWeight: '900' },
   grandCarnetProposal: {
     marginTop: SPACING.md,
     padding: SPACING.md,
@@ -373,6 +495,20 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   grandCarnetBudget: { color: COLORS.accent, fontSize: FONT.sm, fontWeight: '800', marginTop: SPACING.sm },
+  chooseButton: {
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surface,
+  },
+  chooseButtonSelected: {
+    borderColor: COLORS.accent,
+    backgroundColor: COLORS.accent,
+  },
+  chooseButtonText: { color: COLORS.textMuted, fontSize: 9, fontWeight: '900' },
+  chooseButtonTextSelected: { color: COLORS.white },
   combinationsTitle: { color: COLORS.textMuted, fontSize: 9, fontWeight: '900', marginTop: SPACING.md, textTransform: 'uppercase' },
   combinationList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: SPACING.sm },
   combinationChip: {
@@ -386,6 +522,40 @@ const styles = StyleSheet.create({
   },
   combinationIndex: { color: COLORS.textFaint, fontSize: 8 },
   combinationText: { color: COLORS.text, fontSize: 9, fontWeight: '800' },
+  selectedBudget: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  selectedBudgetLabel: {
+    color: '#cbd5e1',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.7,
+  },
+  selectedBudgetCount: { color: COLORS.white, fontSize: FONT.sm, fontWeight: '800', marginTop: 3 },
+  selectedBudgetTotal: { color: '#6ee7b7', fontSize: FONT.xl, fontWeight: '900', marginTop: 3 },
+  budgetNotice: { color: COLORS.textMuted, fontSize: 9, lineHeight: 14, marginTop: SPACING.sm },
+  rulesToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surface,
+  },
+  rulesToggleKicker: { color: COLORS.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
+  rulesToggleTitle: { color: COLORS.primary, fontSize: FONT.sm, fontWeight: '900', marginTop: 3 },
+  rulesPanel: { paddingBottom: SPACING.xs },
   sectionTitle: {
     color: COLORS.text,
     fontSize: FONT.md,

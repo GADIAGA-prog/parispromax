@@ -5,6 +5,11 @@ const { getAccess } = require('../services/subscription');
 const { groupPicks: buildGroups } = require('../services/predictionSelection');
 const { getNationalGame } = require('../../../shared/nationalGameRules');
 const { buildNationalBetProposal } = require('../../../shared/nationalBetProposal');
+const { getEcdProfile } = require('../../../shared/ecdRules');
+const {
+  automaticSelection,
+  groupSelectedRaces,
+} = require('../services/ecdProgram');
 const { parisStartIso, gmtTimeLabel } = require('../services/raceTime');
 
 const router = express.Router();
@@ -186,6 +191,63 @@ router.get('/national', async (req, res) => {
           }
         : null,
     },
+  });
+});
+
+// GET /races/ecd?country=bf&date=YYYY-MM-DD
+// Programme des autres courses proposées pour le pays. Une sélection ECD
+// validée dans le back-office est prioritaire ; à défaut, un programme
+// automatique limité et clairement identifié évite d'afficher toutes les
+// réunions internationales sans hiérarchie.
+router.get('/ecd', async (req, res) => {
+  const country = String(req.query.country || '').trim().toLowerCase();
+  if (!country) return res.status(400).json({ error: 'country requis' });
+  const profile = getEcdProfile(country);
+  if (!profile) return res.status(400).json({ error: 'country invalide' });
+
+  let date = req.query.date;
+  if (!date) {
+    const latest = await prisma.race.findFirst({
+      orderBy: { date: 'desc' },
+      select: { date: true },
+    });
+    date = latest?.date || new Date().toISOString().slice(0, 10);
+  }
+
+  const [nationalPick, configuredPicks, races] = await Promise.all([
+    prisma.nationalPick.findUnique({
+      where: { date_country: { date, country } },
+      select: { externalId: true },
+    }),
+    prisma.ecdPick.findMany({
+      where: { date, country },
+      orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+    }),
+    prisma.race.findMany({
+      where: { date },
+      orderBy: { createdAt: 'asc' },
+      include: { result: true },
+      take: 300,
+    }),
+  ]);
+
+  const raceById = new Map(races.map((race) => [race.externalId, race]));
+  const configuredRaces = configuredPicks
+    .map((pick) => raceById.get(pick.externalId))
+    .filter(Boolean)
+    .filter((race) => race.externalId !== nationalPick?.externalId);
+  const selectedRaces = configuredRaces.length
+    ? configuredRaces
+    : automaticSelection(races, profile, nationalPick?.externalId);
+  const journalUrl = configuredPicks.find((pick) => pick.journalUrl)?.journalUrl || null;
+
+  res.json({
+    country,
+    date,
+    profile,
+    selectionMode: configuredRaces.length ? 'country-validated' : 'automatic-fallback',
+    journalUrl,
+    racetracks: groupSelectedRaces(selectedRaces, profile),
   });
 });
 

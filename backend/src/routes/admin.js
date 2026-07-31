@@ -242,6 +242,76 @@ router.get('/api/national-picks', async (req, res) => {
   res.json({ date, picks });
 });
 
+// POST /admin/api/ecd-picks
+// { country, externalIds: [], date?, journalUrl? } — remplace le programme ECD
+// du pays pour la journée afin d'éviter les doublons et sélections périmées.
+router.post('/api/ecd-picks', express.json(), async (req, res) => {
+  const country = String(req.body.country || '').trim().toLowerCase();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(req.body.date || '')
+    ? req.body.date
+    : new Date().toISOString().slice(0, 10);
+  const allowedCountries = pickCountryCatalog().map((item) => item.code);
+  if (!allowedCountries.includes(country)) {
+    return res.status(400).json({ error: `country invalide (${allowedCountries.join(', ')})` });
+  }
+  const externalIds = [...new Set(
+    (Array.isArray(req.body.externalIds) ? req.body.externalIds : [])
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+  )].slice(0, 20);
+  if (!externalIds.length) {
+    return res.status(400).json({ error: 'Sélectionnez au moins une course ECD' });
+  }
+  const journalUrl = String(req.body.journalUrl || '').trim();
+  if (journalUrl && !/^https?:\/\//.test(journalUrl)) {
+    return res.status(400).json({ error: 'journalUrl doit être une URL http(s)' });
+  }
+
+  const [races, nationalPick] = await Promise.all([
+    prisma.race.findMany({
+      where: { externalId: { in: externalIds }, date },
+      select: { externalId: true },
+    }),
+    prisma.nationalPick.findUnique({
+      where: { date_country: { date, country } },
+      select: { externalId: true },
+    }),
+  ]);
+  const valid = new Set(races.map((race) => race.externalId));
+  const cleanIds = externalIds.filter(
+    (externalId) => valid.has(externalId) && externalId !== nationalPick?.externalId
+  );
+  if (!cleanIds.length) {
+    return res.status(400).json({ error: 'Aucune course ECD valide pour cette date' });
+  }
+
+  await prisma.$transaction([
+    prisma.ecdPick.deleteMany({ where: { date, country } }),
+    ...cleanIds.map((externalId, priority) => prisma.ecdPick.create({
+      data: {
+        date,
+        country,
+        externalId,
+        priority,
+        journalUrl: journalUrl || null,
+      },
+    })),
+  ]);
+  res.json({ ok: true, date, country, count: cleanIds.length });
+});
+
+// GET /admin/api/ecd-picks?date=YYYY-MM-DD
+router.get('/api/ecd-picks', async (req, res) => {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')
+    ? req.query.date
+    : new Date().toISOString().slice(0, 10);
+  const picks = await prisma.ecdPick.findMany({
+    where: { date },
+    orderBy: [{ country: 'asc' }, { priority: 'asc' }],
+  });
+  res.json({ date, picks });
+});
+
 // POST /admin/api/reset-password  { phone, newPassword, requestId? }
 // Support client après demande envoyée à ftevolut@gmail.com. Vérifiez toujours
 // l'identité (ex. référence d'un paiement) avant de réinitialiser. L'ancien
@@ -377,6 +447,21 @@ const DASHBOARD_HTML = `<!doctype html>
       <button id="savePickBtn" style="background:#10b981;color:#06251c;font-weight:800">💾 Enregistrer</button>
     </div>
     <div id="npList" class="muted" style="margin-top:10px"></div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="label">📺 Programme ECD par pays</div>
+    <p class="muted" style="margin-left:0">Sélectionnez plusieurs courses avec Ctrl/Cmd. La course nationale est automatiquement exclue.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-start">
+      <select id="ecdCountry">
+        ${PICK_COUNTRY_OPTIONS}
+      </select>
+      <select id="ecdRaces" multiple size="7" style="width:min(100%,520px)"><option>Chargement des courses…</option></select>
+      <div style="display:grid;gap:8px">
+        <input id="ecdJournal" placeholder="URL du journal ECD (optionnel)" style="width:260px"/>
+        <button id="saveEcdBtn" style="background:#10b981;color:#06251c;font-weight:800">💾 Enregistrer les ECD</button>
+      </div>
+    </div>
+    <div id="ecdList" class="muted" style="margin-top:10px"></div>
   </div>
   <table>
     <thead><tr><th>Date</th><th>Téléphone</th><th>Transaction</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead>
@@ -524,31 +609,52 @@ const DASHBOARD_HTML = `<!doctype html>
   const FLAGS = ${JSON.stringify(PICK_FLAGS)};
   async function loadPicks(){
     const sel = document.getElementById('npRace');
+    const ecdSel = document.getElementById('ecdRaces');
     try {
-      const [racesResult, picksResult] = await Promise.allSettled([
+      const [racesResult, picksResult, ecdResult] = await Promise.allSettled([
         fetchJson('/races'),
-        fetchJson('/admin/api/national-picks')
+        fetchJson('/admin/api/national-picks'),
+        fetchJson('/admin/api/ecd-picks')
       ]);
       if (racesResult.status === 'rejected') throw racesResult.reason;
       const d = racesResult.value;
       sel.innerHTML = '';
+      ecdSel.innerHTML = '';
       (d.racetracks||[]).forEach(t=>(t.races||[]).forEach(r=>{
-        const o = document.createElement('option');
-        o.value = r.id;
-        o.textContent = t.name+' '+(r.number||'')+' — '+r.name+(r.time?(' ('+r.time+')'):'');
-        sel.appendChild(o);
+        const label = t.name+' '+(r.number||'')+' — '+r.name+(r.time?(' ('+r.time+')'):'');
+        const nationalOption = document.createElement('option');
+        nationalOption.value = r.id;
+        nationalOption.textContent = label;
+        sel.appendChild(nationalOption);
+        const ecdOption = document.createElement('option');
+        ecdOption.value = r.id;
+        ecdOption.textContent = label;
+        ecdSel.appendChild(ecdOption);
       }));
       if (!sel.options.length) {
         sel.innerHTML = '<option value="">Aucune course disponible</option>';
+        ecdSel.innerHTML = '<option value="">Aucune course disponible</option>';
       }
       if (picksResult.status === 'rejected') throw picksResult.reason;
       const p = picksResult.value;
       document.getElementById('npList').innerHTML = (p.picks||[]).length
         ? p.picks.map(x=>esc(FLAGS[x.country]||x.country)+' '+esc(x.country.toUpperCase())+' → <code>'+esc(x.externalId)+'</code> '+esc(x.betType||'')+(x.journalUrl?' · <a href="'+esc(x.journalUrl)+'" target="_blank" rel="noopener" style="color:#10b981">journal</a>':'')).join('  ·  ')
         : 'Aucune course désignée pour aujourd\\'hui.';
+      if (ecdResult.status === 'rejected') throw ecdResult.reason;
+      const e = ecdResult.value;
+      const byCountry = {};
+      (e.picks||[]).forEach(x=>{
+        if (!byCountry[x.country]) byCountry[x.country]=[];
+        byCountry[x.country].push(x.externalId);
+      });
+      document.getElementById('ecdList').innerHTML = Object.keys(byCountry).length
+        ? Object.entries(byCountry).map(([country, ids])=>esc(FLAGS[country]||country)+' '+esc(country.toUpperCase())+' → '+ids.map(id=>'<code>'+esc(id)+'</code>').join(', ')).join(' · ')
+        : 'Aucun programme ECD validé : la sélection automatique sera utilisée.';
     } catch(e) {
       sel.innerHTML = '<option value="">Chargement impossible</option>';
+      ecdSel.innerHTML = '<option value="">Chargement impossible</option>';
       document.getElementById('npList').textContent = e.message;
+      document.getElementById('ecdList').textContent = e.message;
     }
   }
   async function savePick(){
@@ -566,12 +672,29 @@ const DASHBOARD_HTML = `<!doctype html>
       alert('❌ '+e.message);
     }
   }
+  async function saveEcd(){
+    const select = document.getElementById('ecdRaces');
+    const externalIds = Array.from(select.selectedOptions).map(option=>option.value).filter(Boolean);
+    const body = {
+      country: document.getElementById('ecdCountry').value,
+      externalIds,
+      journalUrl: document.getElementById('ecdJournal').value,
+    };
+    try {
+      const d = await fetchJson('/admin/api/ecd-picks', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      alert(d.ok ? ('✅ '+d.count+' courses ECD enregistrées') : ('❌ '+(d.error||'erreur')));
+      loadPicks();
+    } catch(e) {
+      alert('❌ '+e.message);
+    }
+  }
   document.getElementById('statusFilter').addEventListener('change', load);
   document.getElementById('refreshBtn').addEventListener('click', load);
   document.getElementById('scrapeBtn').addEventListener('click', scrape);
   document.getElementById('ingestBtn').addEventListener('click', ingest);
   document.getElementById('resetSupportBtn').addEventListener('click', resetSupportPassword);
   document.getElementById('savePickBtn').addEventListener('click', savePick);
+  document.getElementById('saveEcdBtn').addEventListener('click', saveEcd);
   document.getElementById('recoveryRequests').addEventListener('click', event=>{
     const button = event.target.closest('.recovery-select');
     if (button) selectRecoveryRequest(button.dataset.recoveryId);

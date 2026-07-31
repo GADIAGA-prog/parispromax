@@ -50,12 +50,23 @@ function listCombinations(items, places) {
   return result;
 }
 
-function couple(id, label, positions, ranking) {
+function couple(id, label, positions, ranking, stakeValue) {
   const horses = positions
     .map((position) => ranking[position - 1])
     .filter(Boolean);
   if (horses.length !== 2) return null;
-  return { id, label, positions, horses };
+  const stake = Number(stakeValue);
+  const unitStake = Number.isFinite(stake) && stake > 0 ? stake : null;
+  return {
+    id,
+    kind: 'couple',
+    label,
+    positions,
+    horses,
+    combinationsCount: 1,
+    stake: unitStake,
+    cost: unitStake,
+  };
 }
 
 function buildNationalBetProposal(game, candidates, { nonPartants = [], source = 'analysis' } = {}) {
@@ -71,27 +82,34 @@ function buildNationalBetProposal(game, candidates, { nonPartants = [], source =
   const combinations = listCombinations(grandCarnetHorses, podium);
   const stake = Number(game?.stake);
 
+  const couples = (game?.couples || []).length ? [
+    couple('winner', 'Couplé gagnant', [1, 2], ranking, stake),
+    couple('placed-a', 'Couplé placé A', [1, 2], ranking, stake),
+    couple('placed-b', 'Couplé placé B', [1, 3], ranking, stake),
+    couple('placed-c', 'Couplé placé C', [2, 3], ranking, stake),
+  ].filter(Boolean) : [];
+  const grandCarnet = {
+    id: 'grand-carnet',
+    kind: 'grand-carnet',
+    label: `Grand Carnet ${game?.label || ''}`.trim(),
+    podium,
+    horses: grandCarnetHorses,
+    selectedHorses: grandCarnetHorses.length,
+    combinationsCount: combinationCount(grandCarnetHorses.length, podium),
+    combinations,
+    stake: Number.isFinite(stake) && stake > 0 ? stake : null,
+    cost: Number.isFinite(stake) && stake > 0
+      ? grandCarnetCost(grandCarnetHorses.length, podium, stake)
+      : null,
+  };
+
   return {
     source,
     ranking: ranking.slice(0, Math.max(3, selectionSize)),
-    couples: (game?.couples || []).length ? [
-      couple('winner', 'Couplé gagnant', [1, 2], ranking),
-      couple('placed-a', 'Couplé placé A', [1, 2], ranking),
-      couple('placed-b', 'Couplé placé B', [1, 3], ranking),
-      couple('placed-c', 'Couplé placé C', [2, 3], ranking),
-    ].filter(Boolean) : [],
+    couples,
     podiumSelection: ranking.slice(0, podium),
-    grandCarnet: {
-      podium,
-      horses: grandCarnetHorses,
-      selectedHorses: grandCarnetHorses.length,
-      combinationsCount: combinationCount(grandCarnetHorses.length, podium),
-      combinations,
-      stake: Number.isFinite(stake) && stake > 0 ? stake : null,
-      cost: Number.isFinite(stake) && stake > 0
-        ? grandCarnetCost(grandCarnetHorses.length, podium, stake)
-        : null,
-    },
+    grandCarnet,
+    plays: [...couples, grandCarnet],
   };
 }
 

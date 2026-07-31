@@ -8,6 +8,8 @@ const state = {
   racetracks: [],
   results: [],
   raceDate: null,
+  ecdProfile: null,
+  ecdSelectionMode: null,
   nationalGame: null,
   nationalRaceId: null,
   nationalCountry: localStorage.getItem('ppm_quinte_country') || 'bf',
@@ -109,6 +111,10 @@ function escapeHtml(value) {
 
 function formatXof(value) {
   return `${Number(value || 0).toLocaleString('fr-FR')} XOF`;
+}
+
+function formatFcfa(value) {
+  return `${Number(value || 0).toLocaleString('fr-FR')} FCFA`;
 }
 
 function dateLabel(value) {
@@ -515,16 +521,33 @@ async function loadRaces() {
   const list = $('#race-list');
   list.innerHTML = '<div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>';
   try {
-    const data = await api('/races', { auth: false });
+    const data = await api(`/races/ecd?country=${encodeURIComponent(state.nationalCountry)}`, { auth: false });
     state.racetracks = data.racetracks || [];
     state.raceDate = data.meta?.date || null;
-    $('#program-kicker').textContent = state.raceDate ? `PROGRAMME DU ${dateLabel(state.raceDate).toUpperCase()}` : 'PROGRAMME DISPONIBLE';
+    state.raceDate = data.date || state.raceDate;
+    state.ecdProfile = data.profile || null;
+    state.ecdSelectionMode = data.selectionMode || null;
+    const country = countryDetails(state.nationalCountry);
+    $('#program-kicker').textContent = state.raceDate
+      ? `ECD ${country.name.toUpperCase()} · ${dateLabel(state.raceDate).toUpperCase()}`
+      : `ECD ${country.name.toUpperCase()}`;
+    const ecdDescription = $('#ecd-program-description');
+    if (ecdDescription) {
+      const stake = data.profile?.unitStake
+        ? ` Mise de base : ${formatFcfa(data.profile.unitStake)}.`
+        : ' Les mises sont affichées uniquement après validation de l’opérateur du pays.';
+      const status = data.selectionMode === 'country-validated'
+        ? 'Programme validé pour votre pays.'
+        : 'Sélection ParisPromax provisoire en attendant le programme national.';
+      ecdDescription.textContent = `${status}${stake}`;
+    }
     renderRaces();
     buildMemberNotifications();
     updateHeroRace();
-    await loadNationalSpotlight();
   } catch (error) {
     list.innerHTML = `<div class="empty-state"><p>${escapeHtml(error.message)}</p></div>`;
+  } finally {
+    await loadNationalSpotlight();
   }
 }
 
@@ -535,12 +558,12 @@ function renderRaces() {
     return;
   }
   list.innerHTML = state.racetracks.map((track) => `
-    <div class="track-label">${escapeHtml(track.name)}</div>
+    <div class="track-label"><span>${escapeHtml(track.name)}</span><small>ECD · ${escapeHtml(countryDetails(state.nationalCountry).name)}</small></div>
     ${(track.races || []).map((race) => {
       const winners = race.result?.winners || [];
       const resultLabel = winners.length
         ? `<small class="race-result-mini">Arrivée : ${winners.slice(0, 5).map(escapeHtml).join(' - ')}</small>`
-        : `<small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants</small>`;
+        : `<small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants${race.ecd?.variants?.length ? ` · ${escapeHtml(race.ecd.variants.map((variant) => variant.label).join(', '))}` : ''}</small>`;
       return `<button class="race-item ${race.id === state.selectedRaceId ? 'active' : ''}" type="button" data-race-id="${escapeHtml(race.id)}">
         <span class="race-time">${escapeHtml(race.time || `C${race.number || ''}`)}</span>
         <span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong>${resultLabel}</span>
@@ -783,6 +806,9 @@ function nationalProposalMarkup(game) {
   const sourceLabel = proposal.source === 'latest-analysis'
     ? 'Hiérarchie ParisPromax actualisée'
     : 'Classement provisoire selon le marché';
+  const budgetLine = (play) => play.cost != null
+    ? `<span class="play-budget"><small>${escapeHtml(play.combinationsCount || 1)} combinaison${Number(play.combinationsCount) > 1 ? 's' : ''} × ${formatFcfa(play.stake)}</small><strong>${formatFcfa(play.cost)}</strong></span>`
+    : '<span class="play-budget"><small>Mise opérateur</small><strong>À confirmer</strong></span>';
 
   return `<section class="national-proposal" aria-labelledby="national-proposal-title">
     <div class="national-proposal-head">
@@ -798,21 +824,20 @@ function nationalProposalMarkup(game) {
     </div>
     <div class="national-ticket-grid">
       ${(proposal.couples || []).length ? `<div class="couple-tickets">
-        ${(proposal.couples || []).map((ticket) => `<article>
-          <span>${escapeHtml(ticket.label)}</span>
+        ${(proposal.couples || []).map((ticket) => `<article class="bet-choice-card">
+          <div class="bet-choice-head"><span>${escapeHtml(ticket.label)}</span><button class="bet-choice-toggle" type="button" data-play-id="${escapeHtml(ticket.id)}" data-play-cost="${escapeHtml(ticket.cost ?? '')}" aria-pressed="false">Choisir</button></div>
           <div>${horseNumbers(ticket.horses || [])}</div>
           <small>${escapeHtml(ticket.horses?.map((horse) => horse.name).join(' · ') || '')}</small>
+          ${budgetLine(ticket)}
         </article>`).join('')}
       </div>` : ''}
-      <article class="grand-carnet-ticket">
+      <article class="grand-carnet-ticket bet-choice-card">
         <div class="grand-carnet-ticket-head">
           <div><span>GRAND CARNET ${escapeHtml(game.label.toUpperCase())}</span><strong>${escapeHtml(grandCarnet.selectedHorses)} chevaux retenus</strong></div>
-          <b>${escapeHtml(grandCarnet.combinationsCount)} combinaison${grandCarnet.combinationsCount > 1 ? 's' : ''}</b>
+          <button class="bet-choice-toggle" type="button" data-play-id="grand-carnet" data-play-cost="${escapeHtml(grandCarnet.cost ?? '')}" aria-pressed="false">Choisir</button>
         </div>
         <div class="grand-carnet-horses">${horseNumbers(grandCarnet.horses)}</div>
-        <p>${grandCarnet.cost != null
-          ? `Budget complet : <strong>${escapeHtml(grandCarnet.cost.toLocaleString('fr-FR'))} FCFA</strong> (${escapeHtml(grandCarnet.stake)} FCFA par combinaison).`
-          : 'Mise à confirmer auprès de l’opérateur national.'}</p>
+        ${budgetLine(grandCarnet)}
         <details>
           <summary>Voir les ${escapeHtml(grandCarnet.combinationsCount)} combinaisons</summary>
           <div class="grand-carnet-combinations">
@@ -821,7 +846,41 @@ function nationalProposalMarkup(game) {
         </details>
       </article>
     </div>
+    <div class="selected-budget" data-selected-budget aria-live="polite">
+      <span><small>Vos choix</small><strong data-selected-count>Aucun jeu sélectionné</strong></span>
+      <span><small>Budget total</small><strong data-selected-total>0 FCFA</strong></span>
+    </div>
+    <p class="budget-disclaimer">Ce budget additionne uniquement les jeux que vous sélectionnez ci-dessus. ParisPromax ne collecte aucune mise.</p>
   </section>`;
+}
+
+function setupNationalBudget(root) {
+  const buttons = $$('.bet-choice-toggle', root);
+  const countNode = $('[data-selected-count]', root);
+  const totalNode = $('[data-selected-total]', root);
+  if (!buttons.length || !countNode || !totalNode) return;
+  const selected = new Map();
+
+  const render = () => {
+    const costs = [...selected.values()];
+    const total = costs.reduce((sum, value) => sum + value, 0);
+    countNode.textContent = costs.length
+      ? `${costs.length} jeu${costs.length > 1 ? 'x' : ''} sélectionné${costs.length > 1 ? 's' : ''}`
+      : 'Aucun jeu sélectionné';
+    totalNode.textContent = formatFcfa(total);
+  };
+
+  buttons.forEach((button) => button.addEventListener('click', () => {
+    const id = button.dataset.playId;
+    const active = button.getAttribute('aria-pressed') !== 'true';
+    button.setAttribute('aria-pressed', String(active));
+    button.textContent = active ? 'Sélectionné ✓' : 'Choisir';
+    button.closest('.bet-choice-card')?.classList.toggle('selected', active);
+    if (active) selected.set(id, Number(button.dataset.playCost) || 0);
+    else selected.delete(id);
+    render();
+  }));
+  render();
 }
 
 function renderNationalGameGuide(game) {
@@ -842,6 +901,9 @@ function renderNationalGameGuide(game) {
 
       ${nationalProposalMarkup(game)}
 
+      <details class="national-rules-disclosure">
+        <summary>Règles, calendrier et calculateur</summary>
+        <div class="national-rules-content">
       ${(game.schedule || []).length ? `<div class="burkina-schedule">
         ${(game.schedule || []).map((item) => `
           <article>
@@ -879,6 +941,8 @@ function renderNationalGameGuide(game) {
           <p>C(${escapeHtml(game.podium)}, ${escapeHtml(game.podium)})${game.stake ? ` × ${escapeHtml(game.stake)} FCFA` : ''}</p>
         </div>
       </div>
+        </div>
+      </details>
     </section>`;
 }
 
@@ -921,6 +985,7 @@ async function loadNationalSpotlight() {
     if (!race) {
       node.innerHTML = `<div class="national-empty"><strong>${escapeHtml(country.flag)} Sélection ${escapeHtml(country.name)}</strong><p>La course nationale est en cours de préparation. Les règles du jeu du jour restent disponibles ci-dessous.</p></div>${gameGuide}`;
       setupGrandCarnetCalculator(game, node);
+      setupNationalBudget(node);
       return;
     }
     const isNational = Boolean(nationalRace);
@@ -951,6 +1016,7 @@ async function loadNationalSpotlight() {
       </div>
       ${gameGuide}`;
     setupGrandCarnetCalculator(game, node);
+    setupNationalBudget(node);
     const button = $('[data-national-race]', node);
     if (button) button.addEventListener('click', async () => {
       await selectRace(button.dataset.nationalRace);
@@ -1483,7 +1549,7 @@ function bindEvents() {
   $('#quinte-country').addEventListener('change', (event) => {
     state.nationalCountry = event.target.value;
     localStorage.setItem('ppm_quinte_country', state.nationalCountry);
-    loadNationalSpotlight();
+    loadRaces();
   });
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });

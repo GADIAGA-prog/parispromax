@@ -6,8 +6,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0f172a",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f4f6f8",
     "ios": {
       "supportsTablet": true
     },
@@ -43,7 +43,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 240,
           "resizeMode": "contain",
-          "backgroundColor": "#020617"
+          "backgroundColor": "#f4f6f8"
         }
       ],
       "expo-web-browser",

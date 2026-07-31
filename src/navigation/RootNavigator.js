@@ -19,11 +19,11 @@ import { COLORS } from '../theme/colors';
 
 const navTheme = {
   ...DefaultTheme,
-  dark: true,
+  dark: false,
   colors: {
     ...DefaultTheme.colors,
     background: COLORS.background,
-    card: COLORS.primary,
+    card: COLORS.surface,
     text: COLORS.text,
     border: COLORS.border,
     primary: COLORS.accent,
@@ -42,7 +42,7 @@ function MainTabs() {
         tabBarActiveTintColor: COLORS.accent,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: COLORS.surface,
           borderTopColor: COLORS.border,
         },
         tabBarIcon: ({ color, size }) => {
@@ -79,7 +79,7 @@ export default function RootNavigator() {
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: COLORS.primary },
-          headerTintColor: COLORS.text,
+          headerTintColor: COLORS.white,
           headerTitleStyle: { fontWeight: '900' },
           contentStyle: { backgroundColor: COLORS.background },
         }}
