@@ -58,3 +58,13 @@ test('les interfaces ne présentent plus ParisPromax comme un produit IA', () =>
 
   assert.doesNotMatch(visibleInterface, /Pronostics? IA|intelligence artificielle|Indice IA|IA \+ données|ANALYSE IA|MODÈLE IA|🤖|name="sparkles"/i);
 });
+
+
+test('le texte saisi dans le chat reste visible sur fond sombre', () => {
+  const styles = read('backend', 'public', 'styles.css');
+
+  assert.match(styles, /\.chat-form input\{[^}]*color:#f3f7fb/);
+  assert.match(styles, /caret-color:#2de2a0/);
+  assert.match(styles, /\.chat-form input::placeholder\{[^}]*color:#91a2b8/);
+  assert.match(styles, /-webkit-text-fill-color:#f3f7fb/);
+});
