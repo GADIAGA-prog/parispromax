@@ -8,6 +8,7 @@ const read = (...parts) => fs.readFileSync(path.join(root, ...parts), 'utf8');
 
 test('les visuels hippiques illustrent le site et Android', () => {
   const html = read('backend', 'public', 'index.html');
+  const webApp = read('backend', 'public', 'app.js');
   const homeScreen = read('src', 'screens', 'HomeScreen.js');
   const historyScreen = read('src', 'screens', 'HistoryScreen.js');
   const assets = [
@@ -20,9 +21,12 @@ test('les visuels hippiques illustrent le site et Android', () => {
   ];
 
   assets.forEach((asset) => assert.ok(fs.statSync(path.join(root, ...asset)).size > 100000));
-  assert.match(html, /race-flat\.jpg/);
-  assert.match(html, /race-harness\.jpg/);
+  assert.match(webApp, /race-flat\.jpg/);
+  assert.match(webApp, /race-harness\.jpg/);
   assert.match(html, /race-finish\.jpg/);
+  assert.equal((html.match(/data-race-carousel/g) || []).length, 4);
+  assert.match(webApp, /raceCarouselPlaceholder/);
+  assert.match(webApp, /setInterval/);
   assert.match(homeScreen, /race-flat\.jpg/);
   assert.match(homeScreen, /race-harness\.jpg/);
   assert.match(historyScreen, /race-finish\.jpg/);

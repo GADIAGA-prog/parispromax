@@ -34,6 +34,71 @@ const FALLBACK_COUNTRIES = [
 
 let deferredInstallPrompt = null;
 const CANONICAL_WEB_ORIGIN = 'https://www.parispromax.com';
+const RACE_CAROUSEL_SLIDES = Object.freeze([
+  { src: '/assets/race-flat.jpg', alt: 'Chevaux et jockeys pendant une course de plat', label: 'Course de plat' },
+  { src: '/assets/race-harness.jpg', alt: 'Chevaux au trot pendant une course attelée', label: 'Trot attelé' },
+  { src: '/assets/race-finish.jpg', alt: 'Chevaux franchissant la ligne d’arrivée', label: 'Arrivée de course' },
+]);
+let raceCarouselTimer = null;
+
+function setRaceCarouselSlide(carousel, index) {
+  const slides = $$('.race-carousel-slide', carousel);
+  const dots = $$('[data-carousel-dot]', carousel);
+  if (!slides.length) return;
+  const safeIndex = ((Number(index) || 0) % slides.length + slides.length) % slides.length;
+  slides.forEach((slide, slideIndex) => {
+    const active = slideIndex === safeIndex;
+    slide.classList.toggle('active', active);
+    slide.setAttribute('aria-hidden', String(!active));
+  });
+  dots.forEach((dot, dotIndex) => {
+    const active = dotIndex === safeIndex;
+    dot.classList.toggle('active', active);
+    dot.setAttribute('aria-current', active ? 'true' : 'false');
+  });
+  carousel.dataset.carouselIndex = String(safeIndex);
+}
+
+function raceCarouselPlaceholder(label, start = 0) {
+  return `<div class="race-carousel race-carousel-inline" data-race-carousel data-carousel-start="${start}" data-carousel-label="${escapeHtml(label)}" aria-label="Images de courses hippiques"></div>`;
+}
+
+function hydrateRaceCarousels(root = document) {
+  $$('[data-race-carousel]', root).forEach((carousel) => {
+    if (carousel.dataset.carouselReady === 'true') return;
+    const label = carousel.dataset.carouselLabel || 'Courses hippiques';
+    carousel.innerHTML = `${RACE_CAROUSEL_SLIDES.map((slide, index) => `
+      <img class="race-carousel-slide" src="${slide.src}" alt="${slide.alt}" width="1600" height="900" loading="${index === 0 ? 'eager' : 'lazy'}" />
+    `).join('')}
+      <div class="race-carousel-bar">
+        <span><small>EN IMAGES</small><strong>${escapeHtml(label)}</strong></span>
+        <div class="race-carousel-dots" aria-label="Choisir une image">
+          ${RACE_CAROUSEL_SLIDES.map((slide, index) => `<button type="button" data-carousel-dot="${index}" aria-label="Afficher : ${slide.label}"></button>`).join('')}
+        </div>
+      </div>`;
+    carousel.dataset.carouselReady = 'true';
+    carousel.addEventListener('click', (event) => {
+      const dot = event.target.closest('[data-carousel-dot]');
+      if (dot) setRaceCarouselSlide(carousel, Number(dot.dataset.carouselDot));
+    });
+    carousel.addEventListener('pointerenter', () => { carousel.dataset.carouselPaused = 'true'; });
+    carousel.addEventListener('pointerleave', () => { carousel.dataset.carouselPaused = 'false'; });
+    setRaceCarouselSlide(carousel, Number(carousel.dataset.carouselStart || 0));
+  });
+}
+
+function startRaceCarousels() {
+  hydrateRaceCarousels();
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || raceCarouselTimer) return;
+  raceCarouselTimer = window.setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    hydrateRaceCarousels();
+    $$('[data-race-carousel]').forEach((carousel) => {
+      if (carousel.dataset.carouselPaused === 'true') return;
+      setRaceCarouselSlide(carousel, Number(carousel.dataset.carouselIndex || 0) + 1);
+    });
+  }, 4800);
+}
 
 function publicWebOrigin() {
   const current = new URL(window.location.origin);
@@ -1152,7 +1217,7 @@ function predictionMarkup(prediction, error, detail) {
     return '<section class="prediction-block locked-prediction"><h4>Accès complet requis</h4><p>Choisissez une formule pour afficher le pronostic détaillé de cette course.</p><a class="button button-primary" href="#abonnements">Voir les formules</a></section>';
   }
   if (state.token) return `<section class="prediction-block locked-prediction"><p>${escapeHtml(error?.message || 'Pronostic en cours de préparation.')}</p></section>`;
-  return '<section class="prediction-block locked-prediction"><h4>Connectez-vous pour voir le pronostic</h4><p>Les partants et les cotes restent accessibles ci-dessous.</p><button class="button button-primary" type="button" data-race-login>Se connecter</button></section>';
+  return `<section class="prediction-block locked-prediction">${raceCarouselPlaceholder('Course sélectionnée', 2)}<h4>Connectez-vous pour voir le pronostic</h4><p>Les partants et les cotes restent accessibles ci-dessous.</p><button class="button button-primary" type="button" data-race-login>Se connecter</button></section>`;
 }
 
 function officialResultMarkup(detail) {
@@ -1205,6 +1270,7 @@ function renderRaceDetail(context, detail, prediction, predictionError) {
     <div class="table-wrap"><table class="horse-table"><thead><tr><th>N°</th><th>Cheval</th><th>Jockey / entraîneur</th><th>Forme</th><th>Cote</th></tr></thead><tbody>
       ${horses.map((horse) => `<tr><td><span class="horse-num">${escapeHtml(horse.number)}</span></td><td><span class="horse-name">${escapeHtml(horse.name)}</span>${horse.nonPartant ? '<span class="horse-sub">Non-partant</span>' : ''}</td><td><span>${escapeHtml(horse.jockey || '—')}</span><span class="horse-sub">${escapeHtml(horse.trainer || '')}</span></td><td>${escapeHtml(horse.form || '—')}</td><td class="odds">${horse.odds != null ? escapeHtml(horse.odds) : '—'}</td></tr>`).join('')}
     </tbody></table></div>`;
+  hydrateRaceCarousels($('#race-detail'));
   const loginButton = $('[data-race-login]');
   if (loginButton) loginButton.addEventListener('click', () => openAuth('login'));
 }
@@ -1604,6 +1670,7 @@ async function boot() {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   bindEvents();
+  startRaceCarousels();
   renderCountryMarquee();
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }

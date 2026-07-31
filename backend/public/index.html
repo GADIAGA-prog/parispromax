@@ -22,7 +22,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260731-7" />
+  <link rel="stylesheet" href="/styles.css?v=20260731-8" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -77,6 +77,7 @@
           <div><span class="spotlight-label"><i></i> LE JEU NATIONAL DU JOUR</span><h2>Pronostic et mise, au même endroit</h2></div>
           <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du jeu national"></select></label>
         </div>
+        <div class="race-carousel race-carousel-national reveal" data-race-carousel data-carousel-start="1" data-carousel-label="Course nationale du jour" aria-label="Images de courses hippiques"></div>
         <div id="national-race" class="national-race-content">
           <div class="skeleton-line"></div><div class="skeleton-line"></div>
         </div>
@@ -98,6 +99,7 @@
       </div>
 
       <div class="hero-panel reveal delay-one" aria-label="Aperçu d'une analyse ParisPromax">
+        <div class="race-carousel race-carousel-panel" data-race-carousel data-carousel-start="0" data-carousel-label="Discipline et ambiance de la course" aria-label="Images de courses hippiques"></div>
         <div class="panel-topline"><span class="live-dot"></span><span id="hero-race-status">PROCHAINE ANALYSE</span><time id="hero-race-time">Aujourd'hui</time></div>
         <div class="hero-race-head">
           <div><small id="hero-track">Réunion principale</small><h2 id="hero-race">Course du jour</h2><p id="hero-meta">Chargement des données officielles…</p></div>
@@ -112,16 +114,6 @@
       </div>
     </section>
 
-    <section class="race-showcase section" aria-label="Les disciplines hippiques">
-      <a class="race-showcase-card reveal" href="#quinte-pays">
-        <img src="/assets/race-flat.jpg" alt="Chevaux et jockeys pendant une course de plat" width="1600" height="900" loading="eager" />
-        <span><small>VITESSE ET ENDURANCE</small><strong>Courses de plat</strong></span>
-      </a>
-      <a class="race-showcase-card reveal delay-one" href="#ecd">
-        <img src="/assets/race-harness.jpg" alt="Chevaux au trot tirant des sulkys pendant une course attelée" width="1600" height="900" loading="lazy" />
-        <span><small>TACTIQUE ET RÉGULARITÉ</small><strong>Trot attelé</strong></span>
-      </a>
-    </section>
 
     <section class="proof-strip" aria-label="Points forts">
       <div><strong>24/7</strong><span>Accès Web et mobile</span></div>
@@ -185,6 +177,7 @@
         <div><span class="section-kicker">GUIDE DE LECTURE</span><h2>Chaque cheval a un rôle clair.</h2></div>
         <p>Les catégories expliquent la construction du pronostic. Le Grand Carnet national adapte automatiquement la sélection au podium officiel du pays, avec deux chevaux de couverture.</p>
       </div>
+      <div class="race-carousel race-carousel-section reveal" data-race-carousel data-carousel-start="2" data-carousel-label="Comprendre les profils de course" aria-label="Images de courses hippiques"></div>
       <div class="guide-grid">
         <article class="guide-card reveal"><span>01</span><h3>Base</h3><p>Le point d’appui principal du modèle, retenu en tête de la hiérarchie.</p></article>
         <article class="guide-card reveal delay-one"><span>02</span><h3>Favori</h3><p>Le cheval le plus soutenu par le marché selon la cote disponible.</p></article>
@@ -200,6 +193,7 @@
         <div><span class="section-kicker">NOTRE MÉTHODE</span><h2>Une analyse lisible, jamais une promesse.</h2></div>
         <p>Chaque signal est replacé dans son contexte. Aucun algorithme ne peut garantir le résultat d'une course.</p>
       </div>
+      <div class="race-carousel race-carousel-section reveal" data-race-carousel data-carousel-start="0" data-carousel-label="Observer les données de course" aria-label="Images de courses hippiques"></div>
       <div class="method-grid">
         <article class="method-card reveal"><span>01</span><div class="method-icon">⌁</div><h3>Données de course</h3><p>Partants, distance, discipline, jockey, entraîneur, forme récente et conditions de piste.</p></article>
         <article class="method-card reveal delay-one"><span>02</span><div class="method-icon">◇</div><h3>Lecture probabiliste</h3><p>Notre modèle classe les concurrents et met en évidence les signaux qui convergent.</p></article>
@@ -417,6 +411,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260731-7" defer></script>
+  <script src="/app.js?v=20260731-8" defer></script>
 </body>
 </html>

@@ -769,3 +769,77 @@ footer { color: #d7e1e6; background: #102734; }
   .race-showcase-card strong { font-size: 21px; }
   .results-race-visual { height: 210px; margin-bottom: 22px; border-radius: 17px; }
 }
+.race-carousel {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  border: 1px solid #d5e1dd;
+  border-radius: 20px;
+  background: #102734;
+  box-shadow: 0 12px 34px rgba(20, 33, 43, .11);
+}
+.race-carousel-national { height: clamp(210px, 25vw, 330px); margin: 18px 0 22px; }
+.race-carousel-panel { height: 165px; margin: -8px -8px 20px; border-color: rgba(255, 255, 255, .15); }
+.race-carousel-section { height: clamp(210px, 25vw, 320px); margin: 0 0 24px; }
+.race-carousel-inline { height: clamp(170px, 22vw, 250px); margin: -8px 0 22px; text-align: left; }
+.race-carousel-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.035);
+  transition: opacity .65s ease, transform 4.8s ease;
+}
+.race-carousel-slide.active { opacity: 1; transform: scale(1); }
+.race-carousel::after {
+  content: "";
+  position: absolute;
+  inset: 42% 0 0;
+  background: linear-gradient(to bottom, transparent, rgba(7, 25, 33, .88));
+  pointer-events: none;
+}
+.race-carousel-bar {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  bottom: 15px;
+  left: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  color: #fff;
+}
+.race-carousel-bar span,
+.race-carousel-bar small,
+.race-carousel-bar strong { display: block; }
+.race-carousel-bar small { color: #b9d8cc; font-size: 8px; font-weight: 900; letter-spacing: 1.2px; }
+.race-carousel-bar strong { margin-top: 3px; font-size: 17px; }
+.race-carousel-dots { display: flex; align-items: center; gap: 6px; }
+.race-carousel-dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+.race-carousel-dots button.active { width: 24px; background: #fff; }
+.locked-prediction .race-carousel-bar { text-align: left; }
+
+@media (max-width: 760px) {
+  .hero-panel { display: block; margin-top: 26px; }
+  .race-carousel-national { height: 190px; margin-block: 15px 18px; border-radius: 16px; }
+  .race-carousel-panel { height: 170px; margin: -2px -2px 18px; border-radius: 15px; }
+  .race-carousel-section { height: 190px; margin-bottom: 18px; border-radius: 16px; }
+  .race-carousel-inline { height: 160px; margin-bottom: 18px; border-radius: 14px; }
+  .race-carousel-bar { right: 13px; bottom: 12px; left: 13px; }
+  .race-carousel-bar strong { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .race-carousel-slide { transition: none; }
+}
