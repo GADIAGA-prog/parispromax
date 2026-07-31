@@ -80,7 +80,8 @@ function buildNationalBetProposal(game, candidates, { nonPartants = [], source =
   const selectionSize = Math.min(ranking.length, Math.max(podium, requestedSize));
   const grandCarnetHorses = ranking.slice(0, selectionSize);
   const combinations = listCombinations(grandCarnetHorses, podium);
-  const stake = Number(game?.stake);
+  const stake = Number(game?.coupleStake || game?.stake);
+  const grandCarnetStake = Number(game?.stake);
 
   const couples = (game?.couples || []).length ? [
     couple('winner', 'Couplé gagnant', [1, 2], ranking, stake),
@@ -97,9 +98,9 @@ function buildNationalBetProposal(game, candidates, { nonPartants = [], source =
     selectedHorses: grandCarnetHorses.length,
     combinationsCount: combinationCount(grandCarnetHorses.length, podium),
     combinations,
-    stake: Number.isFinite(stake) && stake > 0 ? stake : null,
-    cost: Number.isFinite(stake) && stake > 0
-      ? grandCarnetCost(grandCarnetHorses.length, podium, stake)
+    stake: Number.isFinite(grandCarnetStake) && grandCarnetStake > 0 ? grandCarnetStake : null,
+    cost: Number.isFinite(grandCarnetStake) && grandCarnetStake > 0
+      ? grandCarnetCost(grandCarnetHorses.length, podium, grandCarnetStake)
       : null,
   };
 

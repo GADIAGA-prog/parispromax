@@ -31,6 +31,8 @@ const BURKINA_COUPLES = Object.freeze([
   Object.freeze({ label: 'Couplé placé C', positions: [2, 3], description: '2e et 3e à l’arrivée' }),
 ]);
 
+const BURKINA_COUPLE_STAKE = 500;
+
 function parseIsoDate(dateValue) {
   const value = String(dateValue || '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -73,6 +75,7 @@ function getBurkinaGame(dateValue) {
     label,
     podium,
     stake,
+    coupleStake: BURKINA_COUPLE_STAKE,
     currency: 'FCFA',
     isLastTuesday: lastTuesday,
     schedule: BURKINA_SCHEDULE,
@@ -99,6 +102,7 @@ function grandCarnetCost(selectedHorses, podium, stake) {
 module.exports = {
   BURKINA_SCHEDULE,
   BURKINA_COUPLES,
+  BURKINA_COUPLE_STAKE,
   getBurkinaGame,
   combinationCount,
   grandCarnetCost,
