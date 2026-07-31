@@ -52,9 +52,30 @@ const PERKS = [
 const IS_PLAY_DISTRIBUTION =
   Platform.OS === 'android' && process.env.EXPO_PUBLIC_DISTRIBUTION_CHANNEL === 'play';
 
+function normalizePlans(plans) {
+  return (plans || [])
+    .filter((item) => item?.id && Number.isFinite(Number(item.pricePromo)))
+    .map((item) => {
+      const days = Number(item.days) || 0;
+      const priceNormal = Number(item.priceNormal) || Number(item.pricePromo);
+      const pricePromo = Number(item.pricePromo);
+      return {
+        ...item,
+        days,
+        priceNormal,
+        pricePromo,
+        sub: `${days} jour${days > 1 ? 's' : ''}`,
+        discount: priceNormal > 0
+          ? Math.round((1 - pricePromo / priceNormal) * 10000) / 100
+          : 0,
+      };
+    });
+}
+
 export default function PaywallScreen({ navigation }) {
   const { refreshAccess, country, phone, referral } = useAuth();
   const [planId, setPlanId] = useState('monthly');
+  const [plans, setPlans] = useState(PLANS);
   const [providers, setProviders] = useState([]);
   const [providerId, setProviderId] = useState(null);
   const [processing, setProcessing] = useState(false);
@@ -69,7 +90,7 @@ export default function PaywallScreen({ navigation }) {
   const [otp, setOtp] = useState('');
   const [yengaPendingTxn, setYengaPendingTxn] = useState(null);
 
-  const plan = PLANS.find((p) => p.id === planId);
+  const plan = plans.find((p) => p.id === planId) || plans[0] || null;
   const referralPrice = (p) => referral?.firstPaymentEligible
     ? Math.max(200, p.pricePromo - Math.round(p.pricePromo * referral.discountPercent / 100))
     : p.pricePromo;
@@ -77,6 +98,29 @@ export default function PaywallScreen({ navigation }) {
   const providerLabel = providers.find((p) => p.id === providerId)?.label || 'notre partenaire';
   const isFeex = providerId === 'feexpay';
   const isYenga = providerId === 'yengapay';
+
+  // The backend catalog is the charging source of truth. Keep the bundled
+  // values only as an offline fallback so displayed and charged amounts match.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .plans()
+      .then((data) => {
+        if (cancelled) return;
+        const officialPlans = normalizePlans(data.plans);
+        if (!officialPlans.length) return;
+        setPlans(officialPlans);
+        setPlanId((current) => (
+          officialPlans.some((item) => item.id === current)
+            ? current
+            : officialPlans[0].id
+        ));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Load the payment providers actually available (FedaPay / CinetPay).
   useEffect(() => {
@@ -384,7 +428,7 @@ export default function PaywallScreen({ navigation }) {
         </View>
 
         {/* Plans */}
-        {PLANS.map((p) => {
+        {plans.map((p) => {
           const active = p.id === planId;
           const hasPromo = p.pricePromo < p.priceNormal;
           return (
@@ -587,7 +631,7 @@ export default function PaywallScreen({ navigation }) {
               ) : (
                 <>
                   <Ionicons name="lock-open" size={18} color="#06251c" />
-                  <Text style={styles.payText}>Payer {plan ? fmtXOF(plan.pricePromo) : ''}</Text>
+                  <Text style={styles.payText}>Payer {plan ? fmtXOF(referralPrice(plan)) : ''}</Text>
                 </>
               )}
             </Pressable>

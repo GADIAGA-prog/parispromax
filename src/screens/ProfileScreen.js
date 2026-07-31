@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, Share, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, Share, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
@@ -162,6 +162,18 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
 
+        <Pressable
+          style={styles.action}
+          onPress={() => Linking.openURL('https://wa.me/22668254941?text=Bonjour%20ParisPromax%2C%20j%27ai%20besoin%20d%27aide.')}
+        >
+          <Ionicons name="logo-whatsapp" size={20} color={COLORS.success} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.actionText, styles.actionTextStacked]}>Contacter l’assistance WhatsApp</Text>
+            <Text style={styles.actionSub}>+226 68 25 49 41</Text>
+          </View>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
+
         {showPaymentHistory && (
           <>
             <Text style={styles.sectionLabel}>Historique des paiements</Text>
@@ -279,6 +291,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
   },
   actionText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '700', flex: 1 },
+  actionTextStacked: { flex: 0 },
+  actionSub: { color: COLORS.textMuted, fontSize: FONT.sm - 1, marginTop: 2 },
   sectionLabel: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700', marginTop: SPACING.md, marginBottom: SPACING.sm },
   currencyRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm, flexWrap: 'wrap' },
   currencyChip: {

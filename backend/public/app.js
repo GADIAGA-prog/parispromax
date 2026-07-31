@@ -6,7 +6,10 @@ const state = {
   countries: [],
   plans: [],
   racetracks: [],
+  results: [],
   raceDate: null,
+  nationalGame: null,
+  nationalRaceId: null,
   nationalCountry: localStorage.getItem('ppm_quinte_country') || 'bf',
   me: null,
   notifications: [],
@@ -533,13 +536,66 @@ function renderRaces() {
   }
   list.innerHTML = state.racetracks.map((track) => `
     <div class="track-label">${escapeHtml(track.name)}</div>
-    ${(track.races || []).map((race) => `<button class="race-item ${race.id === state.selectedRaceId ? 'active' : ''}" type="button" data-race-id="${escapeHtml(race.id)}">
-      <span class="race-time">${escapeHtml(race.time || `C${race.number || ''}`)}</span>
-      <span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong><small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants</small></span>
-      <span class="race-arrow">›</span>
-    </button>`).join('')}
+    ${(track.races || []).map((race) => {
+      const winners = race.result?.winners || [];
+      const resultLabel = winners.length
+        ? `<small class="race-result-mini">Arrivée : ${winners.slice(0, 5).map(escapeHtml).join(' - ')}</small>`
+        : `<small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants</small>`;
+      return `<button class="race-item ${race.id === state.selectedRaceId ? 'active' : ''}" type="button" data-race-id="${escapeHtml(race.id)}">
+        <span class="race-time">${escapeHtml(race.time || `C${race.number || ''}`)}</span>
+        <span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong>${resultLabel}</span>
+        <span class="race-arrow">${winners.length ? '✓' : '›'}</span>
+      </button>`;
+    }).join('')}
   `).join('');
   $$('.race-item', list).forEach((button) => button.addEventListener('click', () => selectRace(button.dataset.raceId)));
+}
+
+function renderResults() {
+  const grid = $('#results-grid');
+  if (!state.results.length) {
+    grid.innerHTML = '<div class="results-empty"><strong>Aucune arrivée officielle disponible</strong><p>Les résultats apparaîtront ici dès leur publication.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = state.results.map((result) => {
+    const winners = (result.winners || []).slice(0, 5);
+    const comparison = result.aiHit
+      ? '<span class="result-hit success">Base ParisPromax placée</span>'
+      : '<span class="result-hit neutral">Résultat officiel vérifié</span>';
+    return `<article class="result-card">
+      <div class="result-card-head">
+        <div><span>${escapeHtml(result.track)}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
+        ${comparison}
+      </div>
+      <div class="result-arrival" aria-label="Arrivée officielle">
+        ${winners.map((number, index) => `<span class="${index === 0 ? 'winner' : ''}"><small>${index + 1}${index === 0 ? 'er' : 'e'}</small><b>${escapeHtml(number)}</b></span>`).join('')}
+      </div>
+      ${findRace(result.raceId) ? `<button class="result-detail-link" type="button" data-result-race="${escapeHtml(result.raceId)}">Voir la fiche de la course →</button>` : ''}
+    </article>`;
+  }).join('');
+
+  $$('[data-result-race]', grid).forEach((button) => button.addEventListener('click', async () => {
+    await selectRace(button.dataset.resultRace);
+    $('.race-workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+}
+
+async function loadResults(silent = false) {
+  const grid = $('#results-grid');
+  if (!silent) {
+    grid.innerHTML = '<div class="result-placeholder"></div><div class="result-placeholder"></div><div class="result-placeholder"></div>';
+  }
+  try {
+    const data = await api('/races/history', { auth: false });
+    state.results = (data.history || []).slice(0, 12);
+    renderResults();
+    $('#results-updated').textContent = `Dernière vérification : ${new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date())}`;
+  } catch (error) {
+    if (!silent) {
+      grid.innerHTML = `<div class="results-empty"><strong>Résultats momentanément indisponibles</strong><p>${escapeHtml(error.message)}</p></div>`;
+    }
+  }
 }
 
 function firstRace() {
@@ -699,6 +755,98 @@ function fallbackQuinte() {
   return null;
 }
 
+function combinationCount(selectedHorses, podium) {
+  const n = Number(selectedHorses);
+  const k = Number(podium);
+  if (!Number.isInteger(n) || !Number.isInteger(k) || n < k || k < 0) return 0;
+  const smallerSide = Math.min(k, n - k);
+  let result = 1;
+  for (let index = 1; index <= smallerSide; index += 1) {
+    result = (result * (n - smallerSide + index)) / index;
+  }
+  return Math.round(result);
+}
+
+function renderNationalGameGuide(game) {
+  if (!game) return '';
+  const stakeLabel = game.stake
+    ? `${escapeHtml(game.stake)} FCFA par combinaison`
+    : 'Mise à confirmer auprès de l’opérateur national';
+  return `
+    <section class="burkina-game-guide" aria-labelledby="national-rules-title">
+      <div class="burkina-guide-head">
+        <div>
+          <span class="spotlight-label">${game.verified ? 'RÈGLES VÉRIFIÉES' : 'FORMAT NATIONAL DU JOUR'} · ${escapeHtml(game.countryName || '')}</span>
+          <h4 id="national-rules-title">${escapeHtml(game.label)} aujourd’hui</h4>
+          <p>${escapeHtml(game.podium)} chevaux au podium · ${stakeLabel}</p>
+        </div>
+        ${game.isLastTuesday ? '<span class="last-tuesday-badge">Dernier mardi du mois</span>' : ''}
+      </div>
+
+      ${(game.schedule || []).length ? `<div class="burkina-schedule">
+        ${(game.schedule || []).map((item) => `
+          <article>
+            <strong>${escapeHtml(item.label)}</strong>
+            <span>${escapeHtml(item.days)}</span>
+            <small>${escapeHtml(item.podium)} arrivées · ${escapeHtml(item.stake)} FCFA / combinaison<br />${escapeHtml(item.note || '')}</small>
+          </article>`).join('')}
+      </div>` : ''}
+
+      <div class="national-strategies">
+        ${(game.strategies || []).map((strategy) => `
+          <article class="${strategy.id === 'coverage' ? 'recommended' : ''}">
+            <div><strong>${escapeHtml(strategy.label)}</strong>${strategy.id === 'coverage' ? '<span>CONSEILLÉ</span>' : ''}</div>
+            <b>${escapeHtml(strategy.selectedHorses)} chevaux · ${escapeHtml(strategy.combinations)} combinaison${strategy.combinations > 1 ? 's' : ''}</b>
+            <small>${strategy.cost != null ? `${escapeHtml(strategy.cost.toLocaleString('fr-FR'))} FCFA · ` : ''}${escapeHtml(strategy.description)}</small>
+          </article>`).join('')}
+      </div>
+
+      <div class="burkina-tools">
+        ${(game.couples || []).length ? `<div class="burkina-couples">
+          <span class="burkina-tool-label">COUPLÉS POSSIBLES</span>
+          <div>
+            ${(game.couples || []).map((couple) => `
+              <article><strong>${escapeHtml(couple.label)}</strong><small>${escapeHtml(couple.description)}</small></article>`).join('')}
+          </div>
+        </div>` : ''}
+        <div class="grand-carnet" data-grand-carnet>
+          <span class="burkina-tool-label">CALCULATEUR GRAND CARNET</span>
+          <label for="grand-carnet-horses">Nombre de chevaux choisis</label>
+          <input id="grand-carnet-horses" type="number" min="${escapeHtml(game.podium)}" max="20" value="${escapeHtml(game.podium)}" inputmode="numeric" />
+          <div class="grand-carnet-total">
+            <span><small>Combinaisons</small><strong data-grand-carnet-combinations>1</strong></span>
+            <span><small>Mise totale</small><strong data-grand-carnet-cost>${game.stake ? `${escapeHtml(game.stake)} FCFA` : 'À confirmer'}</strong></span>
+          </div>
+          <p>C(${escapeHtml(game.podium)}, ${escapeHtml(game.podium)})${game.stake ? ` × ${escapeHtml(game.stake)} FCFA` : ''}</p>
+        </div>
+      </div>
+    </section>`;
+}
+
+function setupGrandCarnetCalculator(game, root) {
+  const calculator = $('[data-grand-carnet]', root);
+  if (!game || !calculator) return;
+  const input = $('#grand-carnet-horses', calculator);
+  const combinationsNode = $('[data-grand-carnet-combinations]', calculator);
+  const costNode = $('[data-grand-carnet-cost]', calculator);
+  const formulaNode = $('p', calculator);
+
+  const update = () => {
+    const selected = Math.max(game.podium, Math.min(20, Number.parseInt(input.value, 10) || game.podium));
+    input.value = String(selected);
+    const combinations = combinationCount(selected, game.podium);
+    combinationsNode.textContent = combinations.toLocaleString('fr-FR');
+    costNode.textContent = game.stake
+      ? `${(combinations * game.stake).toLocaleString('fr-FR')} FCFA`
+      : 'À confirmer';
+    formulaNode.textContent = `C(${selected}, ${game.podium})${game.stake ? ` × ${game.stake} FCFA` : ''}`;
+  };
+
+  input.addEventListener('input', update);
+  input.addEventListener('change', update);
+  update();
+}
+
 async function loadNationalSpotlight() {
   const node = $('#national-race');
   const country = countryDetails(state.nationalCountry);
@@ -707,25 +855,43 @@ async function loadNationalSpotlight() {
     const data = await api(`/races/national?country=${encodeURIComponent(state.nationalCountry)}`, { auth: false });
     const nationalRace = data.pick?.race || null;
     const race = nationalRace || fallbackQuinte();
+    const game = data.game || null;
+    state.nationalGame = game;
+    state.nationalRaceId = nationalRace?.id || null;
+    const gameGuide = renderNationalGameGuide(game);
     if (!race) {
-      node.innerHTML = `<div class="national-empty"><strong>${escapeHtml(country.flag)} Sélection ${escapeHtml(country.name)}</strong><p>Le Quinté national est en cours de préparation. Revenez dans quelques instants.</p></div>`;
+      node.innerHTML = `<div class="national-empty"><strong>${escapeHtml(country.flag)} Sélection ${escapeHtml(country.name)}</strong><p>La course nationale est en cours de préparation. Les règles du jeu du jour restent disponibles ci-dessous.</p></div>${gameGuide}`;
+      setupGrandCarnetCalculator(game, node);
       return;
     }
     const isNational = Boolean(nationalRace);
     const journalUrl = safeHttpUrl(data.pick?.journalUrl);
+    const gameSeal = isNational && game?.label === 'Tiercé'
+      ? 'T<span>3</span>'
+      : isNational && game?.label === 'Quarté'
+        ? 'Q<span>4</span>'
+        : 'Q<span>5</span>';
+    const nationalLabel = game
+      ? `${game.label.toUpperCase()} ${country.name.toUpperCase()}`
+      : `SÉLECTION ${country.name.toUpperCase()}`;
+    const gameTags = isNational && game
+      ? `<span>${escapeHtml(game.podium)} chevaux au podium</span><span>${game.stake ? `${escapeHtml(game.stake)} FCFA / combinaison` : 'Mise à confirmer'}</span>`
+      : '<span>Pronostic final : 5 chevaux</span>';
     node.innerHTML = `
-      <div class="quinte-seal" aria-hidden="true">Q<span>+</span></div>
+      <div class="quinte-seal" aria-hidden="true">${gameSeal}</div>
       <div class="national-main">
-        <span class="national-status">${escapeHtml(country.flag)} ${isNational ? `QUINTÉ ${country.name.toUpperCase()}` : 'PROGRAMME INTERNATIONAL'} · ${escapeHtml(dateLabel(data.date || race.date))}</span>
+        <span class="national-status">${escapeHtml(country.flag)} ${isNational ? escapeHtml(nationalLabel) : 'PROGRAMME INTERNATIONAL'} · ${escapeHtml(dateLabel(data.date || race.date))}</span>
         <h4>${escapeHtml(race.name)}</h4>
         <p>${[race.track, race.number, race.time, race.distance, race.type || race.discipline].filter(Boolean).map(escapeHtml).join(' · ')}</p>
-        <div class="national-tags"><span>${escapeHtml(data.pick?.betType || (race.isQuinte ? 'Quinté+' : 'Course du jour'))}</span><span>${escapeHtml(race.runners || 0)} partants</span><span>Pronostic final : 5 chevaux</span></div>
+        <div class="national-tags"><span>${escapeHtml((isNational && game?.label) || data.pick?.betType || (race.isQuinte ? 'Quinté+' : 'Course du jour'))}</span><span>${escapeHtml(race.runners || 0)} partants</span>${gameTags}</div>
       </div>
       <div class="national-actions">
         <button class="button button-primary" type="button" data-national-race="${escapeHtml(race.id)}">Analyser cette course <span>→</span></button>
         ${journalUrl ? `<a class="journal-link" href="${escapeHtml(journalUrl)}" target="_blank" rel="noopener noreferrer">Journal hippique ↗</a>` : ''}
         ${!isNational ? '<small>La sélection nationale sera affichée dès sa validation.</small>' : '<small>Course officielle mise en avant pour votre pays.</small>'}
-      </div>`;
+      </div>
+      ${gameGuide}`;
+    setupGrandCarnetCalculator(game, node);
     const button = $('[data-national-race]', node);
     if (button) button.addEventListener('click', async () => {
       await selectRace(button.dataset.nationalRace);
@@ -859,9 +1025,52 @@ function predictionMarkup(prediction, error, detail) {
   return '<section class="prediction-block locked-prediction"><h4>Connectez-vous pour voir le pronostic</h4><p>Les partants et les cotes restent accessibles ci-dessous.</p><button class="button button-primary" type="button" data-race-login>Se connecter</button></section>';
 }
 
+function officialResultMarkup(detail) {
+  const winners = (detail?.result?.winners || []).slice(0, 5);
+  if (!winners.length) return '';
+  const horses = detail.horses || [];
+  return `<section class="official-result">
+    <div class="official-result-head">
+      <div><span>ARRIVÉE VALIDÉE</span><h4>Résultat officiel</h4></div>
+      <small>Source officielle · ${escapeHtml(dateLabel(detail.date))}</small>
+    </div>
+    <div class="official-result-list">
+      ${winners.map((number, index) => {
+        const horse = horses.find((item) => String(item.number) === String(number));
+        return `<div class="${index === 0 ? 'winner' : ''}">
+          <small>${index + 1}${index === 0 ? 'er' : 'e'}</small>
+          <b>${escapeHtml(number)}</b>
+          <span>${escapeHtml(horse?.name || `N° ${number}`)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </section>`;
+}
+
+function nationalStrategyMarkup(detail) {
+  const game = detail?.id === state.nationalRaceId ? state.nationalGame : null;
+  if (!game?.strategies?.length) return '';
+  return `<section class="national-smart-play">
+    <div>
+      <span>JEU INTELLIGENT · ${escapeHtml(game.countryName || '')}</span>
+      <h4>${escapeHtml(game.label)} : couverture calculée</h4>
+      <p>Le moteur adapte le nombre de chevaux au podium officiel du pays, sans inventer une mise non vérifiée.</p>
+    </div>
+    <div class="national-smart-options">
+      ${game.strategies.map((strategy) => `<span class="${strategy.id === 'coverage' ? 'recommended' : ''}">
+        <small>${escapeHtml(strategy.label)}</small>
+        <strong>${escapeHtml(strategy.selectedHorses)} chevaux</strong>
+        <em>${escapeHtml(strategy.combinations)} combinaison${strategy.combinations > 1 ? 's' : ''}${strategy.cost != null ? ` · ${escapeHtml(strategy.cost.toLocaleString('fr-FR'))} FCFA` : ''}</em>
+      </span>`).join('')}
+    </div>
+  </section>`;
+}
+
 function renderRaceDetail(context, detail, prediction, predictionError) {
   const horses = detail.horses || [];
   $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml(context?.track?.name || detail.track || 'COURSE')}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><span class="race-badge">${horses.length} PARTANTS</span></div>
+    ${officialResultMarkup(detail)}
+    ${nationalStrategyMarkup(detail)}
     ${predictionMarkup(prediction, predictionError, detail)}
     <div class="table-wrap"><table class="horse-table"><thead><tr><th>N°</th><th>Cheval</th><th>Jockey / entraîneur</th><th>Forme</th><th>Cote</th></tr></thead><tbody>
       ${horses.map((horse) => `<tr><td><span class="horse-num">${escapeHtml(horse.number)}</span></td><td><span class="horse-name">${escapeHtml(horse.name)}</span>${horse.nonPartant ? '<span class="horse-sub">Non-partant</span>' : ''}</td><td><span>${escapeHtml(horse.jockey || '—')}</span><span class="horse-sub">${escapeHtml(horse.trainer || '')}</span></td><td>${escapeHtml(horse.form || '—')}</td><td class="odds">${horse.odds != null ? escapeHtml(horse.odds) : '—'}</td></tr>`).join('')}
@@ -1257,7 +1466,12 @@ async function boot() {
   renderCountryMarquee();
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }
-  await Promise.all([loadRaces(), refreshMe(), loadReviewSummary()]);
+  await Promise.all([loadRaces(), loadResults(), refreshMe(), loadReviewSummary()]);
+  window.setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      Promise.all([loadRaces(), loadResults(true)]).catch(() => {});
+    }
+  }, 120000);
   applyReferralInvitation();
   const requestedAuth = new URLSearchParams(window.location.search).get('auth');
   if (!state.token && requestedAuth === 'register') openAuth('register');

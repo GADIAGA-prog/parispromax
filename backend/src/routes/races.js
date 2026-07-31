@@ -3,6 +3,7 @@ const prisma = require('../db');
 const { requireAuth } = require('../auth');
 const { getAccess } = require('../services/subscription');
 const { groupPicks: buildGroups } = require('../services/predictionSelection');
+const { getNationalGame } = require('../../../shared/nationalGameRules');
 
 const router = express.Router();
 
@@ -48,6 +49,7 @@ router.get('/', async (req, res) => {
     where,
     orderBy: { createdAt: 'desc' },
     take: 200,
+    include: { result: true },
   });
 
   // Group by track, expose only public fields (no AI picks here).
@@ -71,6 +73,7 @@ router.get('/', async (req, res) => {
       time: full.time || '',
       date: r.date,
       startsAt: parisStartIso(r.date, full.time),
+      result: r.result ? { winners: parse(r.result.winners, []) } : null,
       prize: full.prize ?? null,
       bets: full.bets || [],
       isQuinte: Boolean(full.isQuinte),
@@ -151,15 +154,18 @@ router.get('/national', async (req, res) => {
   const pick = await prisma.nationalPick.findUnique({
     where: { date_country: { date, country } },
   });
-  if (!pick) return res.json({ country, date, pick: null });
+  const game = getNationalGame(country, date, { betType: pick?.betType });
+  if (!pick) return res.json({ country, date, game, pick: null });
 
   const race = await prisma.race.findUnique({ where: { externalId: pick.externalId } });
   const full = race ? parse(race.raw, {}) : {};
+  const betType = game?.label || pick.betType || 'Course du jour';
   res.json({
     country,
     date,
+    game,
     pick: {
-      betType: pick.betType || 'Course du jour',
+      betType,
       journalUrl: pick.journalUrl || null,
       race: race
         ? {
@@ -169,7 +175,7 @@ router.get('/national', async (req, res) => {
             number: full.number || '',
             time: full.time || '',
             prize: full.prize ?? null,
-            betType: pick.betType || 'Course du jour',
+            betType,
             bets: full.bets || [],
             isQuinte: Boolean(full.isQuinte),
             type: full.type || race.discipline || null,
@@ -207,6 +213,7 @@ router.get('/history', async (req, res) => {
     const groups = snapshot?.groups || buildGroups(picks, r.race, Math.min(winners.length, 5));
     return {
       id: r.id,
+      raceId: r.race.externalId,
       track: r.race.track,
       race: r.race.name,
       date: r.race.date,

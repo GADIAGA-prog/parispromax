@@ -31,9 +31,26 @@ function Group({ title, horses, color }) {
   );
 }
 
-export default function RaceInsightsCard({ race, advanced = false }) {
+export default function RaceInsightsCard({ race, advanced = false, game = null }) {
   const insights = useMemo(() => buildRaceInsights(race), [race]);
+  const smartSelection = useMemo(() => {
+    if (!game?.recommendedSelectionSize) return insights.selected;
+    const ranked = [...(race?.horses || [])].sort(
+      (a, b) => Number(a.rank || 999) - Number(b.rank || 999)
+        || Number(b.aiScore || 0) - Number(a.aiScore || 0)
+    );
+    const unique = [];
+    const seen = new Set();
+    for (const horse of [...insights.selected, ...ranked]) {
+      const key = String(horse?.number ?? '');
+      if (!horse || horse.nonPartant || !key || seen.has(key)) continue;
+      seen.add(key);
+      unique.push(horse);
+    }
+    return unique.slice(0, game.recommendedSelectionSize);
+  }, [game?.recommendedSelectionSize, insights.selected, race?.horses]);
   const stars = `${'★'.repeat(insights.confidence.stars)}${'☆'.repeat(5 - insights.confidence.stars)}`;
+  const selectionSize = game ? smartSelection.length : insights.selectionSize;
 
   return (
     <View style={styles.card}>
@@ -45,17 +62,42 @@ export default function RaceInsightsCard({ race, advanced = false }) {
           <Text style={styles.reason}>{insights.confidence.reasons.join(' · ')}</Text>
         </View>
         <View style={styles.selectionCount}>
-          <Text style={styles.selectionCountValue}>{insights.selectionSize}</Text>
+          <Text style={styles.selectionCountValue}>{selectionSize}</Text>
           <Text style={styles.selectionCountLabel}>chevaux</Text>
         </View>
       </View>
+
+      {game && (
+        <View style={styles.smartGame}>
+          <View style={styles.smartGameHead}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.smartGameKicker}>JEU INTELLIGENT · {game.countryName?.toUpperCase()}</Text>
+              <Text style={styles.smartGameTitle}>{game.label} en couverture</Text>
+            </View>
+            <Text style={styles.smartGamePodium}>{game.podium} à l’arrivée</Text>
+          </View>
+          <Text style={styles.help}>
+            Sélection conseillée : {game.recommendedSelectionSize} chevaux, soit {game.recommendedCombinations} combinaison{game.recommendedCombinations > 1 ? 's' : ''}.
+            {game.recommendedCost != null ? ` Budget complet : ${game.recommendedCost.toLocaleString('fr-FR')} FCFA.` : ''}
+          </Text>
+          <View style={styles.smartNumbers}>
+            {smartSelection.map((horse, index) => (
+              <View key={horse.number} style={[styles.smartNumber, index < game.podium && styles.smartNumberPodium]}>
+                <Text style={styles.smartNumberText}>{horse.number}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>La base</Text>
       {insights.bases.map((horse) => <HorseLine key={horse.number} horse={horse} accent={COLORS.accent} />)}
 
       <View style={styles.divider} />
-      <Text style={styles.sectionTitle}>Pronostic final · {insights.format.label}</Text>
-      <Text style={styles.help}>Le podium attendu + 2 chevaux complémentaires, soit 5 chevaux au maximum.</Text>
+      <Text style={styles.sectionTitle}>Pronostic final · {game?.label || insights.format.label}</Text>
+      <Text style={styles.help}>
+        Le podium attendu + 2 chevaux complémentaires, soit {game?.recommendedSelectionSize || 5} chevaux au maximum.
+      </Text>
       <Group title="Couplé recommandé" horses={insights.couple} color={COLORS.accent} />
       <Group title="Chances régulières" horses={insights.chances} color={COLORS.info} />
       <Group title="Tocard" horses={insights.tocards} color={COLORS.gold} />
@@ -84,6 +126,31 @@ const styles = StyleSheet.create({
   confidence: { color: COLORS.gold, fontSize: FONT.xl, letterSpacing: 2, marginTop: 3 },
   confidenceLabel: { color: COLORS.text, fontWeight: '900', fontSize: FONT.lg },
   reason: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 3, lineHeight: 18 },
+  smartGame: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.38)',
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(251,191,36,0.08)',
+  },
+  smartGameHead: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  smartGameKicker: { color: COLORS.gold, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  smartGameTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', marginTop: 2 },
+  smartGamePodium: { color: COLORS.gold, fontSize: 10, fontWeight: '900' },
+  smartNumbers: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.sm },
+  smartNumber: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.info,
+    borderRadius: 17,
+    backgroundColor: 'rgba(56,189,248,0.12)',
+  },
+  smartNumberPodium: { borderColor: COLORS.accent, backgroundColor: 'rgba(16,185,129,0.15)' },
+  smartNumberText: { color: COLORS.text, fontWeight: '900' },
   selectionCount: { width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
   selectionCountValue: { color: '#06251c', fontSize: FONT.xxl, fontWeight: '900' },
   selectionCountLabel: { color: '#06251c', fontSize: FONT.sm - 1, fontWeight: '800' },

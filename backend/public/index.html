@@ -22,7 +22,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260724-1" />
+  <link rel="stylesheet" href="/styles.css?v=20260731-2" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -37,6 +37,7 @@
     <nav class="desktop-nav" aria-label="Navigation principale">
       <a href="#quinte-pays">Quinté par pays</a>
       <a href="#courses">Courses</a>
+      <a href="#resultats">Résultats</a>
       <a href="#guide">Guide</a>
       <a href="#methode">Méthode</a>
       <a href="#abonnements">Abonnements</a>
@@ -64,7 +65,7 @@
       </button>
     </div>
     <button class="mobile-signup-cta" type="button" data-open-auth="register">Créer un compte</button>
-    <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact et avis</a><a href="#securite">Sécurité</a>
+    <button type="button" data-install-app>Installer l'application</button><a href="#quinte-pays">Quinté par pays</a><a href="#courses">Courses</a><a href="#resultats">Résultats</a><a href="#guide">Guide</a><a href="#methode">Méthode</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact et avis</a><a href="#securite">Sécurité</a>
   </nav>
 
   <div class="country-marquee" aria-label="Pays pris en charge par ParisPromax">
@@ -134,8 +135,8 @@
 
       <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
         <div class="national-spotlight-head">
-          <div><span class="spotlight-label"><i></i> LE RENDEZ-VOUS NATIONAL</span><h3>Quinté du jour par pays</h3></div>
-          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du Quinté"></select></label>
+          <div><span class="spotlight-label"><i></i> LE RENDEZ-VOUS NATIONAL</span><h3>Jeu du jour par pays</h3></div>
+          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du jeu national"></select></label>
         </div>
         <div id="national-race" class="national-race-content">
           <div class="skeleton-line"></div><div class="skeleton-line"></div>
@@ -151,6 +152,17 @@
           <div class="empty-state"><div class="empty-mark">PPM</div><h3>Sélectionnez une course</h3><p>Le détail des partants, les cotes et l'analyse apparaîtront ici.</p></div>
         </article>
       </div>
+    </section>
+
+    <section class="section results-section" id="resultats">
+      <div class="section-heading reveal">
+        <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Les résultats après chaque course.</h2></div>
+        <p>Les arrivées publiées par la source officielle apparaissent automatiquement. Actualisation régulière, sans résultat provisoire.</p>
+      </div>
+      <div class="results-grid" id="results-grid" aria-live="polite">
+        <div class="result-placeholder"></div><div class="result-placeholder"></div><div class="result-placeholder"></div>
+      </div>
+      <p class="results-updated" id="results-updated" role="status"></p>
     </section>
 
     <section class="section guide-section" id="guide">
@@ -201,6 +213,9 @@
           <div class="community-card-head"><span>NOUS CONTACTER</span><h3>Comment pouvons-nous vous aider ?</h3><p>Réponse à l’adresse ou au numéro que vous indiquez.</p></div>
           <a class="facebook-link" href="https://www.facebook.com/parispromax" target="_blank" rel="noopener noreferrer" aria-label="Suivre ParisPromax sur Facebook, ouvre un nouvel onglet">
             <span class="facebook-mark" aria-hidden="true">f</span><span><strong>Suivez ParisPromax sur Facebook</strong><small>facebook.com/parispromax</small></span><b aria-hidden="true">↗</b>
+          </a>
+          <a class="whatsapp-link" href="https://wa.me/22668254941?text=Bonjour%20ParisPromax%2C%20j%27ai%20besoin%20d%27aide." target="_blank" rel="noopener noreferrer" aria-label="Contacter ParisPromax sur WhatsApp, ouvre un nouvel onglet">
+            <span class="whatsapp-mark" aria-hidden="true">WA</span><span><strong>Besoin d’aide ? Écrivez-nous sur WhatsApp</strong><small>+226 68 25 49 41</small></span><b aria-hidden="true">↗</b>
           </a>
           <form id="contact-form" class="form-stack">
             <label>Nom<input name="name" autocomplete="name" required minlength="2" maxlength="80" /></label>
@@ -274,7 +289,7 @@
 
   <footer>
     <div class="footer-brand"><img src="/assets/logo-emblem-128.png" alt="" width="44" height="44" /><div><strong>PARISPROMAX</strong><span>L'analyse hippique, plus claire.</span></div></div>
-    <div class="footer-links"><a href="https://t.me/ParisPromaxOfficiel" target="_blank" rel="noopener noreferrer">Canal Telegram ↗</a><a href="https://www.facebook.com/parispromax" target="_blank" rel="noopener noreferrer">Facebook ↗</a><a href="/download/android">Télécharger Android</a><a href="#contact">Nous contacter</a><a href="#contact">Donner un avis</a><a href="/legal/privacy">Confidentialité</a><a href="/legal/terms">Conditions</a><a href="/legal/responsible-gambling">Jeu responsable</a><a href="/legal/account-deletion">Supprimer mon compte</a></div>
+    <div class="footer-links"><a href="https://wa.me/22668254941?text=Bonjour%20ParisPromax%2C%20j%27ai%20besoin%20d%27aide." target="_blank" rel="noopener noreferrer">WhatsApp ↗</a><a href="https://t.me/ParisPromaxOfficiel" target="_blank" rel="noopener noreferrer">Canal Telegram ↗</a><a href="https://www.facebook.com/parispromax" target="_blank" rel="noopener noreferrer">Facebook ↗</a><a href="/download/android">Télécharger Android</a><a href="#contact">Nous contacter</a><a href="#contact">Donner un avis</a><a href="/legal/privacy">Confidentialité</a><a href="/legal/terms">Conditions</a><a href="/legal/responsible-gambling">Jeu responsable</a><a href="/legal/account-deletion">Supprimer mon compte</a></div>
     <p>ParisPromax ne permet pas de parier, ne collecte aucune mise et ne garantit aucun gain. Service réservé aux personnes majeures.</p>
   </footer>
 
@@ -371,6 +386,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260724-1" defer></script>
+  <script src="/app.js?v=20260731-2" defer></script>
 </body>
 </html>

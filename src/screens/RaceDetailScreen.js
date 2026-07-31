@@ -28,7 +28,7 @@ function livePicks(preds) {
 }
 
 export default function RaceDetailScreen({ route, navigation }) {
-  const { trackName, condition, race } = route.params;
+  const { trackName, condition, race, nationalGame = null } = route.params;
   const { isLocked } = useAuth();
   const [officialResult, setOfficialResult] = useState(race?.result || null);
 
@@ -126,7 +126,7 @@ export default function RaceDetailScreen({ route, navigation }) {
           onUnlockPress={goPaywall}
           label="Pronostics IA verrouillés"
         >
-          <RaceInsightsCard race={shown} advanced={isSmart} />
+          <RaceInsightsCard race={shown} advanced={isSmart} game={nationalGame} />
         </LockCard>
 
         <Disclaimer />

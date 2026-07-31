@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import TrialBanner from '../components/TrialBanner';
+import NationalGameCard from '../components/NationalGameCard';
 import TrackCard from '../components/TrackCard';
 import TrackCardSkeleton from '../components/Skeleton';
 import { loadRaces } from '../services/dataService';
@@ -22,6 +23,7 @@ import { countryFlags } from '../services/countries';
 import { COLORS, SPACING, FONT, RADIUS } from '../theme/colors';
 
 const FLAGS = countryFlags();
+const { getNationalGame } = require('../../shared/nationalGameRules');
 
 export default function HomeScreen({ navigation }) {
   const { country, hasPaid } = useAuth();
@@ -32,15 +34,19 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   // Course PMU du jour du pays de l'abonné (Quarté LONAB au Burkina…).
   const [national, setNational] = useState(null);
+  const [nationalGame, setNationalGame] = useState(null);
 
   const fetchData = useCallback(async () => {
     const { data, source: src, offline: off } = await loadRaces();
     setTracks(data.racetracks || []);
     setSource(src);
     setOffline(off);
+    const today = new Date().toISOString().slice(0, 10);
+    setNationalGame(country === 'bf' ? getNationalGame(country, today) : null);
     try {
       const n = country ? await api.nationalRace(country) : null;
       setNational(n?.pick || null);
+      setNationalGame(n?.game || (country === 'bf' ? getNationalGame(country, n?.date || today) : null));
     } catch (e) {
       setNational(null); // hors-ligne : pas de bannière
     }
@@ -59,11 +65,12 @@ export default function HomeScreen({ navigation }) {
     setRefreshing(false);
   }, [fetchData]);
 
-  const onRacePress = (track, race) => {
+  const onRacePress = (track, race, game = null) => {
     navigation.navigate('RaceDetail', {
       trackName: track.name,
       condition: track.condition,
       race,
+      nationalGame: game,
     });
   };
 
@@ -73,7 +80,13 @@ export default function HomeScreen({ navigation }) {
     if (!target) return;
     for (const t of tracks) {
       const race = (t.races || []).find((r) => r.id === target.id);
-      if (race) return onRacePress(t, { ...race, betType: national.betType || target.betType || null });
+      if (race) {
+        return onRacePress(
+          t,
+          { ...race, betType: national.betType || target.betType || null },
+          nationalGame
+        );
+      }
     }
   };
 
@@ -166,6 +179,9 @@ export default function HomeScreen({ navigation }) {
         data={tracks}
         keyExtractor={(t) => t.id}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          nationalGame ? <NationalGameCard game={nationalGame} /> : null
+        }
         renderItem={({ item }) => (
           <TrackCard track={item} onRacePress={onRacePress} />
         )}
