@@ -22,7 +22,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260731-5" />
+  <link rel="stylesheet" href="/styles.css?v=20260731-6" />
   <title>ParisPromax — L'analyse hippique, plus claire</title>
 </head>
 <body>
@@ -35,10 +35,10 @@
       <span><strong>PARISPRO</strong>MAX<small>Pronostics IA · Courses PMU</small></span>
     </a>
     <nav class="desktop-nav" aria-label="Navigation principale">
-      <a href="#quinte-pays">Aujourd'hui</a>
-      <a href="#ecd">ECD</a>
+      <a href="#courses-du-jour">Courses du jour</a>
       <a href="#resultats">Résultats</a>
       <a href="#abonnements">Abonnements</a>
+      <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
       <button class="button button-install" type="button" data-install-app>Installer</button>
@@ -62,11 +62,16 @@
       </button>
     </div>
     <button class="mobile-signup-cta" type="button" data-open-auth="register">Créer un compte</button>
-    <a href="#quinte-pays">Aujourd'hui</a><a href="#ecd">ECD</a><a href="#resultats">Résultats</a><a href="#abonnements">Abonnements</a><a href="#guide">Comment jouer</a><a href="#contact">Aide et contact</a><button type="button" data-install-app>Installer l'application</button>
+    <button class="mobile-login-cta" type="button" data-open-auth="login">Connexion</button>
+    <a href="#courses-du-jour">Courses du jour</a><a href="#resultats">Résultats</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact</a><button type="button" data-install-app>Installer l'application</button>
   </nav>
 
   <main>
-    <section class="section today-section">
+    <section class="section today-section" id="courses-du-jour">
+      <nav class="course-type-nav" aria-label="Types de courses du jour">
+        <a class="active" href="#quinte-pays">Course nationale</a>
+        <a href="#ecd">ECD</a>
+      </nav>
       <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
         <div class="national-spotlight-head">
           <div><span class="spotlight-label"><i></i> LE JEU NATIONAL DU JOUR</span><h2>Pronostic et mise, au même endroit</h2></div>
@@ -150,6 +155,10 @@
         <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Les résultats après chaque course.</h2></div>
         <p>Les arrivées publiées par la source officielle apparaissent automatiquement. Actualisation régulière, sans résultat provisoire.</p>
       </div>
+      <div class="result-tabs" role="tablist" aria-label="Types de résultats">
+        <button class="active" type="button" role="tab" aria-selected="true" data-results-category="national">Course nationale</button>
+        <button type="button" role="tab" aria-selected="false" data-results-category="ecd">ECD</button>
+      </div>
       <div class="results-grid" id="results-grid" aria-live="polite">
         <div class="result-placeholder"></div><div class="result-placeholder"></div><div class="result-placeholder"></div>
       </div>
@@ -206,7 +215,10 @@
             <span class="facebook-mark" aria-hidden="true">f</span><span><strong>Suivez ParisPromax sur Facebook</strong><small>facebook.com/parispromax</small></span><b aria-hidden="true">↗</b>
           </a>
           <a class="whatsapp-link" href="https://wa.me/22668254941?text=Bonjour%20ParisPromax%2C%20j%27ai%20besoin%20d%27aide." target="_blank" rel="noopener noreferrer" aria-label="Contacter ParisPromax sur WhatsApp, ouvre un nouvel onglet">
-            <span class="whatsapp-mark" aria-hidden="true">WA</span><span><strong>Besoin d’aide ? Écrivez-nous sur WhatsApp</strong><small>+226 68 25 49 41</small></span><b aria-hidden="true">↗</b>
+            <span class="whatsapp-mark" aria-hidden="true">WA</span><span><strong>Besoin d’aide ? Écrivez-nous sur WhatsApp</strong><small>Assistance privée</small></span><b aria-hidden="true">↗</b>
+          </a>
+          <a class="telegram-link contact-channel-link" href="https://t.me/ParisPromaxOfficiel" target="_blank" rel="noopener noreferrer" aria-label="Rejoindre ParisPromax sur Telegram, ouvre un nouvel onglet">
+            <span class="telegram-mark" aria-hidden="true">TG</span><span><strong>Rejoignez le canal Telegram</strong><small>Programmes et actualités ParisPromax</small></span><b aria-hidden="true">↗</b>
           </a>
           <form id="contact-form" class="form-stack">
             <label>Nom<input name="name" autocomplete="name" required minlength="2" maxlength="80" /></label>
@@ -237,6 +249,19 @@
             <p class="form-message" id="review-message" role="status"></p>
           </form>
         </article>
+      </div>
+      <div class="contact-referral-panel reveal">
+        <div data-referral-guest>
+          <div class="contact-referral-copy"><span class="section-kicker">VOTRE LIEN DE PARRAINAGE</span><h3>Invitez un proche depuis ParisPromax.</h3><p>Créez un compte ou connectez-vous pour obtenir votre lien personnel à partager.</p></div>
+          <div class="contact-referral-actions"><button class="button button-primary" type="button" data-open-auth="register">Créer un compte</button><button class="button button-outline" type="button" data-open-auth="login">Connexion</button></div>
+        </div>
+        <div class="hidden" data-referral-member>
+          <div class="contact-referral-copy"><span class="section-kicker">VOTRE LIEN DE PARRAINAGE</span><h3>Partagez votre invitation personnelle.</h3><p>Le code de parrainage sera automatiquement ajouté à l’inscription de votre proche.</p></div>
+          <label class="referral-link-label" for="contact-referral-link">Lien personnel</label>
+          <input class="referral-link-input" id="contact-referral-link" type="text" readonly aria-label="Lien personnel de parrainage à partager" />
+          <div class="contact-referral-actions"><button class="button button-outline" id="contact-copy-referral" type="button">Copier le lien</button><button class="button button-primary" id="contact-share-referral" type="button">Partager</button></div>
+          <p class="referral-message" id="contact-referral-message" role="status" aria-live="polite"></p>
+        </div>
       </div>
       <div class="share-panel reveal" id="partager">
         <div class="share-copy"><span class="section-kicker">FAITES CONNAÎTRE PARISPROMAX</span><h3>Partagez le site en un geste.</h3><p>Envoyez ParisPromax à vos proches depuis votre application préférée.</p></div>
@@ -377,6 +402,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260731-5" defer></script>
+  <script src="/app.js?v=20260731-6" defer></script>
 </body>
 </html>

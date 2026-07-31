@@ -7,6 +7,7 @@ const state = {
   plans: [],
   racetracks: [],
   results: [],
+  resultCategory: 'national',
   raceDate: null,
   ecdProfile: null,
   ecdSelectionMode: null,
@@ -214,11 +215,10 @@ function currentReferralCode() {
 }
 
 function showReferralMessage(message) {
-  const node = $('#referral-message');
-  if (!node) return;
-  node.textContent = message;
+  const nodes = ['#referral-message', '#contact-referral-message'].map((selector) => $(selector)).filter(Boolean);
+  nodes.forEach((node) => { node.textContent = message; });
   clearTimeout(showReferralMessage.timer);
-  showReferralMessage.timer = setTimeout(() => { node.textContent = ''; }, 3500);
+  showReferralMessage.timer = setTimeout(() => nodes.forEach((node) => { node.textContent = ''; }), 3500);
 }
 
 async function copyReferralCode() {
@@ -576,12 +576,17 @@ function renderRaces() {
 
 function renderResults() {
   const grid = $('#results-grid');
-  if (!state.results.length) {
+  const visibleResults = state.results.filter((result) => result.category === state.resultCategory);
+  $$('[data-results-category]').forEach((button) => {
+    button.classList.toggle('active', button.dataset.resultsCategory === state.resultCategory);
+    button.setAttribute('aria-selected', String(button.dataset.resultsCategory === state.resultCategory));
+  });
+  if (!visibleResults.length) {
     grid.innerHTML = '<div class="results-empty"><strong>Aucune arrivée officielle disponible</strong><p>Les résultats apparaîtront ici dès leur publication.</p></div>';
     return;
   }
 
-  grid.innerHTML = state.results.map((result) => {
+  grid.innerHTML = visibleResults.map((result) => {
     const winners = (result.winners || []).slice(0, 5);
     const comparison = result.aiHit
       ? '<span class="result-hit success">Base ParisPromax placée</span>'
@@ -610,8 +615,8 @@ async function loadResults(silent = false) {
     grid.innerHTML = '<div class="result-placeholder"></div><div class="result-placeholder"></div><div class="result-placeholder"></div>';
   }
   try {
-    const data = await api('/races/history', { auth: false });
-    state.results = (data.history || []).slice(0, 12);
+    const data = await api(`/races/history?country=${encodeURIComponent(state.nationalCountry)}`, { auth: false });
+    state.results = data.history || [];
     renderResults();
     $('#results-updated').textContent = `Dernière vérification : ${new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date())}`;
   } catch (error) {
@@ -1263,11 +1268,14 @@ async function refreshMe() {
 function renderSession() {
   const loggedIn = Boolean(state.token && state.me);
   $$('[data-open-auth]').forEach((button) => button.classList.toggle('hidden', loggedIn));
+  $$('[data-referral-guest]').forEach((node) => node.classList.toggle('hidden', loggedIn));
+  $$('[data-referral-member]').forEach((node) => node.classList.toggle('hidden', !loggedIn));
   $('#account-button').classList.toggle('hidden', !loggedIn);
   $('#espace').classList.toggle('hidden', !loggedIn);
   buildMemberNotifications();
   if (!loggedIn) {
     $('#referral-link').value = '';
+    $('#contact-referral-link').value = '';
     return;
   }
   const { user, access, referral } = state.me;
@@ -1279,6 +1287,7 @@ function renderSession() {
   $('#referral-code').textContent = referralCode || '—';
   $('#referral-link').value = referralCode ? referralUrl(referralCode) : '';
   $('#access-label').textContent = access?.hasAccess ? 'Accès actif' : 'Accès limité';
+  $('#contact-referral-link').value = referralCode ? referralUrl(referralCode) : '';
   $('#access-detail').textContent = access?.hasAccess
     ? `Formule ${access.plan || 'active'}${access.paidUntil ? ` · jusqu’au ${dateLabel(access.paidUntil)}` : ''}`
     : 'Choisissez une formule pour débloquer les pronostics complets.';
@@ -1550,6 +1559,7 @@ function bindEvents() {
     state.nationalCountry = event.target.value;
     localStorage.setItem('ppm_quinte_country', state.nationalCountry);
     loadRaces();
+    loadResults();
   });
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });
@@ -1560,6 +1570,12 @@ function bindEvents() {
   $('#copy-referral-link').addEventListener('click', copyReferralLink);
   $('#share-referral-link').addEventListener('click', shareReferralLink);
   $('#chat-toggle').addEventListener('click', () => setChatboxOpen($('#chatbox').classList.contains('hidden')));
+  $('#contact-copy-referral').addEventListener('click', copyReferralLink);
+  $('#contact-share-referral').addEventListener('click', shareReferralLink);
+  $$('[data-results-category]').forEach((button) => button.addEventListener('click', () => {
+    state.resultCategory = button.dataset.resultsCategory;
+    renderResults();
+  }));
   $('#chat-close').addEventListener('click', () => setChatboxOpen(false));
   $$('[data-chat-question]').forEach((button) => button.addEventListener('click', () => askChat(button.dataset.chatQuestion)));
   $('#chat-form').addEventListener('submit', (event) => {

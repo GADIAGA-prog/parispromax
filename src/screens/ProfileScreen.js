@@ -56,7 +56,7 @@ export default function ProfileScreen({ navigation }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Mon profil</Text>
+          <Text style={styles.title}>Contact & compte</Text>
           <Pressable onPress={onRefresh} hitSlop={10}>
             <Ionicons name={refreshing ? 'sync' : 'refresh'} size={22} color={COLORS.textMuted} />
           </Pressable>
@@ -161,16 +161,32 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.actionText}>Activer les notifications</Text>
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
+        <Text style={styles.sectionLabel}>Nous contacter</Text>
+        <Pressable style={styles.action} onPress={() => WebBrowser.openBrowserAsync('https://www.parispromax.com/#contact')}>
+          <Ionicons name="mail-outline" size={20} color={COLORS.info} />
+          <Text style={styles.actionText}>Ouvrir le formulaire de contact</Text>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
+
+        <Pressable style={styles.action} onPress={() => Linking.openURL('https://t.me/ParisPromaxOfficiel')}>
+          <Ionicons name="paper-plane" size={20} color={COLORS.info} />
+          <Text style={styles.actionText}>Canal Telegram officiel</Text>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
+
+        <Pressable style={styles.action} onPress={() => Linking.openURL('https://www.facebook.com/parispromax')}>
+          <Ionicons name="logo-facebook" size={20} color={COLORS.info} />
+          <Text style={styles.actionText}>Page Facebook ParisPromax</Text>
+          <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+        </Pressable>
+
 
         <Pressable
           style={styles.action}
           onPress={() => Linking.openURL('https://wa.me/22668254941?text=Bonjour%20ParisPromax%2C%20j%27ai%20besoin%20d%27aide.')}
         >
           <Ionicons name="logo-whatsapp" size={20} color={COLORS.success} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.actionText, styles.actionTextStacked]}>Contacter l’assistance WhatsApp</Text>
-            <Text style={styles.actionSub}>+226 68 25 49 41</Text>
-          </View>
+          <Text style={styles.actionText}>Contacter l’assistance WhatsApp</Text>
           <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
         </Pressable>
 

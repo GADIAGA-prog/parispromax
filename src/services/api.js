@@ -151,7 +151,9 @@ export const api = {
   ecdRaces: (country, date) => request(
     `/races/ecd?country=${encodeURIComponent(country || '')}${date ? `&date=${encodeURIComponent(date)}` : ''}`
   ),
-  raceHistory: () => request('/races/history'),
+  raceHistory: (country) => request(
+    `/races/history${country ? `?country=${encodeURIComponent(country)}` : ''}`
+  ),
   raceDetail: (externalId) => request(`/races/${externalId}`),
   prediction: (externalId) => request(`/races/${externalId}/prediction`, { auth: true }),
 

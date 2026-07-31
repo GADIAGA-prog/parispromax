@@ -47,17 +47,19 @@ function MainTabs() {
         },
         tabBarIcon: ({ color, size }) => {
           const icons = {
-            Courses: 'home',
-            Historique: 'time',
-            Profil: 'person',
+            'Courses du jour': 'home',
+            'Résultats': 'trophy',
+            'Abonnements': 'diamond',
+            'Contact': 'chatbubbles',
           };
           return <Ionicons name={icons[route.name]} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Courses" component={HomeScreen} />
-      <Tab.Screen name="Historique" component={HistoryScreen} />
-      <Tab.Screen name="Profil" component={ProfileScreen} />
+      <Tab.Screen name="Courses du jour" component={HomeScreen} />
+      <Tab.Screen name="Résultats" component={HistoryScreen} />
+      <Tab.Screen name="Abonnements" component={PaywallScreen} />
+      <Tab.Screen name="Contact" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

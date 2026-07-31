@@ -255,6 +255,8 @@ router.get('/ecd', async (req, res) => {
 // arrival + whether our #1 pick placed (top 3). Public. Drives the app's
 // History screen so users compare pronostic vs résultat.
 router.get('/history', async (req, res) => {
+  const country = String(req.query.country || 'bf').trim().toLowerCase();
+  if (!getEcdProfile(country)) return res.status(400).json({ error: 'country invalide' });
   const results = await prisma.result.findMany({
     orderBy: { createdAt: 'desc' },
     take: 60,
@@ -262,6 +264,17 @@ router.get('/history', async (req, res) => {
       race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 50 } } },
     },
   });
+
+  const dates = [...new Set(results.map((result) => result.race.date).filter(Boolean))];
+  const nationalPicks = dates.length
+    ? await prisma.nationalPick.findMany({
+        where: { country, date: { in: dates } },
+        select: { date: true, externalId: true },
+      })
+    : [];
+  const nationalIds = new Set(
+    nationalPicks.map((pick) => `${pick.date}:${pick.externalId}`)
+  );
 
   const history = results.map((r) => {
     const winners = parse(r.winners, []);
@@ -280,13 +293,14 @@ router.get('/history', async (req, res) => {
       race: r.race.name,
       date: r.race.date,
       winners, // finishing order [num, num, ...]
+      category: nationalIds.has(`${r.race.date}:${r.race.externalId}`) ? 'national' : 'ecd',
       topPicks: snapshot?.topPicks || groups.selected, // pronostic figé = arrivée + 2
       groups,
       aiHit: r.predicted, // our #1 pick finished in the top 3
     };
   });
 
-  res.json({ history });
+  res.json({ country, history });
 });
 
 // GET /races/:externalId/non-partants — live scratchings for a race, consumed

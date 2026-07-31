@@ -1,25 +1,29 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 export default function HistoryScreen() {
+  const { country } = useAuth();
   const [history, setHistory] = useState([]);
+  const [category, setCategory] = useState('national');
   const [stat, setStat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [h, s] = await Promise.all([api.raceHistory(), api.successRate()]);
+      const [h, s] = await Promise.all([api.raceHistory(country), api.successRate()]);
       setHistory(h.history || []);
       setStat(s);
     } catch (e) {
       // offline / not critical
     }
-  }, []);
+  }, [country]);
+  const visibleHistory = history.filter((item) => item.category === category);
 
   useEffect(() => {
     (async () => {
@@ -45,7 +49,22 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Historique</Text>
+        <Text style={styles.title}>Résultats</Text>
+      </View>
+
+      <View style={styles.tabs}>
+        <Pressable
+          style={[styles.tab, category === 'national' && styles.tabActive]}
+          onPress={() => setCategory('national')}
+        >
+          <Text style={[styles.tabText, category === 'national' && styles.tabTextActive]}>Course nationale</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, category === 'ecd' && styles.tabActive]}
+          onPress={() => setCategory('ecd')}
+        >
+          <Text style={[styles.tabText, category === 'ecd' && styles.tabTextActive]}>ECD</Text>
+        </Pressable>
       </View>
 
       {/* Real success-rate banner */}
@@ -61,7 +80,7 @@ export default function HistoryScreen() {
       </View>
 
       <FlatList
-        data={history}
+        data={visibleHistory}
         keyExtractor={(h, i) => (h.id != null ? String(h.id) : String(i))}
         contentContainerStyle={styles.list}
         refreshControl={
@@ -135,6 +154,15 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  tabs: {
+    flexDirection: 'row', gap: SPACING.sm, marginHorizontal: SPACING.md,
+    marginTop: SPACING.md, padding: 4, borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.surfaceAlt,
+  },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: RADIUS.pill },
+  tabActive: { backgroundColor: COLORS.primary },
+  tabText: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '800' },
+  tabTextActive: { color: COLORS.white },
   safe: { flex: 1, backgroundColor: COLORS.background },
   center: { alignItems: 'center', justifyContent: 'center' },
   header: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm },

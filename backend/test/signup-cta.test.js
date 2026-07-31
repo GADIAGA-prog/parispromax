@@ -17,4 +17,5 @@ test('le menu mobile permet aussi de créer un compte', () => {
 
   assert.match(mobileNavigation, /class="mobile-signup-cta"/);
   assert.match(mobileNavigation, /data-open-auth="register"/);
+  assert.match(mobileNavigation, /data-open-auth="login"/);
 });
