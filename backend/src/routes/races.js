@@ -4,6 +4,8 @@ const { requireAuth } = require('../auth');
 const { getAccess } = require('../services/subscription');
 const { groupPicks: buildGroups } = require('../services/predictionSelection');
 const { getNationalGame } = require('../../../shared/nationalGameRules');
+const { buildNationalBetProposal } = require('../../../shared/nationalBetProposal');
+const { parisStartIso, gmtTimeLabel } = require('../services/raceTime');
 
 const router = express.Router();
 
@@ -13,28 +15,6 @@ function parse(json, fallback) {
   } catch {
     return fallback;
   }
-}
-
-// Convertit une date/heure hippique française en ISO UTC, indépendamment du
-// fuseau du serveur Render. Cela garde les alertes mobiles exactes en Afrique.
-function parisStartIso(date, time) {
-  const match = String(time || '').match(/(\d{1,2})[:h](\d{2})/i);
-  if (!date || !match) return null;
-  const [year, month, day] = String(date).split('-').map(Number);
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
-  const guess = Date.UTC(year, month - 1, day, hour, minute);
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).formatToParts(new Date(guess));
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const displayedAsUtc = Date.UTC(
-    Number(values.year), Number(values.month) - 1, Number(values.day),
-    Number(values.hour), Number(values.minute)
-  );
-  return new Date(guess - (displayedAsUtc - guess)).toISOString();
 }
 
 // GET /races — list of today's (latest) races, grouped by track. Public.
@@ -70,7 +50,7 @@ router.get('/', async (req, res) => {
       number: full.number || '',
       name: r.name,
       distance: r.distance,
-      time: full.time || '',
+      time: gmtTimeLabel(r.date, full.time),
       date: r.date,
       startsAt: parisStartIso(r.date, full.time),
       result: r.result ? { winners: parse(r.result.winners, []) } : null,
@@ -118,7 +98,7 @@ router.get('/full', async (req, res) => {
       number: full.number || '',
       name: r.name,
       distance: r.distance,
-      time: full.time || '',
+      time: gmtTimeLabel(r.date, full.time),
       date: r.date,
       startsAt: parisStartIso(r.date, full.time),
       result: r.result ? { winners: parse(r.result.winners, []) } : null,
@@ -157,13 +137,33 @@ router.get('/national', async (req, res) => {
   const game = getNationalGame(country, date, { betType: pick?.betType });
   if (!pick) return res.json({ country, date, game, pick: null });
 
-  const race = await prisma.race.findUnique({ where: { externalId: pick.externalId } });
+  const race = await prisma.race.findUnique({
+    where: { externalId: pick.externalId },
+    include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  });
   const full = race ? parse(race.raw, {}) : {};
   const betType = game?.label || pick.betType || 'Course du jour';
+  const nonPartants = race?.nonPartants ? parse(race.nonPartants, []) : [];
+  const predictionCandidates = parse(race?.predictions?.[0]?.topPicks, []);
+  const horseCandidates = (full.horses || [])
+    .slice()
+    .sort((a, b) => {
+      const oddsA = Number(a.odds);
+      const oddsB = Number(b.odds);
+      return (Number.isFinite(oddsA) && oddsA > 0 ? oddsA : 999)
+        - (Number.isFinite(oddsB) && oddsB > 0 ? oddsB : 999);
+    });
+  const proposal = game
+    ? buildNationalBetProposal(game, [...predictionCandidates, ...horseCandidates], {
+        nonPartants,
+        source: predictionCandidates.length ? 'latest-analysis' : 'market-ranking',
+      })
+    : null;
+  const nationalGame = game ? { ...game, proposal } : null;
   res.json({
     country,
     date,
-    game,
+    game: nationalGame,
     pick: {
       betType,
       journalUrl: pick.journalUrl || null,
@@ -173,7 +173,7 @@ router.get('/national', async (req, res) => {
             track: race.track,
             name: race.name,
             number: full.number || '',
-            time: full.time || '',
+            time: gmtTimeLabel(race.date, full.time),
             prize: full.prize ?? null,
             betType,
             bets: full.bets || [],
@@ -256,7 +256,7 @@ router.get('/:externalId', async (req, res) => {
     track: race.track,
     name: race.name,
     date: race.date,
-    time: full.time || '',
+    time: gmtTimeLabel(race.date, full.time),
     discipline: race.discipline,
     type: full.type || race.discipline || null, // Trot Attelé / Plat / Obstacle…
     autostart: Boolean(full.autostart),

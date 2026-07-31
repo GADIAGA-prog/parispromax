@@ -181,6 +181,40 @@ a { color: inherit; }
 .national-strategies article>div span { padding:3px 5px; color:#03261b; border-radius:999px; background:var(--green); font-size:7px; font-weight:950; }
 .national-strategies article b { margin-top:7px; color:var(--gold); font-size:12px; }
 .national-strategies article small { margin-top:4px; color:var(--muted); font-size:9px; line-height:1.5; }
+.national-proposal { margin-top:18px; padding:18px; border:1px solid rgba(45,226,160,.34); border-radius:18px; background:linear-gradient(145deg,rgba(45,226,160,.085),rgba(54,163,255,.035)); }
+.national-proposal-pending { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.national-proposal-pending span,.national-proposal-pending strong { display:block; }
+.national-proposal-pending span,.national-proposal-head>div>span { color:var(--green); font-size:8px; font-weight:950; letter-spacing:1.25px; }
+.national-proposal-pending strong { margin-top:4px; font-size:14px; }
+.national-proposal-pending p,.national-proposal-head p { margin:4px 0 0; color:var(--muted); font-size:9px; line-height:1.5; }
+.national-proposal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+.national-proposal-head h5 { margin:4px 0 0; font-size:20px; }
+.podium-ticket { flex:0 0 auto; padding:10px 12px; text-align:right; border:1px solid rgba(245,199,97,.25); border-radius:12px; background:rgba(245,199,97,.055); }
+.podium-ticket small { display:block; margin-bottom:6px; color:var(--faint); font-size:8px; font-weight:850; text-transform:uppercase; }
+.podium-ticket div,.couple-tickets article>div,.grand-carnet-horses { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+.podium-ticket b,.couple-tickets article>div b,.grand-carnet-horses b { min-width:28px; height:28px; display:grid; place-items:center; color:#03261b; border-radius:50%; background:var(--green); font-size:11px; font-style:normal; }
+.podium-ticket i,.couple-tickets article>div i,.grand-carnet-horses i { color:var(--faint); font-size:8px; font-style:normal; }
+.national-ticket-grid { display:grid; grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr); gap:10px; margin-top:14px; }
+.couple-tickets { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.couple-tickets article,.grand-carnet-ticket { min-width:0; padding:13px; border:1px solid var(--line); border-radius:13px; background:rgba(5,18,31,.52); }
+.couple-tickets article>span { color:#a9d6ff; font-size:9px; font-weight:900; }
+.couple-tickets article>div { margin-top:8px; }
+.couple-tickets article>small { display:block; margin-top:6px; overflow:hidden; color:var(--muted); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+.grand-carnet-ticket { border-color:rgba(245,199,97,.27); }
+.grand-carnet-ticket-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.grand-carnet-ticket-head span,.grand-carnet-ticket-head strong { display:block; }
+.grand-carnet-ticket-head span { color:var(--gold); font-size:8px; font-weight:950; letter-spacing:1px; }
+.grand-carnet-ticket-head strong { margin-top:3px; font-size:13px; }
+.grand-carnet-ticket-head>b { flex:0 0 auto; padding:5px 7px; color:#3b2b00; border-radius:999px; background:var(--gold); font-size:8px; }
+.grand-carnet-horses { margin-top:12px; }
+.grand-carnet-horses b { color:#3b2b00; background:var(--gold); }
+.grand-carnet-ticket>p { margin:10px 0 0; color:var(--muted); font-size:9px; }
+.grand-carnet-ticket>p strong { color:var(--green); }
+.grand-carnet-ticket details { margin-top:10px; padding-top:9px; border-top:1px solid var(--line); }
+.grand-carnet-ticket summary { color:#a9d6ff; font-size:9px; font-weight:850; cursor:pointer; }
+.grand-carnet-combinations { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin-top:9px; max-height:160px; overflow:auto; }
+.grand-carnet-combinations>span { padding:6px; color:var(--text); border-radius:8px; background:rgba(255,255,255,.035); font-size:8px; white-space:nowrap; }
+.grand-carnet-combinations small { margin-right:5px; color:var(--faint); }
 .burkina-tools { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr); gap:12px; margin-top:12px; }
 .burkina-couples,.grand-carnet { padding:16px; border:1px solid var(--line); border-radius:14px; background:rgba(8,21,37,.68); }
 .burkina-tool-label { display:block; margin-bottom:10px; color:var(--faint); font-size:9px; font-weight:900; letter-spacing:1.1px; }
@@ -331,12 +365,12 @@ footer { width:min(1240px,calc(100% - 40px)); margin:40px auto 0; padding:40px 0
   .hero{grid-template-columns:1fr;min-height:auto;padding-top:70px}.hero-copy{max-width:760px}.hero h1{letter-spacing:-3px}.hero-panel{max-width:680px;width:100%;margin-inline:auto}.app-download-card{grid-template-columns:auto 1fr}.app-download-actions{grid-column:1/-1}
   .proof-strip{grid-template-columns:repeat(2,1fr)}.proof-strip div:nth-child(2){border-right:0}.proof-strip div:nth-child(-n+2){border-bottom:1px solid var(--line)}
   .race-workspace{grid-template-columns:1fr}.race-sidebar{border:0;border-bottom:1px solid var(--line)}.race-list{display:flex;gap:8px;overflow:auto;max-height:none}.track-label{writing-mode:vertical-rl}.race-item{min-width:225px}
-  .national-race-content{grid-template-columns:auto 1fr}.national-actions{grid-column:1/-1;display:flex;align-items:center;max-width:none}.burkina-tools{grid-template-columns:1fr}.national-smart-play{grid-template-columns:1fr}.results-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-grid{grid-template-columns:repeat(2,1fr)}
+  .national-race-content{grid-template-columns:auto 1fr}.national-actions{grid-column:1/-1;display:flex;align-items:center;max-width:none}.burkina-tools,.national-ticket-grid{grid-template-columns:1fr}.national-smart-play{grid-template-columns:1fr}.results-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-grid{grid-template-columns:repeat(2,1fr)}
   .method-grid{grid-template-columns:repeat(2,1fr)}.plans-section{grid-template-columns:1fr;gap:42px}.plans-intro{position:static}.community-grid{grid-template-columns:1fr}.share-panel{grid-template-columns:1fr}.share-actions{justify-content:flex-start}.share-message{text-align:left}.account-grid{grid-template-columns:repeat(2,1fr)}.account-card-referral{grid-column:1/-1}.security-card{grid-template-columns:1fr;gap:30px}
 }
 
 @media (max-width: 640px) {
-  .site-header{padding-inline:16px}.brand img{width:42px;height:42px}.brand small{display:none}.section{width:min(100% - 28px,1240px);padding-block:72px}.hero{padding-top:55px}.hero h1{font-size:46px;letter-spacing:-2.6px}.hero-actions{display:grid}.hero-actions .button{width:100%}.trust-row{display:grid;gap:8px}.hero-panel{padding:18px;border-radius:22px}.hero-race-head{margin:24px 0 18px}.confidence{width:70px;height:70px}.panel-footer{display:grid}.proof-strip{width:calc(100% - 28px)}.proof-strip div{padding:20px 14px}.app-download-section{padding-block:38px}.app-download-card{grid-template-columns:1fr;padding:22px}.app-download-icon{width:60px;height:60px;border-radius:17px}.app-download-actions{grid-column:auto}.app-download-actions .button{width:100%}.section-heading{display:block}.section-heading>p{margin-top:18px}.national-spotlight{padding:18px}.national-spotlight-head{display:grid}.country-filter select{width:100%;min-width:0}.national-race-content{grid-template-columns:1fr}.quinte-seal{width:68px;height:68px;font-size:34px}.national-actions{display:grid;grid-column:auto;width:100%}.national-actions .button{width:100%}.burkina-guide-head{display:grid}.burkina-schedule,.national-strategies,.national-smart-options{grid-template-columns:1fr}.burkina-couples>div{grid-template-columns:1fr}.race-detail{padding:18px}.detail-head{display:block}.race-badge{display:inline-block;margin-top:12px}.official-result-head{display:grid}.final-verdict{grid-template-columns:1fr}.final-five{grid-template-columns:repeat(5,68px);overflow-x:auto;padding-bottom:5px}.analysis-grid,.guide-grid,.results-grid{grid-template-columns:1fr}.horse-table th:nth-child(3),.horse-table td:nth-child(3){display:none}.method-grid,.plans-grid,.account-grid{grid-template-columns:1fr}.account-card-referral{grid-column:auto}.method-card{min-height:240px}.plans-grid{gap:10px}.share-actions{display:grid;grid-template-columns:1fr 1fr}.share-button{width:100%}.security-card{padding:25px 20px}footer{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.modal{padding:24px 18px}.modal-brand{padding-right:28px}
+  .site-header{padding-inline:16px}.brand img{width:42px;height:42px}.brand small{display:none}.section{width:min(100% - 28px,1240px);padding-block:72px}.hero{padding-top:55px}.hero h1{font-size:46px;letter-spacing:-2.6px}.hero-actions{display:grid}.hero-actions .button{width:100%}.trust-row{display:grid;gap:8px}.hero-panel{padding:18px;border-radius:22px}.hero-race-head{margin:24px 0 18px}.confidence{width:70px;height:70px}.panel-footer{display:grid}.proof-strip{width:calc(100% - 28px)}.proof-strip div{padding:20px 14px}.app-download-section{padding-block:38px}.app-download-card{grid-template-columns:1fr;padding:22px}.app-download-icon{width:60px;height:60px;border-radius:17px}.app-download-actions{grid-column:auto}.app-download-actions .button{width:100%}.section-heading{display:block}.section-heading>p{margin-top:18px}.national-spotlight{padding:18px}.national-spotlight-head{display:grid}.country-filter select{width:100%;min-width:0}.national-race-content{grid-template-columns:1fr}.quinte-seal{width:68px;height:68px;font-size:34px}.national-actions{display:grid;grid-column:auto;width:100%}.national-actions .button{width:100%}.burkina-guide-head,.national-proposal-head{display:grid}.podium-ticket{text-align:left}.burkina-schedule,.national-strategies,.national-smart-options{grid-template-columns:1fr}.couple-tickets{grid-template-columns:1fr}.grand-carnet-combinations{grid-template-columns:repeat(2,minmax(0,1fr))}.burkina-couples>div{grid-template-columns:1fr}.race-detail{padding:18px}.detail-head{display:block}.race-badge{display:inline-block;margin-top:12px}.official-result-head{display:grid}.final-verdict{grid-template-columns:1fr}.final-five{grid-template-columns:repeat(5,68px);overflow-x:auto;padding-bottom:5px}.analysis-grid,.guide-grid,.results-grid{grid-template-columns:1fr}.horse-table th:nth-child(3),.horse-table td:nth-child(3){display:none}.method-grid,.plans-grid,.account-grid{grid-template-columns:1fr}.account-card-referral{grid-column:auto}.method-card{min-height:240px}.plans-grid{gap:10px}.share-actions{display:grid;grid-template-columns:1fr 1fr}.share-button{width:100%}.security-card{padding:25px 20px}footer{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.modal{padding:24px 18px}.modal-brand{padding-right:28px}
   .chat-launcher{right:14px;bottom:14px;height:50px;min-width:54px;padding:0 13px}.chatbox{right:14px;bottom:76px;max-height:calc(100vh - 92px)}
 }
 

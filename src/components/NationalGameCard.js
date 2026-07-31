@@ -18,8 +18,23 @@ function formatFcfa(value) {
   return `${Number(value || 0).toLocaleString('fr-FR')} FCFA`;
 }
 
+function HorseNumbers({ horses, gold = false }) {
+  return (
+    <View style={styles.horseNumbers}>
+      {(horses || []).map((horse, index) => (
+        <React.Fragment key={`${horse.number}-${index}`}>
+          {index > 0 && <Text style={styles.horseSeparator}>–</Text>}
+          <View style={[styles.horseNumber, gold && styles.horseNumberGold]}>
+            <Text style={styles.horseNumberText}>{horse.number}</Text>
+          </View>
+        </React.Fragment>
+      ))}
+    </View>
+  );
+}
+
 export default function NationalGameCard({ game }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [selectedHorses, setSelectedHorses] = useState(String(game?.podium || 0));
 
   useEffect(() => {
@@ -75,6 +90,73 @@ export default function NationalGameCard({ game }) {
 
       {expanded && (
         <View style={styles.details}>
+          {game.proposal ? (
+            <View style={styles.proposal}>
+              <Text style={styles.proposalKicker}>PROPOSITIONS DE JEUX · COURSE NATIONALE</Text>
+              <Text style={styles.proposalTitle}>Tickets conseillés aujourd’hui</Text>
+              <Text style={styles.proposalHelp}>
+                Hiérarchie actualisée · non-partants exclus.
+              </Text>
+
+              <View style={styles.podiumTicket}>
+                <Text style={styles.ticketLabel}>Podium proposé</Text>
+                <HorseNumbers horses={game.proposal.podiumSelection} />
+              </View>
+
+              <Text style={styles.sectionTitle}>Couplés proposés</Text>
+              <View style={styles.coupleTickets}>
+                {(game.proposal.couples || []).map((ticket) => (
+                  <View key={ticket.id} style={styles.coupleTicket}>
+                    <Text style={styles.ticketLabel}>{ticket.label}</Text>
+                    <HorseNumbers horses={ticket.horses} />
+                    <Text style={styles.ticketNames} numberOfLines={1}>
+                      {(ticket.horses || []).map((horse) => horse.name).join(' · ')}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.grandCarnetProposal}>
+                <View style={styles.grandCarnetHead}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.grandCarnetKicker}>GRAND CARNET {game.label?.toUpperCase()}</Text>
+                    <Text style={styles.grandCarnetTitle}>
+                      {game.proposal.grandCarnet.selectedHorses} chevaux retenus
+                    </Text>
+                  </View>
+                  <Text style={styles.combinationBadge}>
+                    {game.proposal.grandCarnet.combinationsCount} comb.
+                  </Text>
+                </View>
+                <HorseNumbers horses={game.proposal.grandCarnet.horses} gold />
+                <Text style={styles.grandCarnetBudget}>
+                  {game.proposal.grandCarnet.cost != null
+                    ? `Budget complet : ${formatFcfa(game.proposal.grandCarnet.cost)}`
+                    : 'Mise à confirmer auprès de l’opérateur national'}
+                </Text>
+                <Text style={styles.combinationsTitle}>
+                  Toutes les combinaisons
+                </Text>
+                <View style={styles.combinationList}>
+                  {(game.proposal.grandCarnet.combinations || []).map((combination, index) => (
+                    <View key={`${combination.join('-')}-${index}`} style={styles.combinationChip}>
+                      <Text style={styles.combinationIndex}>{index + 1}</Text>
+                      <Text style={styles.combinationText}>{combination.join(' – ')}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.proposalPending}>
+              <Text style={styles.proposalKicker}>PROPOSITIONS DE JEUX</Text>
+              <Text style={styles.proposalTitle}>Analyse en cours</Text>
+              <Text style={styles.proposalHelp}>
+                Les tickets apparaîtront dès que la hiérarchie nationale sera validée.
+              </Text>
+            </View>
+          )}
+
           {!!game.schedule?.length && (
             <>
               <Text style={styles.sectionTitle}>Calendrier des jeux</Text>
@@ -222,6 +304,88 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(251,191,36,0.18)',
   },
+  proposal: {
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.45)',
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(16,185,129,0.08)',
+  },
+  proposalPending: {
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt,
+  },
+  proposalKicker: { color: COLORS.accent, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  proposalTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', marginTop: 3 },
+  proposalHelp: { color: COLORS.textMuted, fontSize: 10, marginTop: 3 },
+  podiumTicket: {
+    marginTop: SPACING.md,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(251,191,36,0.08)',
+  },
+  ticketLabel: { color: COLORS.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' },
+  horseNumbers: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5, marginTop: 7 },
+  horseNumber: {
+    minWidth: 30,
+    height: 30,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+    backgroundColor: COLORS.accent,
+  },
+  horseNumberGold: { backgroundColor: COLORS.gold },
+  horseNumberText: { color: '#06251c', fontSize: FONT.sm, fontWeight: '900' },
+  horseSeparator: { color: COLORS.textMuted, fontSize: 10, fontWeight: '900' },
+  coupleTickets: { gap: SPACING.sm },
+  coupleTicket: {
+    padding: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface,
+  },
+  ticketNames: { color: COLORS.textMuted, fontSize: 9, marginTop: 5 },
+  grandCarnetProposal: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.38)',
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(251,191,36,0.07)',
+  },
+  grandCarnetHead: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm },
+  grandCarnetKicker: { color: COLORS.gold, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 },
+  grandCarnetTitle: { color: COLORS.text, fontSize: FONT.md, fontWeight: '900', marginTop: 3 },
+  combinationBadge: {
+    color: '#3b2b00',
+    backgroundColor: COLORS.gold,
+    borderRadius: RADIUS.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  grandCarnetBudget: { color: COLORS.accent, fontSize: FONT.sm, fontWeight: '800', marginTop: SPACING.sm },
+  combinationsTitle: { color: COLORS.textMuted, fontSize: 9, fontWeight: '900', marginTop: SPACING.md, textTransform: 'uppercase' },
+  combinationList: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: SPACING.sm },
+  combinationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 6,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface,
+  },
+  combinationIndex: { color: COLORS.textFaint, fontSize: 8 },
+  combinationText: { color: COLORS.text, fontSize: 9, fontWeight: '800' },
   sectionTitle: {
     color: COLORS.text,
     fontSize: FONT.md,

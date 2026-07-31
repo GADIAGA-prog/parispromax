@@ -35,6 +35,14 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
   const insights = useMemo(() => buildRaceInsights(race), [race]);
   const smartSelection = useMemo(() => {
     if (!game?.recommendedSelectionSize) return insights.selected;
+    const proposalHorses = game?.proposal?.grandCarnet?.horses || [];
+    if (proposalHorses.length) {
+      return proposalHorses.map((proposalHorse) => (
+        (race?.horses || []).find(
+          (horse) => String(horse.number) === String(proposalHorse.number)
+        ) || proposalHorse
+      ));
+    }
     const ranked = [...(race?.horses || [])].sort(
       (a, b) => Number(a.rank || 999) - Number(b.rank || 999)
         || Number(b.aiScore || 0) - Number(a.aiScore || 0)
@@ -48,7 +56,7 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
       unique.push(horse);
     }
     return unique.slice(0, game.recommendedSelectionSize);
-  }, [game?.recommendedSelectionSize, insights.selected, race?.horses]);
+  }, [game?.proposal, game?.recommendedSelectionSize, insights.selected, race?.horses]);
   const stars = `${'★'.repeat(insights.confidence.stars)}${'☆'.repeat(5 - insights.confidence.stars)}`;
   const selectionSize = game ? smartSelection.length : insights.selectionSize;
 
@@ -87,6 +95,18 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
               </View>
             ))}
           </View>
+          {!!game.proposal?.couples?.length && (
+            <View style={styles.smartCouples}>
+              {game.proposal.couples.map((ticket) => (
+                <View key={ticket.id} style={styles.smartCouple}>
+                  <Text style={styles.smartCoupleLabel}>{ticket.label}</Text>
+                  <Text style={styles.smartCoupleNumbers}>
+                    {(ticket.horses || []).map((horse) => horse.number).join(' – ')}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
@@ -151,6 +171,15 @@ const styles = StyleSheet.create({
   },
   smartNumberPodium: { borderColor: COLORS.accent, backgroundColor: 'rgba(16,185,129,0.15)' },
   smartNumberText: { color: COLORS.text, fontWeight: '900' },
+  smartCouples: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: SPACING.sm },
+  smartCouple: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface,
+  },
+  smartCoupleLabel: { color: COLORS.textMuted, fontSize: 8, fontWeight: '800' },
+  smartCoupleNumbers: { color: COLORS.accent, fontSize: 11, fontWeight: '900', marginTop: 2 },
   selectionCount: { width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
   selectionCountValue: { color: '#06251c', fontSize: FONT.xxl, fontWeight: '900' },
   selectionCountLabel: { color: '#06251c', fontSize: FONT.sm - 1, fontWeight: '800' },

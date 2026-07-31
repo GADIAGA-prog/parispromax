@@ -9,6 +9,10 @@ const {
   getNationalGame,
   inferGameFormat,
 } = require('../../shared/nationalGameRules');
+const {
+  buildNationalBetProposal,
+  listCombinations,
+} = require('../../shared/nationalBetProposal');
 
 test('applique le calendrier hebdomadaire du Burkina Faso', () => {
   assert.deepEqual(
@@ -59,4 +63,32 @@ test('raisonne sur le format officiel du jour sans inventer la mise des autres p
   assert.equal(game.recommendedCombinations, 15);
   assert.equal(game.recommendedCost, null);
   assert.equal(game.verified, false);
+});
+
+test('propose les couplés et toutes les combinaisons du Grand Carnet national', () => {
+  const game = getNationalGame('bf', '2026-07-30');
+  const candidates = [
+    { number: 4, name: 'Alpha' },
+    { number: 8, name: 'Bravo' },
+    { number: 2, name: 'Charlie' },
+    { number: 11, name: 'Delta' },
+    { number: 6, name: 'Echo' },
+    { number: 9, name: 'Foxtrot' },
+  ];
+  const proposal = buildNationalBetProposal(game, candidates, { nonPartants: [11] });
+
+  assert.deepEqual(
+    proposal.couples.map((ticket) => [ticket.id, ticket.horses.map((horse) => horse.number)]),
+    [
+      ['winner', [4, 8]],
+      ['placed-a', [4, 8]],
+      ['placed-b', [4, 2]],
+      ['placed-c', [8, 2]],
+    ]
+  );
+  assert.deepEqual(proposal.grandCarnet.horses.map((horse) => horse.number), [4, 8, 2, 6, 9]);
+  assert.equal(proposal.grandCarnet.combinationsCount, 5);
+  assert.equal(proposal.grandCarnet.combinations.length, 5);
+  assert.equal(proposal.grandCarnet.cost, 1000);
+  assert.equal(listCombinations(candidates.slice(0, 6), 4).length, 15);
 });

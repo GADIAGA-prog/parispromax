@@ -26,7 +26,11 @@ test('Android charge les tarifs officiels et affiche le montant réellement fact
 test('le jeu intelligent national est visible sur le web et Android', () => {
   assert.match(webApp, /renderNationalGameGuide\(game\)/);
   assert.match(webApp, /nationalStrategyMarkup\(detail\)/);
+  assert.match(webApp, /nationalProposalMarkup\(game\)/);
+  assert.match(webApp, /Couplé et Grand Carnet/);
   assert.match(nationalCard, /game\.strategies/);
+  assert.match(nationalCard, /game\.proposal\.couples/);
+  assert.match(nationalCard, /Toutes les combinaisons/);
   assert.match(nationalCard, /Grand carnet/);
 });
 

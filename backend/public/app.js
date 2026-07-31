@@ -767,6 +767,63 @@ function combinationCount(selectedHorses, podium) {
   return Math.round(result);
 }
 
+function nationalProposalMarkup(game) {
+  const proposal = game?.proposal;
+  const grandCarnet = proposal?.grandCarnet;
+  if (!grandCarnet?.horses?.length) {
+    return `<section class="national-proposal national-proposal-pending">
+      <div><span>PROPOSITIONS DE JEUX</span><strong>Analyse en cours</strong></div>
+      <p>Les tickets Couplé et Grand Carnet apparaîtront dès que la hiérarchie de la course nationale sera validée.</p>
+    </section>`;
+  }
+
+  const horseNumbers = (horses) => horses
+    .map((horse) => `<b title="${escapeHtml(horse.name)}">${escapeHtml(horse.number)}</b>`)
+    .join('<i>–</i>');
+  const sourceLabel = proposal.source === 'latest-analysis'
+    ? 'Hiérarchie ParisPromax actualisée'
+    : 'Classement provisoire selon le marché';
+
+  return `<section class="national-proposal" aria-labelledby="national-proposal-title">
+    <div class="national-proposal-head">
+      <div>
+        <span>PROPOSITIONS DE JEUX · COURSE NATIONALE</span>
+        <h5 id="national-proposal-title">Tickets conseillés aujourd’hui</h5>
+        <p>${escapeHtml(sourceLabel)} · non-partants exclus.</p>
+      </div>
+      <div class="podium-ticket">
+        <small>Podium proposé</small>
+        <div>${horseNumbers(proposal.podiumSelection || [])}</div>
+      </div>
+    </div>
+    <div class="national-ticket-grid">
+      ${(proposal.couples || []).length ? `<div class="couple-tickets">
+        ${(proposal.couples || []).map((ticket) => `<article>
+          <span>${escapeHtml(ticket.label)}</span>
+          <div>${horseNumbers(ticket.horses || [])}</div>
+          <small>${escapeHtml(ticket.horses?.map((horse) => horse.name).join(' · ') || '')}</small>
+        </article>`).join('')}
+      </div>` : ''}
+      <article class="grand-carnet-ticket">
+        <div class="grand-carnet-ticket-head">
+          <div><span>GRAND CARNET ${escapeHtml(game.label.toUpperCase())}</span><strong>${escapeHtml(grandCarnet.selectedHorses)} chevaux retenus</strong></div>
+          <b>${escapeHtml(grandCarnet.combinationsCount)} combinaison${grandCarnet.combinationsCount > 1 ? 's' : ''}</b>
+        </div>
+        <div class="grand-carnet-horses">${horseNumbers(grandCarnet.horses)}</div>
+        <p>${grandCarnet.cost != null
+          ? `Budget complet : <strong>${escapeHtml(grandCarnet.cost.toLocaleString('fr-FR'))} FCFA</strong> (${escapeHtml(grandCarnet.stake)} FCFA par combinaison).`
+          : 'Mise à confirmer auprès de l’opérateur national.'}</p>
+        <details>
+          <summary>Voir les ${escapeHtml(grandCarnet.combinationsCount)} combinaisons</summary>
+          <div class="grand-carnet-combinations">
+            ${(grandCarnet.combinations || []).map((combination, index) => `<span><small>${index + 1}</small>${combination.map(escapeHtml).join(' – ')}</span>`).join('')}
+          </div>
+        </details>
+      </article>
+    </div>
+  </section>`;
+}
+
 function renderNationalGameGuide(game) {
   if (!game) return '';
   const stakeLabel = game.stake
@@ -782,6 +839,8 @@ function renderNationalGameGuide(game) {
         </div>
         ${game.isLastTuesday ? '<span class="last-tuesday-badge">Dernier mardi du mois</span>' : ''}
       </div>
+
+      ${nationalProposalMarkup(game)}
 
       ${(game.schedule || []).length ? `<div class="burkina-schedule">
         ${(game.schedule || []).map((item) => `
