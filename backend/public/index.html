@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260801-2" />
+  <link rel="stylesheet" href="/styles.css?v=20260801-3" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -93,6 +93,10 @@
       <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
+      <a class="button header-android-download header-android-download-desktop" href="/download/android" aria-label="Télécharger l’application Android ParisPromax">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M12 6v8m0 0 3-3m-3 3-3-3m1 4.5h4" /></svg>
+        <span>Télécharger Android</span>
+      </a>
       <button class="button button-install" type="button" data-install-app>Installer</button>
       <button class="button button-ghost" type="button" data-open-auth="login">Connexion</button>
       <button class="button button-primary" type="button" data-open-auth="register">Créer un compte</button>
@@ -102,6 +106,10 @@
       </button>
       <button class="button button-primary hidden" id="account-button" type="button">Mon espace</button>
     </div>
+    <a class="button header-android-download header-android-download-mobile" href="/download/android" aria-label="Installer l’application Android ParisPromax">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M12 6v8m0 0 3-3m-3 3-3-3m1 4.5h4" /></svg>
+      <span>Installer Android</span>
+    </a>
     <button class="menu-button" id="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
   </header>
 
@@ -212,7 +220,7 @@
 
       <div class="race-workspace reveal">
         <aside class="race-sidebar">
-          <div class="sidebar-head"><strong>Courses ECD</strong><button type="button" id="refresh-races" aria-label="Actualiser les courses">↻</button></div>
+          <div class="sidebar-head"><span><strong>Courses ECD</strong><small id="race-count">Chargement…</small></span><button type="button" id="refresh-races" aria-label="Actualiser les courses">↻</button></div>
           <div id="race-list" class="race-list" aria-live="polite"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></div>
         </aside>
         <article class="race-detail" id="race-detail" aria-live="polite">
@@ -485,6 +493,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260801-2" defer></script>
+  <script src="/app.js?v=20260801-3" defer></script>
 </body>
 </html>

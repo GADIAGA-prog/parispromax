@@ -527,7 +527,7 @@ export default function LoginScreen() {
             disabled={busy}
           >
             {busy ? (
-              <ActivityIndicator color="#06251c" />
+              <ActivityIndicator color={COLORS.onAccent} />
             ) : (
               <>
                 <Text style={styles.buttonText}>
@@ -550,7 +550,7 @@ export default function LoginScreen() {
                           : 'arrow-forward'
                   }
                   size={18}
-                  color="#06251c"
+                  color={COLORS.onAccent}
                 />
               </>
             )}
@@ -590,7 +590,7 @@ export default function LoginScreen() {
                 après vérification de votre identité.
               </Text>
               <Pressable style={styles.button} onPress={onRecoveryNoted}>
-                <Ionicons name="checkmark" size={18} color="#06251c" />
+                <Ionicons name="checkmark" size={18} color={COLORS.onAccent} />
                 <Text style={styles.buttonText}>
                   {recovery?.next === 'login'
                     ? "J'ai noté le code · Me connecter"
@@ -694,7 +694,7 @@ const styles = StyleSheet.create({
   tab: { flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.sm, alignItems: 'center' },
   tabActive: { backgroundColor: COLORS.accent },
   tabText: { color: COLORS.textMuted, fontWeight: '800', fontSize: FONT.sm },
-  tabTextActive: { color: '#06251c' },
+  tabTextActive: { color: COLORS.onAccent },
   forgotHint: {
     color: COLORS.accent, textAlign: 'center', marginTop: SPACING.md,
     fontSize: FONT.sm, textDecorationLine: 'underline',
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent, borderRadius: RADIUS.md, paddingVertical: SPACING.md, marginTop: SPACING.lg,
   },
   busy: { opacity: 0.7 },
-  buttonText: { color: '#06251c', fontWeight: '900', fontSize: FONT.lg },
+  buttonText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.lg },
   changeNumber: { color: COLORS.textMuted, textAlign: 'center', marginTop: SPACING.md, fontSize: FONT.sm },
   trialNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: SPACING.md },
   trialNoteText: { color: COLORS.textMuted, fontSize: FONT.sm },

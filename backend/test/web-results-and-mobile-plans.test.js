@@ -15,6 +15,13 @@ const appRoot = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
 const disclaimer = fs.readFileSync(path.join(root, 'src', 'components', 'Disclaimer.js'), 'utf8');
 const lockCard = fs.readFileSync(path.join(root, 'src', 'components', 'LockCard.js'), 'utf8');
 const insightsCard = fs.readFileSync(path.join(root, 'src', 'components', 'RaceInsightsCard.js'), 'utf8');
+const androidColors = fs.readFileSync(path.join(root, 'src', 'theme', 'colors.js'), 'utf8');
+const ageGate = fs.readFileSync(path.join(root, 'src', 'screens', 'AgeGateScreen.js'), 'utf8');
+const login = fs.readFileSync(path.join(root, 'src', 'screens', 'LoginScreen.js'), 'utf8');
+const onboarding = fs.readFileSync(path.join(root, 'src', 'screens', 'OnboardingScreen.js'), 'utf8');
+const history = fs.readFileSync(path.join(root, 'src', 'screens', 'HistoryScreen.js'), 'utf8');
+const quinte = fs.readFileSync(path.join(root, 'src', 'screens', 'QuintePlusScreen.js'), 'utf8');
+const trialBanner = fs.readFileSync(path.join(root, 'src', 'components', 'TrialBanner.js'), 'utf8');
 
 const navigator = fs.readFileSync(path.join(root, 'src', 'navigation', 'RootNavigator.js'), 'utf8');
 const historyScreen = fs.readFileSync(path.join(root, 'src', 'screens', 'HistoryScreen.js'), 'utf8');
@@ -45,8 +52,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260801-2/);
-  assert.match(serviceWorker, /parispromax-shell-20260801-2/);
+  assert.match(html, /styles\.css\?v=20260801-3/);
+  assert.match(serviceWorker, /parispromax-shell-20260801-3/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -61,6 +68,19 @@ test('Android utilise des surfaces claires et des textes visibles', () => {
   assert.doesNotMatch(lockCard, /backgroundColor: 'rgba\(15,23,42,0\.92\)'/);
   assert.match(lockCard, /backgroundColor: 'rgba\(238,242,244,0\.96\)'/);
   assert.match(insightsCard, /card: \{[\s\S]*backgroundColor: COLORS\.surface/);
+});
+
+test('les surfaces vertes Android utilisent un texte blanc suffisamment contrasté', () => {
+  assert.match(androidColors, /accent: '#087554',[\s\S]*onAccent: '#ffffff'/);
+  assert.match(ageGate, /buttonText: \{ color: COLORS\.onAccent/);
+  assert.match(login, /tabTextActive: \{ color: COLORS\.onAccent/);
+  assert.match(login, /buttonText: \{ color: COLORS\.onAccent/);
+  assert.match(onboarding, /nextText: \{ color: COLORS\.onAccent/);
+  assert.match(paywall, /payText: \{ color: COLORS\.onAccent/);
+  assert.match(history, /rateText: \{ color: COLORS\.onAccent/);
+  assert.match(quinte, /comboNum: \{ color: COLORS\.onAccent/);
+  assert.match(insightsCard, /selectionCountValue: \{ color: COLORS\.onAccent/);
+  assert.match(trialBanner, /ctaText: \{ color: COLORS\.onAccent/);
 });
 
 test('le site et Android indiquent qu’aucun pari n’est effectué', () => {
@@ -109,4 +129,20 @@ test('les résultats et le contact séparent les parcours utiles', () => {
   assert.match(profile, /t\.me\/ParisPromaxOfficiel/);
   assert.match(profile, /facebook\.com\/parispromax/);
   assert.match(profile, /Share\.share/);
+});
+
+test('le téléchargement Android reste visible en haut du site sur tous les écrans', () => {
+  assert.match(html, /header-android-download-desktop[\s\S]*href="\/download\/android"/);
+  assert.match(html, /header-android-download-mobile[\s\S]*href="\/download\/android"/);
+  assert.match(html, />Télécharger Android</);
+  assert.match(html, />Installer Android</);
+  assert.match(styles, /\.header-android-download-mobile \{ display: none; \}/);
+  assert.match(styles, /@media \(max-width: 1180px\)[\s\S]*\.header-android-download-mobile \{ display: inline-flex; \}/);
+});
+
+test('tout le programme ECD reste consultable sur téléphone et tablette', () => {
+  assert.match(webApp, /faites défiler pour toutes les voir/);
+  assert.match(webApp, /window\.matchMedia\('\(max-width: 980px\)'\)/);
+  assert.match(styles, /@media \(max-width: 980px\)[\s\S]*\.race-list \{[\s\S]*overflow-y: auto;/);
+  assert.match(styles, /\.track-label \{[\s\S]*writing-mode: horizontal-tb;/);
 });

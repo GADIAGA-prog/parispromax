@@ -79,7 +79,7 @@ export default function AgeGateScreen() {
 
         <Pressable style={styles.button} onPress={verify}>
           <Text style={styles.buttonText}>Vérifier mon âge</Text>
-          <Ionicons name="arrow-forward" size={18} color="#06251c" />
+          <Ionicons name="arrow-forward" size={18} color={COLORS.onAccent} />
         </Pressable>
 
         <Pressable onPress={() => WebBrowser.openBrowserAsync(LEGAL_URLS.responsibleGambling)}>
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   message: { color: COLORS.gold, textAlign: 'center', marginTop: SPACING.md, fontWeight: '700' },
   blocked: { color: COLORS.danger },
   button: { marginTop: SPACING.lg, backgroundColor: COLORS.accent, borderRadius: RADIUS.pill, paddingVertical: SPACING.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm },
-  buttonText: { color: '#06251c', fontSize: FONT.md, fontWeight: '900' },
+  buttonText: { color: COLORS.onAccent, fontSize: FONT.md, fontWeight: '900' },
   link: { color: COLORS.accent, textAlign: 'center', fontWeight: '800', marginTop: SPACING.lg, textDecorationLine: 'underline' },
   footer: { color: COLORS.textFaint, fontSize: FONT.sm - 1, textAlign: 'center', lineHeight: 17, marginTop: SPACING.md },
 });

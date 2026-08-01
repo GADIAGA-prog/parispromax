@@ -76,7 +76,7 @@ export default function HistoryScreen() {
 
       {/* Real success-rate banner */}
       <View style={styles.rateBanner}>
-        <Ionicons name="trending-up" size={20} color="#06251c" />
+        <Ionicons name="trending-up" size={20} color={COLORS.onAccent} />
         {stat && stat.rate != null ? (
           <Text style={styles.rateText}>
             Taux de réussite : {stat.rate}% ({stat.sampleSize} courses)
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent, marginHorizontal: SPACING.md, marginTop: SPACING.md,
     paddingVertical: SPACING.md, borderRadius: RADIUS.md,
   },
-  rateText: { color: '#06251c', fontWeight: '900', fontSize: FONT.md },
+  rateText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.md },
   list: { padding: SPACING.md, paddingBottom: SPACING.xxl, flexGrow: 1 },
   empty: { alignItems: 'center', justifyContent: 'center', paddingTop: SPACING.xxl, gap: SPACING.md, paddingHorizontal: SPACING.xl },
   emptyText: { color: COLORS.textMuted, textAlign: 'center', fontSize: FONT.sm, lineHeight: 20 },
