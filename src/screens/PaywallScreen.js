@@ -410,7 +410,7 @@ export default function PaywallScreen({ navigation }) {
               Alert.alert('Accès actualisé', 'Le statut de votre abonnement a été vérifié.');
             }}
           >
-            <Ionicons name="refresh" size={18} color="#06251c" />
+            <Ionicons name="refresh" size={18} color={COLORS.onAccent} />
             <Text style={styles.payText}>Actualiser mon accès</Text>
           </Pressable>
         </ScrollView>
@@ -599,10 +599,10 @@ export default function PaywallScreen({ navigation }) {
               disabled={processing}
             >
               {processing ? (
-                <ActivityIndicator color="#06251c" />
+                <ActivityIndicator color={COLORS.onAccent} />
               ) : (
                 <>
-                  <Ionicons name={isFeex && needsRedirect ? 'open-outline' : 'phone-portrait'} size={18} color="#06251c" />
+                  <Ionicons name={isFeex && needsRedirect ? 'open-outline' : 'phone-portrait'} size={18} color={COLORS.onAccent} />
                   <Text style={styles.payText}>
                     {needsServerOtp && !yengaPendingTxn
                       ? 'Recevoir le code OTP'
@@ -627,10 +627,10 @@ export default function PaywallScreen({ navigation }) {
 
             <Pressable style={[styles.payBtn, processing && { opacity: 0.7 }]} onPress={onPay} disabled={processing}>
               {processing ? (
-                <ActivityIndicator color="#06251c" />
+                <ActivityIndicator color={COLORS.onAccent} />
               ) : (
                 <>
-                  <Ionicons name="lock-open" size={18} color="#06251c" />
+                  <Ionicons name="lock-open" size={18} color={COLORS.onAccent} />
                   <Text style={styles.payText}>Payer {plan ? fmtXOF(referralPrice(plan)) : ''}</Text>
                 </>
               )}
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
     backgroundColor: COLORS.accent, borderRadius: RADIUS.md, paddingVertical: SPACING.md, marginTop: SPACING.lg,
   },
-  payText: { color: '#06251c', fontWeight: '900', fontSize: FONT.lg },
+  payText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.lg },
   secure: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginTop: SPACING.md },
   opRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
   opChip: {

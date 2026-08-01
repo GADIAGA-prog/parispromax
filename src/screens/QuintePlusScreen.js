@@ -100,7 +100,7 @@ export default function QuintePlusScreen({ navigation }) {
           <Text style={styles.title}>Quinté+ du jour</Text>
           {rate != null && (
             <View style={styles.ratePill}>
-              <Ionicons name="trending-up" size={13} color="#06251c" />
+              <Ionicons name="trending-up" size={13} color={COLORS.onAccent} />
               <Text style={styles.ratePillText}>{rate}%</Text>
             </View>
           )}
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: RADIUS.pill,
   },
-  ratePillText: { color: '#06251c', fontWeight: '900', fontSize: FONT.sm },
+  ratePillText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.sm },
   raceMeta: { color: COLORS.textMuted, fontSize: FONT.md, marginTop: SPACING.md, marginBottom: SPACING.sm, paddingHorizontal: SPACING.xs },
   hero: {
     backgroundColor: COLORS.surface,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  comboNum: { color: '#06251c', fontWeight: '900', fontSize: FONT.xl },
+  comboNum: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.xl },
   comboSep: { color: COLORS.textMuted, fontWeight: '900', fontSize: FONT.lg },
   confBar: {
     width: '100%',

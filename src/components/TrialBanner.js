@@ -15,7 +15,7 @@ export default function TrialBanner() {
     const until = paidUntil ? new Date(paidUntil).toLocaleDateString('fr-FR') : null;
     return (
       <View style={[styles.banner, styles.paid]}>
-        <Text style={styles.text}>
+        <Text style={[styles.text, styles.paidText]}>
           👑 Abonnement {p ? p.label : 'VIP'} actif{until ? ` — jusqu'au ${until}` : ''}
         </Text>
       </View>
@@ -24,7 +24,7 @@ export default function TrialBanner() {
 
   return (
     <View style={[styles.banner, styles.cta]}>
-      <Text style={styles.text}>
+      <Text style={[styles.text, styles.ctaText]}>
         Abonnez-vous pour débloquer tous les pronostics détaillés
       </Text>
     </View>
@@ -42,9 +42,10 @@ const styles = StyleSheet.create({
   paid: { backgroundColor: COLORS.gold },
   cta: { backgroundColor: COLORS.accent },
   text: {
-    color: '#06251c',
     fontWeight: '800',
     fontSize: FONT.sm + 1,
     textAlign: 'center',
   },
+  paidText: { color: '#06251c' },
+  ctaText: { color: COLORS.onAccent },
 });

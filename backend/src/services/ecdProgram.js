@@ -78,11 +78,10 @@ function automaticSelection(races, profile, nationalRaceId) {
       }),
       runnerScore: items.reduce((sum, item) => sum + (parse(item.raw, {}).horses || []).length, 0),
     }))
-    .sort((a, b) => b.runnerScore - a.runnerScore || a.track.localeCompare(b.track))
-    .slice(0, profile?.maxMeetings || 2);
+    .sort((a, b) => b.runnerScore - a.runnerScore || a.track.localeCompare(b.track));
 
   return rankedMeetings.flatMap((meeting) =>
-    meeting.items.slice(0, profile?.maxRacesPerMeeting || 5)
+    meeting.items
   );
 }
 

@@ -195,10 +195,9 @@ router.get('/national', async (req, res) => {
 });
 
 // GET /races/ecd?country=bf&date=YYYY-MM-DD
-// Programme des autres courses proposées pour le pays. Une sélection ECD
-// validée dans le back-office est prioritaire ; à défaut, un programme
-// automatique limité et clairement identifié évite d'afficher toutes les
-// réunions internationales sans hiérarchie.
+// Programme complet des autres courses proposées pour le pays. Une sélection
+// ECD validée dans le back-office reste prioritaire, puis toutes les autres
+// courses éligibles du jour sont ajoutées afin que le programme soit complet.
 router.get('/ecd', async (req, res) => {
   const country = String(req.query.country || '').trim().toLowerCase();
   if (!country) return res.status(400).json({ error: 'country requis' });
@@ -236,9 +235,11 @@ router.get('/ecd', async (req, res) => {
     .map((pick) => raceById.get(pick.externalId))
     .filter(Boolean)
     .filter((race) => race.externalId !== nationalPick?.externalId);
+  const completeProgram = automaticSelection(races, profile, nationalPick?.externalId);
+  const configuredIds = new Set(configuredRaces.map((race) => race.externalId));
   const selectedRaces = configuredRaces.length
-    ? configuredRaces
-    : automaticSelection(races, profile, nationalPick?.externalId);
+    ? [...configuredRaces, ...completeProgram.filter((race) => !configuredIds.has(race.externalId))]
+    : completeProgram;
   const journalUrl = configuredPicks.find((pick) => pick.journalUrl)?.journalUrl || null;
 
   res.json({

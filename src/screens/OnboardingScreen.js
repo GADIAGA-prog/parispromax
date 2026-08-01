@@ -88,7 +88,7 @@ export default function OnboardingScreen() {
         </Pressable>
         <Pressable style={styles.next} onPress={() => (isLast ? startRegistration() : goTo(index + 1))}>
           <Text style={styles.nextText}>{isLast ? 'Créer mon compte' : 'Suivant'}</Text>
-          <Ionicons name="arrow-forward" size={18} color="#06251c" />
+          <Ionicons name="arrow-forward" size={18} color={COLORS.onAccent} />
         </Pressable>
       </View>
     </SafeAreaView>
@@ -117,5 +117,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, backgroundColor: COLORS.accent,
     paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md, borderRadius: RADIUS.pill,
   },
-  nextText: { color: '#06251c', fontWeight: '900', fontSize: FONT.md },
+  nextText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.md },
 });

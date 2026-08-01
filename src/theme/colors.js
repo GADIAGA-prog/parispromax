@@ -5,6 +5,7 @@ export const COLORS = {
   primary: '#102f3d',
   background: '#f4f6f8',
   accent: '#087554',
+  onAccent: '#ffffff',
 
   // Brand blue (from the logo) — logo backdrops, brand accents.
   brand: '#166d8f',

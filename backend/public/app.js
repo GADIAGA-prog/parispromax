@@ -616,8 +616,8 @@ async function loadRaces() {
         ? ` Mise de base : ${formatFcfa(data.profile.unitStake)}.`
         : ' Mise à confirmer.';
       const status = data.selectionMode === 'country-validated'
-        ? 'Courses proposées pour votre pays.'
-        : 'Courses ECD disponibles.';
+        ? 'Programme ECD complet, avec les courses validées pour votre pays en premier.'
+        : 'Toutes les courses ECD disponibles aujourd’hui.';
       ecdDescription.textContent = `${status}${stake}`;
     }
     renderRaces();
@@ -641,6 +641,9 @@ function raceDiscipline(race = {}) {
 
 function renderRaces() {
   const list = $('#race-list');
+  const count = state.racetracks.reduce((total, track) => total + (track.races || []).length, 0);
+  const countNode = $('#race-count');
+  if (countNode) countNode.textContent = `${count} course${count > 1 ? 's' : ''} · faites défiler pour toutes les voir`;
   if (!state.racetracks.length) {
     list.innerHTML = '<div class="empty-state"><p>Aucune course disponible actuellement.</p></div>';
     return;
@@ -1162,6 +1165,9 @@ async function selectRace(id) {
       catch (error) { predictionError = error; }
     }
     renderRaceDetail(context, detail, prediction, predictionError);
+    if (window.matchMedia('(max-width: 980px)').matches) {
+      detailNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   } catch (error) {
     detailNode.innerHTML = `<div class="empty-state"><h3>Détail indisponible</h3><p>${escapeHtml(error.message)}</p></div>`;
   }

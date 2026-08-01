@@ -25,7 +25,7 @@ function HorseNumbers({ horses, gold = false }) {
         <React.Fragment key={`${horse.number}-${index}`}>
           {index > 0 && <Text style={styles.horseSeparator}>–</Text>}
           <View style={[styles.horseNumber, gold && styles.horseNumberGold]}>
-            <Text style={styles.horseNumberText}>{horse.number}</Text>
+            <Text style={[styles.horseNumberText, gold && styles.horseNumberTextGold]}>{horse.number}</Text>
           </View>
         </React.Fragment>
       ))}
@@ -433,7 +433,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
   horseNumberGold: { backgroundColor: COLORS.gold },
-  horseNumberText: { color: '#06251c', fontSize: FONT.sm, fontWeight: '900' },
+  horseNumberText: { color: COLORS.onAccent, fontSize: FONT.sm, fontWeight: '900' },
+  horseNumberTextGold: { color: '#06251c' },
   horseSeparator: { color: COLORS.textMuted, fontSize: 10, fontWeight: '900' },
   coupleTickets: { gap: SPACING.sm },
   coupleTicket: {

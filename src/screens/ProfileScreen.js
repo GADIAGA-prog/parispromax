@@ -74,7 +74,7 @@ export default function ProfileScreen({ navigation }) {
               message: `Rejoins ParisPromax avec mon code ${referral.code} : https://www.parispromax.com/?ref=${encodeURIComponent(referral.code)}\nProfite de jusqu’à ${referral.discountPercent}% de réduction sur ton premier paiement (hors formule à 200 XOF).`,
             })}
           >
-            <Ionicons name="share-social" size={18} color="#06251c" />
+            <Ionicons name="share-social" size={18} color={COLORS.onAccent} />
             <Text style={styles.shareText}>Partager mon code</Text>
           </Pressable>
           {!!referral?.successfulReferrals && (
@@ -101,7 +101,7 @@ export default function ProfileScreen({ navigation }) {
               { backgroundColor: hasPaid ? COLORS.gold : COLORS.danger },
             ]}
           >
-            <Text style={styles.statusText}>{statusLabel}</Text>
+            <Text style={[styles.statusText, !hasPaid && styles.statusTextOnDanger]}>{statusLabel}</Text>
           </View>
           {hasPaid && paidUntil && (
             <Text style={styles.paidUntil}>
@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
   identityName: { color: COLORS.textMuted, fontSize: FONT.md, fontWeight: '700', marginTop: 4 },
   statusPill: { marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: 4, borderRadius: RADIUS.pill },
   statusText: { color: '#06251c', fontWeight: '800', fontSize: FONT.sm },
+  statusTextOnDanger: { color: COLORS.white },
   paidUntil: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.sm },
   referralCard: {
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   referralText: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginTop: 6, lineHeight: 19 },
   referralCode: { color: COLORS.gold, fontSize: FONT.xl, fontWeight: '900', letterSpacing: 2, marginTop: SPACING.md },
   shareButton: { flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: COLORS.accent, borderRadius: RADIUS.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, marginTop: SPACING.md },
-  shareText: { color: '#06251c', fontWeight: '900' },
+  shareText: { color: COLORS.onAccent, fontWeight: '900' },
   referralCount: { color: COLORS.accent, fontSize: FONT.sm, fontWeight: '700', marginTop: SPACING.sm },
   action: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.surface,
