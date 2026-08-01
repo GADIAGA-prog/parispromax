@@ -99,8 +99,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   slide: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xl },
   iconWrap: {
-    width: 110, height: 110, borderRadius: 55, backgroundColor: COLORS.primary,
+    width: 110, height: 110, borderRadius: 55, backgroundColor: COLORS.surface,
     alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.xl,
+    borderWidth: 1, borderColor: COLORS.border,
   },
   title: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900', textAlign: 'center' },
   text: { color: COLORS.textMuted, fontSize: FONT.md, textAlign: 'center', marginTop: SPACING.md, lineHeight: 22 },

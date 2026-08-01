@@ -620,10 +620,10 @@ export default function LoginScreen() {
                       setPickerOpen(false);
                     }}
                   >
-                    <Text style={styles.countryRowText}>
+                    <Text style={[styles.countryRowText, c.code === countryCode && styles.selectedRowText]}>
                       {c.flag}  {c.name}
                     </Text>
-                    <Text style={styles.countryRowDial}>{c.dial}</Text>
+                    <Text style={[styles.countryRowDial, c.code === countryCode && styles.selectedRowText]}>{c.dial}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -653,7 +653,7 @@ export default function LoginScreen() {
                       setQuestionPickerOpen(false);
                     }}
                   >
-                    <Text style={styles.questionRowText}>{question.label}</Text>
+                    <Text style={[styles.questionRowText, question.id === recoveryQuestion && styles.selectedRowText]}>{question.label}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -765,7 +765,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.md,
   },
-  countryRowActive: { backgroundColor: COLORS.primary },
+  countryRowActive: { backgroundColor: '#e3f2eb' },
+  selectedRowText: { color: COLORS.accent, fontWeight: '800' },
   countryRowText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '600' },
   countryRowDial: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700' },
   questionRow: { paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm, borderRadius: RADIUS.md },

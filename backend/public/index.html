@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260731-11" />
+  <link rel="stylesheet" href="/styles.css?v=20260801-2" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -105,6 +105,16 @@
     <button class="menu-button" id="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
   </header>
 
+  <aside class="plan-ticker" aria-label="Formules ParisPromax">
+    <span class="plan-ticker-label">FORMULES</span>
+    <div class="plan-ticker-window">
+      <div class="plan-ticker-track" id="plan-ticker-track" aria-live="polite">
+        <span class="plan-ticker-loading">Chargement des tarifs officiels…</span>
+      </div>
+    </div>
+    <a class="plan-ticker-link" href="#abonnements">Tous les tarifs</a>
+  </aside>
+
   <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
     <div class="mobile-member-actions hidden" id="mobile-member-actions">
       <button type="button" data-open-account>Mon espace</button>
@@ -141,15 +151,15 @@
 
     <section class="hero section" id="accueil">
       <div class="hero-copy reveal">
-        <div class="eyebrow"><span></span> COURSE DU JOUR · JEUX ET MISES</div>
-        <h1>La course PMU du jour.<br /><em>Les jeux proposés.</em></h1>
-        <p class="hero-lead">Retrouvez les partants, les numéros conseillés et le coût de chaque jeu.</p>
+        <div class="eyebrow"><span></span> COURSE DU JOUR · PROPOSITIONS ILLUSTRATIVES</div>
+        <h1>La course PMU du jour.<br /><em>Les propositions analysées.</em></h1>
+        <p class="hero-lead">Retrouvez les partants, les numéros conseillés et des montants illustratifs. Aucun jeu ni pari n’est effectué sur ParisPromax.</p>
         <div class="hero-actions">
-          <a class="button button-primary button-large" href="#quinte-pays">Voir le jeu du jour <span aria-hidden="true">→</span></a>
+          <a class="button button-primary button-large" href="#quinte-pays">Voir les propositions du jour <span aria-hidden="true">→</span></a>
           <button class="button button-outline button-large" type="button" data-open-auth="register">Créer un compte</button>
         </div>
         <div class="trust-row" aria-label="Engagements ParisPromax">
-          <span>✓ Réservé aux 18+</span><span>✓ Aucun pari encaissé</span><span>✓ Paiement Mobile Money sécurisé</span>
+          <span>✓ Réservé aux 18+</span><span>✓ Aucun pari effectué ni encaissé</span><span>✓ Paiement Mobile Money sécurisé</span>
         </div>
       </div>
 
@@ -197,7 +207,7 @@
     <section class="section race-section" id="ecd">
       <div class="section-heading reveal">
         <div><span class="section-kicker" id="program-kicker">PROGRAMME ECD</span><h2>Les autres courses proposées pour votre pays.</h2></div>
-        <p id="ecd-program-description">Choisissez une course pour voir sa discipline, ses partants, ses cotes et les jeux disponibles.</p>
+        <p id="ecd-program-description">Choisissez une course pour voir sa discipline, ses partants, ses cotes et les propositions illustratives disponibles.</p>
       </div>
 
       <div class="race-workspace reveal">
@@ -270,8 +280,8 @@
       <div class="plans-intro reveal">
         <span class="section-kicker">ACCÈS COMPLET</span>
         <h2>Choisissez votre rythme.</h2>
-        <p>Accès aux jeux complets sur le Web et l’application mobile. Paiement prépayé, sans reconduction automatique.</p>
-        <ul><li>Jeux proposés avec leur coût</li><li>Cotes et partants détaillés</li><li>Historique des résultats</li><li>Alertes avant le départ</li></ul>
+        <p>Accès aux propositions complètes sur le Web et l’application mobile. Paiement prépayé, sans reconduction automatique.</p>
+        <ul><li>Propositions et montants illustratifs</li><li>Cotes et partants détaillés</li><li>Historique des résultats</li><li>Alertes avant le départ</li></ul>
       </div>
       <div class="plans-grid reveal delay-one" id="plans-grid"><div class="plan-placeholder"></div><div class="plan-placeholder"></div></div>
     </section>
@@ -475,6 +485,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260731-11" defer></script>
+  <script src="/app.js?v=20260801-2" defer></script>
 </body>
 </html>

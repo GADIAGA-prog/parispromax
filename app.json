@@ -47,7 +47,13 @@
         }
       ],
       "expo-web-browser",
-      "expo-status-bar",
+      [
+        "expo-status-bar",
+        {
+          "hidden": false,
+          "style": "dark"
+        }
+      ],
       "expo-secure-store"
     ],
     "extra": {

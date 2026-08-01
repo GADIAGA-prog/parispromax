@@ -9,6 +9,12 @@ const webApp = fs.readFileSync(path.join(root, 'backend', 'public', 'app.js'), '
 const paywall = fs.readFileSync(path.join(root, 'src', 'screens', 'PaywallScreen.js'), 'utf8');
 const profile = fs.readFileSync(path.join(root, 'src', 'screens', 'ProfileScreen.js'), 'utf8');
 const nationalCard = fs.readFileSync(path.join(root, 'src', 'components', 'NationalGameCard.js'), 'utf8');
+const styles = fs.readFileSync(path.join(root, 'backend', 'public', 'styles.css'), 'utf8');
+const serviceWorker = fs.readFileSync(path.join(root, 'backend', 'public', 'sw.js'), 'utf8');
+const appRoot = fs.readFileSync(path.join(root, 'App.js'), 'utf8');
+const disclaimer = fs.readFileSync(path.join(root, 'src', 'components', 'Disclaimer.js'), 'utf8');
+const lockCard = fs.readFileSync(path.join(root, 'src', 'components', 'LockCard.js'), 'utf8');
+const insightsCard = fs.readFileSync(path.join(root, 'src', 'components', 'RaceInsightsCard.js'), 'utf8');
 
 const navigator = fs.readFileSync(path.join(root, 'src', 'navigation', 'RootNavigator.js'), 'utf8');
 const historyScreen = fs.readFileSync(path.join(root, 'src', 'screens', 'HistoryScreen.js'), 'utf8');
@@ -23,6 +29,45 @@ test('Android charge les tarifs officiels et affiche le montant réellement fact
   assert.match(paywall, /api\s*\.\s*plans\(\)/);
   assert.match(paywall, /setPlans\(officialPlans\)/);
   assert.match(paywall, /fmtXOF\(referralPrice\(plan\)\)/);
+});
+
+test('les tarifs officiels défilent en haut du site sans figer les petits écrans', () => {
+  assert.match(html, /id="plan-ticker-track"/);
+  assert.match(webApp, /plan-ticker-group/);
+  assert.match(webApp, /ticker\.classList\.add\('is-ready'\)/);
+  assert.match(webApp, /Number\(plan\.pricePromo\)\.toLocaleString/);
+  assert.match(styles, /@keyframes plan-ticker-scroll/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.plan-ticker-track \{ width: auto; animation: none; \}/);
+});
+
+test('la fenêtre de paiement reste lisible après le passage du site au thème clair', () => {
+  const finalContrastLayer = styles.slice(styles.indexOf('contraste explicite et couche responsive finale'));
+  assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
+  assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
+  assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
+  assert.match(html, /styles\.css\?v=20260801-2/);
+  assert.match(serviceWorker, /parispromax-shell-20260801-2/);
+});
+
+test('les règles responsive finales couvrent tablette et téléphone', () => {
+  const finalResponsiveLayer = styles.slice(styles.indexOf('contraste explicite et couche responsive finale'));
+  assert.match(finalResponsiveLayer, /@media \(max-width: 980px\)[\s\S]*\.hero \{ grid-template-columns: 1fr;/);
+  assert.match(finalResponsiveLayer, /@media \(max-width: 760px\)[\s\S]*\.results-grid,[\s\S]*grid-template-columns: 1fr;/);
+  assert.match(finalResponsiveLayer, /@media \(max-width: 480px\)[\s\S]*\.hero h1 \{ font-size: clamp/);
+});
+
+test('Android utilise des surfaces claires et des textes visibles', () => {
+  assert.match(appRoot, /<StatusBar style="dark" \/>/);
+  assert.doesNotMatch(lockCard, /backgroundColor: 'rgba\(15,23,42,0\.92\)'/);
+  assert.match(lockCard, /backgroundColor: 'rgba\(238,242,244,0\.96\)'/);
+  assert.match(insightsCard, /card: \{[\s\S]*backgroundColor: COLORS\.surface/);
+});
+
+test('le site et Android indiquent qu’aucun pari n’est effectué', () => {
+  assert.match(html, /Aucun jeu ni pari n’est effectué sur ParisPromax/);
+  assert.match(webApp, /Simulation uniquement : aucun jeu ni pari n’est effectué sur ParisPromax/);
+  assert.match(disclaimer, /ParisPromax n’effectue et n’encaisse aucun jeu ni pari/);
+  assert.match(nationalCard, /propositions et montants sont illustratifs/);
 });
 
 test('le jeu intelligent national est visible sur le web et Android', () => {

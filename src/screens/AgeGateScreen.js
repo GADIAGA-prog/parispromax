@@ -64,7 +64,7 @@ export default function AgeGateScreen() {
         </View>
         <Text style={styles.title}>Accès réservé aux adultes</Text>
         <Text style={styles.text}>
-          ParisPromax présente des analyses et pronostics hippiques. Les jeux d’argent comportent des risques et sont interdits aux mineurs.
+          ParisPromax présente des analyses et pronostics hippiques, sans effectuer ni encaisser de pari. Les jeux d’argent comportent des risques et sont interdits aux mineurs.
         </Text>
 
         <Text style={styles.label}>Votre date de naissance</Text>
@@ -94,7 +94,10 @@ export default function AgeGateScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   content: { flex: 1, justifyContent: 'center', padding: SPACING.xl },
-  icon: { width: 92, height: 92, borderRadius: 46, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.primary, marginBottom: SPACING.lg },
+  icon: {
+    width: 92, height: 92, borderRadius: 46, alignSelf: 'center', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.lg,
+  },
   title: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900', textAlign: 'center' },
   text: { color: COLORS.textMuted, fontSize: FONT.md, textAlign: 'center', lineHeight: 22, marginTop: SPACING.md },
   label: { color: COLORS.text, fontWeight: '800', marginTop: SPACING.xl, marginBottom: SPACING.sm },

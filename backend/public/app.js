@@ -579,6 +579,20 @@ function renderPlans() {
       <button class="button ${featured ? 'button-primary' : 'button-outline'}" type="button" data-plan="${escapeHtml(plan.id)}">Choisir cette formule</button>
     </article>`;
   }).join('');
+
+  const ticker = $('#plan-ticker-track');
+  if (ticker) {
+    const tickerItems = (interactive = true) => state.plans.map((plan) => `
+      <button class="plan-ticker-item" type="button" data-plan="${escapeHtml(plan.id)}"${interactive ? '' : ' tabindex="-1"'}>
+        <strong>${escapeHtml(plan.label)}</strong>
+        <span>${Number(plan.pricePromo).toLocaleString('fr-FR')} XOF</span>
+        <small>${escapeHtml(plan.days)} jour${Number(plan.days) > 1 ? 's' : ''}</small>
+      </button>`).join('');
+    ticker.innerHTML = `
+      <div class="plan-ticker-group" role="list">${tickerItems(true)}</div>
+      <div class="plan-ticker-group" aria-hidden="true">${tickerItems(false)}</div>`;
+    ticker.classList.add('is-ready');
+  }
   $$('[data-plan]').forEach((button) => button.addEventListener('click', () => startPayment(button.dataset.plan)));
 }
 
@@ -874,7 +888,7 @@ function nationalProposalMarkup(game) {
   const grandCarnet = proposal?.grandCarnet;
   if (!grandCarnet?.horses?.length) {
     return `<section class="national-proposal national-proposal-pending">
-      <div><span>PROPOSITIONS DE JEUX</span><strong>Pronostic en préparation</strong></div>
+      <div><span>PROPOSITIONS ILLUSTRATIVES</span><strong>Pronostic en préparation</strong></div>
       <p>Les tickets Couplé et Grand Carnet seront affichés dès que l’ordre des chevaux sera disponible.</p>
     </section>`;
   }
@@ -892,7 +906,7 @@ function nationalProposalMarkup(game) {
   return `<section class="national-proposal" aria-labelledby="national-proposal-title">
     <div class="national-proposal-head">
       <div>
-        <span>PROPOSITIONS DE JEUX · COURSE NATIONALE</span>
+        <span>PROPOSITIONS ILLUSTRATIVES · COURSE NATIONALE</span>
         <h5 id="national-proposal-title">Tickets conseillés aujourd’hui</h5>
         <p>${escapeHtml(sourceLabel)} · non-partants exclus.</p>
       </div>
@@ -926,10 +940,10 @@ function nationalProposalMarkup(game) {
       </article>
     </div>
     <div class="selected-budget" data-selected-budget aria-live="polite">
-      <span><small>Vos choix</small><strong data-selected-count>Aucun jeu sélectionné</strong></span>
-      <span><small>Budget total</small><strong data-selected-total>0 FCFA</strong></span>
+      <span><small>Vos choix illustratifs</small><strong data-selected-count>Aucune proposition sélectionnée</strong></span>
+      <span><small>Montant illustratif</small><strong data-selected-total>0 FCFA</strong></span>
     </div>
-    <p class="budget-disclaimer">Ce budget additionne uniquement les jeux que vous sélectionnez ci-dessus. ParisPromax ne collecte aucune mise.</p>
+    <p class="budget-disclaimer">Simulation uniquement : aucun jeu ni pari n’est effectué sur ParisPromax. Les propositions et montants sont illustratifs et aucune mise n’est collectée.</p>
   </section>`;
 }
 
@@ -944,8 +958,8 @@ function setupNationalBudget(root) {
     const costs = [...selected.values()];
     const total = costs.reduce((sum, value) => sum + value, 0);
     countNode.textContent = costs.length
-      ? `${costs.length} jeu${costs.length > 1 ? 'x' : ''} sélectionné${costs.length > 1 ? 's' : ''}`
-      : 'Aucun jeu sélectionné';
+      ? `${costs.length} proposition${costs.length > 1 ? 's' : ''} sélectionnée${costs.length > 1 ? 's' : ''}`
+      : 'Aucune proposition sélectionnée';
     totalNode.textContent = formatFcfa(total);
   };
 
@@ -1015,7 +1029,7 @@ function renderNationalGameGuide(game) {
           <input id="grand-carnet-horses" type="number" min="${escapeHtml(game.podium)}" max="20" value="${escapeHtml(game.podium)}" inputmode="numeric" />
           <div class="grand-carnet-total">
             <span><small>Combinaisons</small><strong data-grand-carnet-combinations>1</strong></span>
-            <span><small>Mise totale</small><strong data-grand-carnet-cost>${game.stake ? `${escapeHtml(game.stake)} FCFA` : 'À confirmer'}</strong></span>
+            <span><small>Montant illustratif</small><strong data-grand-carnet-cost>${game.stake ? `${escapeHtml(game.stake)} FCFA` : 'À confirmer'}</strong></span>
           </div>
           <p>C(${escapeHtml(game.podium)}, ${escapeHtml(game.podium)})${game.stake ? ` × ${escapeHtml(game.stake)} FCFA` : ''}</p>
         </div>

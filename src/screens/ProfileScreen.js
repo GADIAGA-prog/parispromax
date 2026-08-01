@@ -284,8 +284,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.lg,
   },
   avatar: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary,
+    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.surfaceAlt,
     alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md,
+    borderWidth: 1, borderColor: COLORS.border,
   },
   phone: { color: COLORS.text, fontSize: FONT.xl, fontWeight: '900' },
   identityName: { color: COLORS.textMuted, fontSize: FONT.md, fontWeight: '700', marginTop: 4 },

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 
 export const DISCLAIMER_TEXT =
-  "Les pronostics reposent sur une analyse statistique à titre informatif et ne garantissent aucun gain. Les paris comportent des risques — jouez avec modération.";
+  "ParisPromax n’effectue et n’encaisse aucun jeu ni pari. Les propositions et montants affichés sont illustratifs, à titre informatif, sans garantie de gain. Les paris comportent des risques — jouez avec modération.";
 
 // Small legal disclaimer shown near predictions.
 export default function Disclaimer({ compact = false }) {

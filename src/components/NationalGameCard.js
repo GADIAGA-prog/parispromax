@@ -84,8 +84,8 @@ export default function NationalGameCard({ game }) {
           <Ionicons name="flag" size={18} color="#06251c" />
         </View>
         <View style={styles.headingCopy}>
-          <Text style={styles.kicker}>PRONOSTICS · BUDGET · {game.countryName?.toUpperCase()}</Text>
-          <Text style={styles.title}>{game.label} : choisissez votre jeu</Text>
+          <Text style={styles.kicker}>PRONOSTICS · SIMULATION · {game.countryName?.toUpperCase()}</Text>
+          <Text style={styles.title}>{game.label} : propositions illustratives</Text>
           <Text style={styles.subtitle}>
             {game.podium} chevaux au podium · {game.stake
               ? `${formatFcfa(game.stake)} par combinaison`
@@ -103,7 +103,7 @@ export default function NationalGameCard({ game }) {
         <View style={styles.details}>
           {game.proposal ? (
             <View style={styles.proposal}>
-              <Text style={styles.proposalKicker}>PROPOSITIONS DE JEUX · COURSE NATIONALE</Text>
+              <Text style={styles.proposalKicker}>PROPOSITIONS ILLUSTRATIVES · COURSE NATIONALE</Text>
               <Text style={styles.proposalTitle}>Tickets conseillés aujourd’hui</Text>
               <Text style={styles.proposalHelp}>
                 Hiérarchie actualisée · non-partants exclus.
@@ -205,22 +205,22 @@ export default function NationalGameCard({ game }) {
                   <Text style={styles.selectedBudgetLabel}>VOS CHOIX</Text>
                   <Text style={styles.selectedBudgetCount}>
                     {selectedPlayIds.length
-                      ? `${selectedPlayIds.length} jeu${selectedPlayIds.length > 1 ? 'x' : ''} sélectionné${selectedPlayIds.length > 1 ? 's' : ''}`
-                      : 'Aucun jeu sélectionné'}
+                      ? `${selectedPlayIds.length} proposition${selectedPlayIds.length > 1 ? 's' : ''} sélectionnée${selectedPlayIds.length > 1 ? 's' : ''}`
+                      : 'Aucune proposition sélectionnée'}
                   </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.selectedBudgetLabel}>BUDGET TOTAL</Text>
+                  <Text style={styles.selectedBudgetLabel}>MONTANT ILLUSTRATIF</Text>
                   <Text style={styles.selectedBudgetTotal}>{formatFcfa(selectedBudget)}</Text>
                 </View>
               </View>
               <Text style={styles.budgetNotice}>
-                Le total additionne uniquement vos choix. ParisPromax ne collecte aucune mise.
+                Simulation uniquement : aucun jeu ni pari n’est effectué sur ParisPromax. Les propositions et montants sont illustratifs et aucune mise n’est collectée.
               </Text>
             </View>
           ) : (
             <View style={styles.proposalPending}>
-              <Text style={styles.proposalKicker}>PROPOSITIONS DE JEUX</Text>
+              <Text style={styles.proposalKicker}>PROPOSITIONS ILLUSTRATIVES</Text>
               <Text style={styles.proposalTitle}>Analyse en cours</Text>
               <Text style={styles.proposalHelp}>
                 Les tickets apparaîtront dès que la hiérarchie nationale sera validée.
@@ -348,7 +348,7 @@ export default function NationalGameCard({ game }) {
               </View>
               <View style={styles.totalDivider} />
               <View>
-                <Text style={styles.totalLabel}>Mise totale</Text>
+                <Text style={styles.totalLabel}>Montant illustratif</Text>
                 <Text style={[styles.totalValue, styles.totalCost]}>
                   {game.stake ? formatFcfa(totals.cost) : 'À confirmer'}
                 </Text>
