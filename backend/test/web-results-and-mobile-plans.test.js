@@ -52,8 +52,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260801-3/);
-  assert.match(serviceWorker, /parispromax-shell-20260801-3/);
+  assert.match(html, /styles\.css\?v=20260801-4/);
+  assert.match(serviceWorker, /parispromax-shell-20260801-4/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -138,6 +138,12 @@ test('le téléchargement Android reste visible en haut du site sur tous les éc
   assert.match(html, />Installer Android</);
   assert.match(styles, /\.header-android-download-mobile \{ display: none; \}/);
   assert.match(styles, /@media \(max-width: 1180px\)[\s\S]*\.header-android-download-mobile \{ display: inline-flex; \}/);
+});
+
+test('les actions de l’en-tête restent compactes et sur une seule ligne', () => {
+  assert.match(styles, /-webkit-text-size-adjust: 100%/);
+  assert.match(styles, /\.header-actions \.button \{[\s\S]*min-height: 34px;[\s\S]*font-size: 11px;[\s\S]*white-space: nowrap;/);
+  assert.match(styles, /\.header-android-download \{[\s\S]*min-height: 34px;/);
 });
 
 test('tout le programme ECD reste consultable sur téléphone et tablette', () => {
