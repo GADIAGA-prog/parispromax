@@ -140,7 +140,13 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, padding: SPACING.lg },
+  card: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   summary: { flexDirection: 'row', gap: SPACING.md, alignItems: 'center' },
   eyebrow: { color: COLORS.accent, fontSize: FONT.sm - 1, fontWeight: '900', letterSpacing: 1 },
   confidence: { color: COLORS.gold, fontSize: FONT.xl, letterSpacing: 2, marginTop: 3 },
@@ -183,7 +189,7 @@ const styles = StyleSheet.create({
   selectionCount: { width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
   selectionCountValue: { color: '#06251c', fontSize: FONT.xxl, fontWeight: '900' },
   selectionCountLabel: { color: '#06251c', fontSize: FONT.sm - 1, fontWeight: '800' },
-  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.14)', marginVertical: SPACING.md },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.md },
   sectionTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', marginBottom: SPACING.sm },
   help: { color: COLORS.textMuted, fontSize: FONT.sm, lineHeight: 18, marginBottom: SPACING.sm },
   group: { marginTop: SPACING.sm },

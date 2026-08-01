@@ -542,7 +542,7 @@ export default function PaywallScreen({ navigation }) {
                 }
               }}
               placeholder="Numéro Mobile Money"
-              placeholderTextColor={COLORS.textFaint}
+              placeholderTextColor={COLORS.textMuted}
               keyboardType="phone-pad"
             />
             {/* Code OTP — le mode exact est fourni par le backend pour chaque opérateur. */}
@@ -553,7 +553,7 @@ export default function PaywallScreen({ navigation }) {
                   value={otp}
                   onChangeText={setOtp}
                   placeholder="Code OTP de validation"
-                  placeholderTextColor={COLORS.textFaint}
+                  placeholderTextColor={COLORS.textMuted}
                   keyboardType="number-pad"
                   maxLength={10}
                 />
@@ -699,14 +699,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent, borderRadius: RADIUS.md, paddingVertical: SPACING.md, marginTop: SPACING.lg,
   },
   payText: { color: '#06251c', fontWeight: '900', fontSize: FONT.lg },
-  secure: { color: COLORS.textFaint, fontSize: FONT.sm, textAlign: 'center', marginTop: SPACING.md },
+  secure: { color: COLORS.textMuted, fontSize: FONT.sm, textAlign: 'center', marginTop: SPACING.md },
   opRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
   opChip: {
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md,
     borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface,
   },
   opChipActive: { borderColor: COLORS.accent, backgroundColor: COLORS.surface },
-  opChipText: { color: COLORS.textMuted, fontWeight: '800', fontSize: FONT.sm },
+  opChipText: { color: COLORS.text, fontWeight: '800', fontSize: FONT.sm },
   opChipTextActive: { color: COLORS.accent },
   phoneInput: {
     backgroundColor: COLORS.surface, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.border,

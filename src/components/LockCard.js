@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     overflow: 'hidden',
     minHeight: 220,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: SPACING.lg,
-    backgroundColor: 'rgba(15,23,42,0.92)',
+    backgroundColor: 'rgba(238,242,244,0.96)',
   },
   title: {
     color: COLORS.text,
