@@ -35,7 +35,7 @@ test('le site expose une section publique pour les arrivées officielles', () =>
 test('le site affiche les références réunion/course et les gains Burkina', () => {
   assert.match(webApp, /function raceReference/);
   assert.match(webApp, /`R\$\{Number\(exact\[1\]\)\}C\$\{Number\(exact\[2\]\)\}`/);
-  assert.match(webApp, /GAINS ECD · BURKINA FASO/);
+  assert.match(webApp, /GAINS ECD · \$\{escapeHtml\(countryDetails/);
   assert.match(webApp, /Pronostic ParisPromax/);
   assert.match(webApp, /Rapports officiels en attente/);
   assert.match(styles, /\.ecd-gains-table/);
@@ -69,8 +69,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260802-1/);
-  assert.match(serviceWorker, /parispromax-shell-20260802-1/);
+  assert.match(html, /styles\.css\?v=20260802-2/);
+  assert.match(serviceWorker, /parispromax-shell-20260802-2/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -146,6 +146,7 @@ test('les résultats et le contact séparent les parcours utiles', () => {
   assert.match(profile, /t\.me\/ParisPromaxOfficiel/);
   assert.match(profile, /facebook\.com\/parispromax/);
   assert.match(profile, /Share\.share/);
+  assert.match(webApp, /result\.isEcd \|\| result\.category === 'ecd'/);
 });
 
 test('le téléchargement Android reste visible en haut du site sur tous les écrans', () => {

@@ -291,20 +291,12 @@ router.post('/api/ecd-picks', express.json(), async (req, res) => {
     return res.status(400).json({ error: 'journalUrl doit être une URL http(s)' });
   }
 
-  const [races, nationalPick] = await Promise.all([
-    prisma.race.findMany({
-      where: { externalId: { in: externalIds }, date },
-      select: { externalId: true },
-    }),
-    prisma.nationalPick.findUnique({
-      where: { date_country: { date, country } },
-      select: { externalId: true },
-    }),
-  ]);
+  const races = await prisma.race.findMany({
+    where: { externalId: { in: externalIds }, date },
+    select: { externalId: true },
+  });
   const valid = new Set(races.map((race) => race.externalId));
-  const cleanIds = externalIds.filter(
-    (externalId) => valid.has(externalId) && externalId !== nationalPick?.externalId
-  );
+  const cleanIds = externalIds.filter((externalId) => valid.has(externalId));
   if (!cleanIds.length) {
     return res.status(400).json({ error: 'Aucune course ECD valide pour cette date' });
   }

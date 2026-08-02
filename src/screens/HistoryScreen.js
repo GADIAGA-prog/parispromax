@@ -6,6 +6,7 @@ import EcdGainsTable from '../components/EcdGainsTable';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
+import countryCatalog from '../../shared/countries.json';
 
 function formatXof(value) {
   return Number(value || 0).toLocaleString('fr-FR');
@@ -13,6 +14,7 @@ function formatXof(value) {
 
 export default function HistoryScreen() {
   const { country } = useAuth();
+  const countryName = countryCatalog.find((item) => item.code === country)?.name || country;
   const [history, setHistory] = useState([]);
   const [category, setCategory] = useState('national');
   const [stat, setStat] = useState(null);
@@ -164,11 +166,12 @@ export default function HistoryScreen() {
                 </View>
               </View>
 
-              {country === 'bf' && item.category === 'ecd' ? (
+              {item.category === 'ecd' || item.isEcd ? (
                 <EcdGainsTable
                   arrival={arrival}
                   payouts={item.payouts || []}
                   predictions={predictions}
+                  countryName={countryName}
                 />
               ) : null}
 

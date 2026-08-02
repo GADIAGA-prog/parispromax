@@ -46,7 +46,7 @@ test('un programme ECD ne peut être demandé que pour un pays du catalogue', ()
   assert.equal(getEcdProfile('pays-inconnu'), null);
 });
 
-test('la sélection ECD exclut la course nationale et conserve tout le programme éligible', () => {
+test('le repli ECD respecte au maximum deux réunions et cinq courses par réunion', () => {
   const profile = getEcdProfile('bf');
   const races = [
     race('NAT', 'AUTEUIL', '14:00', 16),
@@ -60,8 +60,8 @@ test('la sélection ECD exclut la course nationale et conserve tout le programme
   const selected = automaticSelection(races, profile, 'NAT');
   const grouped = groupSelectedRaces(selected, profile);
 
-  assert.deepEqual(selected.map((item) => item.externalId), ['V1', 'V2', 'V3', 'A1', 'D1']);
-  assert.equal(grouped.length, 3);
+  assert.deepEqual(selected.map((item) => item.externalId), ['V1', 'V2', 'V3', 'A1']);
+  assert.equal(grouped.length, 2);
   assert.equal(grouped[0].races[0].ecd.unitStake, 500);
   assert.equal(grouped[0].races[0].ecd.variants.at(-1).id, 'trio');
 });

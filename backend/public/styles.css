@@ -239,6 +239,10 @@ a { color: inherit; }
 .grand-carnet>p { margin:8px 0 0; color:var(--faint); font-size:9px; }
 
 .race-workspace { display: grid; grid-template-columns: 320px 1fr; min-height: 590px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: rgba(8, 21, 37, .72); box-shadow: var(--shadow); }
+.ecd-program-links { grid-column:1/-1; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; margin-top:10px; }
+.ecd-program-links:empty { display:none; }
+.ecd-program-links a { padding:7px 10px; color:#075a42; border:1px solid rgba(8,117,84,.22); border-radius:999px; background:rgba(45,226,160,.1); font-size:9px; font-weight:900; text-decoration:none; }
+.ecd-program-links a:hover { border-color:#087554; background:rgba(45,226,160,.18); }
 .race-sidebar { border-right: 1px solid var(--line); background: rgba(255,255,255,.018); }
 .sidebar-head { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--line); }
 .sidebar-head span, .sidebar-head strong, .sidebar-head small { display: block; }
