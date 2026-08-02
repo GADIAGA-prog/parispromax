@@ -2,9 +2,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import EcdGainsTable from '../components/EcdGainsTable';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
+
+function formatXof(value) {
+  return Number(value || 0).toLocaleString('fr-FR');
+}
 
 export default function HistoryScreen() {
   const { country } = useAuth();
@@ -110,12 +115,18 @@ export default function HistoryScreen() {
             .slice()
             .sort((a, b) => (a.rank || 999) - (b.rank || 999))
             .slice(0, selectionSize);
+          const outcome = item.grandCarnetOutcome;
+          const gainDisplay = outcome?.gain == null
+            ? 'À CONFIRMER'
+            : `${formatXof(outcome.gain)} FCFA`;
           return (
             <View style={styles.card}>
               <View style={styles.cardHead}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.race} numberOfLines={1}>{item.race}</Text>
-                  <Text style={styles.meta}>{item.track} · {item.date}</Text>
+                  <Text style={styles.meta}>
+                    {item.number ? `${item.number} · ` : ''}{item.track} · {item.date}
+                  </Text>
                 </View>
                 {item.aiHit ? (
                   <View style={styles.win}><Text style={styles.winText}>PRONOSTIC PLACÉ</Text></View>
@@ -152,6 +163,54 @@ export default function HistoryScreen() {
                   ))}
                 </View>
               </View>
+
+              {country === 'bf' && item.category === 'ecd' ? (
+                <EcdGainsTable
+                  arrival={arrival}
+                  payouts={item.payouts || []}
+                  predictions={predictions}
+                />
+              ) : null}
+
+              {country === 'bf' && item.category === 'national' && outcome ? (
+                <View style={styles.gainsBox}>
+                  <Text style={styles.gainsKicker}>TABLEAU DES GAINS · BURKINA FASO</Text>
+                  <Text style={[styles.gainsStatus, outcome.isWinning ? styles.gainsWon : styles.gainsLost]}>
+                    {outcome.isWinning ? 'Grand Carnet gagnant' : 'Grand Carnet non gagnant'}
+                  </Text>
+
+                  <View style={styles.gainsTable}>
+                    <View style={styles.gainsRow}>
+                      <Text style={styles.gainsLabel}>Pronostic couvert</Text>
+                      <Text style={styles.gainsValue}>{outcome.selection.join(' - ')}</Text>
+                    </View>
+                    <View style={styles.gainsRow}>
+                      <Text style={styles.gainsLabel}>Mise unitaire</Text>
+                      <Text style={styles.gainsValue}>{formatXof(outcome.unitStake)} FCFA</Text>
+                    </View>
+                    <View style={styles.gainsRow}>
+                      <Text style={styles.gainsLabel}>Combinaisons jouées</Text>
+                      <Text style={styles.gainsValue}>{outcome.combinationsCount}</Text>
+                    </View>
+                    <View style={styles.gainsRow}>
+                      <Text style={styles.gainsLabel}>Mise totale</Text>
+                      <Text style={styles.gainsValue}>{formatXof(outcome.totalStake)} FCFA</Text>
+                    </View>
+                    <View style={[styles.gainsRow, styles.gainsRowLast]}>
+                      <Text style={styles.gainsLabel}>Combinaison gagnante</Text>
+                      <Text style={styles.gainsValue}>{outcome.winningCombinations}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.gainHero}>
+                    <Text style={styles.gainHeroLabel}>GAIN SELON LE PRONOSTIC GRAND CARNET</Text>
+                    <Text style={styles.gainHeroAmount}>{gainDisplay}</Text>
+                    {outcome.gainStatus === 'pending-official-report' ? (
+                      <Text style={styles.gainHeroNote}>Montant publié dès réception du rapport officiel.</Text>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
             </View>
           );
         }}
@@ -206,6 +265,27 @@ const styles = StyleSheet.create({
   chipTextHit: { color: COLORS.success },
   chipWin: { backgroundColor: COLORS.gold, borderColor: COLORS.gold },
   chipTextWin: { color: '#06251c' },
+  gainsBox: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: '#C9DED3',
+    backgroundColor: '#F3F8F5',
+  },
+  gainsKicker: { color: COLORS.primary, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
+  gainsStatus: { alignSelf: 'flex-start', marginTop: 6, fontSize: FONT.sm, fontWeight: '900' },
+  gainsWon: { color: COLORS.success },
+  gainsLost: { color: COLORS.textMuted },
+  gainsTable: { marginTop: SPACING.sm, borderWidth: 1, borderColor: '#C9DED3', borderRadius: RADIUS.sm, overflow: 'hidden' },
+  gainsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: SPACING.sm, padding: 9, borderBottomWidth: 1, borderBottomColor: '#C9DED3' },
+  gainsRowLast: { borderBottomWidth: 0 },
+  gainsLabel: { color: COLORS.textMuted, fontSize: FONT.sm, flex: 1 },
+  gainsValue: { color: COLORS.text, fontSize: FONT.sm, fontWeight: '900', textAlign: 'right', flex: 1 },
+  gainHero: { alignItems: 'center', marginTop: SPACING.sm, padding: SPACING.md, borderRadius: RADIUS.sm, backgroundColor: COLORS.primary },
+  gainHeroLabel: { color: COLORS.white, fontSize: 9, fontWeight: '900', letterSpacing: 0.7, textAlign: 'center' },
+  gainHeroAmount: { color: COLORS.gold, fontSize: 28, lineHeight: 34, fontWeight: '900', marginTop: 3, textAlign: 'center' },
+  gainHeroNote: { color: COLORS.white, opacity: 0.78, fontSize: FONT.sm - 1, marginTop: 2, textAlign: 'center' },
   resultsVisual: {
     height: 150,
     marginHorizontal: SPACING.md,

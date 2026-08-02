@@ -24,6 +24,7 @@ import { COLORS, SPACING, FONT, RADIUS } from '../theme/colors';
 
 const FLAGS = countryFlags();
 const { getNationalGame } = require('../../shared/nationalGameRules');
+const { formatRaceReference } = require('../../shared/raceReference');
 
 export default function HomeScreen({ navigation }) {
   const { country, hasPaid } = useAuth();
@@ -194,7 +195,8 @@ export default function HomeScreen({ navigation }) {
                 <Pressable style={styles.national} onPress={openNationalRace}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.nationalTitle}>
-                      {national.betType || 'Course du jour'} · {national.race.track} {national.race.number}
+                      {national.betType || 'Course du jour'} · {national.race.track}{' '}
+                      {formatRaceReference(national.race)}
                     </Text>
                     <Text style={styles.nationalSub} numberOfLines={2}>
                       {national.race.name}
@@ -232,8 +234,8 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <TrackCard track={item} onRacePress={onRacePress} />
+        renderItem={({ item, index }) => (
+          <TrackCard track={item} meetingNumber={index + 1} onRacePress={onRacePress} />
         )}
         refreshControl={
           <RefreshControl

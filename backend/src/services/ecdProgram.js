@@ -1,6 +1,7 @@
 'use strict';
 
 const { availableVariants } = require('../../../shared/ecdRules');
+const { formatRaceReference } = require('../../../shared/raceReference');
 const { parisStartIso, gmtTimeLabel } = require('./raceTime');
 
 function parse(json, fallback) {
@@ -17,7 +18,7 @@ function raceSummary(race, profile) {
   const variants = availableVariants(profile, runners);
   return {
     id: race.externalId,
-    number: full.number || '',
+    number: formatRaceReference({ ...full, id: race.externalId }),
     name: race.name,
     distance: race.distance,
     time: gmtTimeLabel(race.date, full.time),

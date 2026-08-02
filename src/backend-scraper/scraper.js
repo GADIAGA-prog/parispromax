@@ -262,7 +262,8 @@ async function scrape(date) {
   const racetracks = [];
   const hippos = [...byHippo.entries()].slice(0, MAX_REUNIONS);
 
-  for (const [hippoSlug, courses] of hippos) {
+  for (let reunionIndex = 0; reunionIndex < hippos.length; reunionIndex++) {
+    const [hippoSlug, courses] = hippos[reunionIndex];
     const hippoName = courses[0].hippo;
     const races = [];
     const slice = courses.slice(0, MAX_COURSES_PER_REUNION);
@@ -276,7 +277,9 @@ async function scrape(date) {
         race.horses.forEach((h) => {
           if (odds[h.number] != null) h.odds = odds[h.number];
         });
-        race.number = `R-C${i + 1}`;
+        race.number = `R${reunionIndex + 1}C${i + 1}`;
+        race.meetingNumber = reunionIndex + 1;
+        race.courseNumber = i + 1;
         if (race.horses.length) races.push(race);
         await sleep(REQUEST_DELAY_MS);
       } catch (e) {

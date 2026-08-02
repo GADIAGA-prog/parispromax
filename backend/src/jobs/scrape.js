@@ -324,7 +324,8 @@ async function scrapeProgrammeGeny(date, { maxReunions = 8, maxCourses = 4 } = {
   const racetracks = [];
   const hippos = [...byHippo.entries()].slice(0, maxReunions);
 
-  for (const [hippoSlug, courses] of hippos) {
+  for (let reunionIndex = 0; reunionIndex < hippos.length; reunionIndex++) {
+    const [hippoSlug, courses] = hippos[reunionIndex];
     const races = [];
     const slice = courses.slice(0, maxCourses);
     for (let i = 0; i < slice.length; i++) {
@@ -343,7 +344,9 @@ async function scrapeProgrammeGeny(date, { maxReunions = 8, maxCourses = 4 } = {
             h.coteFloat = odds[h.number];
           }
         });
-        race.number = `C${i + 1}`;
+        race.number = `R${reunionIndex + 1}C${i + 1}`;
+        race.meetingNumber = reunionIndex + 1;
+        race.courseNumber = i + 1;
         if (race.horses.length) races.push(race);
       } catch (e) {
         // Continuing with dozens of other pages after a 429 only extends the

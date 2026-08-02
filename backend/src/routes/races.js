@@ -6,6 +6,8 @@ const { groupPicks: buildGroups } = require('../services/predictionSelection');
 const { getNationalGame } = require('../../../shared/nationalGameRules');
 const { buildNationalBetProposal } = require('../../../shared/nationalBetProposal');
 const { getEcdProfile } = require('../../../shared/ecdRules');
+const { formatRaceReference } = require('../../../shared/raceReference');
+const { evaluateGrandCarnet } = require('../../../shared/grandCarnetOutcome');
 const {
   automaticSelection,
   groupSelectedRaces,
@@ -52,7 +54,7 @@ router.get('/', async (req, res) => {
     const full = parse(r.raw, {});
     byTrack[r.track].races.push({
       id: r.externalId,
-      number: full.number || '',
+      number: formatRaceReference({ ...full, id: r.externalId }),
       name: r.name,
       distance: r.distance,
       time: gmtTimeLabel(r.date, full.time),
@@ -100,7 +102,7 @@ router.get('/full', async (req, res) => {
     }
     byTrack[r.track].races.push({
       id: r.externalId,
-      number: full.number || '',
+      number: formatRaceReference({ ...full, id: r.externalId }),
       name: r.name,
       distance: r.distance,
       time: gmtTimeLabel(r.date, full.time),
@@ -177,7 +179,7 @@ router.get('/national', async (req, res) => {
             id: race.externalId,
             track: race.track,
             name: race.name,
-            number: full.number || '',
+            number: formatRaceReference({ ...full, id: race.externalId }),
             time: gmtTimeLabel(race.date, full.time),
             prize: full.prize ?? null,
             betType,
@@ -279,6 +281,7 @@ router.get('/history', async (req, res) => {
 
   const history = results.map((r) => {
     const winners = parse(r.winners, []);
+    const full = parse(r.race.raw, {});
     const snapshot = parse(r.predictionSnapshot, null);
     // For legacy rows without a snapshot, use the prediction that existed
     // when the result was recorded instead of a later recalculation.
@@ -287,17 +290,25 @@ router.get('/history', async (req, res) => {
     ) || r.race.predictions.at(-1);
     const picks = parse(historicalPrediction?.topPicks, []);
     const groups = snapshot?.groups || buildGroups(picks, r.race, Math.min(winners.length, 5));
+    const category = nationalIds.has(`${r.race.date}:${r.race.externalId}`) ? 'national' : 'ecd';
+    const game = category === 'national' ? getNationalGame(country, r.race.date) : null;
+    const grandCarnetOutcome = country === 'bf' && game
+      ? evaluateGrandCarnet(game, snapshot?.topPicks || groups.selected, winners)
+      : null;
     return {
       id: r.id,
       raceId: r.race.externalId,
       track: r.race.track,
       race: r.race.name,
+      number: formatRaceReference({ ...full, id: r.race.externalId }),
       date: r.race.date,
+      payouts: parse(r.payouts, []),
       winners, // finishing order [num, num, ...]
-      category: nationalIds.has(`${r.race.date}:${r.race.externalId}`) ? 'national' : 'ecd',
+      category,
       topPicks: snapshot?.topPicks || groups.selected, // pronostic figé = arrivée + 2
       groups,
       aiHit: r.predicted, // our #1 pick finished in the top 3
+      grandCarnetOutcome,
     };
   });
 

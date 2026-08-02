@@ -20,17 +20,30 @@ import { buildRaceInsights } from '../services/raceInsights';
 import { usePrediction } from '../hooks/usePrediction';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
+const { formatRaceReference } = require('../../shared/raceReference');
 
 // Picks the day's "featured" race = track with the biggest prize pool.
 // Only considers races that actually have runners (avoids an empty combo).
 function pickFeatured(tracks) {
   let best = null;
-  for (const t of tracks) {
-    for (const r of t.races) {
+  for (let meetingIndex = 0; meetingIndex < tracks.length; meetingIndex++) {
+    const t = tracks[meetingIndex];
+    for (let raceIndex = 0; raceIndex < t.races.length; raceIndex++) {
+      const r = t.races[raceIndex];
       if (!r.horses || !r.horses.length) continue;
       const score = (t.prizePool || 0) + (r.horses?.length || 0);
       if (!best || score > best.score) {
-        best = { track: t, race: r, score };
+        best = {
+          track: t,
+          race: {
+            ...r,
+            number: formatRaceReference(r, {
+              meetingNumber: meetingIndex + 1,
+              courseNumber: raceIndex + 1,
+            }),
+          },
+          score,
+        };
       }
     }
   }
@@ -109,7 +122,7 @@ export default function QuintePlusScreen({ navigation }) {
         <TrialBanner />
 
         <Text style={styles.raceMeta}>
-          {featured.track.name} · {featured.race.name}
+          {featured.race.number} · {featured.track.name} · {featured.race.name}
         </Text>
 
         {/* Hero combination */}
