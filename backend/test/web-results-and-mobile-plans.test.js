@@ -32,6 +32,23 @@ test('le site expose une section publique pour les arrivées officielles', () =>
   assert.match(webApp, /officialResultMarkup\(detail\)/);
 });
 
+test('le site affiche les références réunion/course et les gains Burkina', () => {
+  assert.match(webApp, /function raceReference/);
+  assert.match(webApp, /`R\$\{Number\(exact\[1\]\)\}C\$\{Number\(exact\[2\]\)\}`/);
+  assert.match(webApp, /GAINS ECD · BURKINA FASO/);
+  assert.match(webApp, /Pronostic ParisPromax/);
+  assert.match(webApp, /Rapports officiels en attente/);
+  assert.match(styles, /\.ecd-gains-table/);
+});
+
+test('le site publie le bilan de gain du Grand Carnet après la course', () => {
+  assert.match(webApp, /BILAN GRAND CARNET PARISPROMAX/);
+  assert.match(webApp, /gainStatus === 'confirmed'/);
+  assert.match(webApp, /Pronostic gagnant · gain officiel en attente/);
+  assert.match(webApp, /Pronostic non gagnant · gain 0 FCFA/);
+  assert.match(styles, /\.grand-carnet-outcome/);
+});
+
 test('Android charge les tarifs officiels et affiche le montant réellement facturé', () => {
   assert.match(paywall, /api\s*\.\s*plans\(\)/);
   assert.match(paywall, /setPlans\(officialPlans\)/);
@@ -52,8 +69,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260801-4/);
-  assert.match(serviceWorker, /parispromax-shell-20260801-4/);
+  assert.match(html, /styles\.css\?v=20260802-1/);
+  assert.match(serviceWorker, /parispromax-shell-20260802-1/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
