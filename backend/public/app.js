@@ -639,6 +639,128 @@ function raceDiscipline(race = {}) {
   return raw ? raw.toUpperCase() : 'COURSE HIPPIQUE';
 }
 
+function raceReference(race = {}, fallback = {}) {
+  const sources = [race.reference, race.number, race.id, race.externalId];
+  for (const source of sources) {
+    const exact = String(source || '').toUpperCase().match(/R\s*(\d+)\D*C\s*(\d+)/);
+    if (exact) return `R${Number(exact[1])}C${Number(exact[2])}`;
+  }
+  const meeting = Number(race.meetingNumber || race.reunionNumber || fallback.meetingNumber);
+  const taggedCourse = String(race.number || '').toUpperCase().match(/C\s*(\d+)/);
+  const course = Number(race.courseNumber || taggedCourse?.[1] || fallback.courseNumber);
+  return Number.isInteger(meeting) && meeting > 0 && Number.isInteger(course) && course > 0
+    ? `R${meeting}C${course}`
+    : String(race.number || '').trim();
+}
+
+function normalizeBet(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z]+/g, ' ')
+    .trim();
+}
+
+function betKind(value) {
+  const bet = normalizeBet(value);
+  if (bet.includes('trio')) return 'trio';
+  if (bet.includes('ordre')) return 'jum-order';
+  if (bet.includes('jum') && bet.includes('place')) return 'jum-place';
+  if (bet.includes('jum')) return 'jum-win';
+  if (bet.includes('place')) return 'place';
+  return 'win';
+}
+
+function resultNumbers(value) {
+  return String(value || '').match(/\d+/g)?.map(Number) || [];
+}
+
+function predictionNumbers(result = {}) {
+  return (result.topPicks || [])
+    .slice()
+    .sort((a, b) => Number(a?.rank || 999) - Number(b?.rank || 999))
+    .map((pick) => Number(typeof pick === 'object' ? pick.number : pick))
+    .filter(Number.isFinite);
+}
+
+function predictionForBet(kind, prediction) {
+  const pair = (values) => values.length < 3
+    ? values.slice(0, 2).join(' - ')
+    : `${values[0]} - ${values[1]} / ${values[0]} - ${values[2]} / ${values[1]} - ${values[2]}`;
+  if (kind === 'win') return String(prediction[0] || '—');
+  if (kind === 'place' || kind === 'trio') return prediction.slice(0, 3).join(' - ') || '—';
+  if (kind === 'jum-place') return pair(prediction.slice(0, 3)) || '—';
+  return prediction.slice(0, 2).join(' - ') || '—';
+}
+
+function predictionCovers(kind, officialValue, prediction) {
+  const official = resultNumbers(officialValue);
+  if (!official.length || !prediction.length) return false;
+  if (kind === 'win') return official[0] === prediction[0];
+  if (kind === 'place') return prediction.slice(0, 3).includes(official[0]);
+  if (kind === 'jum-order') return official[0] === prediction[0] && official[1] === prediction[1];
+  if (kind === 'jum-win') {
+    const expected = new Set(prediction.slice(0, 2));
+    return official.length >= 2 && official.slice(0, 2).every((number) => expected.has(number));
+  }
+  return official.every((number) => prediction.slice(0, 3).includes(number));
+}
+
+function fallbackPayoutRows(arrival = []) {
+  const [first, second, third] = arrival;
+  return [
+    { bet: 'Gagnant', numbers: first },
+    ...arrival.slice(0, 3).map((number) => ({ bet: 'Placé', numbers: number })),
+    { bet: 'Jumelé ordre', numbers: `${first} - ${second}` },
+    { bet: 'Jumelé gagnant', numbers: `${first} - ${second}` },
+    { bet: 'Jumelé placé', numbers: `${first} - ${second}` },
+    { bet: 'Jumelé placé', numbers: `${first} - ${third}` },
+    { bet: 'Jumelé placé', numbers: `${second} - ${third}` },
+    { bet: 'Trio', numbers: `${first} - ${second} - ${third}` },
+  ].filter((row) => !String(row.numbers).includes('undefined'));
+}
+
+function ecdGainsTableMarkup(result = {}) {
+  const prediction = predictionNumbers(result);
+  const reportsAvailable = Array.isArray(result.payouts) && result.payouts.length > 0;
+  const rows = reportsAvailable ? result.payouts : fallbackPayoutRows(result.winners || []);
+  return `<section class="ecd-gains" aria-label="Tableau des gains ECD au Burkina Faso">
+    <div class="ecd-gains-head">
+      <div><span>GAINS ECD · BURKINA FASO</span><strong>Rapports de la course et pronostic ParisPromax</strong></div>
+      <em class="${reportsAvailable ? 'published' : 'pending'}">${reportsAvailable ? 'Rapports publiés' : 'Rapports officiels en attente'}</em>
+    </div>
+    <div class="ecd-gains-scroll"><table class="ecd-gains-table">
+      <thead><tr><th>Pari</th><th>N°</th><th>Montant</th><th>NB</th><th>Pronostic ParisPromax</th></tr></thead>
+      <tbody>${rows.map((row) => {
+        const kind = betKind(row.bet);
+        const covered = predictionCovers(kind, row.numbers, prediction);
+        const amount = reportsAvailable ? `${Number(row.amount || 0).toLocaleString('fr-FR')} FCFA` : 'En attente';
+        return `<tr><th>${escapeHtml(String(row.bet || 'Pari').toUpperCase())}</th><td>${escapeHtml(row.numbers || '—')}</td><td>${escapeHtml(amount)}</td><td>${reportsAvailable ? escapeHtml(row.winnerCount ?? 0) : '—'}</td><td class="prediction-cell ${covered ? 'covered' : ''}">${escapeHtml(predictionForBet(kind, prediction))}${covered ? ' <b>✓ Couvert</b>' : ''}</td></tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    <p>Montants officiels publiés par l’opérateur. La colonne ParisPromax compare le pronostic archivé à l’arrivée ; elle ne représente pas un pari encaissé.</p>
+  </section>`;
+}
+
+function grandCarnetOutcomeMarkup(outcome) {
+  if (!outcome) {
+    return `<section class="grand-carnet-outcome pending"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>Pronostic archivé indisponible</strong></div><p>Le gain illustratif ne peut pas être calculé pour cette course.</p></section>`;
+  }
+  const confirmed = outcome.gainStatus === 'confirmed';
+  const pending = outcome.gainStatus === 'pending-official-report';
+  const status = confirmed
+    ? `Gain officiel : ${Number(outcome.gain || 0).toLocaleString('fr-FR')} ${escapeHtml(outcome.currency || 'FCFA')}`
+    : pending
+      ? 'Pronostic gagnant · gain officiel en attente'
+      : 'Pronostic non gagnant · gain 0 FCFA';
+  return `<section class="grand-carnet-outcome ${outcome.isWinning ? 'winning' : 'not-winning'}">
+    <div class="grand-carnet-outcome-head"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>${status}</strong></div><em>${escapeHtml(outcome.matchedHorses || 0)} / ${escapeHtml(outcome.arrival?.length || 0)} chevaux trouvés</em></div>
+    <div class="grand-carnet-outcome-lines"><span><small>Pronostic</small><b>${escapeHtml((outcome.selection || []).join(' - '))}</b></span><span><small>Arrivée</small><b>${escapeHtml((outcome.arrival || []).join(' - '))}</b></span><span><small>Mise illustrative</small><b>${outcome.totalStake != null ? `${Number(outcome.totalStake).toLocaleString('fr-FR')} ${escapeHtml(outcome.currency || 'FCFA')}` : '—'}</b></span></div>
+    <p>Simulation basée sur le Grand Carnet ParisPromax archivé avant la course. Aucun pari n’est encaissé par ParisPromax.</p>
+  </section>`;
+}
+
 function renderRaces() {
   const list = $('#race-list');
   const count = state.racetracks.reduce((total, track) => total + (track.races || []).length, 0);
@@ -648,15 +770,16 @@ function renderRaces() {
     list.innerHTML = '<div class="empty-state"><p>Aucune course disponible actuellement.</p></div>';
     return;
   }
-  list.innerHTML = state.racetracks.map((track) => `
+  list.innerHTML = state.racetracks.map((track, trackIndex) => `
     <div class="track-label"><span>${escapeHtml(track.name)}</span><small>ECD · ${escapeHtml(countryDetails(state.nationalCountry).name)}</small></div>
-    ${(track.races || []).map((race) => {
+    ${(track.races || []).map((race, raceIndex) => {
+      const reference = raceReference(race, { meetingNumber: trackIndex + 1, courseNumber: raceIndex + 1 });
       const winners = race.result?.winners || [];
       const resultLabel = winners.length
         ? `<small class="race-result-mini">Arrivée : ${winners.slice(0, 5).map(escapeHtml).join(' - ')}</small>`
         : `<small>${escapeHtml(race.distance || '')} · ${escapeHtml(race.runners || 0)} partants${race.ecd?.variants?.length ? ` · ${escapeHtml(race.ecd.variants.map((variant) => variant.label).join(', '))}` : ''}</small>`;
       return `<button class="race-item ${race.id === state.selectedRaceId ? 'active' : ''}" type="button" data-race-id="${escapeHtml(race.id)}">
-        <span class="race-time">${escapeHtml(race.time || `C${race.number || ''}`)}</span>
+        <span class="race-time"><b>${escapeHtml(reference || 'COURSE')}</b><small>${escapeHtml(race.time || 'À venir')}</small></span>
         <span class="race-item-main"><span class="race-discipline-badge">${escapeHtml(raceDiscipline(race))}</span><strong>${escapeHtml(race.name)} ${race.isQuinte ? '<em class="quinte-mini">Q+</em>' : ''}</strong>${resultLabel}</span>
         <span class="race-arrow">${winners.length ? '✓' : '›'}</span>
       </button>`;
@@ -682,14 +805,19 @@ function renderResults() {
     const comparison = result.aiHit
       ? '<span class="result-hit success">Base ParisPromax placée</span>'
       : '<span class="result-hit neutral">Résultat officiel vérifié</span>';
-    return `<article class="result-card">
+    const reference = raceReference(result);
+    const resultDetails = result.category === 'ecd'
+      ? ecdGainsTableMarkup(result)
+      : grandCarnetOutcomeMarkup(result.grandCarnetOutcome);
+    return `<article class="result-card result-card-detailed">
       <div class="result-card-head">
-        <div><span>${escapeHtml(result.track)}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
+        <div><span>${escapeHtml([reference, result.track].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
         ${comparison}
       </div>
       <div class="result-arrival" aria-label="Arrivée officielle">
         ${winners.map((number, index) => `<span class="${index === 0 ? 'winner' : ''}"><small>${index + 1}${index === 0 ? 'er' : 'e'}</small><b>${escapeHtml(number)}</b></span>`).join('')}
       </div>
+      ${resultDetails}
       ${findRace(result.raceId) ? `<button class="result-detail-link" type="button" data-result-race="${escapeHtml(result.raceId)}">Voir la fiche de la course →</button>` : ''}
     </article>`;
   }).join('');
@@ -1130,7 +1258,7 @@ async function updateHeroRace() {
   $('#hero-track').textContent = first.track.name;
   $('#hero-race').textContent = first.race.name;
   $('#hero-race-time').textContent = first.race.time || 'Aujourd’hui';
-  $('#hero-meta').textContent = [first.race.distance, `${first.race.runners || 0} partants`].filter(Boolean).join(' · ');
+  $('#hero-meta').textContent = [raceReference(first.race), first.race.distance, `${first.race.runners || 0} partants`].filter(Boolean).join(' · ');
   $('#hero-race-status').textContent = first.race.isQuinte ? 'COURSE NATIONALE · QUINTÉ+' : 'COURSE DU JOUR';
   $('#hero-discipline').textContent = raceDiscipline(first.race);
   try {
@@ -1292,7 +1420,8 @@ function nationalStrategyMarkup(detail) {
 
 function renderRaceDetail(context, detail, prediction, predictionError) {
   const horses = detail.horses || [];
-  $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml(context?.track?.name || detail.track || 'COURSE')}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><div class="detail-badges"><span class="race-discipline-badge race-discipline-prominent">${escapeHtml(raceDiscipline(detail))}</span><span class="race-badge">${horses.length} PARTANTS</span></div></div>
+  const reference = raceReference(context?.race || detail);
+  $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml([reference, context?.track?.name || detail.track || 'COURSE'].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><div class="detail-badges"><span class="race-discipline-badge race-discipline-prominent">${escapeHtml(raceDiscipline(detail))}</span><span class="race-badge">${horses.length} PARTANTS</span></div></div>
     ${officialResultMarkup(detail)}
     ${nationalStrategyMarkup(detail)}
     ${predictionMarkup(prediction, predictionError, detail)}
