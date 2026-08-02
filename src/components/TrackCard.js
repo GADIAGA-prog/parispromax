@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PressableScale from './PressableScale';
 import { COLORS, SPACING, RADIUS, FONT, TRACK_CONDITIONS } from '../theme/colors';
+const { formatRaceReference } = require('../../shared/raceReference');
 
 function formatXOF(amount) {
   if (amount == null) return '—';
@@ -11,7 +12,7 @@ function formatXOF(amount) {
 
 // A racetrack (hippodrome) summary card with its races. Tapping a race calls
 // onRacePress(track, race).
-export default function TrackCard({ track, onRacePress }) {
+export default function TrackCard({ track, meetingNumber, onRacePress }) {
   const cond = TRACK_CONDITIONS[track.condition] || TRACK_CONDITIONS.dry;
   const [now, setNow] = useState(Date.now());
 
@@ -47,16 +48,20 @@ export default function TrackCard({ track, onRacePress }) {
         <Text style={styles.prize}>Dotation : {formatXOF(track.prizePool)}</Text>
       </View>
 
-      {track.races.map((race) => {
+      {track.races.map((race, raceIndex) => {
         const state = raceState(race);
+        const reference = formatRaceReference(race, {
+          meetingNumber,
+          courseNumber: raceIndex + 1,
+        });
         return (
         <PressableScale
           key={race.id}
           style={[styles.race, styles[`race_${state.kind}`]]}
-          onPress={() => onRacePress?.(track, race)}
+          onPress={() => onRacePress?.(track, { ...race, number: reference })}
         >
           <View style={styles.raceNumber}>
-            <Text style={styles.raceNumberText}>{race.number}</Text>
+            <Text style={styles.raceNumberText}>{reference}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.raceName} numberOfLines={1}>
@@ -162,7 +167,8 @@ const styles = StyleSheet.create({
   },
   race_past: { backgroundColor: 'rgba(148,163,184,0.08)', opacity: 0.78 },
   raceNumber: {
-    width: 38,
+    minWidth: 52,
+    paddingHorizontal: 6,
     height: 30,
     borderRadius: RADIUS.sm,
     backgroundColor: COLORS.primary,

@@ -48,7 +48,9 @@ test('PMU race excludes non-runners and keeps a stable external id', () => {
   ]);
 
   assert.equal(race.id, 'pmu-2026-07-15-R1-C3');
-  assert.equal(race.number, 'C3');
+  assert.equal(race.number, 'R1C3');
+  assert.equal(race.meetingNumber, 1);
+  assert.equal(race.courseNumber, 3);
   assert.equal(race.distance, '2700m');
   assert.equal(race.time, '14:30');
   assert.equal(race.prize, 50000);

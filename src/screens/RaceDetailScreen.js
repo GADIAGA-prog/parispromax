@@ -13,6 +13,7 @@ import { useLiveRace } from '../hooks/useLiveRace';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT, TRACK_CONDITIONS } from '../theme/colors';
+const { formatRaceReference } = require('../../shared/raceReference');
 
 // Maps the live LTR payload -> the backend-picks shape aiEngine understands.
 function livePicks(preds) {
@@ -63,6 +64,7 @@ export default function RaceDetailScreen({ route, navigation }) {
   const goPaywall = () => navigation.navigate('Paywall');
   const winners = officialResult?.winners || analyzed.result?.winners || [];
   const isPast = race?.startsAt && new Date(race.startsAt).getTime() <= Date.now();
+  const reference = formatRaceReference(analyzed);
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -73,7 +75,7 @@ export default function RaceDetailScreen({ route, navigation }) {
         <View style={styles.head}>
           <Text style={styles.race}>{analyzed.name}</Text>
           <Text style={styles.sub}>
-            {trackName} · {analyzed.distance}
+            {reference ? `${reference} · ` : ''}{trackName} · {analyzed.distance}
             {analyzed.time ? ` · 🕐 ${analyzed.time}` : ''}
           </Text>
           {(analyzed.type || analyzed.autostart) ? (

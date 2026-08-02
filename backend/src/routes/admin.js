@@ -122,11 +122,13 @@ router.get('/api/recovery-requests', async (_req, res) => {
   res.json({ requests });
 });
 
-// POST /admin/api/results  { externalId, winners: [4,7,1,...] }
+// POST /admin/api/results
+// { externalId, winners: [4,7,1,...], payouts?: [{ bet, numbers, amount, winnerCount }] }
 // Records the official arrival and computes whether our #1 AI pick placed.
 router.post('/api/results', express.json(), async (req, res) => {
   const { externalId } = req.body || {};
   let { winners } = req.body || {};
+  const payoutsInput = req.body?.payouts;
   if (!externalId || !Array.isArray(winners) || !winners.length) {
     return res.status(400).json({ error: 'externalId et winners[] requis' });
   }
@@ -136,6 +138,17 @@ router.post('/api/results', express.json(), async (req, res) => {
   if (winners.length < 3) {
     return res.status(400).json({ error: 'winners[] doit contenir au moins 3 numéros valides (1-30)' });
   }
+  if (payoutsInput != null && !Array.isArray(payoutsInput)) {
+    return res.status(400).json({ error: 'payouts doit être un tableau' });
+  }
+  const payouts = Array.isArray(payoutsInput)
+    ? payoutsInput.slice(0, 100).map((row) => ({
+        bet: String(row?.bet || '').trim().slice(0, 40),
+        numbers: String(row?.numbers || '').trim().slice(0, 40),
+        amount: Math.max(0, Math.round(Number(row?.amount) || 0)),
+        winnerCount: Math.max(0, Math.round(Number(row?.winnerCount) || 0)),
+      })).filter((row) => row.bet)
+    : null;
   const race = await prisma.race.findUnique({
     where: { externalId },
     include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
@@ -161,8 +174,19 @@ router.post('/api/results', express.json(), async (req, res) => {
 
   const result = await prisma.result.upsert({
     where: { raceId: race.id },
-    update: { winners: JSON.stringify(winners), predictionSnapshot, predicted },
-    create: { raceId: race.id, winners: JSON.stringify(winners), predictionSnapshot, predicted },
+    update: {
+      winners: JSON.stringify(winners),
+      predictionSnapshot,
+      predicted,
+      ...(payouts ? { payouts: JSON.stringify(payouts) } : {}),
+    },
+    create: {
+      raceId: race.id,
+      winners: JSON.stringify(winners),
+      predictionSnapshot,
+      predicted,
+      payouts: payouts ? JSON.stringify(payouts) : null,
+    },
   });
   // Stamp the LTR training labels on the Runner rows too.
   const { stampFinishPositions } = require('../jobs/results');

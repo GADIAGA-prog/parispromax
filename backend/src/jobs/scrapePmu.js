@@ -136,7 +136,9 @@ function normalizeRace(date, reunionNumber, raw, participants) {
 
   return {
     id: `pmu-${date}-R${reunionNumber}-C${courseNumber}`,
-    number: `C${courseNumber}`,
+    number: `R${reunionNumber}C${courseNumber}`,
+    meetingNumber: reunionNumber,
+    courseNumber,
     name: String(raw.libelle || raw.libelleCourt || `Course ${courseNumber}`).trim(),
     time: raceTime(raw.heureDepart),
     prize: numeric(raw.montantPrix) || numeric(raw.montantTotalOffert) || null,
