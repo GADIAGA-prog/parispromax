@@ -8,6 +8,7 @@ const { buildNationalBetProposal } = require('../../../shared/nationalBetProposa
 const { getEcdProfile } = require('../../../shared/ecdRules');
 const { formatRaceReference } = require('../../../shared/raceReference');
 const { evaluateGrandCarnet } = require('../../../shared/grandCarnetOutcome');
+const { evaluateEcdTickets } = require('../../../shared/ecdTicketOutcome');
 const {
   groupSelectedRaces,
 } = require('../services/ecdProgram');
@@ -273,20 +274,25 @@ router.get('/ecd', async (req, res) => {
 // History screen so users compare pronostic vs résultat.
 router.get('/history', async (req, res) => {
   const country = String(req.query.country || 'bf').trim().toLowerCase();
-  if (!getEcdProfile(country)) return res.status(400).json({ error: 'country invalide' });
-  const results = await prisma.result.findMany({
+  const ecdProfile = getEcdProfile(country);
+  if (!ecdProfile) return res.status(400).json({ error: 'country invalide' });
+  const resultQuery = {
     orderBy: { createdAt: 'desc' },
     take: 300,
     include: {
       race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 50 } } },
     },
-  });
+  };
+  let results = await prisma.result.findMany(resultQuery);
 
   const dates = [...new Set(results.map((result) => result.race.date).filter(Boolean))];
   for (const date of dates.slice(0, 2)) {
     try { await syncOfficialEcdProgram(country, date); }
     catch (error) { console.warn(`[ecd/history] source officielle ${country}/${date}:`, error.message); }
   }
+  // The official sync can publish payouts during this very request. Reload so
+  // the user immediately sees the new reports and the corresponding ticket balance.
+  results = await prisma.result.findMany(resultQuery);
   const [nationalPicks, ecdPicks] = dates.length
     ? await Promise.all([
         prisma.nationalPick.findMany({
@@ -323,8 +329,18 @@ router.get('/history', async (req, res) => {
     const category = isNational ? 'national' : isEcd ? 'ecd' : null;
     if (!category) return null;
     const game = category === 'national' ? getNationalGame(country, r.race.date) : null;
+    const topPicks = snapshot?.topPicks || groups.selected;
+    const payouts = parse(r.payouts, []);
     const grandCarnetOutcome = country === 'bf' && game
-      ? evaluateGrandCarnet(game, snapshot?.topPicks || groups.selected, winners)
+      ? evaluateGrandCarnet(game, topPicks, winners)
+      : null;
+    const ecdTicketOutcome = isEcd
+      ? evaluateEcdTickets({
+          payouts,
+          predictions: topPicks,
+          unitStake: ecdProfile.unitStake,
+          currency: ecdProfile.currency,
+        })
       : null;
     return {
       id: r.id,
@@ -333,14 +349,15 @@ router.get('/history', async (req, res) => {
       race: r.race.name,
       number: formatRaceReference({ ...full, id: r.race.externalId }),
       date: r.race.date,
-      payouts: parse(r.payouts, []),
+      payouts,
       winners, // finishing order [num, num, ...]
       category,
       isEcd,
-      topPicks: snapshot?.topPicks || groups.selected, // pronostic figé = arrivée + 2
+      topPicks, // pronostic figé = arrivée + 2
       groups,
       aiHit: r.predicted, // our #1 pick finished in the top 3
       grandCarnetOutcome,
+      ecdTicketOutcome,
     };
   }).filter(Boolean);
 

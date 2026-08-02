@@ -20,6 +20,7 @@ const ageGate = fs.readFileSync(path.join(root, 'src', 'screens', 'AgeGateScreen
 const login = fs.readFileSync(path.join(root, 'src', 'screens', 'LoginScreen.js'), 'utf8');
 const onboarding = fs.readFileSync(path.join(root, 'src', 'screens', 'OnboardingScreen.js'), 'utf8');
 const history = fs.readFileSync(path.join(root, 'src', 'screens', 'HistoryScreen.js'), 'utf8');
+const ecdTicketOutcomeCard = fs.readFileSync(path.join(root, 'src', 'components', 'EcdTicketOutcomeCard.js'), 'utf8');
 const quinte = fs.readFileSync(path.join(root, 'src', 'screens', 'QuintePlusScreen.js'), 'utf8');
 const trialBanner = fs.readFileSync(path.join(root, 'src', 'components', 'TrialBanner.js'), 'utf8');
 
@@ -39,6 +40,12 @@ test('le site affiche les références réunion/course et les gains Burkina', ()
   assert.match(webApp, /Pronostic ParisPromax/);
   assert.match(webApp, /Rapports officiels en attente/);
   assert.match(styles, /\.ecd-gains-table/);
+  assert.match(webApp, /BILAN DES TICKETS PARISPROMAX/);
+  assert.match(webApp, /Tickets gagnants du pronostic/);
+  assert.match(webApp, /Solde théorique/);
+  assert.match(styles, /\.ecd-ticket-outcome/);
+  assert.match(ecdTicketOutcomeCard, /outcome\.winningTickets/);
+  assert.match(history, /EcdTicketOutcomeCard/);
 });
 
 test('le site publie le bilan de gain du Grand Carnet après la course', () => {
@@ -69,8 +76,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260802-2/);
-  assert.match(serviceWorker, /parispromax-shell-20260802-2/);
+  assert.match(html, /styles\.css\?v=20260802-3/);
+  assert.match(serviceWorker, /parispromax-shell-20260802-3/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -137,9 +144,12 @@ test('la navigation principale suit les quatre parcours demandés', () => {
 
 test('les résultats et le contact séparent les parcours utiles', () => {
   assert.match(historyScreen, /Course nationale/);
-  assert.match(historyScreen, />ECD</);
+  assert.match(historyScreen, />ECD · Tickets & gains</);
   assert.match(html, /data-results-category="national"/);
   assert.match(html, /data-results-category="ecd"/);
+  assert.match(html, /data-open-ecd-results/);
+  assert.match(webApp, /resultCategory: 'ecd'/);
+  assert.match(historyScreen, /useState\('ecd'\)/);
   assert.match(html, /href="https:\/\/t\.me\/ParisPromaxOfficiel"/);
   assert.match(html, /href="https:\/\/www\.facebook\.com\/parispromax"/);
   assert.match(html, /id="contact-referral-link"/);

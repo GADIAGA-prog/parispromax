@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260802-2" />
+  <link rel="stylesheet" href="/styles.css?v=20260802-3" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -217,6 +217,7 @@
         <div><span class="section-kicker" id="program-kicker">PROGRAMME ECD</span><h2>Les courses ECD officielles de votre pays.</h2></div>
         <p id="ecd-program-description">Choisissez une course pour voir sa discipline, ses partants, ses cotes et les propositions illustratives disponibles.</p>
         <div class="ecd-program-links" id="ecd-program-links" aria-label="Programmes ECD officiels"></div>
+        <a class="ecd-results-link" href="#resultats" data-open-ecd-results>Voir les tickets gagnants et les gains ECD <span aria-hidden="true">↓</span></a>
       </div>
 
       <div class="race-workspace reveal">
@@ -236,12 +237,12 @@
         <figcaption>Arrivées officielles et comparaison avec le pronostic</figcaption>
       </figure>
       <div class="section-heading reveal">
-        <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Les résultats après chaque course.</h2></div>
-        <p>L’arrivée s’affiche après chaque course dès qu’elle est disponible.</p>
+        <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Résultats, tickets gagnants et gains.</h2></div>
+        <p>Comparez l’arrivée et les rapports officiels avec le pronostic ParisPromax archivé avant la course.</p>
       </div>
       <div class="result-tabs" role="tablist" aria-label="Types de résultats">
-        <button class="active" type="button" role="tab" aria-selected="true" data-results-category="national">Course nationale</button>
-        <button type="button" role="tab" aria-selected="false" data-results-category="ecd">ECD</button>
+        <button type="button" role="tab" aria-selected="false" data-results-category="national">Course nationale · Grand Carnet</button>
+        <button class="active" type="button" role="tab" aria-selected="true" data-results-category="ecd">ECD · Tickets &amp; gains</button>
       </div>
       <div class="results-grid" id="results-grid" aria-live="polite">
         <div class="result-placeholder"></div><div class="result-placeholder"></div><div class="result-placeholder"></div>
@@ -494,6 +495,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260802-2" defer></script>
+  <script src="/app.js?v=20260802-3" defer></script>
 </body>
 </html>

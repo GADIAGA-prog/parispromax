@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Pr
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import EcdGainsTable from '../components/EcdGainsTable';
+import EcdTicketOutcomeCard from '../components/EcdTicketOutcomeCard';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
@@ -16,7 +17,7 @@ export default function HistoryScreen() {
   const { country } = useAuth();
   const countryName = countryCatalog.find((item) => item.code === country)?.name || country;
   const [history, setHistory] = useState([]);
-  const [category, setCategory] = useState('national');
+  const [category, setCategory] = useState('ecd');
   const [stat, setStat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -30,7 +31,9 @@ export default function HistoryScreen() {
       // offline / not critical
     }
   }, [country]);
-  const visibleHistory = history.filter((item) => item.category === category);
+  const visibleHistory = history.filter((item) => category === 'ecd'
+    ? item.isEcd || item.category === 'ecd'
+    : item.category === 'national');
 
   useEffect(() => {
     (async () => {
@@ -70,7 +73,7 @@ export default function HistoryScreen() {
           style={[styles.tab, category === 'ecd' && styles.tabActive]}
           onPress={() => setCategory('ecd')}
         >
-          <Text style={[styles.tabText, category === 'ecd' && styles.tabTextActive]}>ECD</Text>
+          <Text style={[styles.tabText, category === 'ecd' && styles.tabTextActive]}>ECD · Tickets & gains</Text>
         </Pressable>
       </View>
 
@@ -167,12 +170,15 @@ export default function HistoryScreen() {
               </View>
 
               {item.category === 'ecd' || item.isEcd ? (
-                <EcdGainsTable
-                  arrival={arrival}
-                  payouts={item.payouts || []}
-                  predictions={predictions}
-                  countryName={countryName}
-                />
+                <>
+                  <EcdTicketOutcomeCard outcome={item.ecdTicketOutcome} />
+                  <EcdGainsTable
+                    arrival={arrival}
+                    payouts={item.payouts || []}
+                    predictions={predictions}
+                    countryName={countryName}
+                  />
+                </>
               ) : null}
 
               {country === 'bf' && item.category === 'national' && outcome ? (
