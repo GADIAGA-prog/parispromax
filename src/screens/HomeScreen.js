@@ -224,9 +224,11 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.sectionKicker}>ECD · COURSES EN DIRECT</Text>
               <Text style={styles.sectionTitle}>Courses proposées pour votre pays</Text>
               <Text style={styles.ecdHelp}>
-                {ecdSelectionMode === 'country-validated'
-                  ? 'Programme national validé.'
-                  : 'Sélection provisoire ParisPromax.'}
+                {ecdSelectionMode === 'official-country-program'
+                  ? 'Programme officiel de votre opérateur national.'
+                  : ecdSelectionMode === 'country-validated'
+                    ? 'Programme national validé.'
+                    : 'Programme officiel du pays en attente de publication.'}
                 {ecdProfile?.unitStake
                   ? ` Mise de base : ${ecdProfile.unitStake.toLocaleString('fr-FR')} FCFA.`
                   : ''}

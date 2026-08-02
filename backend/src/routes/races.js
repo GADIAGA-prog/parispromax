@@ -9,9 +9,9 @@ const { getEcdProfile } = require('../../../shared/ecdRules');
 const { formatRaceReference } = require('../../../shared/raceReference');
 const { evaluateGrandCarnet } = require('../../../shared/grandCarnetOutcome');
 const {
-  automaticSelection,
   groupSelectedRaces,
 } = require('../services/ecdProgram');
+const { syncOfficialEcdProgram, raceParts } = require('../services/ecdOfficialSource');
 const { parisStartIso, gmtTimeLabel } = require('../services/raceTime');
 
 const router = express.Router();
@@ -215,11 +215,14 @@ router.get('/ecd', async (req, res) => {
     date = latest?.date || new Date().toISOString().slice(0, 10);
   }
 
-  const [nationalPick, configuredPicks, races] = await Promise.all([
-    prisma.nationalPick.findUnique({
-      where: { date_country: { date, country } },
-      select: { externalId: true },
-    }),
+  let officialProgram = null;
+  try {
+    officialProgram = await syncOfficialEcdProgram(country, date);
+  } catch (error) {
+    console.warn(`[ecd] source officielle ${country}/${date}:`, error.message);
+  }
+
+  const [configuredPicks, races] = await Promise.all([
     prisma.ecdPick.findMany({
       where: { date, country },
       orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
@@ -235,21 +238,32 @@ router.get('/ecd', async (req, res) => {
   const raceById = new Map(races.map((race) => [race.externalId, race]));
   const configuredRaces = configuredPicks
     .map((pick) => raceById.get(pick.externalId))
-    .filter(Boolean)
-    .filter((race) => race.externalId !== nationalPick?.externalId);
-  const completeProgram = automaticSelection(races, profile, nationalPick?.externalId);
-  const configuredIds = new Set(configuredRaces.map((race) => race.externalId));
-  const selectedRaces = configuredRaces.length
-    ? [...configuredRaces, ...completeProgram.filter((race) => !configuredIds.has(race.externalId))]
-    : completeProgram;
+    .filter(Boolean);
+  const selectedRaces = configuredRaces;
   const journalUrl = configuredPicks.find((pick) => pick.journalUrl)?.journalUrl || null;
+  const journals = configuredPicks
+    .filter((pick) => pick.journalUrl)
+    .map((pick) => {
+      const parts = raceParts(raceById.get(pick.externalId));
+      return { meeting: parts?.meeting || null, url: pick.journalUrl };
+    })
+    .filter((journal, index, all) => all.findIndex((item) => item.url === journal.url) === index)
+    .sort((a, b) => Number(a.meeting || 999) - Number(b.meeting || 999));
+  const selectionMode = officialProgram?.meetings?.length
+    ? 'official-country-program'
+    : configuredRaces.length
+      ? 'country-validated'
+      : 'country-program-pending';
 
   res.json({
     country,
     date,
     profile,
-    selectionMode: configuredRaces.length ? 'country-validated' : 'automatic-fallback',
+    selectionMode,
+    operator: officialProgram?.operator || null,
+    meetings: officialProgram?.meetings || journals.map((journal) => journal.meeting).filter(Boolean),
     journalUrl,
+    journals,
     racetracks: groupSelectedRaces(selectedRaces, profile),
   });
 });
@@ -262,21 +276,34 @@ router.get('/history', async (req, res) => {
   if (!getEcdProfile(country)) return res.status(400).json({ error: 'country invalide' });
   const results = await prisma.result.findMany({
     orderBy: { createdAt: 'desc' },
-    take: 60,
+    take: 300,
     include: {
       race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 50 } } },
     },
   });
 
   const dates = [...new Set(results.map((result) => result.race.date).filter(Boolean))];
-  const nationalPicks = dates.length
-    ? await prisma.nationalPick.findMany({
-        where: { country, date: { in: dates } },
-        select: { date: true, externalId: true },
-      })
-    : [];
+  for (const date of dates.slice(0, 2)) {
+    try { await syncOfficialEcdProgram(country, date); }
+    catch (error) { console.warn(`[ecd/history] source officielle ${country}/${date}:`, error.message); }
+  }
+  const [nationalPicks, ecdPicks] = dates.length
+    ? await Promise.all([
+        prisma.nationalPick.findMany({
+          where: { country, date: { in: dates } },
+          select: { date: true, externalId: true },
+        }),
+        prisma.ecdPick.findMany({
+          where: { country, date: { in: dates } },
+          select: { date: true, externalId: true },
+        }),
+      ])
+    : [[], []];
   const nationalIds = new Set(
     nationalPicks.map((pick) => `${pick.date}:${pick.externalId}`)
+  );
+  const ecdIds = new Set(
+    ecdPicks.map((pick) => `${pick.date}:${pick.externalId}`)
   );
 
   const history = results.map((r) => {
@@ -290,7 +317,11 @@ router.get('/history', async (req, res) => {
     ) || r.race.predictions.at(-1);
     const picks = parse(historicalPrediction?.topPicks, []);
     const groups = snapshot?.groups || buildGroups(picks, r.race, Math.min(winners.length, 5));
-    const category = nationalIds.has(`${r.race.date}:${r.race.externalId}`) ? 'national' : 'ecd';
+    const identity = `${r.race.date}:${r.race.externalId}`;
+    const isNational = nationalIds.has(identity);
+    const isEcd = ecdIds.has(identity);
+    const category = isNational ? 'national' : isEcd ? 'ecd' : null;
+    if (!category) return null;
     const game = category === 'national' ? getNationalGame(country, r.race.date) : null;
     const grandCarnetOutcome = country === 'bf' && game
       ? evaluateGrandCarnet(game, snapshot?.topPicks || groups.selected, winners)
@@ -305,12 +336,13 @@ router.get('/history', async (req, res) => {
       payouts: parse(r.payouts, []),
       winners, // finishing order [num, num, ...]
       category,
+      isEcd,
       topPicks: snapshot?.topPicks || groups.selected, // pronostic figé = arrivée + 2
       groups,
       aiHit: r.predicted, // our #1 pick finished in the top 3
       grandCarnetOutcome,
     };
-  });
+  }).filter(Boolean);
 
   res.json({ country, history });
 });

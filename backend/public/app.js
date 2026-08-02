@@ -615,10 +615,20 @@ async function loadRaces() {
       const stake = data.profile?.unitStake
         ? ` Mise de base : ${formatFcfa(data.profile.unitStake)}.`
         : ' Mise à confirmer.';
-      const status = data.selectionMode === 'country-validated'
-        ? 'Programme ECD complet, avec les courses validées pour votre pays en premier.'
-        : 'Toutes les courses ECD disponibles aujourd’hui.';
+      const meetings = (data.meetings || []).map((meeting) => `R${meeting}`).join(' et ');
+      const status = data.selectionMode === 'official-country-program'
+        ? `Programme officiel ${data.operator || country.name}${meetings ? ` : ${meetings}` : ''}.`
+        : data.selectionMode === 'country-validated'
+          ? 'Programme ECD validé spécifiquement pour votre pays.'
+          : 'Le programme officiel de votre pays est en attente de publication.';
       ecdDescription.textContent = `${status}${stake}`;
+    }
+    const programLinks = $('#ecd-program-links');
+    if (programLinks) {
+      programLinks.innerHTML = (data.journals || []).map((journal) => {
+        const url = safeHttpUrl(journal.url);
+        return url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Programme officiel R${escapeHtml(journal.meeting)} ↗</a>` : '';
+      }).join('');
     }
     renderRaces();
     buildMemberNotifications();
@@ -725,9 +735,9 @@ function ecdGainsTableMarkup(result = {}) {
   const prediction = predictionNumbers(result);
   const reportsAvailable = Array.isArray(result.payouts) && result.payouts.length > 0;
   const rows = reportsAvailable ? result.payouts : fallbackPayoutRows(result.winners || []);
-  return `<section class="ecd-gains" aria-label="Tableau des gains ECD au Burkina Faso">
+  return `<section class="ecd-gains" aria-label="Tableau des gains ECD pour ${escapeHtml(countryDetails(state.nationalCountry).name)}">
     <div class="ecd-gains-head">
-      <div><span>GAINS ECD · BURKINA FASO</span><strong>Rapports de la course et pronostic ParisPromax</strong></div>
+      <div><span>GAINS ECD · ${escapeHtml(countryDetails(state.nationalCountry).name.toUpperCase())}</span><strong>Rapports de la course et pronostic ParisPromax</strong></div>
       <em class="${reportsAvailable ? 'published' : 'pending'}">${reportsAvailable ? 'Rapports publiés' : 'Rapports officiels en attente'}</em>
     </div>
     <div class="ecd-gains-scroll"><table class="ecd-gains-table">
@@ -806,9 +816,9 @@ function renderResults() {
       ? '<span class="result-hit success">Base ParisPromax placée</span>'
       : '<span class="result-hit neutral">Résultat officiel vérifié</span>';
     const reference = raceReference(result);
-    const resultDetails = result.category === 'ecd'
-      ? ecdGainsTableMarkup(result)
-      : grandCarnetOutcomeMarkup(result.grandCarnetOutcome);
+    const resultDetails = `${result.category === 'national'
+      ? grandCarnetOutcomeMarkup(result.grandCarnetOutcome)
+      : ''}${result.isEcd || result.category === 'ecd' ? ecdGainsTableMarkup(result) : ''}`;
     return `<article class="result-card result-card-detailed">
       <div class="result-card-head">
         <div><span>${escapeHtml([reference, result.track].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
@@ -1782,8 +1792,7 @@ function bindEvents() {
   $('#quinte-country').addEventListener('change', (event) => {
     state.nationalCountry = event.target.value;
     localStorage.setItem('ppm_quinte_country', state.nationalCountry);
-    loadRaces();
-    loadResults();
+    loadRaces().then(() => loadResults()).catch(() => {});
   });
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });
@@ -1832,10 +1841,11 @@ async function boot() {
   renderCountryMarquee();
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }
-  await Promise.all([loadRaces(), loadResults(), refreshMe(), loadReviewSummary()]);
+  await loadRaces();
+  await Promise.all([loadResults(), refreshMe(), loadReviewSummary()]);
   window.setInterval(() => {
     if (document.visibilityState === 'visible') {
-      Promise.all([loadRaces(), loadResults(true)]).catch(() => {});
+      loadRaces().then(() => loadResults(true)).catch(() => {});
     }
   }, 120000);
   applyReferralInvitation();

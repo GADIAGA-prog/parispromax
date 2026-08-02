@@ -70,7 +70,7 @@ function amount(value, reportsAvailable) {
   return `${Number(value || 0).toLocaleString('fr-FR')} FCFA`;
 }
 
-export default function EcdGainsTable({ arrival = [], payouts = [], predictions = [] }) {
+export default function EcdGainsTable({ arrival = [], payouts = [], predictions = [], countryName = 'votre pays' }) {
   const prediction = useMemo(
     () => predictions
       .slice()
@@ -85,7 +85,7 @@ export default function EcdGainsTable({ arrival = [], payouts = [], predictions 
   return (
     <View style={styles.section}>
       <View style={styles.heading}>
-        <Text style={styles.kicker}>GAINS ECD · BURKINA FASO</Text>
+        <Text style={styles.kicker}>GAINS ECD · {String(countryName).toUpperCase()}</Text>
         {!reportsAvailable ? <Text style={styles.pending}>Rapports en attente</Text> : null}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator>

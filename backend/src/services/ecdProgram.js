@@ -81,9 +81,11 @@ function automaticSelection(races, profile, nationalRaceId) {
     }))
     .sort((a, b) => b.runnerScore - a.runnerScore || a.track.localeCompare(b.track));
 
-  return rankedMeetings.flatMap((meeting) =>
-    meeting.items
-  );
+  const meetingLimit = Math.max(1, Number(profile?.maxMeetings) || 2);
+  const raceLimit = Math.max(1, Number(profile?.maxRacesPerMeeting) || 5);
+  return rankedMeetings
+    .slice(0, meetingLimit)
+    .flatMap((meeting) => meeting.items.slice(0, raceLimit));
 }
 
 module.exports = {

@@ -4,6 +4,7 @@ const config = require('../config');
 const { scrapeProgramme } = require('../jobs/scrape');
 const { ingestData } = require('../jobs/ingest');
 const { detectResults } = require('../jobs/results');
+const { syncOfficialEcdData } = require('../services/ecdOfficialSource');
 
 const router = express.Router();
 
@@ -51,6 +52,12 @@ async function runRefresh() {
   } catch (e) {
     console.error('[cron] results error:', e.message);
   }
+  try {
+    const official = await syncOfficialEcdData({ dates: [today, isoDaysAgo(1)] });
+    console.log('[cron] official ECD:', official);
+  } catch (e) {
+    console.error('[cron] official ECD error:', e.message);
+  }
 }
 
 // POST /cron/refresh — responds immediately (202) and runs the job in the
@@ -74,8 +81,13 @@ router.post('/results', checkToken, (req, res) => {
   runningResults = true;
   res.status(202).json({ ok: true, started: true });
   const today = new Date().toISOString().slice(0, 10);
-  detectResults({ dates: [today, isoDaysAgo(1)] })
-    .then((r) => console.log('[cron/results]', r))
+  const dates = [today, isoDaysAgo(1)];
+  detectResults({ dates })
+    .then(async (r) => {
+      console.log('[cron/results]', r);
+      const official = await syncOfficialEcdData({ dates });
+      console.log('[cron/results] official ECD:', official);
+    })
     .catch((e) => console.error('[cron/results] error:', e.message))
     .finally(() => { runningResults = false; });
 });
