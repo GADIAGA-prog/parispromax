@@ -243,6 +243,8 @@ a { color: inherit; }
 .ecd-program-links:empty { display:none; }
 .ecd-program-links a { padding:7px 10px; color:#075a42; border:1px solid rgba(8,117,84,.22); border-radius:999px; background:rgba(45,226,160,.1); font-size:9px; font-weight:900; text-decoration:none; }
 .ecd-program-links a:hover { border-color:#087554; background:rgba(45,226,160,.18); }
+.ecd-results-link { grid-column:1/-1; justify-self:end; display:inline-flex; align-items:center; gap:7px; margin-top:8px; padding:10px 14px; color:#fff; border-radius:10px; background:#087554; font-size:10px; font-weight:900; text-decoration:none; box-shadow:0 8px 20px rgba(8,117,84,.18); }
+.ecd-results-link:hover { color:#fff; background:#065f46; }
 .race-sidebar { border-right: 1px solid var(--line); background: rgba(255,255,255,.018); }
 .sidebar-head { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--line); }
 .sidebar-head span, .sidebar-head strong, .sidebar-head small { display: block; }
@@ -356,6 +358,28 @@ a { color: inherit; }
 .grand-carnet-outcome-lines small,.grand-carnet-outcome-lines b { display:block; }
 .grand-carnet-outcome-lines small { color:var(--faint); font-size:7px; text-transform:uppercase; }
 .grand-carnet-outcome-lines b { margin-top:4px; color:var(--text); font-size:11px; }
+.ecd-ticket-outcome { margin-top:18px; padding:17px; border:1px solid rgba(8,117,84,.28); border-radius:14px; background:rgba(8,117,84,.05); }
+.ecd-ticket-outcome.positive { border-color:rgba(8,117,84,.48); background:rgba(45,226,160,.08); }
+.ecd-ticket-outcome.negative { border-color:rgba(188,92,71,.32); background:rgba(188,92,71,.05); }
+.ecd-ticket-outcome.pending { border-style:dashed; }
+.ecd-ticket-outcome-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+.ecd-ticket-outcome-head span { display:block; color:var(--green); font-size:8px; font-weight:950; letter-spacing:1.15px; }
+.ecd-ticket-outcome-head strong { display:block; margin-top:4px; color:var(--text); font-size:14px; }
+.ecd-ticket-outcome-head em { flex:0 0 auto; padding:5px 8px; color:#fff; border-radius:999px; background:#087554; font-size:8px; font-style:normal; font-weight:900; }
+.ecd-ticket-outcome.pending .ecd-ticket-outcome-head em { color:#5a4300; background:var(--gold); }
+.ecd-ticket-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:13px; }
+.ecd-ticket-metrics>span { min-width:0; padding:11px; border:1px solid rgba(8,117,84,.15); border-radius:10px; background:rgba(255,255,255,.55); }
+.ecd-ticket-metrics small,.ecd-ticket-metrics b { display:block; }
+.ecd-ticket-metrics small { color:var(--faint); font-size:7px; text-transform:uppercase; }
+.ecd-ticket-metrics b { margin-top:4px; color:var(--text); font-size:12px; overflow-wrap:anywhere; }
+.ecd-ticket-outcome.positive .ecd-ticket-metrics>span:last-child b { color:#087554; }
+.ecd-ticket-outcome.negative .ecd-ticket-metrics>span:last-child b { color:#9b3f31; }
+.ecd-winning-tickets { margin-top:13px; padding:12px; border-radius:10px; background:rgba(255,255,255,.58); }
+.ecd-winning-tickets>strong { color:var(--text); font-size:10px; }
+.ecd-winning-tickets ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 12px; margin:9px 0 0; padding:0; list-style:none; }
+.ecd-winning-tickets li { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid rgba(8,117,84,.12); color:var(--muted); font-size:9px; }
+.ecd-winning-tickets li b { color:#087554; white-space:nowrap; }
+.ecd-winning-tickets p,.ecd-ticket-outcome>p { margin:9px 0 0; color:var(--faint); font-size:8px; line-height:1.5; }
 
 .method-section { padding-top: 70px; }.method-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }.method-card { min-height:300px; position:relative; padding:26px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.02); }.method-card > span { position:absolute; top:20px; right:22px; color:var(--faint); font-size:11px; }.method-icon { width:48px; height:48px; display:grid; place-items:center; border-radius:15px; background:rgba(45,226,160,.08); color:var(--green); font-size:23px; }.method-card h3 { margin:70px 0 10px; font-size:20px; }.method-card p { color:var(--muted); line-height:1.7; font-size:14px; }
 .guide-section{padding-top:60px}.guide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.guide-card{position:relative;min-height:180px;padding:22px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.02)}.guide-card>span{position:absolute;right:18px;top:16px;color:var(--faint);font-size:9px}.guide-card h3{margin:34px 0 7px;font-size:18px}.guide-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.65}
@@ -1170,9 +1194,10 @@ footer {
   .share-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .share-button { width: 100%; }
   .modal { width: calc(100% - 16px); max-height: calc(100dvh - 16px); padding: 24px 18px; border-radius: 18px; }
-  .ecd-gains-head,.grand-carnet-outcome-head { display:grid; }
-  .ecd-gains-head em,.grand-carnet-outcome-head em { justify-self:start; }
-  .grand-carnet-outcome-lines { grid-template-columns:1fr; }
+  .ecd-gains-head,.grand-carnet-outcome-head,.ecd-ticket-outcome-head { display:grid; }
+  .ecd-gains-head em,.grand-carnet-outcome-head em,.ecd-ticket-outcome-head em { justify-self:start; }
+  .grand-carnet-outcome-lines,.ecd-ticket-metrics { grid-template-columns:1fr 1fr; }
+  .ecd-winning-tickets ul { grid-template-columns:1fr; }
   .operator-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .operator-chip { min-height: 46px; padding-inline: 10px; }
 }
@@ -1194,6 +1219,8 @@ footer {
   .result-tabs { border-radius: 16px; }
   .course-type-nav a,
   .result-tabs button { min-width: 0; padding-inline: 7px; font-size: 10px; }
+  .ecd-results-link { justify-self:stretch; justify-content:center; }
+  .ecd-ticket-metrics { grid-template-columns:1fr; }
   .operator-list { grid-template-columns: 1fr; }
   .modal h2 { padding-right: 24px; font-size: 24px; line-height: 1.2; }
 }

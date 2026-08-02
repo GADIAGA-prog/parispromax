@@ -7,7 +7,7 @@ const state = {
   plans: [],
   racetracks: [],
   results: [],
-  resultCategory: 'national',
+  resultCategory: 'ecd',
   raceDate: null,
   ecdProfile: null,
   ecdSelectionMode: null,
@@ -753,6 +753,46 @@ function ecdGainsTableMarkup(result = {}) {
   </section>`;
 }
 
+function ecdTicketOutcomeMarkup(outcome) {
+  if (!outcome || outcome.status === 'prediction-unavailable') {
+    return `<section class="ecd-ticket-outcome pending">
+      <div class="ecd-ticket-outcome-head"><div><span>BILAN DES TICKETS PARISPROMAX</span><strong>Pronostic archivé indisponible</strong></div></div>
+      <p>Le bilan des tickets ne peut pas être calculé pour cette course.</p>
+    </section>`;
+  }
+
+  const currency = escapeHtml(outcome.currency || 'FCFA');
+  const money = (value) => value == null
+    ? 'En attente'
+    : `${Number(value || 0).toLocaleString('fr-FR')} ${currency}`;
+  const settled = outcome.status === 'settled';
+  const positive = settled && Number(outcome.netReturn || 0) >= 0;
+  const winningTickets = outcome.winningTickets || [];
+  const status = settled
+    ? `${Number(outcome.winningCount || 0)} ticket${Number(outcome.winningCount || 0) > 1 ? 's' : ''} gagnant${Number(outcome.winningCount || 0) > 1 ? 's' : ''} sur ${Number(outcome.ticketsCount || 0)}`
+    : `${Number(outcome.ticketsCount || 0)} tickets proposés · rapports en attente`;
+
+  return `<section class="ecd-ticket-outcome ${settled ? (positive ? 'positive' : 'negative') : 'pending'}">
+    <div class="ecd-ticket-outcome-head">
+      <div><span>BILAN DES TICKETS PARISPROMAX</span><strong>${escapeHtml(status)}</strong></div>
+      <em>${settled ? 'Calcul terminé' : 'À confirmer'}</em>
+    </div>
+    <div class="ecd-ticket-metrics">
+      <span><small>Tickets gagnants</small><b>${settled ? `${Number(outcome.winningCount || 0)} / ${Number(outcome.ticketsCount || 0)}` : '—'}</b></span>
+      <span><small>Retour théorique</small><b>${money(outcome.totalReturn)}</b></span>
+      <span><small>Mise illustrative</small><b>${money(outcome.totalStake)}</b></span>
+      <span><small>Solde théorique</small><b>${money(outcome.netReturn)}</b></span>
+    </div>
+    ${settled ? `<div class="ecd-winning-tickets">
+      <strong>Tickets gagnants du pronostic</strong>
+      ${winningTickets.length
+        ? `<ul>${winningTickets.map((ticket) => `<li><span>${escapeHtml(ticket.bet)} · ${escapeHtml((ticket.numbers || []).join(' - '))}</span><b>${money(ticket.returnAmount)}</b></li>`).join('')}</ul>`
+        : '<p>Aucun ticket gagnant pour ce pronostic.</p>'}
+    </div>` : '<p>Les tickets gagnants et les montants apparaîtront dès la publication des rapports officiels.</p>'}
+    <p>Simulation du pronostic ParisPromax archivé, avec une mise de ${money(outcome.unitStake)} par ticket. Aucun pari n’est effectué ou encaissé par ParisPromax.</p>
+  </section>`;
+}
+
 function grandCarnetOutcomeMarkup(outcome) {
   if (!outcome) {
     return `<section class="grand-carnet-outcome pending"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>Pronostic archivé indisponible</strong></div><p>Le gain illustratif ne peut pas être calculé pour cette course.</p></section>`;
@@ -800,7 +840,9 @@ function renderRaces() {
 
 function renderResults() {
   const grid = $('#results-grid');
-  const visibleResults = state.results.filter((result) => result.category === state.resultCategory);
+  const visibleResults = state.results.filter((result) => state.resultCategory === 'ecd'
+    ? result.isEcd || result.category === 'ecd'
+    : result.category === 'national');
   $$('[data-results-category]').forEach((button) => {
     button.classList.toggle('active', button.dataset.resultsCategory === state.resultCategory);
     button.setAttribute('aria-selected', String(button.dataset.resultsCategory === state.resultCategory));
@@ -818,7 +860,9 @@ function renderResults() {
     const reference = raceReference(result);
     const resultDetails = `${result.category === 'national'
       ? grandCarnetOutcomeMarkup(result.grandCarnetOutcome)
-      : ''}${result.isEcd || result.category === 'ecd' ? ecdGainsTableMarkup(result) : ''}`;
+      : ''}${result.isEcd || result.category === 'ecd'
+      ? `${ecdTicketOutcomeMarkup(result.ecdTicketOutcome)}${ecdGainsTableMarkup(result)}`
+      : ''}`;
     return `<article class="result-card result-card-detailed">
       <div class="result-card-head">
         <div><span>${escapeHtml([reference, result.track].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
@@ -1807,6 +1851,10 @@ function bindEvents() {
   $('#contact-share-referral').addEventListener('click', shareReferralLink);
   $$('[data-results-category]').forEach((button) => button.addEventListener('click', () => {
     state.resultCategory = button.dataset.resultsCategory;
+    renderResults();
+  }));
+  $$('[data-open-ecd-results]').forEach((link) => link.addEventListener('click', () => {
+    state.resultCategory = 'ecd';
     renderResults();
   }));
   $('#chat-close').addEventListener('click', () => setChatboxOpen(false));
