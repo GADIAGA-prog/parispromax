@@ -42,6 +42,22 @@ async function requireAuth(req, res, next) {
   }
 }
 
+// Resolve a bearer token when one is present, while keeping genuinely public
+// endpoints accessible. Invalid or expired tokens are treated as anonymous.
+async function optionalAuth(req, _res, next) {
+  const header = String(req.headers.authorization || '');
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return next();
+  try {
+    const identity = await authenticateToken(token);
+    req.userId = identity.userId;
+    req.userPhone = identity.phone;
+  } catch {
+    // Public response below will contain no subscriber-only content.
+  }
+  return next();
+}
+
 // Basic-auth middleware for the admin back-office. Disabled entirely when no
 // real ADMIN_PASSWORD is configured on a production DB (default admin/admin
 // would otherwise expose payments + phone numbers). Constant-time compares.
@@ -65,4 +81,4 @@ function requireAdmin(req, res, next) {
   return res.status(401).send('Authentification requise');
 }
 
-module.exports = { signToken, authenticateToken, requireAuth, requireAdmin };
+module.exports = { signToken, authenticateToken, requireAuth, optionalAuth, requireAdmin };

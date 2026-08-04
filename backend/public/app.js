@@ -854,15 +854,16 @@ function renderResults() {
 
   grid.innerHTML = visibleResults.map((result) => {
     const winners = (result.winners || []).slice(0, 5);
-    const comparison = result.aiHit
+    const hasAccess = Boolean(state.me?.access?.hasAccess);
+    const comparison = hasAccess && result.aiHit
       ? '<span class="result-hit success">Base ParisPromax placée</span>'
       : '<span class="result-hit neutral">Résultat officiel vérifié</span>';
     const reference = raceReference(result);
-    const resultDetails = `${result.category === 'national'
+    const resultDetails = hasAccess ? `${result.category === 'national'
       ? grandCarnetOutcomeMarkup(result.grandCarnetOutcome)
       : ''}${result.isEcd || result.category === 'ecd'
       ? `${ecdTicketOutcomeMarkup(result.ecdTicketOutcome)}${ecdGainsTableMarkup(result)}`
-      : ''}`;
+      : ''}` : '';
     return `<article class="result-card result-card-detailed">
       <div class="result-card-head">
         <div><span>${escapeHtml([reference, result.track].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
@@ -888,7 +889,7 @@ async function loadResults(silent = false) {
     grid.innerHTML = '<div class="result-placeholder"></div><div class="result-placeholder"></div><div class="result-placeholder"></div>';
   }
   try {
-    const data = await api(`/races/history?country=${encodeURIComponent(state.nationalCountry)}`, { auth: false });
+    const data = await api(`/races/history?country=${encodeURIComponent(state.nationalCountry)}`);
     state.results = data.history || [];
     renderResults();
     $('#results-updated').textContent = `Dernière vérification : ${new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date())}`;
@@ -1069,6 +1070,7 @@ function combinationCount(selectedHorses, podium) {
 }
 
 function nationalProposalMarkup(game) {
+  if (!state.me?.access?.hasAccess) return '';
   const proposal = game?.proposal;
   const grandCarnet = proposal?.grandCarnet;
   if (!grandCarnet?.horses?.length) {
@@ -1253,7 +1255,7 @@ async function loadNationalSpotlight() {
   const country = countryDetails(state.nationalCountry);
   node.innerHTML = '<div class="skeleton-line"></div><div class="skeleton-line"></div>';
   try {
-    const data = await api(`/races/national?country=${encodeURIComponent(state.nationalCountry)}`, { auth: false });
+    const data = await api(`/races/national?country=${encodeURIComponent(state.nationalCountry)}`);
     const nationalRace = data.pick?.race || null;
     const race = nationalRace || fallbackQuinte();
     const game = data.game || null;
@@ -1530,7 +1532,11 @@ async function register(form) {
 }
 
 async function refreshMe() {
-  if (!state.token) return renderSession();
+  if (!state.token) {
+    renderSession();
+    renderResults();
+    return loadNationalSpotlight();
+  }
   try {
     state.me = await api('/me');
   } catch (error) {
@@ -1541,6 +1547,8 @@ async function refreshMe() {
     }
   }
   renderSession();
+  renderResults();
+  await loadNationalSpotlight();
 }
 
 function renderSession() {

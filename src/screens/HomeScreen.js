@@ -27,7 +27,7 @@ const { getNationalGame } = require('../../shared/nationalGameRules');
 const { formatRaceReference } = require('../../shared/raceReference');
 
 export default function HomeScreen({ navigation }) {
-  const { country, hasPaid } = useAuth();
+  const { country, hasPaid, hasAccess } = useAuth();
   const [tracks, setTracks] = useState([]);
   const [source, setSource] = useState(null);
   const [offline, setOffline] = useState(false);
@@ -218,7 +218,7 @@ export default function HomeScreen({ navigation }) {
                   )}
                 </Pressable>
               )}
-              {nationalGame ? <NationalGameCard game={nationalGame} /> : null}
+              {hasAccess && nationalGame ? <NationalGameCard game={nationalGame} /> : null}
             </View>
             <View style={styles.ecdHeading}>
               <Text style={styles.sectionKicker}>ECD · COURSES EN DIRECT</Text>

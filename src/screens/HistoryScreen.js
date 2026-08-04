@@ -14,7 +14,7 @@ function formatXof(value) {
 }
 
 export default function HistoryScreen() {
-  const { country } = useAuth();
+  const { country, hasAccess } = useAuth();
   const countryName = countryCatalog.find((item) => item.code === country)?.name || country;
   const [history, setHistory] = useState([]);
   const [category, setCategory] = useState('ecd');
@@ -84,8 +84,8 @@ export default function HistoryScreen() {
         </View>
       </View>
 
-      {/* Real success-rate banner */}
-      <View style={styles.rateBanner}>
+      {/* Subscriber report: performance of archived predictions. */}
+      {hasAccess ? <View style={styles.rateBanner}>
         <Ionicons name="trending-up" size={20} color={COLORS.onAccent} />
         {stat && stat.rate != null ? (
           <Text style={styles.rateText}>
@@ -94,7 +94,7 @@ export default function HistoryScreen() {
         ) : (
           <Text style={styles.rateText}>Taux de réussite : en cours de mesure</Text>
         )}
-      </View>
+      </View> : null}
 
       <FlatList
         data={visibleHistory}
@@ -133,15 +133,15 @@ export default function HistoryScreen() {
                     {item.number ? `${item.number} · ` : ''}{item.track} · {item.date}
                   </Text>
                 </View>
-                {item.aiHit ? (
+                {hasAccess && item.aiHit ? (
                   <View style={styles.win}><Text style={styles.winText}>PRONOSTIC PLACÉ</Text></View>
-                ) : (
+                ) : hasAccess ? (
                   <View style={styles.miss}><Text style={styles.missText}>Non placé</Text></View>
-                )}
+                ) : null}
               </View>
 
               {/* Our AI prediction */}
-              {predictions.length > 0 && (
+              {hasAccess && predictions.length > 0 && (
                 <View style={styles.line}>
                   <Text style={styles.lineLabel}>Pronostic</Text>
                   <View style={styles.chips}>
@@ -169,7 +169,7 @@ export default function HistoryScreen() {
                 </View>
               </View>
 
-              {item.category === 'ecd' || item.isEcd ? (
+              {hasAccess && (item.category === 'ecd' || item.isEcd) ? (
                 <>
                   <EcdTicketOutcomeCard outcome={item.ecdTicketOutcome} />
                   <EcdGainsTable
@@ -181,7 +181,7 @@ export default function HistoryScreen() {
                 </>
               ) : null}
 
-              {country === 'bf' && item.category === 'national' && outcome ? (
+              {hasAccess && country === 'bf' && item.category === 'national' && outcome ? (
                 <View style={styles.gainsBox}>
                   <Text style={styles.gainsKicker}>TABLEAU DES GAINS · BURKINA FASO</Text>
                   <Text style={[styles.gainsStatus, outcome.isWinning ? styles.gainsWon : styles.gainsLost]}>

@@ -1,6 +1,6 @@
 const express = require('express');
 const prisma = require('../db');
-const { requireAuth } = require('../auth');
+const { requireAuth, optionalAuth } = require('../auth');
 const { getAccess } = require('../services/subscription');
 const { groupPicks: buildGroups } = require('../services/predictionSelection');
 const { getNationalGame } = require('../../../shared/nationalGameRules');
@@ -130,7 +130,7 @@ router.get('/full', async (req, res) => {
 // GET /races/national?country=bf&date=YYYY-MM-DD — LA course support des paris
 // PMU du pays (Quarté LONAB au Burkina, LONACI en CI…), désignée chaque jour
 // depuis le back-office, + le journal hippique national à télécharger. Public.
-router.get('/national', async (req, res) => {
+router.get('/national', optionalAuth, async (req, res) => {
   const country = String(req.query.country || '').trim().toLowerCase();
   if (!country) return res.status(400).json({ error: 'country requis' });
   let date = req.query.date;
@@ -161,7 +161,8 @@ router.get('/national', async (req, res) => {
       return (Number.isFinite(oddsA) && oddsA > 0 ? oddsA : 999)
         - (Number.isFinite(oddsB) && oddsB > 0 ? oddsB : 999);
     });
-  const proposal = game
+  const access = req.userId ? await getAccess(req.userId) : { hasAccess: false };
+  const proposal = access.hasAccess && game
     ? buildNationalBetProposal(game, [...predictionCandidates, ...horseCandidates], {
         nonPartants,
         source: predictionCandidates.length ? 'latest-analysis' : 'market-ranking',
@@ -272,7 +273,8 @@ router.get('/ecd', async (req, res) => {
 // GET /races/history — finished races with our AI prediction + the actual
 // arrival + whether our #1 pick placed (top 3). Public. Drives the app's
 // History screen so users compare pronostic vs résultat.
-router.get('/history', async (req, res) => {
+router.get('/history', optionalAuth, async (req, res) => {
+  const access = req.userId ? await getAccess(req.userId) : { hasAccess: false };
   const country = String(req.query.country || 'bf').trim().toLowerCase();
   const ecdProfile = getEcdProfile(country);
   if (!ecdProfile) return res.status(400).json({ error: 'country invalide' });
@@ -349,15 +351,17 @@ router.get('/history', async (req, res) => {
       race: r.race.name,
       number: formatRaceReference({ ...full, id: r.race.externalId }),
       date: r.race.date,
-      payouts,
+      payouts: access.hasAccess ? payouts : [],
       winners, // finishing order [num, num, ...]
       category,
       isEcd,
-      topPicks, // pronostic figé = arrivée + 2
-      groups,
-      aiHit: r.predicted, // our #1 pick finished in the top 3
-      grandCarnetOutcome,
-      ecdTicketOutcome,
+      ...(access.hasAccess ? {
+        topPicks,
+        groups,
+        aiHit: r.predicted,
+        grandCarnetOutcome,
+        ecdTicketOutcome,
+      } : {}),
     };
   }).filter(Boolean);
 
