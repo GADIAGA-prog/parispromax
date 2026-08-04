@@ -93,6 +93,44 @@ function parseDocumentLinks(html, pageUrl, date, kind) {
     .sort((a, b) => a.meeting - b.meeting);
 }
 
+function meetingOneCandidate(document) {
+  if (!document || Number(document.meeting) === 1 || !document.url) return null;
+  let url;
+  try {
+    const parsed = new URL(document.url);
+    const nextPath = parsed.pathname.replace(/([_-]R)\d+(?=\.pdf$)/i, (_match, prefix) => `${prefix}1`);
+    if (nextPath === parsed.pathname) return null;
+    parsed.pathname = nextPath;
+    url = parsed.toString();
+  } catch {
+    return null;
+  }
+  return {
+    ...document,
+    meeting: 1,
+    title: String(document.title || '').replace(/\bR\s*\d+\b/i, 'R1'),
+    url,
+    inferredFromOfficialUrl: true,
+  };
+}
+
+async function includePublishedMeetingOne(documents) {
+  if (!documents?.length || documents.some((document) => document.meeting === 1)) return documents;
+  for (const document of documents) {
+    const candidate = meetingOneCandidate(document);
+    if (!candidate) continue;
+    try {
+      const response = await HTTP.head(candidate.url);
+      if (response.status >= 200 && response.status < 300) {
+        return [candidate, ...documents].sort((a, b) => a.meeting - b.meeting);
+      }
+    } catch {
+      // La LONAB n'a pas publié de document R1 compagnon à cette adresse.
+    }
+  }
+  return documents;
+}
+
 async function discoverOfficialDocuments(countryValue, date, { force = false } = {}) {
   const source = officialSource(countryValue);
   if (!source) return null;
@@ -106,9 +144,11 @@ async function discoverOfficialDocuments(countryValue, date, { force = false } =
       ? HTTP.get(source.resultsUrl).catch(() => null)
       : Promise.resolve(null),
   ]);
+  let programs = parseDocumentLinks(programResponse.data, source.programUrl, date, 'program');
+  if (source.operator === 'LONAB') programs = await includePublishedMeetingOne(programs);
   const value = {
     source,
-    programs: parseDocumentLinks(programResponse.data, source.programUrl, date, 'program'),
+    programs,
     reports: resultsResponse
       ? parseDocumentLinks(resultsResponse.data, source.resultsUrl, date, 'report')
       : [],
@@ -428,6 +468,7 @@ module.exports = {
   officialSource,
   documentIdentity,
   parseDocumentLinks,
+  meetingOneCandidate,
   discoverOfficialDocuments,
   raceParts,
   selectOfficialRaces,

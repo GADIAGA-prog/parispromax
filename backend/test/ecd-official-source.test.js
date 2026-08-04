@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   documentIdentity,
   parseDocumentLinks,
+  meetingOneCandidate,
   selectOfficialRaces,
   parseLonabReportText,
   payoutRowsFromBlock,
@@ -53,6 +54,22 @@ test('le programme LONAB du 3 août conserve R1 et R3 quand la date est dans le 
     'program'
   );
   assert.deepEqual(documents.map((item) => item.meeting), [1, 3]);
+});
+
+test('retrouve le PDF officiel R1 quand la page LONAB ne référence que R3', () => {
+  const candidate = meetingOneCandidate({
+    date: '2026-08-03',
+    meeting: 3,
+    kind: 'program',
+    title: 'journal hippique ECD du 03 AOUT 2026 R3',
+    url: 'https://www.lonab.bf/sites/default/files/2026-08/JH_ECD_DU-03-08-2026_R3.pdf',
+  });
+  assert.equal(candidate.meeting, 1);
+  assert.equal(
+    candidate.url,
+    'https://www.lonab.bf/sites/default/files/2026-08/JH_ECD_DU-03-08-2026_R1.pdf'
+  );
+  assert.match(candidate.title, /R1$/);
 });
 
 test('la sélection officielle conserve toutes les courses de R1 et R3', () => {
