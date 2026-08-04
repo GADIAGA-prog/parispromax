@@ -32,6 +32,29 @@ test('le programme LONAB du 2 août contient exclusivement R1 et R3', () => {
   assert.match(documents[0].url, /^https:\/\/www\.lonab\.bf\//);
 });
 
+test('le programme LONAB du 3 août conserve R1 et R3 quand la date est dans le titre', () => {
+  const html = `
+    <div class="views-row">
+      <span>journal hippique ECD du 03 AOÛT 2026 R1</span>
+      <a href="/documents/journal-hippique-r1.pdf">Télécharger</a>
+    </div>
+    <div class="views-row">
+      <span>journal hippique ECD du 03 AOÛT 2026 R3</span>
+      <a href="/documents/journal-hippique-r3.pdf">Télécharger</a>
+    </div>
+    <div class="views-row">
+      <span>journal hippique ECD du 02 AOÛT 2026 R3</span>
+      <a href="/documents/journal-hippique-veille-r3.pdf">Télécharger</a>
+    </div>`;
+  const documents = parseDocumentLinks(
+    html,
+    'https://www.lonab.bf/programme-ecd',
+    '2026-08-03',
+    'program'
+  );
+  assert.deepEqual(documents.map((item) => item.meeting), [1, 3]);
+});
+
 test('la sélection officielle conserve toutes les courses de R1 et R3', () => {
   const race = (meeting, course) => ({
     externalId: `pmu-2026-08-02-R${meeting}-C${course}`,

@@ -49,11 +49,22 @@ function documentIdentity(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase();
-  const dateMatch = normalized.match(/(\d{2})\s*[-_]\s*(\d{2})\s*[-_]\s*(\d{4})/);
+  const numericDate = normalized.match(/(\d{1,2})\s*[-_\/.]\s*(\d{1,2})\s*[-_\/.]\s*(\d{4})/);
+  const frenchDate = normalized.match(
+    /(\d{1,2})\s+(JANVIER|FEVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOUT|SEPTEMBRE|OCTOBRE|NOVEMBRE|DECEMBRE)\s+(\d{4})/
+  );
   const meetingMatch = normalized.match(/(?:REUNION|\bR)\s*[-_:]?\s*(\d+)/);
-  if (!dateMatch || !meetingMatch) return null;
+  if ((!numericDate && !frenchDate) || !meetingMatch) return null;
+  const months = [
+    'JANVIER', 'FEVRIER', 'MARS', 'AVRIL', 'MAI', 'JUIN',
+    'JUILLET', 'AOUT', 'SEPTEMBRE', 'OCTOBRE', 'NOVEMBRE', 'DECEMBRE',
+  ];
+  const day = Number(numericDate?.[1] || frenchDate[1]);
+  const month = Number(numericDate?.[2] || months.indexOf(frenchDate[2]) + 1);
+  const year = Number(numericDate?.[3] || frenchDate[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   return {
-    date: `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`,
+    date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
     meeting: Number(meetingMatch[1]),
   };
 }
@@ -61,9 +72,12 @@ function documentIdentity(value) {
 function parseDocumentLinks(html, pageUrl, date, kind) {
   const $ = cheerio.load(String(html || ''));
   const documents = [];
-  $('tr').each((_index, row) => {
-    const title = $(row).text().replace(/\s+/g, ' ').trim();
-    const href = $(row).find('a[href]').attr('href');
+  $('a[href]').each((_index, link) => {
+    const container = $(link).closest('tr, article, li, .views-row');
+    const title = (container.length ? container.text() : $(link).parent().text())
+      .replace(/\s+/g, ' ')
+      .trim();
+    const href = $(link).attr('href');
     if (!href) return;
     const identity = documentIdentity(`${title} ${href}`);
     if (!identity || identity.date !== date) return;
