@@ -1,0 +1,18 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var C,B={aua:function aua(d,e){this.a=d
+this.b=e}},A
+C=c[0]
+B=a.updateHolder(c[938],B)
+A=c[2217]
+B.aua.prototype={}
+var z=a.updateTypes([]);(function inheritance(){var y=a.inherit
+y(B.aua,C.ac)})()
+C.an(b.typeUniverse,JSON.parse('{"aua":{"ac":[]}}'));(function constants(){var y=a.makeConstList
+A.kR4=new B.aua(0,"PLAY_APP_CLASSIFICATION_UNSPECIFIED")
+A.kR5=new B.aua(1,"PLAY_APP_CLASSIFICATION_STANDARD")
+A.bdF=new B.aua(2,"PLAY_APP_CLASSIFICATION_PLACEHOLDER_P1")
+A.bdG=new B.aua(4,"PLAY_APP_CLASSIFICATION_EXTERNAL")
+A.cQT=new B.aua(3,"PLAY_APP_CLASSIFICATION_THIRD_PARTY_APP_STORE")
+A.cA3=y([A.kR4,A.kR5,A.bdF,A.bdG,A.cQT],C.t("r<aua>"))})()};
+(a=>{a["UdXEmP/itFGQ7mebqWldmhGwyig="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3040.part.js.map

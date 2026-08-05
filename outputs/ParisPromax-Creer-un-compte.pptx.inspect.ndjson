@@ -1,0 +1,98 @@
+{"kind":"deck","id":"pr/w9doaf","name":"Deck"}
+{"kind":"layout","layoutId":"419545ee-ca06-4177-a758-c76aac11d48c","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"b3486c0c-908f-4faa-a17c-4bd11f329cd3","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/o4kq0h","slide":1,"title":"GUIDE DE DÉMARRAGE","textShapes":5}
+{"kind":"shape","id":"sh/f6xsr69c","slide":1,"name":"accent-top","bbox":[0,0,720,18]}
+{"kind":"textbox","id":"sh/18zatgr2","slide":1,"name":"eyebrow","text":"GUIDE DE DÉMARRAGE","textPreview":"GUIDE DE DÉMARRAGE","textChars":18,"textLines":1,"bbox":[80,438,560,36]}
+{"kind":"textbox","id":"sh/6horuhsf","slide":1,"name":"opening-title","text":"Créez votre compte ParisPromax","textPreview":"Créez votre compte ParisPromax","textChars":30,"textLines":1,"bbox":[58,500,604,190]}
+{"kind":"textbox","id":"sh/rixsnm90","slide":1,"name":"opening-subtitle","text":"Une inscription simple, claire et sécurisée.","textPreview":"Une inscription simple, claire et sécurisée.","textChars":44,"textLines":1,"bbox":[82,710,556,76]}
+{"kind":"shape","id":"sh/sj69wral","slide":1,"name":"official-link","bbox":[110,844,500,80]}
+{"kind":"textbox","id":"sh/tkfapwr6","slide":1,"name":"official-link-text","text":"www.parispromax.com","textPreview":"www.parispromax.com","textChars":19,"textLines":1,"bbox":[120,861,480,46]}
+{"kind":"textbox","id":"sh/id4rqhsj","slide":1,"name":"opening-disclaimer","text":"18+ • Aucun gain garanti","textPreview":"18+ • Aucun gain garanti","textChars":24,"textLines":1,"bbox":[110,1070,500,44]}
+{"kind":"image","id":"im/lcvutsjy","slide":1,"name":"","geometry":"ellipse","alt":"ParisPromax logo","bbox":[240,155,240,240]}
+{"kind":"notes","id":"nt/o4kq0h","slide":1,"text":""}
+{"kind":"slide","id":"sl/0v8obc","slide":2,"title":"1","textShapes":6}
+{"kind":"shape","id":"sh/14z6d47q","slide":2,"name":"header-panel-1","bbox":[28,28,664,146]}
+{"kind":"shape","id":"sh/03q5kzq5","slide":2,"name":"step-1","bbox":[50,52,58,58]}
+{"kind":"textbox","id":"sh/n6hofepg","slide":2,"name":"step-text-1","text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[50,58,58,44]}
+{"kind":"textbox","id":"sh/m587m98b","slide":2,"name":"title-1","text":"Ouvrez le site officiel","textPreview":"Ouvrez le site officiel","textChars":23,"textLines":1,"bbox":[126,49,530,58]}
+{"kind":"textbox","id":"sh/98z6ho7m","slide":2,"name":"subtitle-1","text":"Saisissez directement www.parispromax.com","textPreview":"Saisissez directement www.parispromax.com","textChars":41,"textLines":1,"bbox":[126,107,530,38]}
+{"kind":"shape","id":"sh/o7qpojq1","slide":2,"name":"create-account-cta","bbox":[146,865,428,92]}
+{"kind":"textbox","id":"sh/3ado3apc","slide":2,"name":"create-account-cta-text","text":"Créer un compte  →","textPreview":"Créer un compte  →","textChars":18,"textLines":1,"bbox":[156,886,408,50]}
+{"kind":"shape","id":"sh/294nap8r","slide":2,"name":"footer-1","bbox":[28,1090,664,158]}
+{"kind":"textbox","id":"sh/wzipczat","slide":2,"name":"footer-copy-1","text":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textPreview":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textChars":83,"textLines":1,"bbox":[54,1114,612,66]}
+{"kind":"textbox","id":"sh/x0rql4be","slide":2,"name":"footer-disclaimer-1","text":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textPreview":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textChars":62,"textLines":1,"bbox":[54,1184,612,38]}
+{"kind":"image","id":"im/nehojm5w","slide":2,"name":"","geometry":"rect","alt":"Accueil officiel ParisPromax","bbox":[0,0,720,1280]}
+{"kind":"notes","id":"nt/0v8obc","slide":2,"text":""}
+{"kind":"slide","id":"sl/1hmf4k","slide":3,"title":"2","textShapes":5}
+{"kind":"shape","id":"sh/c3m983q5","slide":3,"name":"header-panel-2","bbox":[28,28,664,146]}
+{"kind":"shape","id":"sh/d4vq18rq","slide":3,"name":"step-2","bbox":[50,52,58,58]}
+{"kind":"textbox","id":"sh/y54rad8v","slide":3,"name":"step-text-2","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[50,58,58,44]}
+{"kind":"textbox","id":"sh/z6d83i9g","slide":3,"name":"title-2","text":"Renseignez votre identité","textPreview":"Renseignez votre identité","textChars":25,"textLines":1,"bbox":[126,49,530,58]}
+{"kind":"textbox","id":"sh/0769cnq1","slide":3,"name":"subtitle-2","text":"Prénom, nom, date et lieu de naissance","textPreview":"Prénom, nom, date et lieu de naissance","textChars":38,"textLines":1,"bbox":[126,107,530,38]}
+{"kind":"shape","id":"sh/l8fq5srm","slide":3,"name":"identity-highlight","bbox":[168,438,388,110]}
+{"kind":"shape","id":"sh/mtorex87","slide":3,"name":"footer-2","bbox":[28,1090,664,158]}
+{"kind":"textbox","id":"sh/nux8729s","slide":3,"name":"footer-copy-2","text":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textPreview":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textChars":83,"textLines":1,"bbox":[54,1114,612,66]}
+{"kind":"textbox","id":"sh/3a1szm98","slide":3,"name":"footer-disclaimer-2","text":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textPreview":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textChars":62,"textLines":1,"bbox":[54,1184,612,38]}
+{"kind":"image","id":"im/atknat4j","slide":3,"name":"","geometry":"rect","alt":"Formulaire inscription ParisPromax","bbox":[0,0,720,1280]}
+{"kind":"notes","id":"nt/1hmf4k","slide":3,"text":""}
+{"kind":"slide","id":"sl/aeenfi","slide":4,"title":"3","textShapes":5}
+{"kind":"shape","id":"sh/547elsze","slide":4,"name":"header-panel-3","bbox":[28,28,664,146]}
+{"kind":"shape","id":"sh/43yxcnit","slide":4,"name":"step-3","bbox":[50,52,58,58]}
+{"kind":"textbox","id":"sh/vypwfihc","slide":4,"name":"step-text-3","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[50,58,58,44]}
+{"kind":"textbox","id":"sh/adwf6d0r","slide":4,"name":"title-3","text":"Sécurisez votre accès","textPreview":"Sécurisez votre accès","textChars":21,"textLines":1,"bbox":[126,49,530,58]}
+{"kind":"textbox","id":"sh/x07ehszi","slide":4,"name":"subtitle-3","text":"Pays, téléphone et mot de passe personnel","textPreview":"Pays, téléphone et mot de passe personnel","textChars":41,"textLines":1,"bbox":[126,107,530,38]}
+{"kind":"shape","id":"sh/wzyx8nix","slide":4,"name":"access-highlight","bbox":[168,548,388,158]}
+{"kind":"shape","id":"sh/fu9grmhg","slide":4,"name":"footer-3","bbox":[28,1090,664,158]}
+{"kind":"textbox","id":"sh/et0fih0v","slide":4,"name":"footer-copy-3","text":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textPreview":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textChars":83,"textLines":1,"bbox":[54,1114,612,66]}
+{"kind":"textbox","id":"sh/c7e5kb2t","slide":4,"name":"footer-disclaimer-3","text":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textPreview":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textChars":62,"textLines":1,"bbox":[54,1184,612,38]}
+{"kind":"image","id":"im/ruxgf2dw","slide":4,"name":"","geometry":"rect","alt":"Formulaire pays téléphone mot de passe","bbox":[0,0,720,1280]}
+{"kind":"notes","id":"nt/aeenfi","slide":4,"text":""}
+{"kind":"slide","id":"sl/x4jq4c","slide":5,"title":"4","textShapes":5}
+{"kind":"shape","id":"sh/hkbalc3i","slide":5,"name":"header-panel-4","bbox":[28,28,664,146]}
+{"kind":"shape","id":"sh/gj2ts7mx","slide":5,"name":"step-4","bbox":[50,52,58,58]}
+{"kind":"textbox","id":"sh/7utsf250","slide":5,"name":"step-text-4","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[50,58,58,44]}
+{"kind":"textbox","id":"sh/mtkbmx4v","slide":5,"name":"title-4","text":"Préparez la récupération","textPreview":"Préparez la récupération","textChars":24,"textLines":1,"bbox":[126,49,530,58]}
+{"kind":"textbox","id":"sh/twbahsn6","slide":5,"name":"subtitle-4","text":"Choisissez une réponse connue de vous seul","textPreview":"Choisissez une réponse connue de vous seul","textChars":42,"textLines":1,"bbox":[126,107,530,38]}
+{"kind":"shape","id":"sh/8v2to7ml","slide":5,"name":"recovery-highlight","bbox":[168,699,388,112]}
+{"kind":"shape","id":"sh/rqdcrmlk","slide":5,"name":"footer-4","bbox":[28,1090,664,158]}
+{"kind":"textbox","id":"sh/qp4byh4z","slide":5,"name":"footer-copy-4","text":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textPreview":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textChars":83,"textLines":1,"bbox":[54,1114,612,66]}
+{"kind":"textbox","id":"sh/sfq14vmt","slide":5,"name":"footer-disclaimer-4","text":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textPreview":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textChars":62,"textLines":1,"bbox":[54,1184,612,38]}
+{"kind":"image","id":"im/3ipkz6xg","slide":5,"name":"","geometry":"rect","alt":"Question de récupération","bbox":[0,0,720,1280]}
+{"kind":"notes","id":"nt/x4jq4c","slide":5,"text":""}
+{"kind":"slide","id":"sl/jugihj","slide":6,"title":"5","textShapes":5}
+{"kind":"shape","id":"sh/grudg7qh","slide":6,"name":"header-panel-5","bbox":[28,28,664,146]}
+{"kind":"shape","id":"sh/1s3e9cr2","slide":6,"name":"step-5","bbox":[50,52,58,58]}
+{"kind":"textbox","id":"sh/61svad8f","slide":6,"name":"step-text-5","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[50,58,58,44]}
+{"kind":"textbox","id":"sh/r21w3i90","slide":6,"name":"title-5","text":"Finalisez votre inscription","textPreview":"Finalisez votre inscription","textChars":27,"textLines":1,"bbox":[126,49,530,58]}
+{"kind":"textbox","id":"sh/s3udcnql","slide":6,"name":"subtitle-5","text":"Parrainage facultatif • majorité obligatoire","textPreview":"Parrainage facultatif • majorité obligatoire","textChars":44,"textLines":1,"bbox":[126,107,530,38]}
+{"kind":"shape","id":"sh/t43e5sr6","slide":6,"name":"referral-highlight","bbox":[168,804,388,56]}
+{"kind":"shape","id":"sh/ixsv6d8j","slide":6,"name":"adult-highlight","bbox":[168,861,388,65]}
+{"kind":"shape","id":"sh/jy1wzi94","slide":6,"name":"footer-5","bbox":[28,1090,664,158]}
+{"kind":"textbox","id":"sh/zapkzy1w","slide":6,"name":"footer-copy-5","text":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textPreview":"Réservé aux 18 ans et plus, sous réserve de l’âge légal applicable dans votre pays.","textChars":83,"textLines":1,"bbox":[54,1114,612,66]}
+{"kind":"textbox","id":"sh/e9gjqt0r","slide":6,"name":"footer-disclaimer-5","text":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textPreview":"ParisPromax ne collecte aucune mise. Aucun gain n’est garanti.","textChars":62,"textLines":1,"bbox":[54,1184,612,38]}
+{"kind":"image","id":"im/apw7alwr","slide":6,"name":"","geometry":"rect","alt":"Parrainage et majorité","bbox":[0,0,720,1280]}
+{"kind":"notes","id":"nt/jugihj","slide":6,"text":""}
+{"kind":"slide","id":"sl/wt2wp5","slide":7,"title":"À CONSERVER EN LIEU SÛR","textShapes":6}
+{"kind":"shape","id":"sh/321c7qhc","slide":7,"name":"accent-top-code","bbox":[0,0,720,18]}
+{"kind":"textbox","id":"sh/43atgvyx","slide":7,"name":"code-eyebrow","text":"À CONSERVER EN LIEU SÛR","textPreview":"À CONSERVER EN LIEU SÛR","textChars":23,"textLines":1,"bbox":[72,130,576,36]}
+{"kind":"textbox","id":"sh/54ju90zi","slide":7,"name":"code-title","text":"Votre code de récupération","textPreview":"Votre code de récupération","textChars":26,"textLines":1,"bbox":[62,204,596,138]}
+{"kind":"shape","id":"sh/ux8ba1gv","slide":7,"name":"code-card","bbox":[92,432,536,190]}
+{"kind":"textbox","id":"sh/vyhs36h0","slide":7,"name":"code-placeholder","text":"XXXX – XXXX","textPreview":"XXXX – XXXX","textChars":11,"textLines":1,"bbox":[112,484,496,82]}
+{"kind":"textbox","id":"sh/gzatcbyl","slide":7,"name":"code-help","text":"Il permet de récupérer votre compte.\nNe le partagez jamais.","textPreview":"Il permet de récupérer votre compte. | Ne le partagez jamais.","textChars":59,"textLines":2,"bbox":[82,710,556,110]}
+{"kind":"shape","id":"sh/h0ju5gz6","slide":7,"name":"safety-line","bbox":[130,890,460,82]}
+{"kind":"textbox","id":"sh/698b61gj","slide":7,"name":"safety-line-text","text":"Mot de passe • réponse • code : privés","textPreview":"Mot de passe • réponse • code : privés","textChars":38,"textLines":1,"bbox":[145,911,430,42]}
+{"kind":"textbox","id":"sh/7ahsz6h4","slide":7,"name":"code-disclaimer","text":"ParisPromax ne demandera jamais ces informations dans un commentaire ou un message public.","textPreview":"ParisPromax ne demandera jamais ces informations dans un commentaire ou un message public.","textChars":90,"textLines":1,"bbox":[72,1080,576,80]}
+{"kind":"notes","id":"nt/wt2wp5","slide":7,"text":""}
+{"kind":"slide","id":"sl/2cb7o5","slide":8,"title":"✓","textShapes":6}
+{"kind":"shape","id":"sh/29ozydo7","slide":8,"name":"accent-top-ready","bbox":[0,0,720,18]}
+{"kind":"shape","id":"sh/4b6h0n6d","slide":8,"name":"check-circle","bbox":[300,382,120,120]}
+{"kind":"textbox","id":"sh/rex0bi5o","slide":8,"name":"check","text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[300,394,120,88]}
+{"kind":"textbox","id":"sh/qdoz2do3","slide":8,"name":"ready-title","text":"Votre compte est prêt","textPreview":"Votre compte est prêt","textChars":21,"textLines":1,"bbox":[62,560,596,92]}
+{"kind":"textbox","id":"sh/dgzidsnu","slide":8,"name":"ready-copy","text":"Connectez-vous pour consulter les courses, les analyses commentées et votre espace membre.","textPreview":"Connectez-vous pour consulter les courses, les analyses commentées et votre espace membre.","textChars":90,"textLines":1,"bbox":[76,690,568,150]}
+{"kind":"shape","id":"sh/cf6h4n69","slide":8,"name":"ready-cta","bbox":[110,900,500,92]}
+{"kind":"textbox","id":"sh/7idgzypk","slide":8,"name":"ready-cta-text","text":"Découvrir ParisPromax  →","textPreview":"Découvrir ParisPromax  →","textChars":24,"textLines":1,"bbox":[125,922,470,48]}
+{"kind":"textbox","id":"sh/6h4zqtoz","slide":8,"name":"ready-link","text":"www.parispromax.com","textPreview":"www.parispromax.com","textChars":19,"textLines":1,"bbox":[110,1042,500,42]}
+{"kind":"textbox","id":"sh/4ra50ret","slide":8,"name":"ready-disclaimer","text":"Réservé aux 18+ • Aucun gain n’est garanti","textPreview":"Réservé aux 18+ • Aucun gain n’est garanti","textChars":42,"textLines":1,"bbox":[90,1170,540,42]}
+{"kind":"image","id":"im/ovm5gr2h","slide":8,"name":"","geometry":"ellipse","alt":"ParisPromax logo final","bbox":[260,120,200,200]}
+{"kind":"notes","id":"nt/2cb7o5","slide":8,"text":""}

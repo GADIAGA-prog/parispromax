@@ -1,0 +1,7 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B
+A=c[0]
+B=c[2543]
+var z=a.updateTypes([]);(function constants(){B.Kt=new A.ep(31,31,31,1)})()};
+(a=>{a["WM62j+ZQw1vK5Uc8BW7/srj2wso="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_1580.part.js.map

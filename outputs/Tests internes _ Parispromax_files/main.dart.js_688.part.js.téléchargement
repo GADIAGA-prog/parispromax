@@ -1,0 +1,30 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={YF:function YF(){},
+bFD(d,e){var y=new B.ewd(A.a2(d,e,16)),x=$.ut6
+y.b=x==null?$.ut6=A.bl($.LiW,null):x
+y.c=b.G.document.createElement("page-loading")
+return y},
+ewd:function ewd(d){var _=this
+_.c=_.b=_.a=_.f=_.e=$
+_.d=d}}
+A=c[0]
+B=a.updateHolder(c[1783],B)
+B.YF.prototype={}
+B.ewd.prototype={
+gu(){return"PageLoadingComponent"},
+q(){var y,x=this,w=x.ag(),v=x.e=A.i_(x,0)
+w.append(v.c)
+v.aa("spinner")
+y=new A.hN()
+x.f=y
+v.N(0,y)},
+v(){this.e.l()},
+A(){this.e.m()}}
+var z=a.updateTypes([]);(function inheritance(){var y=a.inherit
+y(B.YF,A.B)
+y(B.ewd,A.b0)})()
+A.an(b.typeUniverse,JSON.parse('{"ewd":{"j":[]}}'));(function staticFields(){$.LuC=A.a(["._nghost-%ID%{display:flex;flex:1;flex-direction:column;justify-content:center}.spinner._ngcontent-%ID%{display:block;margin:16px auto}"],A.t("r<B>"))
+$.ut6=null
+$.LiW=A.a([$.LuC],A.t("r<B>"))})()};
+(a=>{a["AYN42xyzcxrZkjJpRi6XP9EJYwE="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_688.part.js.map

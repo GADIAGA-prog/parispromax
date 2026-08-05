@@ -11,6 +11,7 @@ import LoginScreen from '../screens/LoginScreen';
 import AgeGateScreen from '../screens/AgeGateScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
+import QuintePlusScreen from '../screens/QuintePlusScreen';
 import RaceDetailScreen from '../screens/RaceDetailScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import HistoryScreen from '../screens/HistoryScreen';
@@ -103,6 +104,11 @@ export default function RootNavigator() {
               name="RaceDetail"
               component={RaceDetailScreen}
               options={{ title: 'Détail de la course' }}
+            />
+            <Stack.Screen
+              name="Nationale"
+              component={QuintePlusScreen}
+              options={{ title: 'Course nationale' }}
             />
             <Stack.Screen
               name="Paywall"

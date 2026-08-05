@@ -1,0 +1,30 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,C,B={ik:function ik(){},
+iv(d,e){var x=new B.e39(A.a2(d,e,0)),w=$.tIN
+x.b=w==null?$.tIN=A.ad(C.a,null):w
+x.c=b.G.document.createElement("console-block-2-columns")
+return x},
+e39:function e39(d){var _=this
+_.c=_.b=_.a=$
+_.d=d}}
+A=c[0]
+C=c[2]
+B=a.updateHolder(c[1766],B)
+B.ik.prototype={}
+B.e39.prototype={
+gu(){return"ConsoleBlock2ColumnsComponent"},
+gcV(){var x=y.h
+return A.a([A.a([],x),A.a([],x)],y.f)},
+q(){var x,w="ratio-1-2",v=this.ag(),u=b.G.document,t=A.Y(u,v)
+A.c(t,w,"")
+this.cg(t,0)
+x=A.Y(u,v)
+A.c(x,w,"")
+this.cg(x,1)}}
+var z=a.updateTypes([]);(function inheritance(){var x=a.inherit
+x(B.ik,A.B)
+x(B.e39,A.b0)})()
+A.an(b.typeUniverse,JSON.parse('{"e39":{"j":[]}}'))
+var y={f:A.t("r<N<B>>"),h:A.t("r<B>")};(function staticFields(){$.tIN=null})()};
+(a=>{a["cs7lUC5lcEfn8U9UpwRexmxAZ5I="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_278.part.js.map

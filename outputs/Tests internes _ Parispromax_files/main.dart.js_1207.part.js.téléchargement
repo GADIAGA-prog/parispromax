@@ -1,0 +1,12 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A={rM:function rM(d,e){this.a=d
+this.b=e}},C
+B=c[0]
+A=a.updateHolder(c[1605],A)
+C=c[2511]
+A.rM.prototype={}
+var z=a.updateTypes([]);(function inheritance(){var y=a.inherit
+y(A.rM,B.ac)})()
+B.an(b.typeUniverse,JSON.parse('{"rM":{"ac":[]}}'));(function constants(){C.iU=new A.rM(0,"PRIMITIVE_ASSET_TYPE_UNSPECIFIED")})()};
+(a=>{a["t9+WAPzvLpxMXThOV/8R83UKang="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_1207.part.js.map

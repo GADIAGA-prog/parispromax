@@ -1,0 +1,92 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,A={
+obp(d,e,f,g,h,i){var x=B.aI()
+e.setAttribute("is-gallery","false")
+return new A.cOu(f,g,h,i,e,d,x)},
+cOu:function cOu(d,e,f,g,h,i,j){var _=this
+_.d=d
+_.e=e
+_.f=!0
+_.r=null
+_.w=f
+_.x=g
+_.a=h
+_.b=i
+_.c=j},
+j2t:function j2t(d,e){this.a=d
+this.b=e},
+j2q:function j2q(d){this.a=d},
+j2r:function j2r(d){this.a=d},
+j2s:function j2s(d){this.a=d},
+obq(d,e){var x=new A.e_J(B.a2(d,e,16)),w=$.tDn
+x.b=w==null?$.tDn=B.bl($.LcP,null):w
+x.c=b.G.document.createElement("bottom-bar-base")
+return x},
+MbF(d,e){return new A.fhF(B.q(d,e,y.c))},
+e_J:function e_J(d){var _=this
+_.e=$
+_.f=null
+_.c=_.b=_.a=$
+_.d=d},
+fhF:function fhF(d){this.a=d}}
+B=c[0]
+C=c[2]
+A=a.updateHolder(c[1778],A)
+A.cOu.prototype={
+sbH(d,e){this.f=e
+this.e.kK(new A.j2t(this,e))},
+G(){var x=this
+x.Vs()
+x.e.kK(new A.j2q(x))
+x.r=x.x.b8X(new A.j2r(x),new A.j2s(x),y.e)},
+B(){this.a20()
+this.d.sbAT(!1)
+var x=this.r
+if(x!=null)x.bs(0)}}
+A.e_J.prototype={
+gu(){return"BottomBarBaseComponent"},
+gcV(){return B.a([B.a([],y.h)],y.f)},
+q(){this.e=B.x(this,0,this.ag(),A.FMJ())},
+v(){var x=this.a,w=this.e
+w.c.sI(x.f)
+w.a.C()},
+A(){this.e.a.D()},
+U(d){var x,w,v=this,u=v.a.d.a,t=v.f!==u
+if(t){x=v.c
+w=C.v.a1(u)
+x.style.setProperty("bottom",w+"px","")
+v.f=u}$.u().F(t)}}
+A.fhF.prototype={
+gu(){return"BottomBarBaseComponent"},
+q(){var x,w=this,v=b.G.document,u=v.createElement("div")
+w.S(u,"bottom-bar-container")
+x=B.Y(v,u)
+w.S(x,"container")
+w.cg(x,0)
+w.K(u)}}
+var z=a.updateTypes(["l<~>(j,F)"])
+A.j2t.prototype={
+$0(){this.a.d.sbAT(this.b)},
+$S:2}
+A.j2q.prototype={
+$0(){var x=this.a
+x.d.sbAT(x.f)},
+$S:2}
+A.j2r.prototype={
+$0(){return C.F.bS(this.a.w.offsetHeight)},
+$S:36}
+A.j2s.prototype={
+$1(d){this.a.d.sfUN(d)},
+$S:0};(function installTearOffs(){var x=a._static_2
+x(A,"FMJ","MbF",0)})();(function inheritance(){var x=a.inherit,w=a.inheritMany
+x(A.cOu,B.wn)
+w(B.cD,[A.j2t,A.j2q,A.j2r])
+x(A.j2s,B.aL)
+x(A.e_J,B.b0)
+x(A.fhF,B.l)})()
+B.an(b.typeUniverse,JSON.parse('{"e_J":{"j":[]},"fhF":{"l":["cOu"],"j":[],"p":[]}}'))
+var y={c:B.t("cOu"),f:B.t("r<N<B>>"),h:B.t("r<B>"),e:B.t("F")};(function staticFields(){$.LmK=B.a(["._nghost-%ID%{background:var(--color-surface);bottom:0;box-shadow:0 -5px 5px -5px #999;display:block;left:0;position:fixed;right:0}.action-triggered._nghost-%ID%{background:var(--color-primary)}[is-navigation-drawer-open=true]._nghost-%ID%>.bottom-bar-container._ngcontent-%ID%{padding-left:296px}[is-navigation-drawer-open=true][is-gallery=true]._nghost-%ID%>.bottom-bar-container._ngcontent-%ID%{padding-left:256px}[side-panel-state=open]._nghost-%ID%{right:var(--dynamic-side-panel-width,370px)}[side-panel-state=open].always-full-width._nghost-%ID%{right:0}[side-panel-state=collapsed]._nghost-%ID%{right:64px}[side-panel-state=collapsed].always-full-width._nghost-%ID%{right:0}.acx-overlay-container ._nghost-%ID%{right:0}.acx-overlay-container ._nghost-%ID% .bottom-bar-container._ngcontent-%ID%{padding-left:0}.container._ngcontent-%ID%{box-sizing:border-box;display:flex;min-height:68px;padding:0 16px}.container._ngcontent-%ID%>*{flex-grow:1}"],y.h)
+$.tDn=null
+$.LcP=B.a([$.LmK],y.h)})()};
+(a=>{a["oSRiO0iW6BfpbOHp12x966ZA23Q="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_966.part.js.map

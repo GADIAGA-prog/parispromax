@@ -3,12 +3,117 @@ const prisma = require('../db');
 const { requireAdmin } = require('../auth');
 const { ingestFromFile, ingestData } = require('../jobs/ingest');
 const { scrapeProgramme } = require('../jobs/scrape');
-const { buildPredictionSnapshot } = require('../services/predictionSelection');
+const {
+  buildPredictionSnapshot,
+  preRacePredictionPicks,
+} = require('../services/predictionSelection');
 const { availableProviders } = require('../services/paymentProvider');
 const { countriesForProviderIds } = require('../services/paymentCountries');
 const { rateLimit } = require('../security');
+const { raceRunnerCount } = require('../services/ecdOfficialSource');
+const { ecdPodiumSize, getEcdProfile } = require('../../../shared/ecdRules');
+const { getNationalGame } = require('../../../shared/nationalGameRules');
+const { canonicalPayoutLabel } = require('../services/nationalOfficialSource');
+const {
+  mergeCompatibleArrival,
+  serializableTransaction,
+  uniqueRunnerNumbers,
+} = require('../services/officialResultState');
 
 const router = express.Router();
+const PAYOUT_CONTEXTS = new Set(['ecd', 'national']);
+
+function parsePayoutRows(value) {
+  try {
+    const rows = JSON.parse(value || '[]');
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+function payoutScope(row) {
+  return {
+    // Historical untagged rows predate multi-country support and are Burkina
+    // ECD rows throughout the existing report reader.
+    country: String(row?.country || 'bf').trim().toLowerCase(),
+    context: String(row?.context || 'ecd').trim().toLowerCase(),
+  };
+}
+
+function manualNationalKind(row) {
+  const explicit = String(row?.kind || '').trim().toLowerCase();
+  if (['order', 'disorder', 'bonus', 'quarte-venant', 'tierce-venant', 'couple-venant', 'simple-venant'].includes(explicit)) {
+    return explicit;
+  }
+  return canonicalPayoutLabel(row?.bet)?.kind || null;
+}
+
+function tagManualPayoutRows(rows, {
+  country,
+  context,
+  reportDate = null,
+  podium = null,
+  arrival = [],
+  gameLabel = null,
+  operator = null,
+} = {}) {
+  const officialArrival = uniqueRunnerNumbers(arrival).slice(0, Number(podium) || 5);
+  return (Array.isArray(rows) ? rows : []).map((row) => {
+    const tagged = {
+      ...row,
+      country,
+      context,
+      source: 'admin',
+      reportStatus: 'manual',
+      reportDate,
+      podium: Number(podium) || null,
+      arrivals: officialArrival.length ? [officialArrival] : [],
+      operator: operator || null,
+    };
+    if (context !== 'national') return tagged;
+    return {
+      ...tagged,
+      kind: manualNationalKind(row),
+      numbers: officialArrival.join(' - '),
+      gameLabel: gameLabel || null,
+    };
+  });
+}
+
+function mergeScopedPayoutRows(existingRows, replacementRows, scope) {
+  const preserved = (Array.isArray(existingRows) ? existingRows : []).flatMap((row) => {
+    const current = payoutScope(row);
+    if (current.country === scope.country && current.context === scope.context) return [];
+    return [{ ...row, country: current.country, context: current.context }];
+  });
+  return [...preserved, ...(Array.isArray(replacementRows) ? replacementRows : [])];
+}
+
+function resolvePayoutContext(value, { hasEcd = false, hasNational = false } = {}) {
+  const requested = String(value || '').trim().toLowerCase();
+  if (requested === 'ecd') return hasEcd ? requested : null;
+  if (requested === 'national') return hasNational ? requested : null;
+  if (requested) return null;
+  if (hasEcd && !hasNational) return 'ecd';
+  if (hasNational && !hasEcd) return 'national';
+  return null;
+}
+
+function maximumRequiredArrival({
+  hasEcd = false,
+  runnerCount = 0,
+  hasNational = false,
+  nationalPodium = null,
+} = {}) {
+  const requirements = [];
+  if (hasEcd) requirements.push(ecdPodiumSize(runnerCount));
+  if (hasNational) {
+    const podium = Number(nationalPodium);
+    requirements.push(Number.isInteger(podium) && podium > 0 ? Math.min(5, podium) : 3);
+  }
+  return Math.max(1, ...(requirements.length ? requirements : [3]));
+}
 
 router.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 120 }), requireAdmin);
 
@@ -123,75 +228,163 @@ router.get('/api/recovery-requests', async (_req, res) => {
 });
 
 // POST /admin/api/results
-// { externalId, winners: [4,7,1,...], payouts?: [{ bet, numbers, amount, winnerCount }] }
+// { externalId, country?, context?, winners: [4,7,1,...], payouts?: [...] }
 // Records the official arrival and computes whether our #1 AI pick placed.
 router.post('/api/results', express.json(), async (req, res) => {
   const { externalId } = req.body || {};
   let { winners } = req.body || {};
   const payoutsInput = req.body?.payouts;
+  const country = String(req.body?.country || 'bf').trim().toLowerCase();
+  const requestedContext = String(req.body?.context || '').trim().toLowerCase();
   if (!externalId || !Array.isArray(winners) || !winners.length) {
     return res.status(400).json({ error: 'externalId et winners[] requis' });
+  }
+  if (!getEcdProfile(country)) {
+    return res.status(400).json({ error: 'country invalide' });
+  }
+  if (requestedContext && !PAYOUT_CONTEXTS.has(requestedContext)) {
+    return res.status(400).json({ error: 'context doit être ecd ou national' });
   }
   // Sanitise the arrival: valid runner numbers (1-30), no duplicates, capped.
   winners = winners.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n >= 1 && n <= 30);
   winners = [...new Set(winners)].slice(0, 30);
-  if (winners.length < 3) {
-    return res.status(400).json({ error: 'winners[] doit contenir au moins 3 numéros valides (1-30)' });
-  }
   if (payoutsInput != null && !Array.isArray(payoutsInput)) {
     return res.status(400).json({ error: 'payouts doit être un tableau' });
   }
-  const payouts = Array.isArray(payoutsInput)
+  const payoutRows = Array.isArray(payoutsInput)
     ? payoutsInput.slice(0, 100).map((row) => ({
         bet: String(row?.bet || '').trim().slice(0, 40),
+        kind: String(row?.kind || '').trim().toLowerCase().slice(0, 30) || null,
         numbers: String(row?.numbers || '').trim().slice(0, 40),
         amount: Math.max(0, Math.round(Number(row?.amount) || 0)),
-        winnerCount: Math.max(0, Math.round(Number(row?.winnerCount) || 0)),
+        winnerCount: row?.winnerCount == null || row?.winnerCount === ''
+          ? null
+          : Math.max(0, Math.round(Number(row.winnerCount) || 0)),
       })).filter((row) => row.bet)
     : null;
   const race = await prisma.race.findUnique({
     where: { externalId },
-    include: { predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    include: { predictions: { orderBy: { createdAt: 'desc' }, take: 50 } },
   });
   if (!race) return res.status(404).json({ error: 'Course introuvable' });
-
-  let predicted = false;
-  let predictionSnapshot = null;
-  if (race.predictions.length) {
-    let picks = [];
-    try {
-      picks = JSON.parse(race.predictions[0].topPicks);
-    } catch {
-      picks = [];
-    }
-    const topPick = picks[0];
-    // Hit = our #1 pick finished in the top 3 (placé).
-    predicted = topPick ? winners.slice(0, 3).includes(topPick.number) : false;
-    predictionSnapshot = JSON.stringify(
-      buildPredictionSnapshot(picks, race, Math.min(winners.length, 5))
-    );
-  }
-
-  const result = await prisma.result.upsert({
-    where: { raceId: race.id },
-    update: {
-      winners: JSON.stringify(winners),
-      predictionSnapshot,
-      predicted,
-      ...(payouts ? { payouts: JSON.stringify(payouts) } : {}),
-    },
-    create: {
-      raceId: race.id,
-      winners: JSON.stringify(winners),
-      predictionSnapshot,
-      predicted,
-      payouts: payouts ? JSON.stringify(payouts) : null,
-    },
+  const [ecdPick, nationalPick] = await Promise.all([
+    prisma.ecdPick.findFirst({
+      where: { country, date: race.date, externalId: race.externalId },
+      select: { id: true },
+    }),
+    prisma.nationalPick.findFirst({
+      where: { country, date: race.date, externalId: race.externalId },
+      select: { id: true, betType: true },
+    }),
+  ]);
+  const runnerCount = raceRunnerCount(race);
+  const nationalGame = nationalPick
+    ? getNationalGame(country, race.date, { betType: nationalPick.betType })
+    : null;
+  const minimumArrival = maximumRequiredArrival({
+    hasEcd: Boolean(ecdPick),
+    runnerCount,
+    hasNational: Boolean(nationalPick),
+    nationalPodium: nationalGame?.podium,
   });
-  // Stamp the LTR training labels on the Runner rows too.
+  if (winners.length < minimumArrival) {
+    return res.status(400).json({
+      error: `winners[] doit contenir au moins ${minimumArrival} numéros valides (1-30)`,
+    });
+  }
+  const payoutContext = payoutsInput == null
+    ? null
+    : resolvePayoutContext(requestedContext, {
+        hasEcd: Boolean(ecdPick),
+        hasNational: Boolean(nationalPick),
+      });
+  if (payoutsInput != null && !payoutContext) {
+    return res.status(400).json({
+      error: requestedContext
+        ? `context ${requestedContext} indisponible pour cette course et ce pays`
+        : 'context requis pour rattacher les rapports (ecd ou national)',
+    });
+  }
+  const picks = preRacePredictionPicks(race);
+  const preparedSnapshot = picks.length
+    ? JSON.stringify(buildPredictionSnapshot(picks, race, minimumArrival))
+    : null;
+  const payoutPodium = payoutContext === 'national'
+    ? Number(nationalGame?.podium) || minimumArrival
+    : payoutContext === 'ecd'
+      ? ecdPodiumSize(runnerCount)
+      : null;
+
   const { stampFinishPositions } = require('../jobs/results');
-  await stampFinishPositions(race.id, winners);
-  res.json({ ok: true, predicted, resultId: result.id });
+  const persisted = await serializableTransaction(prisma, async (tx) => {
+    const current = await tx.result.findUnique({ where: { raceId: race.id } });
+    let currentWinners = [];
+    try { currentWinners = uniqueRunnerNumbers(JSON.parse(current?.winners || '[]')); }
+    catch { currentWinners = []; }
+    const arrivalState = mergeCompatibleArrival(currentWinners, winners);
+    // A full manual arrival may correct an older full arrival. A shorter
+    // contradictory prefix, however, can never erase known later positions.
+    if (!arrivalState.compatible && winners.length < currentWinners.length) {
+      return { conflict: true, currentWinners };
+    }
+    const mergedWinners = arrivalState.compatible ? arrivalState.arrival : winners;
+    const taggedPayouts = payoutRows == null
+      ? null
+      : tagManualPayoutRows(payoutRows, {
+          country,
+          context: payoutContext,
+          reportDate: race.date,
+          podium: payoutPodium,
+          arrival: mergedWinners,
+          gameLabel: payoutContext === 'national' ? nationalGame?.label : null,
+          operator: country === 'bf' ? 'LONAB' : null,
+        });
+    const mergedPayouts = taggedPayouts == null
+      ? null
+      : mergeScopedPayoutRows(
+          parsePayoutRows(current?.payouts),
+          taggedPayouts,
+          { country, context: payoutContext }
+        );
+    const topPick = picks[0];
+    const predicted = topPick
+      ? mergedWinners.slice(0, minimumArrival).includes(Number(topPick.number))
+      : false;
+    const predictionSnapshot = current?.predictionSnapshot || preparedSnapshot;
+    const savedResult = await tx.result.upsert({
+      where: { raceId: race.id },
+      update: {
+        winners: JSON.stringify(mergedWinners),
+        predictionSnapshot,
+        predicted,
+        ...(mergedPayouts ? { payouts: JSON.stringify(mergedPayouts) } : {}),
+      },
+      create: {
+        raceId: race.id,
+        winners: JSON.stringify(mergedWinners),
+        predictionSnapshot,
+        predicted,
+        payouts: mergedPayouts ? JSON.stringify(mergedPayouts) : null,
+      },
+    });
+    await stampFinishPositions(race.id, mergedWinners, tx);
+    return { conflict: false, result: savedResult, predicted, winners: mergedWinners };
+  });
+  if (persisted.conflict) {
+    return res.status(409).json({
+      error: 'arrivee plus courte incompatible avec le resultat deja enregistre',
+      currentWinners: persisted.currentWinners,
+    });
+  }
+  res.json({
+    ok: true,
+    predicted: persisted.predicted,
+    resultId: persisted.result.id,
+    country,
+    context: payoutContext,
+    requiredArrival: minimumArrival,
+    winners: persisted.winners,
+  });
 });
 
 // POST /admin/api/non-partants  { externalId, nonPartants: [3,7] }
@@ -722,5 +915,15 @@ const DASHBOARD_HTML = `<!doctype html>
   setInterval(loadRecoveryRequests, 30000);
 </script>
 </body></html>`;
+
+router._test = {
+  parsePayoutRows,
+  payoutScope,
+  manualNationalKind,
+  tagManualPayoutRows,
+  mergeScopedPayoutRows,
+  resolvePayoutContext,
+  maximumRequiredArrival,
+};
 
 module.exports = router;

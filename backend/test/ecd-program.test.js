@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { getEcdProfile, availableVariants } = require('../../shared/ecdRules');
 const {
+  activeRunnerCount,
   automaticSelection,
   groupSelectedRaces,
 } = require('../src/services/ecdProgram');
@@ -34,7 +35,7 @@ test('les règles ECD burkinabè exposent la mise officielle et les variantes é
   assert.equal(profile.unitStake, 500);
   assert.deepEqual(
     availableVariants(profile, 7).map((variant) => variant.id),
-    ['simple-gagnant', 'simple-place', 'jumele']
+    ['simple-gagnant', 'simple-place', 'jumele-ordre']
   );
   assert.deepEqual(
     availableVariants(profile, 8).map((variant) => variant.id),
@@ -44,6 +45,21 @@ test('les règles ECD burkinabè exposent la mise officielle et les variantes é
 
 test('un programme ECD ne peut être demandé que pour un pays du catalogue', () => {
   assert.equal(getEcdProfile('pays-inconnu'), null);
+});
+
+test('les non-partants font basculer le programme ECD de Trio vers Jumelé', () => {
+  const profile = getEcdProfile('bf');
+  const item = race('SMALL', 'AUTEUIL', '14:00', 8);
+  item.nonPartants = '[8]';
+  const full = JSON.parse(item.raw);
+
+  assert.equal(activeRunnerCount(item, full), 7);
+  const grouped = groupSelectedRaces([item], profile);
+  assert.equal(grouped[0].races[0].runners, 7);
+  assert.deepEqual(
+    grouped[0].races[0].ecd.variants.map((variant) => variant.id),
+    ['simple-gagnant', 'simple-place', 'jumele-ordre']
+  );
 });
 
 test('le repli ECD respecte au maximum deux réunions et cinq courses par réunion', () => {

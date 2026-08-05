@@ -17,69 +17,161 @@ import { loadRaces } from '../services/dataService';
 import api from '../services/api';
 import { analyzeRace, confidenceLabel } from '../services/aiEngine';
 import { buildRaceInsights } from '../services/raceInsights';
+import { countActiveRunners } from '../services/raceContext';
 import { usePrediction } from '../hooks/usePrediction';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 const { formatRaceReference } = require('../../shared/raceReference');
 
-// Picks the day's "featured" race = track with the biggest prize pool.
-// Only considers races that actually have runners (avoids an empty combo).
-function pickFeatured(tracks) {
-  let best = null;
-  for (let meetingIndex = 0; meetingIndex < tracks.length; meetingIndex++) {
-    const t = tracks[meetingIndex];
-    for (let raceIndex = 0; raceIndex < t.races.length; raceIndex++) {
-      const r = t.races[raceIndex];
-      if (!r.horses || !r.horses.length) continue;
-      const score = (t.prizePool || 0) + (r.horses?.length || 0);
-      if (!best || score > best.score) {
-        best = {
-          track: t,
-          race: {
-            ...r,
-            number: formatRaceReference(r, {
-              meetingNumber: meetingIndex + 1,
-              courseNumber: raceIndex + 1,
-            }),
-          },
-          score,
-        };
-      }
-    }
+function findRaceById(tracks, externalId) {
+  for (const track of tracks || []) {
+    const race = (track.races || []).find((item) => String(item.id) === String(externalId));
+    if (race) return { track, race };
   }
-  return best;
+  return null;
+}
+
+function mergeNationalRace(summary, cached, detail, date) {
+  const cachedHorses = Array.isArray(cached?.horses) ? cached.horses : [];
+  const detailHorses = Array.isArray(detail?.horses) ? detail.horses : [];
+  const horses = detailHorses.length ? detailHorses : cachedHorses;
+  const nonPartants = Array.isArray(detail?.nonPartants)
+    ? detail.nonPartants
+    : Array.isArray(cached?.nonPartants)
+      ? cached.nonPartants
+      : [];
+  const scratched = new Set(nonPartants.map((number) => String(number)));
+  const normalizedHorses = horses.map((horse) => ({
+    ...horse,
+    nonPartant: horse.nonPartant === true || scratched.has(String(horse.number)),
+  }));
+  return {
+    ...(cached || {}),
+    ...(summary || {}),
+    ...(detail || {}),
+    id: summary?.id || detail?.id || cached?.id,
+    date: detail?.date || summary?.date || cached?.date || date || null,
+    number: summary?.number || cached?.number || formatRaceReference(summary || detail || cached || {}),
+    betType: summary?.betType || cached?.betType || null,
+    bets: summary?.bets || cached?.bets || [],
+    isQuinte: summary?.isQuinte ?? cached?.isQuinte ?? false,
+    startsAt: cached?.startsAt || summary?.startsAt || null,
+    nonPartants,
+    runners: countActiveRunners({
+      horses: normalizedHorses,
+      nonPartants,
+      runners: summary?.runners || cached?.runners || 0,
+    }),
+    horses: normalizedHorses,
+  };
+}
+
+function NationalRatePill({ rate, sampleSize, resolved, error }) {
+  const measured = rate != null;
+  return (
+    <View style={[styles.ratePill, !measured && styles.ratePillPending]}>
+      <Ionicons name={measured ? 'trending-up' : 'time-outline'} size={13} color={COLORS.onAccent} />
+      <Text style={styles.ratePillText}>
+        {measured
+          ? `Base nationale placée : ${rate}%${sampleSize != null ? ` · ${sampleSize} pronostics` : ''}`
+          : error
+            ? 'Base nationale placée : mesure indisponible'
+            : resolved
+              ? 'Base nationale placée : échantillon en cours de constitution'
+              : 'Base nationale placée : mesure en cours'}
+      </Text>
+    </View>
+  );
+}
+
+async function loadNationalFeature(country) {
+  const [national, { data }] = await Promise.all([
+    api.nationalRace(country),
+    loadRaces(),
+  ]);
+  const summary = national?.pick?.race;
+  if (!summary?.id) return { featured: null, game: national?.game || null };
+
+  const located = findRaceById(data?.racetracks || [], summary.id);
+  const detail = await api.raceDetail(summary.id).catch(() => null);
+  const hydrated = mergeNationalRace(summary, located?.race, detail, national?.date);
+  if (!hydrated.horses.length) return { featured: null, game: national?.game || null };
+
+  return {
+    game: national?.game || null,
+    featured: {
+      track: located?.track || {
+        id: String(summary.track || 'course-nationale').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: summary.track || detail?.track || 'Course nationale',
+        condition: detail?.condition || null,
+      },
+      race: analyzeRace(hydrated),
+    },
+  };
 }
 
 export default function QuintePlusScreen({ navigation }) {
-  const { isLocked } = useAuth();
+  const { isLocked, country } = useAuth();
   const [featured, setFeatured] = useState(null);
-  const [rate, setRate] = useState(null); // real measured rate (null until data)
+  const [nationalGame, setNationalGame] = useState(null);
+  const [rate, setRate] = useState(null);
+  const [rateSample, setRateSample] = useState(null);
+  const [rateResolved, setRateResolved] = useState(false);
+  const [rateError, setRateError] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      const { data } = await loadRaces();
-      const tracks = (data.racetracks || []).map((t) => ({
-        ...t,
-        races: t.races.map((r) => analyzeRace(r)),
-      }));
-      setFeatured(pickFeatured(tracks));
-      try {
-        const s = await api.successRate();
-        setRate(s.rate);
-      } catch (e) {
-        setRate(null);
-      }
-      setLoading(false);
-    })();
-  }, []);
+    let cancelled = false;
+    setFeatured(null);
+    setNationalGame(null);
+    setRate(null);
+    setRateSample(null);
+    setRateResolved(false);
+    setRateError(false);
+    setLoading(true);
+
+    loadNationalFeature(country)
+      .then(({ featured: nextFeatured, game }) => {
+        if (!cancelled) {
+          setFeatured(nextFeatured);
+          setNationalGame(game);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    api.successRate(country)
+      .then((stats) => {
+        if (cancelled) return;
+        const nationalRate = stats?.byContext?.national?.rate;
+        const nationalSample = stats?.byContext?.national?.sampleSize;
+        setRate(nationalRate != null && Number.isFinite(Number(nationalRate)) ? Number(nationalRate) : null);
+        setRateSample(
+          nationalSample != null && Number.isFinite(Number(nationalSample))
+            ? Number(nationalSample)
+            : null
+        );
+        setRateError(false);
+        setRateResolved(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRateError(true);
+          setRateResolved(true);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [country]);
 
   // Upgrade the featured race with the backend model for subscribers.
   const { race: heroRace } = usePrediction(featured?.race, !isLocked && !!featured);
 
   const insights = useMemo(
-    () => buildRaceInsights(heroRace || {}),
-    [heroRace]
+    () => buildRaceInsights(heroRace || {}, { game: nationalGame, mode: 'national' }),
+    [heroRace, nationalGame]
   );
   const selection = insights.selected;
 
@@ -98,8 +190,17 @@ export default function QuintePlusScreen({ navigation }) {
 
   if (!featured) {
     return (
-      <SafeAreaView style={[styles.safe, styles.center]}>
-        <Text style={styles.muted}>Aucune course disponible.</Text>
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.emptyContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{nationalGame?.label || 'Course nationale'} du jour</Text>
+            <NationalRatePill rate={rate} sampleSize={rateSample} resolved={rateResolved} error={rateError} />
+          </View>
+          <View style={styles.emptyState}>
+            <Ionicons name="flag-outline" size={30} color={COLORS.gold} />
+            <Text style={styles.muted}>La course nationale est momentanément indisponible.</Text>
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
@@ -110,13 +211,8 @@ export default function QuintePlusScreen({ navigation }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Quinté+ du jour</Text>
-          {rate != null && (
-            <View style={styles.ratePill}>
-              <Ionicons name="trending-up" size={13} color={COLORS.onAccent} />
-              <Text style={styles.ratePillText}>{rate}%</Text>
-            </View>
-          )}
+          <Text style={styles.title}>{nationalGame?.label || 'Course nationale'} du jour</Text>
+          <NationalRatePill rate={rate} sampleSize={rateSample} resolved={rateResolved} error={rateError} />
         </View>
 
         <TrialBanner />
@@ -126,7 +222,7 @@ export default function QuintePlusScreen({ navigation }) {
         </Text>
 
         {/* Hero combination */}
-        <LockCard locked={isLocked} onUnlockPress={goPaywall} label="Combinaison Quinté+ verrouillée">
+        <LockCard locked={isLocked} onUnlockPress={goPaywall} label="Combinaison nationale verrouillée">
           <View style={styles.hero}>
             <Text style={styles.heroLabel}>Combinaison recommandée</Text>
             <View style={styles.comboRow}>
@@ -164,6 +260,8 @@ export default function QuintePlusScreen({ navigation }) {
               trackName: featured.track.name,
               condition: featured.track.condition,
               race: featured.race,
+              nationalGame,
+              predictionMode: 'national',
             })
           }
         >
@@ -181,9 +279,8 @@ const styles = StyleSheet.create({
   muted: { color: COLORS.textMuted },
   content: { padding: SPACING.md, paddingBottom: SPACING.xxl },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.xs,
   },
   title: { color: COLORS.text, fontSize: FONT.xxl, fontWeight: '900' },
@@ -196,7 +293,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: RADIUS.pill,
   },
-  ratePillText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.sm },
+  ratePillPending: { backgroundColor: COLORS.primary },
+  ratePillText: { color: COLORS.onAccent, fontWeight: '900', fontSize: FONT.sm, flexShrink: 1 },
+  emptyContent: { flex: 1, padding: SPACING.md },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, padding: SPACING.xl },
   raceMeta: { color: COLORS.textMuted, fontSize: FONT.md, marginTop: SPACING.md, marginBottom: SPACING.sm, paddingHorizontal: SPACING.xs },
   hero: {
     backgroundColor: COLORS.surface,
@@ -207,7 +307,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   heroLabel: { color: COLORS.accent, fontWeight: '900', fontSize: FONT.lg, marginBottom: SPACING.md },
-  comboRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: SPACING.lg },
+  comboRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap',
+    gap: 4, marginBottom: SPACING.lg,
+  },
   comboBall: {
     width: 46,
     height: 46,

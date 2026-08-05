@@ -1,0 +1,12 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A,C={
+nDO(d){var y,x=d.a.ah(0).cB(10)
+if(x.length>12)B.aj(B.au(B.aX("BillingCustomerNumber is too long",null),null))
+y=A.o.n1(x,12,"0")
+return A.o.cO(y,0,4)+"-"+A.o.cO(y,4,8)+"-"+A.o.cO(y,8,12)}}
+B=c[0]
+A=c[2]
+C=a.updateHolder(c[913],C)
+var z=a.updateTypes([])};
+(a=>{a["CIZfBbOrSrbcs5IbKQgHtkvjTbI="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_1692.part.js.map

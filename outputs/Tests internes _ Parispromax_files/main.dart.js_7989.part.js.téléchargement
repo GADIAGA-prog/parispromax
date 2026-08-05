@@ -1,0 +1,24 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,D,A={
+egT(){var x=new A.bAR()
+x.R()
+return x},
+DKn(){return A.egT()},
+bAR:function bAR(){this.a=$}}
+B=c[0]
+C=c[1781]
+D=c[2141]
+A=a.updateHolder(c[836],A)
+A.bAR.prototype={
+T(d){return B.z(this,y.d)},
+gP(){return $.yl8()}}
+var z=a.updateTypes(["w()"]);(function installTearOffs(){var x=a._static_0
+x(A,"Oab","DKn",0)})();(function inheritance(){var x=a.inherit
+x(A.bAR,B.w)})()
+B.an(b.typeUniverse,JSON.parse('{"bAR":{"w":[]}}'))
+var y={d:B.t("bAR")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"QXI","yl8",()=>{var w=null,v=B.A("GetWindowsReleaseRequest",A.Oab(),w,w,D.hE,w,w)
+v.M(1,"windowsReleaseReference",C.b0s(),B.t("ang"))
+return v})})()};
+(a=>{a["FcqhmWsRoXBYWdFaNAKr52qf7/I="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_7989.part.js.map

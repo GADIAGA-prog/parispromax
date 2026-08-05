@@ -4,7 +4,7 @@ const config = require('../config');
 const { scrapeProgramme } = require('../jobs/scrape');
 const { ingestData } = require('../jobs/ingest');
 const { detectResults } = require('../jobs/results');
-const { syncOfficialEcdData } = require('../services/ecdOfficialSource');
+const { syncOfficialResultsData } = require('../services/officialCatchup');
 
 const router = express.Router();
 
@@ -53,8 +53,8 @@ async function runRefresh() {
     console.error('[cron] results error:', e.message);
   }
   try {
-    const official = await syncOfficialEcdData({ dates: [today, isoDaysAgo(1)] });
-    console.log('[cron] official ECD:', official);
+    const official = await syncOfficialResultsData({ dates: [today, isoDaysAgo(1)] });
+    console.log('[cron] official reports:', official);
   } catch (e) {
     console.error('[cron] official ECD error:', e.message);
   }
@@ -82,13 +82,20 @@ router.post('/results', checkToken, (req, res) => {
   res.status(202).json({ ok: true, started: true });
   const today = new Date().toISOString().slice(0, 10);
   const dates = [today, isoDaysAgo(1)];
-  detectResults({ dates })
-    .then(async (r) => {
-      console.log('[cron/results]', r);
-      const official = await syncOfficialEcdData({ dates });
-      console.log('[cron/results] official ECD:', official);
-    })
-    .catch((e) => console.error('[cron/results] error:', e.message))
+  (async () => {
+    try {
+      const result = await detectResults({ dates });
+      console.log('[cron/results]', result);
+    } catch (error) {
+      console.error('[cron/results] error:', error.message);
+    }
+    try {
+      const official = await syncOfficialResultsData({ dates });
+      console.log('[cron/results] official reports:', official);
+    } catch (error) {
+      console.error('[cron/results] official ECD error:', error.message);
+    }
+  })()
     .finally(() => { runningResults = false; });
 });
 

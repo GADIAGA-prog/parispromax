@@ -1,0 +1,535 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A,C={
+l5(d){var w=$.bqb().E(0,d)
+if(w==null)throw B.a3(B.au("No known string for "+d.a1(0),null))
+return w},
+H0g(d){if(d===A.aG_)return $.GGI
+if(d===A.aFK)return"android.permission.BODY_SENSORS"
+if(d===A.aFa)return"android.permission.BODY_SENSORS_BACKGROUND"
+if(d===A.aF7)return"android.permission.ACTIVITY_RECOGNITION"
+return A.o.ms(d.a1(0),"POLICY_QUESTION_ID_HEALTH_CONNECT_","android.permission.health.READ_")},
+vz5(d){var w=C.H0g(d)
+return B.b("Describe your app's use of the "+w+" permission",null,"permissionDescription",B.a([w],x.h),null)}}
+B=c[0]
+A=c[2]
+C=a.updateHolder(c[1472],C)
+var z=a.updateTypes([])
+var y={c:"Do you provide a way for users to request that their data is deleted?",g:"What is the core functionality of your app?"}
+var x={h:B.t("r<B>"),j:B.t("r<bx>"),c:B.t("bx")};(function staticFields(){$.GGI="android.permission.health.READ_EXERCISE_ROUTES"})();(function lazyInitializers(){var w=a.lazyFinal
+w($,"V0a","t5P",()=>B.ag(B.a([A.aF7,A.bfX,A.bgd,A.bfm,A.bf4,A.aG_,A.bfF,A.bgb,A.bey,A.bew,A.beY,A.beq,A.beG,A.beK],x.j),x.c))
+w($,"VdX","t8H",()=>B.ag(B.a([A.bfL,A.bfT,A.bep,A.bek,A.bfp,A.bfA,A.bfS,A.bf3],x.j),x.c))
+w($,"Vom","tbh",()=>B.ag(B.a([A.bf0,A.bfR,A.bfQ,A.bfx,A.beX],x.j),x.c))
+w($,"W2N","tjI",()=>B.ag(B.a([A.bg6,A.bgf,A.bfu],x.j),x.c))
+w($,"Wne","tow",()=>B.ag(B.a([A.beS],x.j),x.c))
+w($,"WAE","trT",()=>B.ag(B.a([A.bf9,A.bgl,A.beB,A.aFK,A.aFa,A.bfZ,A.beT,A.bfP,A.bg8,A.bfg,A.bfs],x.j),x.c))
+w($,"WC3","ts8",()=>B.ag(B.a([A.bfW],x.j),x.c))
+w($,"VXV","tio",()=>B.ag(B.a([A.bf2,A.bge],x.j),x.c))
+w($,"VJe","tfO",()=>{var v=x.c,u=B.ajT($.t5P(),!0,v)
+A.c.a2(u,$.t8H())
+A.c.a2(u,$.tbh())
+A.c.a2(u,$.tjI())
+A.c.a2(u,$.tow())
+A.c.a2(u,$.trT())
+A.c.a2(u,$.ts8())
+A.c.a2(u,$.tio())
+return B.ag(u,v)})
+w($,"WdF","o6M",()=>B.ag(B.a([A.ber,A.beZ,A.bfk,A.bfa,A.beg,A.beH,A.bgc,A.bfY,A.beP,A.bet,A.bfb,A.beE],x.j),x.c))
+w($,"V29","o0B",()=>{var v=x.c,u=B.ajT($.tfO(),!0,v)
+A.c.a2(u,$.o6M())
+return B.ag(u,v)})
+w($,"VDd","C3q",()=>{var v=null
+return B.b("Select all of the financial features your app provides. This helps us to make sure the right teams review your submission.",v,v,v,v)})
+w($,"VDc","C3p",()=>{var v=null
+return B.b("Describe the other financial features that your app provides",v,v,v,v)})
+w($,"UMC","bqb",()=>{var v,u,t,s,r,q,p=null,o=B.J(x.c,B.t("o"))
+o.V(0,A.yQ,"Test question title")
+o.V(0,A.aFv,"Test question title 2")
+o.V(0,A.aFE,"Test question title 3")
+o.V(0,A.U9,"Test question title 4")
+o.V(0,A.aFP,$.BSv())
+o.V(0,A.a1r,$.C_V())
+o.V(0,A.aFe,$.BXP())
+o.V(0,A.aFu,$.C97())
+o.V(0,A.It,$.BWo())
+o.V(0,A.Ok,$.BWk())
+o.V(0,A.Ie,$.BWn())
+o.V(0,A.O8,$.BWq())
+o.V(0,A.O6,$.BWi())
+o.V(0,A.Og,$.BWp())
+o.V(0,A.Oh,$.BWf())
+o.V(0,A.In,$.BWl())
+o.V(0,A.Ob,$.BWh())
+o.V(0,A.Oa,$.BWg())
+o.V(0,A.U8,$.BWe())
+o.V(0,A.Uk,$.BWj())
+o.V(0,A.Ug,$.BWd())
+o.V(0,A.Oj,$.BWm())
+o.V(0,A.Od,$.BWs())
+o.V(0,A.Ih,$.BWt())
+o.V(0,A.Ig,$.BWv())
+o.V(0,A.EG,$.BWr())
+o.V(0,A.Ir,$.BWu())
+o.V(0,A.td,$.tbx())
+o.V(0,A.Uc,$.Cra())
+o.V(0,A.afE,$.Cr2())
+o.V(0,A.aFs,$.Cr8())
+o.V(0,A.aFx,$.Cr7())
+o.V(0,A.EF,$.Cr_())
+o.V(0,A.aG0,$.Cr9())
+o.V(0,A.yP,$.Cr0())
+o.V(0,A.Oi,$.Cr1())
+o.V(0,A.aFS,$.tke())
+o.V(0,A.bfe,$.C1V())
+o.V(0,A.bg3,$.CwL())
+o.V(0,A.afs,$.C4b())
+o.V(0,A.a1q,$.C4f())
+o.V(0,A.Of,$.C67())
+o.V(0,A.afZ,$.C63())
+o.V(0,A.aFp,$.C1k())
+for(v=$.o0B().gaH(0);v.ai();){u=v.gb6(0)
+o.V(0,u,C.vz5(u))}o.V(0,A.a1K,$.tmm())
+o.V(0,A.a1t,$.tmn())
+o.V(0,A.Ik,$.C3q())
+o.V(0,A.aeZ,$.C3p())
+o.V(0,A.a1j,$.BS0())
+o.V(0,A.Uf,$.BS2())
+o.V(0,A.afz,$.BRX())
+o.V(0,A.O9,$.CcX())
+o.V(0,A.a1o,$.thu())
+o.V(0,A.Ul,$.Cd4())
+o.V(0,A.afU,$.CcZ())
+v=x.h
+o.V(0,A.aFD,B.b('Where will links to your external app be shown to users? Make sure that your external apps meet the requirements for the countries and regions that you enabled when you enrolled. <a href="https://support.google.com/googleplay/android-developer/topic/16470499" target="_blank" rel="noopener">Learn more</a> ',p,"linkoutsCountryAvailabilityQuestionCaption",B.a(['<a href="https://support.google.com/googleplay/android-developer/topic/16470499" target="_blank" rel="noopener">',"</a>"],v),p))
+o.V(0,A.a1w,$.Cjp())
+o.V(0,A.a1z,$.tje())
+o.V(0,A.a1A,$.tjd())
+o.V(0,A.a1J,$.Cj1())
+o.V(0,A.aeX,$.Cj_())
+o.V(0,A.aFt,$.CiV())
+o.V(0,A.af2,B.b('Select the categories that best describe the topics of content your app publishes. To learn more about these categories, <a href="https://support.google.com/googleplay/android-developer/answer/16189314"target="_blank" rel="noopener">visit the Help center</a>',p,"newsMagsContentTypeQuestionLabel",B.a(['<a href="https://support.google.com/googleplay/android-developer/answer/16189314"target="_blank" rel="noopener">',"</a>"],v),p))
+o.V(0,A.af1,$.CiK())
+o.V(0,A.a1y,$.Cj5())
+o.V(0,A.afY,$.Cjr())
+o.V(0,A.a1G,$.Cj2())
+v=$.Cjq()
+o.V(0,A.a1F,v)
+o.V(0,A.afV,$.Cj4())
+o.V(0,A.a1k,v)
+o.V(0,A.a1n,$.Cj3())
+o.V(0,A.a1v,v)
+o.V(0,A.a1p,$.Cj8())
+o.V(0,A.Uj,$.Cj7())
+o.V(0,A.bff,$.Cj6())
+o.V(0,A.bg_,v)
+o.V(0,A.a1L,$.Cjk())
+o.V(0,A.Uh,$.Cjm())
+o.V(0,A.bfK,$.Cjl())
+o.V(0,A.beD,v)
+for(v=[A.af5,A.afK,A.afq,A.a1l,A.afJ],u=v.length,t=0;t<u;++t)o.V(0,v[t],$.CvG())
+o.V(0,A.Im,$.C9k())
+o.V(0,A.If,$.C9n())
+v=$.CnS()
+o.V(0,A.Is,v)
+o.V(0,A.Id,v)
+o.V(0,A.Iv,$.Cbt())
+o.V(0,A.a1x,$.Cbq())
+o.V(0,A.aF0,$.Cbu())
+o.V(0,A.aFL,$.Ccd())
+o.V(0,A.ag1,$.Ccg())
+o.V(0,A.EI,$.CjC())
+o.V(0,A.a1u,$.Cjy())
+o.V(0,A.af9,$.Cjw())
+o.V(0,A.a1E,$.Ccj())
+o.V(0,A.afH,$.CjM())
+o.V(0,A.aFi,$.CjN())
+o.V(0,A.aG7,$.CjL())
+v=$.CvK()
+o.V(0,A.a1s,v)
+o.V(0,A.afr,$.CjU())
+o.V(0,A.aFT,$.CjV())
+o.V(0,A.aFz,$.CjS())
+o.V(0,A.aFC,$.CjT())
+o.V(0,A.Io,$.CjR())
+o.V(0,A.a1I,v)
+o.V(0,A.beV,$.C9c())
+o.V(0,A.aFn,$.C9b())
+o.V(0,A.bfM,$.C9d())
+o.V(0,A.Bb,$.C9e())
+o.V(0,A.Ba,$.CmB())
+o.V(0,A.Ii,$.Cmz())
+o.V(0,A.afQ,$.CmC())
+o.V(0,A.aFZ,$.Cmw())
+o.V(0,A.bfh,$.Cmx())
+o.V(0,A.beU,$.Cmt())
+o.V(0,A.bfG,$.Cmy())
+o.V(0,A.O5,$.Cmv())
+o.V(0,A.afc,$.CvH())
+v=$.Cz7()
+o.V(0,A.Il,v)
+o.V(0,A.Iw,v)
+v=$.Cza()
+o.V(0,A.Iq,v)
+o.V(0,A.Iu,v)
+o.V(0,A.a1h,$.Czb())
+v=$.BUQ()
+o.V(0,A.afo,v)
+o.V(0,A.aF2,$.CB1())
+u=$.BUS()
+o.V(0,A.aFN,u)
+o.V(0,A.afC,v)
+o.V(0,A.bf_,u)
+o.V(0,A.afS,v)
+o.V(0,A.aFF,$.BUP())
+o.V(0,A.aFX,u)
+o.V(0,A.afI,v)
+o.V(0,A.aG4,$.BUY())
+o.V(0,A.aFB,u)
+o.V(0,A.ag0,v)
+o.V(0,A.aF5,$.BUH())
+o.V(0,A.aeR,v)
+s=$.BUR()
+o.V(0,A.aFR,s)
+o.V(0,A.bfj,u)
+o.V(0,A.afh,v)
+o.V(0,A.beu,u)
+o.V(0,A.af7,v)
+o.V(0,A.bfB,u)
+o.V(0,A.a1H,v)
+o.V(0,A.aFO,u)
+o.V(0,A.afg,v)
+o.V(0,A.aFj,u)
+o.V(0,A.aeS,v)
+r=$.BUT()
+o.V(0,A.afn,r)
+q=$.CBW()
+o.V(0,A.aFg,q)
+o.V(0,A.aF6,q)
+o.V(0,A.aFy,q)
+o.V(0,A.aeT,v)
+o.V(0,A.afA,r)
+o.V(0,A.aFM,q)
+o.V(0,A.afd,s)
+o.V(0,A.aFI,q)
+o.V(0,A.afx,s)
+o.V(0,A.afO,v)
+o.V(0,A.afL,r)
+o.V(0,A.aG2,q)
+o.V(0,A.aFd,q)
+o.V(0,A.afy,v)
+o.V(0,A.afm,r)
+o.V(0,A.aFA,q)
+o.V(0,A.aFh,q)
+o.V(0,A.aFG,q)
+o.V(0,A.a1i,$.BUy())
+o.V(0,A.afB,v)
+o.V(0,A.af6,$.BUU())
+o.V(0,A.bfy,$.BUw())
+o.V(0,A.ag2,v)
+o.V(0,A.aFr,$.BUA())
+o.V(0,A.aeU,r)
+o.V(0,A.aFl,u)
+o.V(0,A.af4,$.C13())
+o.V(0,A.aFH,$.C12())
+o.V(0,A.afu,$.C11())
+o.V(0,A.aFb,$.C1_())
+o.V(0,A.aFf,$.C0Z())
+o.V(0,A.aFo,$.C15())
+for(v=[A.afv,A.aft,A.afT,A.afk,A.afW,A.afG,A.afM,A.afP,A.afX,A.af8,A.afp],u=v.length,t=0;t<u;++t)o.V(0,v[t],s)
+o.V(0,A.aG3,$.BV_())
+o.V(0,A.aF1,$.BV4())
+o.V(0,A.Oe,$.BNe())
+o.V(0,A.af0,$.BMG())
+o.V(0,A.ag_,$.BMP())
+o.V(0,A.Ip,$.BMI())
+o.V(0,A.afi,$.BMN())
+o.V(0,A.cT2,$.BN7())
+o.V(0,A.aeW,$.BMK())
+o.V(0,A.aeY,$.BMZ())
+o.V(0,A.afw,$.BMv())
+o.V(0,A.af_,$.BNi())
+o.V(0,A.Oc,$.BN6())
+o.V(0,A.afD,$.BMO())
+o.V(0,A.af3,$.BN2())
+o.V(0,A.aff,$.BNf())
+o.V(0,A.afb,$.BN9())
+o.V(0,A.afa,$.BMT())
+o.V(0,A.ag3,$.BMU())
+o.V(0,A.afl,$.BMR())
+o.V(0,A.ag4,$.BMH())
+return o})
+w($,"Vzf","C13",()=>{var v=null
+return B.b("Device trade name",v,v,v,v)})
+w($,"Vze","C12",()=>{var v=null
+return B.b("Single Registration Number (SRN)",v,v,v,v)})
+w($,"Vzd","C11",()=>{var v=null
+return B.b("Manufacturer name",v,v,v,v)})
+w($,"Vzb","C1_",()=>{var v=null
+return B.b("Manufacturer address",v,v,v,v)})
+w($,"Vza","C0Z",()=>{var v=null
+return B.b("Electronic instructions for use (eIFU) URL",v,v,v,v)})
+w($,"Vzj","C15",()=>{var v=null
+return B.b("Unique device identification number (UDI-DI)",v,v,v,v)})
+w($,"WnA","CwL",()=>B.b("Specify",null,null,null,"To explicitly name something or state a particular detail"))
+w($,"VAA","C1V",()=>{var v=null
+return B.b("Provide reason (Select all that apply)",v,v,v,v)})
+w($,"Vpp","tbx",()=>{var v=null
+return B.b("Data usage and handling",v,v,v,v)})
+w($,"Vj4","BSv",()=>{var v=null
+return B.b("Does your app collect or share any of the required user data types?",v,v,v,v)})
+w($,"Vx3","C_V",()=>{var v=null
+return B.b("Is all of the user data collected by your app encrypted in transit?",v,v,v,v)})
+w($,"VrO","BXP",()=>{var v=null
+return B.b(y.c,v,v,v,v)})
+w($,"VM9","C97",()=>{var v=null
+return B.b('Has your app successfully completed an independent security review, according to the Mobile Application Security Assessment (MASA) framework? Only answer "yes" if the review is in good standing.',v,v,v,v)})
+w($,"Vpr","BWs",()=>{var v=null
+return B.b("Is this data collected, shared, or both?",v,v,v,v)})
+w($,"Vps","BWt",()=>{var v=null
+return B.b("Is this data processed ephemerally?",v,v,v,v)})
+w($,"Vpu","BWv",()=>{var v=null
+return B.b("Is this data required for your app, or can users choose whether it's collected?",v,v,v,v)})
+w($,"Vpq","BWr",()=>{var v=null
+return B.b("Why is this user data collected? Select all that apply.",v,v,v,v)})
+w($,"Vpt","BWu",()=>{var v=null
+return B.b("Why is this user data shared? Select all that apply.",v,v,v,v)})
+w($,"Vpm","BWo",()=>{var v=null
+return B.b("Personal info",v,v,v,v)})
+w($,"Vph","BWk",()=>{var v=null
+return B.b("Financial info",v,v,v,v)})
+w($,"Vpl","BWn",()=>{var v=null
+return B.b("Location",v,v,v,v)})
+w($,"Vpo","BWq",()=>{var v=null
+return B.b("Web browsing",v,v,v,v)})
+w($,"Vpf","BWi",()=>{var v=null
+return B.b("Messages",v,v,v,v)})
+w($,"Vpn","BWp",()=>{var v=null
+return B.b("Photos and videos",v,v,v,v)})
+w($,"Vpc","BWf",()=>{var v=null
+return B.b("Audio files",v,v,v,v)})
+w($,"Vpi","BWl",()=>{var v=null
+return B.b("Health and fitness",v,v,v,v)})
+w($,"Vpe","BWh",()=>{var v=null
+return B.b("Contacts",v,v,v,v)})
+w($,"Vpd","BWg",()=>{var v=null
+return B.b("Calendar",v,v,v,v)})
+w($,"Vpb","BWe",()=>{var v=null
+return B.b("App info and performance",v,v,v,v)})
+w($,"Vpg","BWj",()=>{var v=null
+return B.b("Files and docs",v,v,v,v)})
+w($,"Vpa","BWd",()=>{var v=null
+return B.b("App activity",v,v,v,v)})
+w($,"Vpj","BWm",()=>{var v=null
+return B.b("Device or other IDs",v,v,v,v)})
+w($,"Wdz","Cra",()=>{var v=null
+return B.b("Which of the following methods of account creation does your app support? Select all that apply",v,v,v,v)})
+w($,"Wdq","Cr2",()=>{var v=null
+return B.b("Can users login to your app with accounts created outside of the app?",v,v,v,v)})
+w($,"Wdx","Cr8",()=>{var v=null
+return B.b("How are these accounts created?",v,v,v,v)})
+w($,"Wdw","Cr7",()=>{var v=null
+return B.b("Describe how these accounts are created",v,v,v,v)})
+w($,"Wdn","Cr_",()=>{var v=null
+return B.b("Add a link that users can use to request that their account and associated data is deleted ",v,v,v,v)})
+w($,"Wdo","Cr0",()=>{var v=null
+return B.b(y.c,v,v,v,v)})
+w($,"Wdy","Cr9",()=>{var v=null
+return B.b("Describe the method of account creation that your app supports",v,v,v,v)})
+w($,"Wdp","Cr1",()=>{var v=null
+return B.b("Delete data URL",v,v,v,v)})
+w($,"W49","tke",()=>{var v=null
+return B.b("Do you want to show this badge on your store listing?",v,v,v,v)})
+w($,"VEj","C4b",()=>{var v=null
+return B.b(y.g,v,v,v,v)})
+w($,"VEn","C4f",()=>{var v=null
+return B.b("Do you want to have this permission pre-granted at installation of your app?",v,v,v,v)})
+w($,"VzG","C1k",()=>{var v=null
+return B.b(y.g,v,v,v,v)})
+w($,"VIa","C67",()=>{var v=null
+return B.b("Tell us about the health features in your app (select all that apply)",v,v,v,v)})
+w($,"VI6","C63",()=>{var v=null
+return B.b("What other health features does your app offer?",v,v,v,v)})
+w($,"WeX","tmm",()=>{var v=null
+return B.b("Describe your app's use of the READ_MEDIA_IMAGES permission",v,v,v,v)})
+w($,"WeZ","tmn",()=>{var v=null
+return B.b("Describe your app's use of the READ_MEDIA_VIDEO permission",v,v,v,v)})
+w($,"Vic","BS0",()=>{var v=null
+return B.b("Provide a link to your app's externally published standards against child sexual abuse and exploitation (CSAE)",v,v,v,v)})
+w($,"Vie","BS2",()=>{var v=null
+return B.b("The designated point of contact must be ready and able to speak about your app's child sexual abuse material (CSAM) prevention practices and compliance",v,v,v,v)})
+w($,"Vi8","BRX",()=>{var v=null
+return B.b("Email address",v,v,v,v)})
+w($,"VSc","CcX",()=>{var v=null
+return B.b("Links to external apps included in your Play app",v,v,v,v)})
+w($,"VSk","thu",()=>{var v=null
+return B.b("Package name",v,v,v,v)})
+w($,"VSl","Cd4",()=>{var v=null
+return B.b("Landing page URL",v,v,v,v)})
+w($,"VSe","CcZ",()=>{var v=null
+return B.b("APK URL",v,v,v,v)})
+w($,"W0o","Cjp",()=>{var v=null
+return B.b("Are you completing this declaration on behalf of your developer account's legal entity?",v,v,v,v)})
+w($,"W0n","tje",()=>{var v=null
+return B.b("Provide the name of the entity you are submitting on behalf of",v,v,v,v)})
+w($,"W_Q","tjd",()=>{var v=null
+return B.b("Provide a URL where we can find contact information for this entity",v,v,v,v)})
+w($,"W0_","Cj1",()=>{var v=null
+return B.b("What category best describes your app or your legal entity?",v,v,v,v)})
+w($,"W_Y","Cj_",()=>{var v=null
+return B.b("Enter a category",v,v,v,v)})
+w($,"W_T","CiV",()=>{var v=null
+return B.b("Is your app a news or magazine aggregator?",v,v,v,v)})
+w($,"W_H","CiK",()=>{var v=null
+return B.b("Content category",v,v,v,v)})
+w($,"W03","Cj5",()=>{var v=null
+return B.b("Does your app have a YouTube channel?",v,v,v,v)})
+w($,"W0q","Cjr",()=>{var v=null
+return B.b("YouTube URL",v,v,v,v)})
+w($,"W00","Cj2",()=>{var v=null
+return B.b("Does your app or your legal entity have published editorial guidelines?",v,v,v,v)})
+w($,"W02","Cj4",()=>{var v=null
+return B.b("Is your app or the entity associated with any journalistic standards groups or initiatives?",v,v,v,v)})
+w($,"W01","Cj3",()=>{var v=null
+return B.b("Has your app or your legal entity received recognition for its journalism?",v,v,v,v)})
+w($,"W06","Cj8",()=>{var v=null
+return B.b("Is your app or your legal entity a member of any industry associations?",v,v,v,v)})
+w($,"W05","Cj7",()=>{var v=null
+return B.b("Provide the name of the association and a URL where we can go to learn more",v,v,v,v)})
+w($,"W04","Cj6",()=>{var v=null
+return B.b("Association name",v,v,v,v)})
+w($,"W0i","Cjk",()=>{var v=null
+return B.b("Is your app or your legal entity a member of a public service broadcaster or media association?",v,v,v,v)})
+w($,"W0k","Cjm",()=>{var v=null
+return B.b("Provide the name and URL of the public service broadcaster or media association",v,v,v,v)})
+w($,"W0j","Cjl",()=>{var v=null
+return B.b("Association name",v,v,v,v)})
+w($,"W0p","Cjq",()=>{var v=null
+return B.b("Website URL",v,v,v,v)})
+w($,"WlG","CvG",()=>{var v=null
+return B.b("Select one of the following documents to upload",v,v,v,v)})
+w($,"WlK","CvK",()=>{var v=null
+return B.b("Select one of the following options to upload",v,v,v,v)})
+w($,"WlH","CvH",()=>{var v=null
+return B.b("Select one of the following licenses to upload",v,v,v,v)})
+w($,"VMr","C9k",()=>{var v=null
+return B.b("Upload your OJK license",v,v,v,v)})
+w($,"VMu","C9n",()=>{var v=null
+return B.b("Upload your OJK registration",v,v,v,v)})
+w($,"W8e","CnS",()=>{var v=null
+return B.b("Upload SEC license documents",v,v,v,v)})
+w($,"VPA","Cbt",()=>{var v=null
+return B.b("Upload CBK DCP license",v,v,v,v)})
+w($,"VPx","Cbq",()=>{var v=null
+return B.b("Upload copy of CBK DCP license application",v,v,v,v)})
+w($,"VPB","Cbu",()=>{var v=null
+return B.b("Upload a letter confirming your license application",v,v,v,v)})
+w($,"VR9","Ccd",()=>{var v=null
+return B.b("Business name",v,v,v,v)})
+w($,"VRc","Ccg",()=>{var v=null
+return B.b("Relationship",v,v,v,v)})
+w($,"W0E","CjC",()=>{var v=null
+return B.b("Upload FCCPC DML license approval letter",v,v,v,v)})
+w($,"W0A","Cjy",()=>{var v=null
+return B.b("Upload a copy of your FCCPC DML application",v,v,v,v)})
+w($,"W0y","Cjw",()=>{var v=null
+return B.b("Upload FCCPC DML license conditional approval letter",v,v,v,v)})
+w($,"VRf","Ccj",()=>{var v=null
+return B.b("Type of lending partner",v,v,v,v)})
+w($,"W0O","CjM",()=>{var v=null
+return B.b("Business name",v,v,v,v)})
+w($,"W0P","CjN",()=>{var v=null
+return B.b("Phone number",v,v,v,v)})
+w($,"W0N","CjL",()=>{var v=null
+return B.b("Email address",v,v,v,v)})
+w($,"W0W","CjU",()=>{var v=null
+return B.b("Business name",v,v,v,v)})
+w($,"W0X","CjV",()=>{var v=null
+return B.b("Phone number",v,v,v,v)})
+w($,"W0U","CjS",()=>{var v=null
+return B.b("Email address",v,v,v,v)})
+w($,"W0V","CjT",()=>{var v=null
+return B.b("License number",v,v,v,v)})
+w($,"W0T","CjR",()=>{var v=null
+return B.b("Upload a copy of your lending partner's CBN license",v,v,v,v)})
+w($,"VMh","C9e",()=>{var v=null
+return B.b("Upload your RBI finance entity license",v,v,v,v)})
+w($,"VMf","C9c",()=>{var v=null
+return B.b("Type of lending partner",v,v,v,v)})
+w($,"VMe","C9b",()=>{var v=null
+return B.b("Business name",v,v,v,v)})
+w($,"VMg","C9d",()=>{var v=null
+return B.b("Website",v,v,v,v)})
+w($,"W6d","CmB",()=>{var v=null
+return B.b("Upload your SECP NBFC license documents",v,v,v,v)})
+w($,"W6b","Cmz",()=>{var v=null
+return B.b("Upload approval letter from the SECP",v,v,v,v)})
+w($,"W6e","CmC",()=>{var v=null
+return B.b("Upload NOC issued by the SECP",v,v,v,v)})
+w($,"W68","Cmw",()=>{var v=null
+return B.b("Business name",v,v,v,v)})
+w($,"W69","Cmx",()=>{var v=null
+return B.b("Phone number",v,v,v,v)})
+w($,"W65","Cmt",()=>{var v=null
+return B.b("Email address",v,v,v,v)})
+w($,"W6a","Cmy",()=>{var v=null
+return B.b("Website",v,v,v,v)})
+w($,"W67","Cmv",()=>{var v=null
+return B.b("Upload lending partner's Non-Banking Finance Company (NBFC) license and SECP approval letter",v,v,v,v)})
+w($,"WsA","Czb",()=>{var v=null
+return B.b("Does your app provide personal loans with interest rates lower than 15% APR?",v,v,v,v)})
+w($,"Wsw","Cz7",()=>{var v=null
+return B.b("Upload BOT license documentation",v,v,v,v)})
+w($,"Wsz","Cza",()=>{var v=null
+return B.b("Upload BOT or MOF license documentation",v,v,v,v)})
+w($,"Vn5","BUQ",()=>{var v=null
+return B.b("Entity legal name",v,v,v,v)})
+w($,"Wv6","CB1",()=>{var v=null
+return B.b("Reference number",v,v,v,v)})
+w($,"Vn7","BUS",()=>{var v=null
+return B.b("Upload a copy of all relevant licenses, including any other documentation confirming permission to operate these products or services in this country / region",v,v,v,v)})
+w($,"Vn4","BUP",()=>{var v=null
+return B.b("Business registration number",v,v,v,v)})
+w($,"Vne","BUY",()=>{var v=null
+return B.b("Business registration number",v,v,v,v)})
+w($,"VmX","BUH",()=>{var v=null
+return B.b("Central Entity (CE) number",v,v,v,v)})
+w($,"Vng","BV_",()=>{var v=null
+return B.b("Business registration number",v,v,v,v)})
+w($,"Vnl","BV4",()=>{var v=null
+return B.b("Business registration number",v,v,v,v)})
+w($,"Vn6","BUR",()=>{var v=null
+return B.b("License number",v,v,v,v)})
+w($,"Vn9","BUU",()=>{var v=null
+return B.b("MiCA license number",v,v,v,v)})
+w($,"VmM","BUw",()=>{var v=null
+return B.b("Upload a copy of all relevant licenses, including any other documentation confirming permission to operate these products or services in the European Union",v,v,v,v)})
+w($,"Vn8","BUT",()=>{var v=null
+return B.b("Select all that apply",v,v,v,v)})
+w($,"WwJ","CBW",()=>{var v=null
+return B.b("Upload license",v,v,v,v)})
+w($,"VmO","BUy",()=>{var v=null
+return B.b("Is your app an authorized crypto-asset service provider?",v,v,v,v)})
+w($,"VmQ","BUA",()=>{var v=null
+return B.b("AMF license number",v,v,v,v)})
+w($,"V8L","BNe",()=>{var v=null
+return B.b("Trust and safety URL",v,v,v,v)})
+w($,"V7W","BMG",()=>B.b("Developer agreement URL",null,null,null,"Label for a URL field where the developer provides a link to their developer agreement."))
+w($,"V7Y","BMI",()=>B.b("Contact support URL",null,null,null,"Label for Developer Support compliance URL question"))
+w($,"V82","BMN",()=>B.b("Illegal content URL",null,null,null,"Label for Illegal Content Removal URL"))
+w($,"V8C","BN7",()=>B.b("Security Policies URL",null,null,null,"Label for Security Policies URL in a declaration."))
+w($,"V8_","BMK",()=>B.b("Government and legal requests URL",null,null,null,"Label for Government Requests compliance URL question in app store policy declaration."))
+w($,"V8f","BMZ",()=>B.b("Parental controls URL",null,null,null,"Label for Parental Controls URL in a declaration."))
+w($,"V8P","BNi",()=>B.b("App store terms of service URL",null,null,null,"Label for App store terms of service URL in a declaration."))
+w($,"V8B","BN6",()=>B.b("Restricted content",null,null,null,"Label for Restricted Content Policy URL in a declaration."))
+w($,"V83","BMO",()=>B.b("Impersonation",null,null,null,"Label for Impersonation Policy URL in a declaration."))
+w($,"V84","BMP",()=>B.b("Intellectual property",null,null,null,"Label for Intellectual Property Policy URL in a declaration."))
+w($,"V8l","BN2",()=>B.b("Privacy, deception, and device abuse",null,null,null,"Label for Privacy, Deception and Device Abuse Policy URL in a declaration."))
+w($,"V7D","BMv",()=>B.b("Ads",null,null,null,"Label for Ads Policy URL in a declaration."))
+w($,"V8M","BNf",()=>B.b("Use of SDKs in apps",null,null,null,"Label for Use of SDKs In Apps Policy URL in a declaration."))
+w($,"V8G","BN9",()=>{var v=null
+return B.b("Spam, functionality, and user experience",v,v,v,v)})
+w($,"V88","BMT",()=>B.b("Malware",null,null,null,"Label for Malware Policy URL in a declaration."))
+w($,"V89","BMU",()=>B.b("Mobile unwanted software",null,null,null,"Label for Mobile Unwanted Software Policy URL in a declaration."))
+w($,"V7X","BMH",()=>B.b("Developer privacy policy URL",null,null,null,"Label for a URL field where the developer provides a link to their developer privacy policy."))
+w($,"V86","BMR",()=>B.b("IP dispute processes",null,null,null,"Label for a URL field where the developer provides a link to their intellectual property dispute processes."))})()};
+(a=>{a["kBwpr3CWWJ+nVtqHxrIXL7AwjLg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3702.part.js.map

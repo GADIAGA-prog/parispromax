@@ -1,0 +1,18 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var C,B,D={
+vDp(d,e,f){var y,x,w,v=C.nC(0,null,d.length)
+if(v<2)return
+if(v<32){A.v2y(d,e,f,0,v,d,0)
+return}y=B.v.i0(v,1)
+x=v-y
+w=B.c.h4(d,0,x)
+A.dN7(d,e,f,y,v,w,0)
+A.dN7(d,e,f,0,y,d,x)
+A.os_(e,f,d,x,v,w,0,x,d,0)}},A
+C=c[0]
+B=c[2]
+D=a.updateHolder(c[1717],D)
+A=c[1719]
+var z=a.updateTypes([])};
+(a=>{a["GQcl2/AaJvTrGElWNjLK/RNRbT0="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3174.part.js.map

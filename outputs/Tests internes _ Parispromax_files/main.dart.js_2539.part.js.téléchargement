@@ -1,0 +1,12 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+odw(){var y=A.uP(null,A.Dw(),null)
+y.toString
+y=new A.q9(new A.zo(),y)
+y.ih("Hm")
+return y}}
+A=c[0]
+B=a.updateHolder(c[1467],B)
+var z=a.updateTypes([])};
+(a=>{a["HiZWt+bpA3AFlQdDTu78/wPXjfg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_2539.part.js.map

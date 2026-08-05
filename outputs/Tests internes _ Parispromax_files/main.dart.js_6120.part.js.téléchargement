@@ -1,0 +1,407 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,C,D,E,F,B={
+uuu(){return new B.bh6(G.ihU,C.E,"","","",0,!1)},
+uut(d,e,f,g,h,i){var w=new A.K(g,new B.l0E(),A.a8(g).n("K<1,dL>")).fT(0,0,new B.l0F(),x.b)
+w=new B.bh6(g,B.Ed0(e,g),h,i,d,w,f)
+w.e9h(d,e,null,f,g,h,i)
+return w},
+Ed0(d,e){var w,v,u="failed precondition",t=d.length
+if(t===0){t=e.length
+w=$.b1p().a
+v=w.length
+if(t>v){t=A.aX("percentages must contain less than "+v+" items.",u)
+t.toString
+A.aj(A.b6(t))}t=A.a8(w).n("K<1,o>")
+t=A.a4(new A.K(w,new B.l0C(),t),t.n("aK.E"))
+return t}w=e.length
+if(w!==t){t=A.aX("percentages ("+t+") and customColors ("+w+") should contain the same number of items.",u)
+t.toString
+A.aj(A.b6(t))}t=A.a8(d).n("K<1,o>")
+t=A.a4(new A.K(d,new B.l0D(),t),t.n("aK.E"))
+return t},
+ahv:function ahv(d,e){this.a=d
+this.b=!1
+this.c=e},
+bh6:function bh6(d,e,f,g,h,i,j){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h
+_.f=i
+_.r=j},
+l0I:function l0I(){},
+l0E:function l0E(){},
+l0F:function l0F(){},
+l0G:function l0G(){},
+l0H:function l0H(){},
+l0C:function l0C(){},
+l0D:function l0D(){},
+Mpc(d,e){return new B.fvB(A.q(d,e,x.u))},
+Mpd(d,e){return new B.fvC(A.S(),A.S(),A.q(d,e,x.u))},
+Mpe(d,e){return new B.fvD(A.S(),A.S(),A.q(d,e,x.u))},
+EUX(){return new B.crw(new A.bs())},
+e4k:function e4k(d,e,f){var _=this
+_.f=_.e=$
+_.r=d
+_.w=e
+_.dy=_.dx=_.db=_.cy=_.cx=_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=$
+_.k4=_.k3=_.k2=_.k1=_.id=_.go=_.fy=_.fx=_.fr=null
+_.c=_.b=_.a=_.p1=_.ok=$
+_.d=f},
+jp6:function jp6(d){this.a=d},
+jp7:function jp7(d){this.a=d},
+jp8:function jp8(d){this.a=d},
+jp9:function jp9(d){this.a=d},
+jpa:function jpa(d){this.a=d},
+fvB:function fvB(d){var _=this
+_.c=_.b=null
+_.e=_.d=$
+_.a=d},
+fvC:function fvC(d,e,f){var _=this
+_.b=d
+_.c=e
+_.e=_.d=$
+_.f=null
+_.a=f},
+fvD:function fvD(d,e,f){var _=this
+_.b=d
+_.c=e
+_.e=_.d=$
+_.f=null
+_.a=f},
+crw:function crw(d){var _=this
+_.c=_.b=_.a=$
+_.d=d}},G,H
+A=c[0]
+C=c[2]
+D=c[1693]
+E=c[2335]
+F=c[1023]
+B=a.updateHolder(c[572],B)
+G=c[2753]
+H=c[1110]
+B.ahv.prototype={
+enZ(d){this.a=d==null?B.uuu():d}}
+B.bh6.prototype={
+gu4(){var w=this
+return[w.a,w.c,w.d,w.r,C.dj3]},
+grs(){var w=this.a
+return new A.K(w,new B.l0I(),A.a8(w).n("K<1,o>")).bX(0," ")},
+gru(){return this.f},
+e9h(d,e,f,g,h,i,j){var w="failed precondition",v=this.a
+if(v.length!==0){if(!new A.K(v,new B.l0G(),A.a8(v).n("K<1,dL>")).dm(0,new B.l0H())){v=A.aX("Percentages must each must be in the range [0,1]",w)
+v.toString
+A.aj(A.b6(v))}v=this.f
+if(!(0<=v&&v<=1)){v=A.aX("Percentages must add up to 1, i.e. 100%",w)
+v.toString
+A.aj(A.b6(v))}}if(this.d.length===0){v=A.aX("percentageStackedBarCellTitleLabel must not be empty",w)
+v.toString
+A.aj(A.b6(v))}},
+gbv(){return null}}
+B.e4k.prototype={
+gu(){return y.d},
+q(){var w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g=this,f=null,e=g.ag(),d=b.G.document,a0=A.Y(d,e)
+g.S(a0,"flex-container")
+A.c(a0,"popupSource","")
+a0.tabIndex=0
+w=g.d
+v=w.a
+w=w.b
+g.x=A.BT(v.i(A.E(C.bj,A.dw()),w),a0,v.p(C.ac,w),v.p(C.r,w),f,f,f)
+u=g.ok=A.Y(d,a0)
+g.S(u,"percentage")
+u.append(g.r.b)
+u=g.p1=A.Y(d,a0)
+g.S(u,"full-bar")
+A.c(u,"role","img")
+u=g.y=new A.W(4,g,A.ah(u))
+g.z=new A.b8(u,new A.a9(u,B.G3O()))
+u=g.Q=A.Gk(g,5)
+t=u.c
+a0.append(t)
+A.c(t,"enforceSpaceConstraints","")
+A.c(t,"role","alert")
+g.gZ().a_(t)
+s=new A.W(5,g,t)
+g.as=s
+t=g.at=A.Gj(v.p(C.d4,w),v.p(C.eA,w),v.i(C.h,w),v.i(C.fb,w),v.i(A.E(C.f,A.M()),w),v.i(C.jr,w),v.i(C.kk,w),v.i(C.iR,w),v.i(C.km,w),v.i(A.E(C.kl,f),w),v.p(C.X,w),u,s,t,f,f)
+s=g.ax=D.ahs(g,6)
+w=s.c
+g.gZ().a_(w)
+v=new D.a_Z()
+g.ay=v
+r=g.ch=D.aqf(g,7)
+q=r.c
+g.gZ().a_(q)
+p=new D.a5x()
+g.CW=p
+r.N(0,p)
+p=g.cx=F.cRS(g,8)
+r=p.c
+g.gZ().a_(r)
+o=new F.b6a()
+g.cy=o
+n=g.db=new A.W(9,g,A.b3())
+g.dx=new A.b8(n,new A.a9(n,B.G3P()))
+m=d.createElement("div")
+g.S(m,"grid-container total")
+l=A.Y(d,m)
+g.S(l,"series-name")
+A.O(l,$.xaK())
+k=A.Y(d,m)
+g.S(k,"measure")
+k.append(g.w.b)
+j=A.x(g,15,f,B.G3Q())
+g.dy=j
+i=x.h
+h=x.v
+p.t(o,A.a([A.a([n,m,j.a],i)],h))
+s.t(v,A.a([A.a([q,r],i)],h))
+u.t(t,A.a([C.a,A.a([w],i),C.a],h))
+h=x.E
+$.L_.j9().b.wN(0,a0,"keyup",13,0,g.ar(new B.jp6(g),h,h))
+h=x.m
+a0.addEventListener("mouseover",A.U(g.ar(new B.jp7(g),h,h)))
+a0.addEventListener("mouseleave",A.U(g.ar(new B.jp8(g),h,h)))
+a0.addEventListener("click",A.U(g.ar(new B.jp9(g),h,h)))
+t=t.aY$
+h=x.e
+g.ba(A.a([new A.k(t,A.v(t).n("k<1>")).J(0,g.X(new B.jpa(g),h,h))],x.q))},
+Y(d,e,f){var w,v,u=this
+if(5<=e&&e<=15){if(d===C.eA||d===C.bw||d===C.by)return u.at
+if(d===C.d4){w=u.e
+return w===$?u.e=u.at.gnP():w}if(d===C.c0){w=u.f
+if(w===$){v=u.at.db
+v===$&&A.n()
+w=u.f=v}return w}}return f},
+v(){var w,v,u,t,s,r,q,p,o,n,m,l=this,k=null,j="ConsoleTablePercentageStackedBarCellComponent__makeDisplayedTotalPercentageAriaLabel",i="aria-label",h=l.a,g=(l.d.f&1)!==0,f=l.x,e=h.a.a,d=l.go!==e
+if(d){l.z.sb9(e)
+l.go=e}l.z.av()
+if(g){w=l.at
+v=w.aG.a
+v.V(0,C.mV,!0)
+v.V(0,C.iZ,!0)
+v.V(0,C.iz,C.ML)
+v.V(0,C.mW,!1)
+w.aS="alert"
+d=!0}if(l.id!==f){l.at.slV(0,f)
+l.id=f
+u=!0
+d=!0}else u=g
+t=h.b
+if(l.k1!==t){l.at.sbH(0,t)
+l.k1=t
+u=!0
+d=!0}if(u)l.Q.d.f|=32
+w=h.a
+s=w.d
+u=l.k2!==s
+if(u){l.k2=l.CW.a=s
+d=!0}if(u)l.ch.d.f|=32
+r=w.a
+if(l.k3!==r){l.dx.sb9(r)
+l.k3=r
+d=!0}l.dx.av()
+w=l.dy
+w.c.sI(h.a.c.length!==0)
+l.y.C()
+l.as.C()
+l.db.C()
+w.a.C()
+w=h.a
+v=w.d
+q=x.h
+w=w.f
+p=h.c
+if(v.length===0){w=p.au(w)
+o=A.b("Percentage: "+w,k,j,A.a([w],q),k)}else{w=p.au(w)
+o=A.b(v+": "+w,k,"ConsoleTablePercentageStackedBarCellComponent__makeDisplayedTotalPercentageAriaLabelWithName",A.a([v,w],q),k)}if(l.fr!==o){A.a5(l.ok,i,o)
+l.fr=o
+d=!0}l.r.a9(p.au(h.a.f))
+n=E.ar6.goF()
+if(l.fx!==n){w=l.p1
+w.style.setProperty("background-color",n,"")
+l.fx=n
+d=!0}w=h.a
+m=w.e
+if(m==null){w=p.au(w.f)
+m=A.b("Percentage: "+w,k,j,A.a([w],q),k)}if(l.fy!==m){A.a5(l.p1,i,m)
+l.fy=m
+d=!0}w=l.Q
+w.U(g)
+l.w.a9(p.au(h.a.f))
+w.l()
+l.ax.l()
+l.ch.l()
+l.cx.l()
+if(g){l.at.a0()
+f.a0()}$.u().F(d)},
+A(){var w=this
+w.y.D()
+w.as.D()
+w.db.D()
+w.dy.a.D()
+w.Q.m()
+w.ax.m()
+w.ch.m()
+w.cx.m()
+w.at.B()
+w.x.B()},
+U(d){var w=this,v=w.a.a.r,u=w.k4!==v
+if(u){A.al(w.c,"take-full-width",v)
+w.k4=v}$.u().F(u)}}
+B.fvB.prototype={
+gu(){return y.d},
+q(){var w,v=this,u=b.G.document,t=v.d=u.createElement("div")
+v.S(t,"color-bar-with-margin")
+w=A.Y(u,t)
+v.e=w
+v.S(w,"color-bar")
+v.K(t)},
+v(){var w,v,u=this,t=u.a,s=t.f,r=s.E(0,"$implicit"),q=s.E(0,"index"),p=r.a*100,o=u.b!==p
+if(o){s=u.d
+w=C.F.a1(p)
+s.style.setProperty("width",w+"%","")
+u.b=p}t=t.a.a.b
+if(q>>>0!==q||q>=t.length)return A.H(t,q)
+v=t[q]
+if(u.c!==v){t=u.e
+t.style.setProperty("background-color",v,"")
+u.c=v
+o=!0}$.u().F(o)}}
+B.fvC.prototype={
+gu(){return y.d},
+q(){var w,v,u,t,s=this,r=b.G.document,q=r.createElement("div")
+s.S(q,"grid-container")
+w=s.d=D.iYg(s,1)
+v=w.c
+q.append(v)
+s.gZ().a_(v)
+v=new D.bZj()
+s.e=v
+w.N(0,v)
+u=A.Y(r,q)
+s.S(u,"series-name")
+u.append(s.b.b)
+t=A.Y(r,q)
+s.S(t,"measure")
+t.append(s.c.b)
+s.K(q)},
+v(){var w,v,u,t,s=this,r=s.a,q=r.a
+r=r.f
+w=r.E(0,"index")
+v=r.E(0,"$implicit")
+r=q.a.b
+if(w>>>0!==w||w>=r.length)return A.H(r,w)
+u=r[w]
+t=s.f!==u
+if(t)s.f=s.e.a=u
+if(t)s.d.d.f|=32
+s.b.a9(v.b)
+r=v.a
+s.c.a9(q.c.au(r))
+s.d.l()
+$.u().F(t)},
+A(){this.d.m()}}
+B.fvD.prototype={
+gu(){return y.d},
+q(){var w,v,u,t,s=this,r=b.G.document,q=r.createElement("div")
+s.S(q,"grid-container remainder")
+w=s.d=D.iYg(s,1)
+v=w.c
+q.append(v)
+s.gZ().a_(v)
+v=new D.bZj()
+s.e=v
+w.N(0,v)
+u=A.Y(r,q)
+s.S(u,"series-name")
+u.append(s.b.b)
+t=A.Y(r,q)
+s.S(t,"measure")
+t.append(s.c.b)
+s.K(q)},
+v(){var w,v=this,u=v.a.a,t=E.ar6.goF(),s=v.f!==t
+if(s)v.f=v.e.a=t
+if(s)v.d.d.f|=32
+v.b.a9(u.a.c)
+w=u.a
+v.c.a9(u.c.au(1-w.f))
+v.d.l()
+$.u().F(s)},
+A(){this.d.m()}}
+B.crw.prototype={
+q(){var w,v,u=this,t=null,s=new B.e4k(A.S(),A.S(),A.a2(u,0,0)),r=$.tKf
+s.b=r==null?$.tKf=A.bl($.Lep,t):r
+w=b.G.document.createElement("console-table-percentage-stacked-bar-cell")
+s.c=w
+u.b=s
+s=u.i(C.f0,t)
+v=u.i(C.cr,t)
+v=new B.ahv(B.uuu(),A.jz(t,v))
+s.n0(0,v.genY(),x.a)
+u.a=v
+u.K(w)},
+v(){var w=this.d.d,v=this.b
+v.U((w&1)!==0)
+v.l()}}
+var z=a.updateTypes(["l<~>(j,F)","~(bh6?)","o(i2)","crw()"])
+B.l0I.prototype={
+$1(d){return d.b},
+$S:3075}
+B.l0E.prototype={
+$1(d){return d.a},
+$S:942}
+B.l0F.prototype={
+$2(d,e){return d+e},
+$S:80}
+B.l0G.prototype={
+$1(d){return d.a},
+$S:942}
+B.l0H.prototype={
+$1(d){return 0<=d&&d<=1},
+$S:367}
+B.l0C.prototype={
+$1(d){return d.goF()},
+$S:z+2}
+B.l0D.prototype={
+$1(d){return H.oca(d).goF()},
+$S:6}
+B.jp6.prototype={
+$1(d){this.a.a.b=!0},
+$S:0}
+B.jp7.prototype={
+$1(d){this.a.a.b=!0},
+$S:0}
+B.jp8.prototype={
+$1(d){this.a.a.b=!1},
+$S:0}
+B.jp9.prototype={
+$1(d){this.a.a.b=!0},
+$S:0}
+B.jpa.prototype={
+$1(d){this.a.a.b=d},
+$S:0};(function installTearOffs(){var w=a._instance_1u,v=a._static_2,u=a._static_0
+w(B.ahv.prototype,"genY","enZ",1)
+v(B,"G3O","Mpc",0)
+v(B,"G3P","Mpd",0)
+v(B,"G3Q","Mpe",0)
+u(B,"vlU","EUX",3)})();(function inheritance(){var w=a.inherit,v=a.inheritMany
+w(B.ahv,A.B)
+w(B.bh6,A.mZ)
+v(A.aL,[B.l0I,B.l0E,B.l0G,B.l0H,B.l0C,B.l0D,B.jp6,B.jp7,B.jp8,B.jp9,B.jpa])
+w(B.l0F,A.ej)
+w(B.e4k,A.b0)
+v(A.l,[B.fvB,B.fvC,B.fvD])
+w(B.crw,A.ab)})()
+A.an(b.typeUniverse,JSON.parse('{"bh6":{"mZ":[],"h5":["mZ"]},"crw":{"ab":["ahv"],"p":[],"ab.T":"ahv"},"e4k":{"j":[]},"fvB":{"l":["ahv"],"j":[],"p":[]},"fvC":{"l":["ahv"],"j":[],"p":[]},"fvD":{"l":["ahv"],"j":[],"p":[]}}'))
+var y={d:"ConsoleTablePercentageStackedBarCellComponent"}
+var x={u:A.t("ahv"),v:A.t("r<N<B>>"),h:A.t("r<B>"),q:A.t("r<bt<~>>"),E:A.t("B"),e:A.t("I"),b:A.t("dL"),m:A.t("@"),a:A.t("bh6?")};(function constants(){var w=a.makeConstList
+G.ihU=w([],A.t("r<b2<dL>>"))})();(function staticFields(){$.Lsa=A.a(["._nghost-%ID%{max-width:200px;width:100%}.take-full-width._nghost-%ID%{max-width:none}.flex-container._ngcontent-%ID%{align-items:center;display:flex;flex-wrap:nowrap;width:100%}.percentage._ngcontent-%ID%{width:48px}.full-bar._ngcontent-%ID%{border-radius:1px;display:flex;flex:1;height:6px;margin-left:8px;margin-right:22px}.color-bar-with-margin._ngcontent-%ID%{height:100%}.color-bar-with-margin._ngcontent-%ID% .color-bar._ngcontent-%ID%{border-radius:1px;height:100%;margin-right:1px}.color-bar-with-margin:last-child._ngcontent-%ID% .color-bar._ngcontent-%ID%{margin-right:0}.grid-container._ngcontent-%ID%{display:grid;grid-template-columns:min-content auto min-content;margin-bottom:4px}.grid-container.remainder._ngcontent-%ID%{margin-top:16px}.series-name._ngcontent-%ID%{text-align:left;padding-right:16px;padding-left:8px}.total._ngcontent-%ID% .series-name._ngcontent-%ID%{padding-left:0}.measure._ngcontent-%ID%{text-align:right;white-space:nowrap}"],x.h)
+$.tKf=null
+$.Lep=A.a([$.Lsa],x.h)})();(function lazyInitializers(){var w=a.lazyFinal
+w($,"PBH","xaK",()=>{var v=null
+return A.b("Total",v,v,v,v)})})()};
+(a=>{a["Gj4jDtcmkuWPqXiqFRtemLQQaZs="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_6120.part.js.map

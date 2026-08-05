@@ -1,0 +1,8 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A
+B=c[0]
+A=c[2524]
+var z=a.updateTypes([]);(function constants(){A.aDh={apk:0,other:1}
+A.b9w=new B.y(A.aDh,["APK removed","App bundle removed"],B.t("y<B,o>"))})()};
+(a=>{a["Y9u40Y1e2oKPQ/YM1P8bgROPazM="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_4844.part.js.map

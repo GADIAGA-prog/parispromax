@@ -1,0 +1,8 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A
+A=c[0]
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"SQH","inR",()=>{var x=null
+return A.b("Windows app bundle",x,x,x,x)})})()};
+(a=>{a["TNuEzq+WctOODQLkl+lwieVnEf0="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5612.part.js.map

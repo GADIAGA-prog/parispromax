@@ -1,0 +1,8 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A
+A=c[0]
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"U3O","nZW",()=>{var x=null
+return A.b("Enter a valid URL",x,x,x,x)})})()};
+(a=>{a["c52/a0/qcQMVlcLMwPEpYPk7jOg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_2947.part.js.map

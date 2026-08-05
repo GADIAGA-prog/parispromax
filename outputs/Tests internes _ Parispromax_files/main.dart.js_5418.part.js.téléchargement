@@ -1,0 +1,1156 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,K,L,F,M,E,D,G,N,O,P,Q,H,R,C={
+D_0(){var w=new C.cOj()
+w.R()
+return w},
+D_1(){var w=new C.cOk()
+w.R()
+return w},
+tD3(){var w=new C.cOi()
+w.R()
+return w},
+D__(){return C.tD3()},
+cOj:function cOj(){this.a=$},
+cOk:function cOk(){this.a=$},
+cOi:function cOi(){this.a=$},
+b4P:function b4P(d,e,f){this.a=d
+this.b=e
+this.c=f},
+MaB(d,e){return new C.fgD(A.q(d,e,x.z))},
+MaC(d,e){return new C.fgE(A.q(d,e,x.z))},
+MaD(d,e){return new C.fgF(A.q(d,e,x.z))},
+e_r:function e_r(d){var _=this
+_.c=_.b=_.a=_.dx=_.db=_.cy=_.cx=_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=$
+_.d=d},
+fgD:function fgD(d){this.c=this.b=$
+this.a=d},
+fgE:function fgE(d){this.c=this.b=$
+this.a=d},
+fgF:function fgF(d){var _=this
+_.w=_.r=_.f=_.e=_.d=_.c=_.b=$
+_.x=null
+_.z=_.y=$
+_.a=d},
+Tr:function Tr(d,e,f,g,h,i,j,k,l,m,n,o,p){var _=this
+_.f=!0
+_.r=d
+_.w=e
+_.y=_.x=null
+_.z=f
+_.Q=$
+_.as=g
+_.at=h
+_.ax=i
+_.ay=j
+_.ch=k
+_.a=l
+_.b=m
+_.c=n
+_.d=o
+_.e=p},
+MaN(d,e){return new C.fgN(A.q(d,e,x.O))},
+MaO(d,e){return new C.fgO(A.q(d,e,x.O))},
+MaP(d,e){return new C.fgP(A.q(d,e,x.O))},
+MaQ(d,e){return new C.fgQ(A.q(d,e,x.O))},
+EU2(){return new C.cqH(new A.bs())},
+G8Z(){return new A.R("billing-choice-page",C.FLH(),x.Z)},
+e_t:function e_t(d){var _=this
+_.w=_.r=_.f=_.e=$
+_.as=_.Q=_.z=_.y=_.x=null
+_.c=_.b=_.a=$
+_.d=d},
+fgN:function fgN(d){var _=this
+_.d=_.c=_.b=$
+_.a=d},
+fgO:function fgO(d){var _=this
+_.e=_.d=_.c=_.b=$
+_.f=null
+_.a=d},
+fgP:function fgP(d){var _=this
+_.z=_.y=_.x=_.w=_.r=_.f=_.e=_.d=_.c=_.b=$
+_.ax=_.at=_.as=_.Q=null
+_.a=d},
+mvS:function mvS(d){this.a=d},
+fgQ:function fgQ(d){var _=this
+_.d=_.c=_.b=$
+_.a=d},
+cqH:function cqH(d){var _=this
+_.c=_.b=_.a=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=$
+_.d=d},
+bDK:function bDK(d,e,f,g,h,i){var _=this
+_.a=$
+_.b=!0
+_.c=d
+_.d=e
+_.e=f
+_.f=g
+_.r=h
+_.w=i},
+kzK:function kzK(){},
+kzL:function kzL(){},
+kzD:function kzD(d){this.a=d},
+kzw:function kzw(d){this.a=d},
+kzs:function kzs(d,e){this.a=d
+this.b=e},
+kzj:function kzj(){},
+kzk:function kzk(d){this.a=d},
+kzl:function kzl(){},
+N4l(d,e){return new C.hcG(A.q(d,e,x.d))},
+N4p(d,e){return new C.hcK(A.q(d,e,x.d))},
+N4t(d,e){return new C.hcM(A.q(d,e,x.d))},
+enz:function enz(d){var _=this
+_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=$
+_.cx=null
+_.c=_.b=_.a=$
+_.d=d},
+hcG:function hcG(d){this.c=this.b=$
+this.a=d},
+hcK:function hcK(d){var _=this
+_.id=_.go=_.fy=_.fx=_.fr=_.dy=_.dx=_.db=_.cy=_.cx=_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=_.d=_.c=_.b=$
+_.k2=_.k1=null
+_.a=d},
+mQy:function mQy(d){this.a=d},
+hcM:function hcM(d){var _=this
+_.w=_.r=_.f=_.e=_.d=_.c=_.b=$
+_.a=d}},I
+A=c[0]
+B=c[2]
+K=c[1784]
+L=c[1736]
+F=c[1656]
+M=c[1767]
+E=c[1002]
+D=c[2704]
+G=c[1094]
+N=c[2332]
+O=c[1155]
+P=c[2467]
+Q=c[2673]
+H=c[1095]
+R=c[1626]
+C=a.updateHolder(c[189],C)
+I=c[1782]
+C.cOj.prototype={
+T(d){return A.z(this,x.T)},
+gP(){return $.wSq()}}
+C.cOk.prototype={
+T(d){return A.z(this,x.B)},
+gP(){return $.wSr()}}
+C.cOi.prototype={
+T(d){return A.z(this,x.h)},
+gP(){return $.wSs()}}
+C.b4P.prototype={
+Zl(){return this.b.W(0,null)}}
+C.e_r.prototype={
+gu(){return y.e},
+q(){var w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g,f=this,e=null,d="role",a0="listitem",a1="isSmallIcon",a2=f.ag(),a3=f.w=A.mi(f,0),a4=a3.c
+a2.append(a4)
+A.c(a4,"full-height","")
+w=f.d
+v=w.a
+w=w.b
+w=A.mh(v.i(B.n,w),a4,v.i(B.dg,w))
+f.x=w
+v=f.y=A.aR(f,1)
+a4=v.c
+A.c(a4,"secondary-content","")
+A.c(a4,"type","section")
+u=A.aQ(a4)
+f.z=u
+t=f.Q=A.a1(f,2)
+s=t.c
+A.c(s,"description","")
+A.c(s,"no-top-padding","")
+r=new A.a0()
+f.as=r
+q=b.G.document
+p=q.createElement("div")
+A.c(p,"container1","")
+o=A.Y(q,p)
+A.c(o,d,"list")
+n=A.ao(q,o,"p")
+A.c(n,d,a0)
+m=f.at=A.eg(f,6)
+l=m.c
+n.append(l)
+A.c(l,a1,"")
+l=x.k
+k=A.a([],l)
+j=x.u
+k=new A.e4(k,B.bh,new A.G(e,e,j))
+f.ax=k
+i=x.Q
+m.t(k,A.a([B.a],i))
+h=A.ao(q,o,"p")
+A.c(h,d,a0)
+k=f.ay=A.eg(f,8)
+m=k.c
+h.append(m)
+A.c(m,a1,"")
+m=A.a([],l)
+m=new A.e4(m,B.bh,new A.G(e,e,j))
+f.ch=m
+k.t(m,A.a([B.a],i))
+g=A.ao(q,o,"p")
+A.c(g,d,a0)
+m=f.CW=A.eg(f,10)
+k=m.c
+g.append(k)
+A.c(k,a1,"")
+l=A.a([],l)
+l=new A.e4(l,B.bh,new A.G(e,e,j))
+f.cx=l
+m.t(l,A.a([B.a],i))
+l=x.f
+t.t(r,A.a([A.a([p],l)],i))
+v.t(u,A.a([B.a,B.a,B.a,B.a,A.a([s],l)],i))
+s=A.x(f,11,e,C.FLv())
+f.cy=s
+u=A.x(f,12,e,C.FLw())
+f.db=u
+v=A.x(f,13,e,C.FLx())
+f.dx=v
+a3.t(w,A.a([B.a,A.a([a4],l),A.a([s.a],l),A.a([u.a,v.a],l)],i))},
+Y(d,e,f){var w,v=this,u=d===B.Y
+if(u&&6===e){w=v.e
+return w===$?v.e=A.eh():w}if(u&&8===e){w=v.f
+return w===$?v.f=A.eh():w}if(u&&10===e){w=v.r
+return w===$?v.r=A.eh():w}return f},
+v(){var w,v,u,t=this,s=t.a,r=(t.d.f&1)!==0
+if(r){w=$.wRQ()
+v=t.x
+v.d=w
+v.e=$.wRR()
+v.seL(s.c)}if(r)t.x.G()
+if(r){w=t.z
+w.saO(0,"section")
+w.sb4($.wRV())}if(r)t.y.d.f|=32
+if(r){w=t.ax
+w.b=D.arj
+w.x=!0
+w.scT(A.a([$.wRU()],x.f))}if(r)t.ax.a4()
+if(r){w=t.ch
+w.b=D.arc
+w.x=!0
+w.scT(A.a([$.wRP()],x.f))}if(r)t.ch.a4()
+if(r){w=t.cx
+w.b=N.a7Z
+w.x=!0
+w.scT(A.a([$.wRL()],x.f))}if(r)t.cx.a4()
+w=t.cy
+w.c.sI(s.a===D.ro)
+v=t.db
+v.c.sI(s.a===D.xS)
+u=t.dx
+u.c.sI(s.a===D.GQ)
+w.a.C()
+v.a.C()
+u.a.C()
+u=t.w
+u.U(r)
+u.l()
+t.y.l()
+t.Q.l()
+t.at.l()
+t.ay.l()
+t.CW.l()
+if(r){t.z.a0()
+t.x.a0()}$.u().F(r)},
+A(){var w=this
+w.cy.a.D()
+w.db.a.D()
+w.dx.a.D()
+w.w.m()
+w.y.m()
+w.Q.m()
+w.at.m()
+w.ay.m()
+w.CW.m()
+w.x.B()}}
+C.fgD.prototype={
+gu(){return y.e},
+q(){var w,v=this,u=v.b=A.cj(v,0),t=u.c
+A.c(t,"debug-id","ineligible-message")
+A.c(t,"missing-requirements","")
+w=v.a.c
+w=A.ci(w.gh().i(A.E(B.f,A.M()),w.gj()),u,w.gh().i(B.h,w.gj()))
+v.c=w
+u.N(0,w)
+v.K(t)},
+v(){var w,v,u=this,t=(u.a.Q&1)!==0
+if(t){w=u.c
+w.c=w.b=B.bO
+w.e=B.eU
+v=$.wRW()
+v=A.be(v,new A.bc(B.U))
+v=new A.b5(v,A.aU(v))
+w.y=v
+w.z=$.wRT()
+w.fx=!0}if(t)u.b.d.f|=32
+w=u.c
+w.av()
+v=u.b
+v.U(t)
+v.l()
+if(t)w.a0()
+$.u().F(t)},
+A(){this.b.m()
+this.c.B()}}
+C.fgE.prototype={
+gu(){return y.e},
+q(){var w,v,u=this,t=b.G.document,s=t.createElement("div")
+u.S(s,"pc-flex pc-center-vertically")
+w=u.b=A.i_(u,1)
+s.append(w.c)
+v=new A.hN()
+u.c=v
+w.N(0,v)
+A.O(A.bP(t,s),$.wRM())
+u.K(s)},
+v(){this.b.l()},
+A(){this.b.m()}}
+C.fgF.prototype={
+gu(){return y.e},
+q(){var w,v,u,t,s,r,q,p=this,o="debug-id",n=p.a,m=p.b=A.b_(p,0),l=m.c,k=n.c,j=A.aZ(l,m,k.gh().i(A.E(B.f,A.M()),k.gj()),k.gh().i(B.q,k.gj()),k.gh().p(B.t,k.gj()),k.gh().p(B.y,k.gj()))
+p.c=j
+w=p.d=A.aT(p,1)
+v=p.y=w.c
+w.aa("mdc-button mdc-button--unelevated")
+A.c(v,o,"enroll-button")
+u=A.aS(v)
+p.e=u
+t=b.G.document.createElement("span")
+p.S(t,"mdc-button__label")
+A.O(t,$.wRO())
+s=x.f
+r=x.Q
+w.t(u,A.a([A.a([t],s)],r))
+u=p.f=A.a70(p,4)
+w=p.z=u.c
+A.c(w,o,"learn-more-button")
+q=A.cU(k.gh().i(B.az,k.gj()),k.gh().p(B.ax,k.gj()),k.gh().p(B.aA,k.gj()),k.gh().p(B.ay,k.gj()),k.gh().p(B.aF,k.gj()),k.gh().p(B.aB,k.gj()),k.gh().p(B.av,k.gj()),k.gh().p(B.aG,k.gj()))
+p.r=q
+k=A.a7_(q,new A.af(u,null),k.gh().p(B.by,k.gj()),k.gh().p(B.aO,k.gj()),k.gh().p(B.aS,k.gj()),k.gh().p(B.aT,k.gj()),k.gh().p(B.aI,k.gj()),k.gh().p(B.aU,k.gj()),k.gh().p(B.i,k.gj()),k.gh().p(B.aW,k.gj()),k.gh().p(A.E(B.aH,A.cW()),k.gj()))
+p.w=k
+u.N(0,k)
+m.t(j,A.a([A.a([v,w],s)],r))
+v.addEventListener("click",A.U(p.a7(n.a.gZk(),x.A)))
+p.K(l)},
+Y(d,e,f){if(4===e){if(d===B.y)return this.r
+if(d===B.r)return this.w}return f},
+v(){var w,v,u,t,s,r=this,q="aria-label",p=(r.a.Q&1)!==0
+if(p)r.c.G()
+w=B.v.a1(17161464)
+v=r.x!==w
+if(v){u=r.w
+u.d.c=w
+u.dj()
+r.x=w}if(v)r.f.d.f|=32
+if(p)r.w.G()
+r.c.ac()
+u=r.b
+u.U(p)
+if(p){t=$.wRN()
+A.a5(r.y,q,t)
+t=$.wRS()
+A.a5(r.z,q,t)
+s=!0}else s=v
+u.l()
+r.d.l()
+r.f.l()
+$.u().F(s)},
+A(){var w=this
+w.b.m()
+w.d.m()
+w.f.m()
+w.c.B()}}
+C.Tr.prototype={
+aX(d){return this.hNp(d)},
+hNp(d){var w=0,v=A.i(x.H),u=this,t,s,r
+var $async$aX=A.d(function(e,f){if(e===1)return A.e(f,v)
+for(;;)switch(w){case 0:w=2
+return A.C(d,$async$aX)
+case 2:t=f
+s=C.tD3()
+r=t.a.d9(s)
+s=r.a
+u.Q=s.k(2)
+if(s.a3(0))u.r=D.o6
+else if(s.a3(1)){u.r=D.hY
+t=s.k(1).a.k(0).a
+s=t.k(1)
+u.z=s
+if(E.aUP(s)&&u.Q.a.H(1,x.e).a.length!==0)u.r=D.kI
+if(!t.an(0))A.aj(A.b6("Unexpected Billing Choice Play ineligibility. Developer must be eligible."))}else A.aj(A.b6("Unexpected billing choice enrollment status: "+r.a1(0)))
+u.f=!1
+w=u.r===D.hY?3:4
+break
+case 3:w=5
+return A.C(u.aFJ(),$async$aX)
+case 5:u.w=f
+case 4:return A.f(null,v)}})
+return A.h($async$aX,v)},
+Vl(){this.r=D.kI},
+Zt(){this.r=D.hY},
+Vj(){this.w=D.ro
+this.r=D.hY},
+v9(){var w=0,v=A.i(x.H),u=this
+var $async$v9=A.d(function(d,e){if(d===1)return A.e(e,v)
+for(;;)switch(w){case 0:u.f=!0
+w=2
+return A.C(u.aX(u.ch.oQ("/v1/developers/billingChoice")),$async$v9)
+case 2:return A.f(null,v)}})
+return A.h($async$v9,v)},
+aFJ(){var w=0,v=A.i(x.G),u,t=this,s,r,q,p,o
+var $async$aFJ=A.d(function(d,e){if(d===1)return A.e(e,v)
+for(;;)switch(w){case 0:if(E.aUP(t.z)){u=D.GQ
+w=1
+break}s=E.egO()
+r=s.a
+r.L(1,t.as)
+q=A.a2g()
+p=A.b51()
+q.a.L(2,p)
+r.L(2,q)
+w=3
+return A.C(t.ay.azH(s).ga6(0),$async$aFJ)
+case 3:o=e
+s=o.a
+if(s.a3(0)){s=s.k(0).a
+t.x=s.k(1)
+t.y=s.k(0)}u=E.nH3(o)
+w=1
+break
+case 1:return A.f(u,v)}})
+return A.h($async$aFJ,v)},
+$ibJ:1}
+C.e_t.prototype={
+gu(){return"BillingChoicePageComponent"},
+q(){var w,v,u,t=this,s=t.ag(),r=t.e=A.cF(t,0)
+s.append(r.c)
+w=t.d
+v=w.a
+w=w.b
+u=A.cE(v.p(B.D,w),r,v.i(B.h,w),v.i(B.Q,w),v.i(B.K,w),v.i(B.P,w),v.i(B.a9,w),new A.af(r,null),v.i(B.w,w),v.i(B.Z,w),v.p(B.au,w),v.p(B.N,w),v.i(B.p,w))
+t.f=u
+r.t(u,A.a([B.a,B.a,B.a,B.a,B.a],x.Q))
+u=t.r=new A.W(1,t,A.ah(s))
+t.w=new I.c6(u,new A.a9(u,C.FLI()),v.i(B.L,w))},
+v(){var w,v,u,t,s,r,q,p,o=this,n=o.a,m=(o.d.f&1)!==0
+if(m){w=o.f
+w.ax=n.ax
+w.ch=n.at
+w.x1=!0
+w.fr=$.wSp()
+w.go=$.wSo()}w=n.r
+v=w!==D.o6
+u=!v||w===D.kI
+if(o.x!==u){o.x=o.f.c=u
+t=!0}else t=m
+s=!v||w===D.kI
+if(o.y!==s){o.y=o.f.fx=s
+t=!0}r=!v||w===D.kI
+if(o.z!==r){o.f.seZ(r)
+o.z=r
+t=!0}q=n.r===D.hY
+if(o.Q!==q){o.f.sAx(q)
+o.Q=q
+t=!0}if(m)o.f.G()
+p=n.f
+if(o.as!==p){o.w.sbK(p)
+o.as=p
+t=!0}o.r.C()
+n=o.f
+n.ac()
+w=o.e
+w.U(m)
+w.l()
+if(m)n.a0()
+$.u().F(t)},
+A(){this.r.D()
+this.e.m()
+this.f.B()}}
+C.fgN.prototype={
+gu(){return"BillingChoicePageComponent"},
+q(){var w,v,u=this,t=null,s=A.x(u,0,t,C.FLJ())
+u.b=s
+w=A.x(u,1,t,C.FLK())
+u.c=w
+v=A.x(u,2,t,C.FLL())
+u.d=v
+u.a5(A.a([s.a,w.a,v.a],x.f),t)},
+v(){var w,v,u=this,t=u.a.a,s=u.b
+s.c.sI(t.r===D.hY)
+w=u.c
+w.c.sI(t.r===D.kI)
+v=u.d
+v.c.sI(t.r===D.o6)
+s.a.C()
+w.a.C()
+v.a.C()},
+A(){this.b.a.D()
+this.c.a.D()
+this.d.a.D()}}
+C.fgO.prototype={
+gu(){return"BillingChoicePageComponent"},
+q(){var w,v,u,t,s,r,q,p,o=this,n=null,m=o.a,l=o.b=A.a1(o,0),k=l.c
+A.c(k,"center-items-vertically","")
+w=new A.a0()
+o.c=w
+v=b.G
+u=v.document.createElement("div")
+A.c(u,"container1","")
+t=new C.e_r(A.a2(o,2,16))
+s=$.tCZ
+t.b=s==null?$.tCZ=A.ad(B.a,n):s
+v=v.document.createElement("billing-choice-enrollment-get-started")
+t.c=v
+o.d=t
+u.append(v)
+v=m.c
+v=v.gh().gh().i(B.P,v.gh().gj())
+r=x.o
+q=new A.G(n,n,r)
+v=new C.b4P(D.xS,q,v.$2("package:play.console.ui.common.images/getting_started/monetization_setup.svg",n))
+o.e=v
+t.N(0,v)
+v=x.f
+l.t(w,A.a([A.a([u],v)],x.Q))
+p=new A.k(q,r.n("k<1>")).J(0,o.a7(m.a.gVk(),x.H))
+o.a5(A.a([k],v),A.a([p],x.x))},
+v(){var w=this,v=w.a.a.w,u=w.f!==v
+if(u)w.f=w.e.a=v
+w.b.l()
+w.d.l()
+$.u().F(u)},
+A(){this.b.m()
+this.d.m()}}
+C.fgP.prototype={
+gu(){return"BillingChoicePageComponent"},
+q(){var w,v,u,t,s,r,q,p,o=this,n=o.a,m=n.a,l=o.d=A.a1(o,0),k=l.c,j=new A.a0()
+o.e=j
+w=b.G.document.createElement("div")
+A.c(w,"container1","")
+v=o.f=E.kiv(o,2)
+w.append(v.c)
+n=n.c
+u=n.gh().gh().i(B.x,n.gh().gj()).aK(0,n.gh().gh().i(B.cd,n.gh().gj()),"play.console.apps.api.monetization.MonetizationService")
+o.r=u
+u=A.eDj(n.gh().gh().i(B.m,n.gh().gj()),n.gh().gh().i(B.k,n.gh().gj()),n.gh().gh().i(B.l,n.gh().gj()),u)
+o.w=u
+t=n.gh().gh().i(B.x,n.gh().gj()).aK(0,n.gh().gh().i(B.cd,n.gh().gj()),y.d)
+o.x=t
+t=A.Kf(n.gh().gh().i(B.m,n.gh().gj()),n.gh().gh().i(B.k,n.gh().gj()),n.gh().gh().i(B.l,n.gh().gj()),t)
+o.y=t
+n=o.z=E.kiu(n.gh().gh().i(B.j,n.gh().gj()),u,t,n.gh().gh().i(B.w,n.gh().gj()),n.gh().gh().i(B.M,n.gh().gj()))
+v.N(0,n)
+v=x.f
+l.t(j,A.a([A.a([w],v)],x.Q))
+j=n.b
+l=x.H
+s=new A.k(j,A.v(j).n("k<1>")).J(0,o.a7(m.ga0B(),l))
+j=n.c
+r=new A.k(j,A.v(j).n("k<1>")).J(0,o.a7(m.gZs(),l))
+j=n.d
+q=new A.k(j,A.v(j).n("k<1>")).J(0,o.a7(m.gVi(),l))
+n=n.w
+l=x.V
+p=new A.k(n,A.v(n).n("k<1>")).J(0,o.X(new C.mvS(o),l,l))
+o.a5(A.a([k],v),A.a([s,r,q,p],x.x))},
+Y(d,e,f){var w,v,u=this
+if(2===e){if(d===B.Nz)return u.r
+if(d===B.pH)return u.w
+if(d===B.kr)return u.x
+if(d===B.ky)return u.y
+if(d===B.aiO){w=u.b
+if(w===$){v=u.a.c
+v.gh().gh().i(B.m,v.gh().gj())
+v.gh().gh().i(B.k,v.gh().gj())
+v.gh().gh().i(B.l,v.gh().gj())
+w=u.b=new A.aGn()}return w}if(d===B.lZ){w=u.c
+if(w===$){v=u.a.c
+v.gh().gh().i(B.m,v.gh().gj())
+v.gh().gh().i(B.k,v.gh().gj())
+v.gh().gh().i(B.l,v.gh().gj())
+w=u.c=new A.AP()}return w}}return f},
+v(){var w,v,u,t,s,r=this,q=r.a,p=q.a
+q=q.Q
+w=p.x
+v=r.Q!=w
+if(v)r.Q=r.z.a=w
+u=p.Q
+u===$&&A.n()
+if(r.as!==u){r.z.sfUy(u)
+r.as=u
+v=!0}t=p.y
+if(r.at!=t){u=r.z
+u.fx=t
+if(!B.br.CJ(t!=null,u.go))A.aj(A.au(A.aX("The indirect billing onboarding flow must be configured for either signup or to view the status of a payments profile.",null),null))
+r.at=t
+v=!0}s=p.z
+if(r.ax!==s){r.z.saoe(s)
+r.ax=s
+v=!0}if((q&1)!==0)r.z.G()
+r.d.l()
+r.f.l()
+$.u().F(v)},
+A(){this.d.m()
+this.f.m()
+this.z.B()}}
+C.fgQ.prototype={
+gu(){return"BillingChoicePageComponent"},
+q(){var w,v,u,t,s,r,q=this,p="console-table-text-cell",o="console-table-image-cell",n="console-table-secondary-action-text-cell",m=new C.enz(A.a2(q,0,16)),l=$.ukC
+m.b=l==null?$.ukC=A.ad(B.a,null):l
+w=b.G.document.createElement("manage-apps-table")
+m.c=w
+q.b=m
+v=A.bE()
+q.c=v
+u=q.a.c
+t=u.gh().gh().i(B.aj,u.gh().gj())
+s=u.gh().gh().i(B.j,u.gh().gj())
+r=u.gh().gh().i(B.pH,u.gh().gj())
+u=u.gh().gh().i(B.t,u.gh().gj())
+u=new C.bDK(new A.aV(A.a([],x.J),x.i),A.J(x.g,x.n),t,s,r,u)
+v=v.a
+v.V(0,p,new A.R(p,A.f2(),x.j))
+v.V(0,o,new A.R(o,A.tk(),x.P))
+v.V(0,n,new A.R(n,F.L3(),x.C))
+u.cRA(!1)
+q.d=u
+m.N(0,u)
+q.K(w)},
+Y(d,e,f){if(d===B.u&&0===e)return this.c
+return f},
+v(){var w=this.a.Q
+if((w&1)!==0)this.d.G()
+this.b.l()},
+A(){this.b.m()}}
+C.cqH.prototype={
+q(){var w,v,u,t,s,r,q,p=this,o=null,n=new C.e_t(A.a2(p,0,16)),m=$.tD2
+n.b=m==null?$.tD2=A.ad(B.a,o):m
+w=b.G.document.createElement("billing-choice-page")
+n.c=w
+p.b=n
+v=$.az
+if(v==null)v=$.az=new A.bL(A.J(x.N,x.W))
+p.w=v
+u=$.aA
+v=u==null?$.aA=A.bQ(v):u
+p.x=v
+v=new A.bM(v,A.a([],x.q))
+p.y=v
+n=p.z=new A.bS(v,new A.af(n,o))
+v=p.i(B.e,o)
+u=p.i(B.L,o)
+p.Q=new A.cf(v,n,u)
+t=p.i(B.x,o).aK(0,p.i(B.cd,o),y.d)
+p.as=t
+t=A.Kf(p.i(B.m,o),p.i(B.k,o),p.i(B.l,o),t)
+p.at=t
+s=p.i(B.j,o)
+r=p.i(B.Fs,o)
+q=x.N
+p.a=new C.Tr(D.hY,D.xS,E.obC(),s,$.z9().de(),$.Aa().b,t,r,v,A.bI(B.a2,q,q),new A.aW(new A.ay($.bz,x.D),x.F),n,u)
+p.K(w)},
+Y(d,e,f){var w,v,u=this,t=null
+if(0===e){if(d===B.aa)return u.w
+if(d===B.a7)return u.x
+if(d===B.ab)return u.y
+if(d===B.a3)return u.z
+if(d===B.al)return u.Q
+if(d===B.kr)return u.as
+if(d===B.ky)return u.at
+if(d===B.p){w=u.e
+if(w===$){v=u.i(B.ak,t)
+w=u.e=A.cg(v.a,v.b,u.p(B.e,t))}return w}if(d===B.a_){w=u.f
+return w===$?u.f="polite":w}if(d===B.lZ){w=u.r
+if(w===$){u.i(B.m,t)
+u.i(B.k,t)
+u.i(B.l,t)
+w=u.r=new A.AP()}return w}}return f},
+v(){var w=this,v=(w.d.d&1)!==0
+if(v)w.a.G()
+w.b.l()
+if(v)w.a.a0()},
+A(){this.a.B()}}
+C.bDK.prototype={
+G(){var w=0,v=A.i(x.H),u=this,t,s,r
+var $async$G=A.d(function(d,e){if(d===1)return A.e(e,v)
+for(;;)switch(w){case 0:r=A
+w=2
+return A.C(u.e.gh9(),$async$G)
+case 2:u.d=r.oV(e.b.bT(0,new C.kzK(),x.A),new C.kzL(),null,x.g,x.n)
+t=H.d87()
+t.a.L(1,u.f)
+w=3
+return A.C(u.r.atg(t).ga6(0),$async$G)
+case 3:t=e.a
+s=t.H(0,x.r)
+u.c.a2(0,new A.K(s,new C.kzD(u),s.$ti.n("K<aa.E,Q<o,B>>")))
+u.b=!1
+w=4
+return A.C(u.aPo(t.O(1)),$async$G)
+case 4:return A.f(null,v)}})
+return A.h($async$G,v)},
+aPo(d){return this.f6D(d)},
+f6D(d){var w=0,v=A.i(x.H),u,t=this,s,r,q,p,o,n,m,l
+var $async$aPo=A.d(function(e,f){if(e===1)return A.e(f,v)
+for(;;)switch(w){case 0:s=t.r,r=t.f,q=x.Y,p=x.U,o=t.c,n=x.r
+case 3:if(!(d.length!==0)){w=4
+break}m=new H.Ux()
+m.R()
+l=m.a
+l.L(1,r)
+l.af(2,d)
+w=5
+return A.C(s.aL(s.ath(m,null),q,p).ga6(0),$async$aPo)
+case 5:m=f.a
+l=m.H(0,n)
+o.a2(0,new A.K(l,new C.kzw(t),l.$ti.n("K<aa.E,Q<o,B>>")))
+m=m.b
+if(1>=m.length){u=A.H(m,1)
+w=1
+break}m=m[1]
+d=m==null?"":m
+w=3
+break
+case 4:t.cRA(!0)
+case 1:return A.f(u,v)}})
+return A.h($async$aPo,v)},
+cRA(d){var w=null,v="text"
+return this.a=A.cm(w,A.a([A.ae(w,w,"console-table-image-cell",!1,0,0,0,w,v,!1,w,w,!0,w,!1,$.yOr(),w,!1,"app",w,w,!0,w,w,!0,d,w,w,!0,w),A.ae(w,w,"console-table-text-cell",!1,0,0,0,w,v,!1,w,w,!0,w,!1,$.yOz(),w,!1,"programs",w,w,!0,w,w,!0,d,$.yOA(),w,!0,w),A.ae(w,w,"console-table-secondary-action-text-cell",!1,0,0,0,w,v,!1,w,w,!0,w,!1,"",100,!1,"manage-app",w,w,!1,w,w,!0,!1,w,w,!0,w)],x.L),x.I,x._)},
+cRz(d,e){var w=null,v=d.a,u=v.O(2),t=v.O(1),s=A.a([v.O(1),v.O(4)],x.s),r=v.k(3).a.H(0,x.t)
+u=A.lq(w,!1,t,"large",u,w,r.a8(r,B.dp)?"draftAppIcon":"appIcon",w,"",s,!1,!1)
+t=A.ar(w,!1,!1,w,!1,!1,w,w,w,"large",!1,w,!1,this.eiq(e),w,!1,!1,!1,!1,w,w,B.E,w,B.B,w,w,w,w,w,!1)
+s=$.yOw()
+v=v.O(1)
+return A.V(["app",u,"programs",t,"manage-app",new F.qi(s,A.b("Manage billing choice settings for "+v,w,"ManageAppsTableComponent__manageBillingChoiceButtonAriaLabel",A.a([v],x.f),w),w,w,new C.kzs(this,d),!1,!1,!1,!1,!1)],x.N,x.K)},
+eiq(d){var w,v=d.a.H(11,x.R),u=new A.K(v,new C.kzj(),v.$ti.n("K<aa.E,aaY>")).bO(0)
+if(u.a===0)return $.yOx()
+v=x.N
+v=R.JH(new A.er(u,new C.kzk(this),A.v(u).n("er<dQ.E,o>")),new C.kzl(),v,v)
+w=B.c.gaT(v)?"":B.c.ci(v,L.fn())
+return A.b("Enrolled, "+w,null,"ManageAppsTableComponent__enrolledStatusText",A.a([w],x.f),null)},
+eip(d){switch(d){case B.FS:return $.yOy()
+case B.K2:return $.yOs()
+case B.bC4:default:throw A.a3(A.fv("Invalid program type: "+d.a1(0)))}},
+gbv(d){return this.c}}
+C.enz.prototype={
+gu(){return"ManageAppsTableComponent"},
+q(){var w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h=this,g=h.ag(),f=b.G.document,e=A.Y(f,g)
+h.S(e,"pc-flex pc-join-cards-vertically")
+w=A.Y(f,e)
+h.S(w,"pc-card")
+v=h.e=A.a1(h,2)
+w.append(v.c)
+u=new A.a0()
+h.f=u
+t=f.createElement("div")
+A.c(t,"container1","")
+s=h.r=A.aR(h,4)
+r=s.c
+t.append(r)
+A.c(r,"type","section")
+r=A.aQ(r)
+h.w=r
+q=f.createElement("div")
+A.c(q,"description","")
+A.O(q,$.yP_())
+p=h.x=A.dl(h,7)
+o=p.c
+q.append(o)
+n=h.d
+m=n.a
+n=n.b
+l=A.cU(m.i(B.az,n),m.p(B.ax,n),m.p(B.aA,n),m.p(B.ay,n),m.p(B.aF,n),m.p(B.aB,n),m.p(B.av,n),m.p(B.aG,n))
+h.y=l
+k=m.p(B.ao,n)
+k=new A.ct(k===!0)
+h.z=k
+k=A.dk(l,o,k,new A.af(p,null),m.p(B.aO,n),m.p(B.aS,n),m.p(B.aT,n),m.p(B.aI,n),m.p(B.aU,n),m.p(B.aW,n),m.p(A.E(B.aH,A.cW()),n))
+h.Q=k
+p.N(0,k)
+k=h.as=A.b_(h,8)
+p=k.c
+A.c(p,"action-items","")
+o=A.aZ(p,k,m.i(A.E(B.f,A.M()),n),m.i(B.q,n),m.p(B.t,n),m.p(B.y,n))
+h.at=o
+l=h.ax=A.ku(h,9)
+j=l.c
+A.c(j,"debug-id","manage-billing-profile-button")
+A.c(j,"isTertiary","")
+i=A.kt()
+h.ay=i
+l.N(0,i)
+i=x.f
+l=x.Q
+k.t(o,A.a([A.a([j],i)],l))
+s.t(r,A.a([B.a,B.a,B.a,A.a([p],i),A.a([q],i)],l))
+v.t(u,A.a([A.a([t],i)],l))
+l=h.ch=new A.W(10,h,A.ah(e))
+h.CW=new I.c6(l,new A.a9(l,C.Hkw()),m.i(B.L,n))},
+Y(d,e,f){if(7===e){if(d===B.y)return this.y
+if(d===B.ap)return this.z
+if(d===B.aY||d===B.b2||d===B.r)return this.Q}return f},
+v(){var w,v,u,t,s=this,r=s.a,q=(s.d.f&1)!==0
+if(q){w=s.w
+w.saO(0,"section")
+w.sb4($.yOW())}if(q)s.r.d.f|=32
+if(q){w=$.rEk()
+v=s.Q
+v.sds(w)
+v.w=$.rEl()
+v.x=!1}if(q)s.x.d.f|=32
+if(q)s.Q.G()
+if(q)s.at.G()
+if(q){w=$.yP8()
+v=s.ay
+v.a=w
+v.c=$.yP0()
+v.f=!0}if(q)s.ay.a4()
+u=r.b
+if(s.cx!==u){s.CW.sbK(u)
+s.cx=u
+t=!0}else t=q
+s.ch.C()
+s.at.ac()
+r=s.as
+r.U(q)
+s.e.l()
+s.r.l()
+s.x.l()
+r.l()
+s.ax.l()
+if(q)s.w.a0()
+$.u().F(t)},
+A(){var w=this
+w.ch.D()
+w.e.m()
+w.r.m()
+w.x.m()
+w.as.m()
+w.ax.m()
+w.Q.B()
+w.at.B()}}
+C.hcG.prototype={
+gu(){return"ManageAppsTableComponent"},
+q(){var w,v=this,u=A.x(v,0,null,C.Hkx())
+v.b=u
+w=A.x(v,1,null,C.Hky())
+v.c=w
+v.a5(A.a([u.a,w.a],x.f),null)},
+v(){var w,v=this.a.a,u=this.b
+u.c.sI(v.d.a!==0)
+w=this.c
+w.c.sI(v.d.a===0)
+u.a.C()
+w.a.C()},
+A(){this.b.a.D()
+this.c.a.D()}}
+C.hcK.prototype={
+gcRU(){var w=this.b
+return w===$?this.b=A.a([B.aE],x.E):w},
+gbqQ(){var w=this.f
+return w===$?this.f=B.an:w},
+gcRS(){var w=this.r
+return w===$?this.r=new A.cy(this.gbqQ()):w},
+gcRQ(){var w=this.x
+return w===$?this.x=A.cQ(x.a):w},
+gcRR(){var w=this.y
+return w===$?this.y=new A.cL():w},
+gcRT(){var w=this.z
+return w===$?this.z=new A.cG(new A.cJ(A.J(x.N,x.S))):w},
+gu(){return"ManageAppsTableComponent"},
+q(){var w,v,u,t,s,r,q,p,o,n,m=this,l=b.G.document,k=l.createElement("div")
+m.S(k,"pc-card pc-no-padding")
+w=m.CW=A.a1(m,1)
+v=w.c
+k.append(v)
+A.c(v,"extra-bottom-padding","")
+v=new A.a0()
+m.cx=v
+u=l.createElement("div")
+A.c(u,"container1","")
+t=m.cy=A.hS(m,3)
+s=t.c
+u.append(s)
+A.c(s,"wide","")
+s=m.db=A.hR()
+t.N(0,s)
+t=x.f
+r=x.Q
+w.t(v,A.a([A.a([u],t)],r))
+v=m.dx=A.cT(m,4)
+w=v.c
+k.append(w)
+A.c(w,"gm3-theme","")
+w=m.a.c
+q=A.c4(w.gh().gh().p(B.u,w.gh().gj()))
+m.dy=q
+p=m.fr=window
+w=A.aP(w.gh().gh().p(A.E(B.f,A.M()),w.gh().gj()),w.gh().gh().p(B.I,w.gh().gj()),w.gh().gh().i(B.h,w.gh().gj()),p)
+m.fx=w
+o=document
+m.fy=o
+o=A.cd(o)
+m.go=o
+p=m.id=A.cS(q,w,o,p)
+p.k2=A.a([],x.M)
+v.t(p,A.a([B.a],r))
+s=s.w
+r=x.N
+n=new A.k(s,A.v(s).n("k<1>")).J(0,m.X(new C.mQy(m),r,r))
+m.a5(A.a([k],t),A.a([n],x.x))},
+Y(d,e,f){var w,v,u=this
+if(4===e){if(d===B.u)return u.dy
+if(d===B.q)return u.fr
+if(d===A.E(B.f,A.M()))return u.fx
+if(d===B.ad)return u.fy
+if(d===B.W)return u.go
+if(d===B.r||d===B.aC)return u.id
+if(d===B.am)return u.gcRU()
+if(d===B.O){w=u.c
+if(w===$){v=u.a.c
+w=u.c=A.ck(u.fy,u.gcRU(),v.gh().gh().p(B.O,v.gh().gj()))}return w}if(d===B.at){w=u.d
+return w===$?u.d=document:w}if(d===A.E(B.aw,A.cO())){w=u.e
+return w===$?u.e=new A.cA(u.fx):w}if(d===B.M)return u.gbqQ()
+if(d===B.ar)return u.gcRS()
+if(d===B.K){w=u.w
+if(w===$){v=u.a.c
+w=u.w=A.cP(u.fx,v.gh().gh().i(B.h,v.gh().gj()),u.gcRS(),u.fr)}return w}if(d===B.aJ)return u.gcRQ()
+if(d===B.aK)return u.gcRR()
+if(d===B.aP)return u.gcRT()
+if(d===B.aL){w=u.Q
+return w===$?u.Q=A.cR(u.gcRQ(),u.gcRR(),u.gcRT(),x.a):w}if(d===B.aQ){w=u.as
+return w===$?u.as=A.cV():w}if(d===B.G){w=u.at
+if(w===$){v=u.a.c
+w=u.at=A.cn(v.gh().gh().p(B.G,v.gh().gj()),u.gbqQ())}return w}if(d===B.aN){w=u.ax
+return w===$?u.ax=new A.cC(null,A.J(x.N,x.y)):w}if(d===B.aM){w=u.ay
+return w===$?u.ay=new A.cI():w}if(d===B.aD){w=u.ch
+return w===$?u.ch=new A.cK():w}}return f},
+v(){var w,v,u=this,t=u.a,s=t.a,r=(t.Q&1)!==0
+if(r){t=$.yPg()
+u.db.a=t
+t=u.id
+t.b1=Q.vZ
+t.c2=$.E24
+t.c9=$.yOK()
+t.ao=$.yPc()
+t.ex()
+t.se3($.yP4())}t=s.a
+t===$&&A.n()
+if(u.k1!==t){u.id.sc5(t)
+u.k1=t
+w=!0}else w=r
+v=s.c
+if(u.k2!==v){u.id.sbv(0,v)
+u.k2=v
+w=!0}if(r)u.id.G()
+if(r)u.id.bd()
+t=u.dx
+t.U(r)
+u.CW.l()
+u.cy.l()
+t.l()
+$.u().F(w)},
+A(){var w=this
+w.CW.m()
+w.cy.m()
+w.dx.m()
+w.id.B()}}
+C.hcM.prototype={
+gu(){return"ManageAppsTableComponent"},
+q(){var w,v,u,t,s,r,q,p,o,n,m=this,l=b.G.document,k=l.createElement("div")
+m.S(k,"pc-card")
+w=A.Y(l,k)
+m.S(w,"pc-card")
+v=m.b=A.eW(m,2)
+u=v.c
+w.append(u)
+A.c(u,"icon","smartphone")
+A.c(u,"tall","")
+A.c(u,"wide","")
+u=new A.eM()
+m.c=u
+t=m.d=A.i4(m,3)
+s=m.w=t.c
+t.aa("mdc-button mdc-button--text mdc-button--icon-text pc-text-tertiary")
+A.c(s,"debug-id","empty-state-learn-more")
+A.c(s,"rel","noopener noreferrer")
+A.c(s,"target","_blank")
+r=A.i3(s)
+m.e=r
+q=l.createElement("span")
+m.S(q,"mdc-button__label")
+A.O(q,$.yOM())
+p=m.f=A.c_(m,6)
+o=p.c
+p.aa("mdc-button__icon external")
+A.c(o,"icon","open_in_new")
+n=new A.bV(o,A.bG(null,!1))
+m.r=n
+p.N(0,n)
+n=x.f
+p=x.Q
+t.t(r,A.a([A.a([q,o],n)],p))
+v.t(u,A.a([B.a,B.a,A.a([s],n)],p))
+m.K(k)},
+v(){var w,v,u,t=this,s=(t.a.Q&1)!==0
+if(s){w=t.c
+w.a="smartphone"
+w.c=$.yOL()}if(s)t.r.saW(0,"open_in_new")
+if(s)t.f.d.f|=32
+t.c.ac()
+if(s){w=$.rEk()
+v=t.w
+u=A.e2(w)
+v.href=u
+A.a5(v,"aria-label",$.rEl())}t.b.l()
+t.d.l()
+t.f.l()
+$.u().F(s)},
+A(){this.b.m()
+this.d.m()
+this.f.m()}}
+var z=a.updateTypes(["l<~>(j,F)","~()","w()","Z<~>()","cqH()"])
+C.mvS.prototype={
+$1(d){this.a.a.a.Q=d},
+$S:0}
+C.kzK.prototype={
+$1(d){return d.a},
+$S:63}
+C.kzL.prototype={
+$1(d){return d.gbl()},
+$S:257}
+C.kzD.prototype={
+$1(d){var w=this.a,v=w.d.E(0,d.a.k(0))
+v.toString
+return w.cRz(v,d)},
+$S:165}
+C.kzw.prototype={
+$1(d){var w=this.a,v=w.d.E(0,d.a.k(0))
+v.toString
+return w.cRz(v,d)},
+$S:165}
+C.kzs.prototype={
+$0(){return this.a.w.bp(0,$.b1q().ql("billing-choice-section",A.aC(this.b.a.k(0).a.k(1))))},
+$S:2}
+C.kzj.prototype={
+$1(d){return d.a.k(1)},
+$S:2503}
+C.kzk.prototype={
+$1(d){return this.a.eip(d)},
+$S:2504}
+C.kzl.prototype={
+$1(d){return d},
+$S:6}
+C.mQy.prototype={
+$1(d){this.a.id.fe(0,d)},
+$S:0};(function installTearOffs(){var w=a._static_0,v=a._instance_0u,u=a._static_2
+w(C,"vEP","D_0",2)
+w(C,"vEQ","D_1",2)
+w(C,"HuN","D__",2)
+v(C.b4P.prototype,"gZk","Zl",1)
+u(C,"FLv","MaB",0)
+u(C,"FLw","MaC",0)
+u(C,"FLx","MaD",0)
+var t
+v(t=C.Tr.prototype,"gVk","Vl",1)
+v(t,"gZs","Zt",1)
+v(t,"gVi","Vj",1)
+v(t,"ga0B","v9",3)
+u(C,"FLI","MaN",0)
+u(C,"FLJ","MaO",0)
+u(C,"FLK","MaP",0)
+u(C,"FLL","MaQ",0)
+w(C,"FLH","EU2",4)
+u(C,"Hkw","N4l",0)
+u(C,"Hkx","N4p",0)
+u(C,"Hky","N4t",0)})();(function inheritance(){var w=a.inheritMany,v=a.inherit
+w(A.w,[C.cOj,C.cOk,C.cOi])
+w(A.B,[C.b4P,C.bDK])
+w(A.b0,[C.e_r,C.e_t,C.enz])
+w(A.l,[C.fgD,C.fgE,C.fgF,C.fgN,C.fgO,C.fgP,C.fgQ,C.hcG,C.hcK,C.hcM])
+v(C.Tr,K.aN)
+w(A.aL,[C.mvS,C.kzK,C.kzL,C.kzD,C.kzw,C.kzj,C.kzk,C.kzl,C.mQy])
+v(C.cqH,A.ab)
+v(C.kzs,A.cD)})()
+A.an(b.typeUniverse,JSON.parse('{"cOj":{"w":[]},"cOk":{"w":[]},"cOi":{"w":[]},"e_r":{"j":[]},"fgD":{"l":["b4P"],"j":[],"p":[]},"fgE":{"l":["b4P"],"j":[],"p":[]},"fgF":{"l":["b4P"],"j":[],"p":[]},"Tr":{"aN":[],"bJ":["d3"]},"cqH":{"ab":["Tr"],"p":[],"ab.T":"Tr"},"e_t":{"j":[]},"fgN":{"l":["Tr"],"j":[],"p":[]},"fgO":{"l":["Tr"],"j":[],"p":[]},"fgP":{"l":["Tr"],"j":[],"p":[]},"fgQ":{"l":["Tr"],"j":[],"p":[]},"enz":{"j":[]},"hcG":{"l":["bDK"],"j":[],"p":[]},"hcK":{"l":["bDK"],"j":[],"p":[]},"hcM":{"l":["bDK"],"j":[],"p":[]}}'))
+var y={e:"BillingChoiceEnrollmentGetStartedComponent",d:"play.console.apps.api.payments.PaymentsService"}
+var x=(function rtii(){var w=A.t
+return{g:w("dK"),n:w("ie"),z:w("b4P"),O:w("Tr"),h:w("cOi"),T:w("cOj"),B:w("cOk"),e:w("aaX"),R:w("Fv"),I:w("cb"),Z:w("R<Tr>"),P:w("R<qO>"),C:w("R<Au>"),j:w("R<hb>"),a:w("f5"),G:w("aDA"),L:w("r<cb>"),q:w("r<cv<@>>"),E:w("r<eR<B>>"),M:w("r<cq>"),k:w("r<fU>"),Q:w("r<N<B>>"),J:w("r<Q<o,B>>"),f:w("r<B>"),x:w("r<bt<~>>"),s:w("r<o>"),t:w("wv"),Y:w("Ux"),U:w("ajQ"),d:w("bDK"),r:w("UQ"),K:w("B"),N:w("o"),_:w("eQ"),u:w("G<F>"),o:w("G<~>"),D:w("ay<~>"),i:w("aV<Q<o,B>>"),y:w("cu<@>"),F:w("aW<~>"),A:w("@"),W:w("@()"),S:w("F"),V:w("aMk?"),H:w("~")}})();(function staticFields(){$.tCZ=null
+$.tD2=null
+$.E24=A.a(["app"],x.s)
+$.ukC=null})();(function lazyInitializers(){var w=a.lazyFinal
+w($,"Pe_","wSq",()=>{var v=null
+return A.A("BillingChoicePageStartupDataResponse.Enrolled",C.vEP(),v,v,B.eq,v,v)})
+w($,"Pe0","wSr",()=>{var v=null,u=A.A("BillingChoicePageStartupDataResponse.NotEnrolled",C.vEQ(),v,v,B.eq,v,v)
+u.M(1,"enrollmentContext",E.ikG(),A.t("aSl"))
+return u})
+w($,"Pe1","wSs",()=>{var v=null,u=A.A("BillingChoicePageStartupDataResponse",C.HuN(),v,v,B.eq,v,v)
+u.bN(0,A.a([1,2],A.t("r<F>")))
+u.M(1,"enrolled",C.vEP(),x.T)
+u.M(2,"notEnrolled",C.vEQ(),x.B)
+u.M(3,"enrollmentDetails",A.rfb(),A.t("aMk"))
+return u})
+w($,"Pdq","wRT",()=>A.ud($.irB(),$.irA(),B.cL,A.qZ("https://support.google.com/googleplay/android-developer/contact/billing_choice"),null))
+w($,"Pds","wRV",()=>$.is2())
+w($,"Pdj","wRM",()=>$.ipW())
+w($,"Pdp","wRS",()=>$.o1P())
+w($,"Pdl","wRO",()=>$.iqp())
+w($,"Pdt","wRW",()=>$.isf())
+w($,"Pdh","rpk",()=>G.a9C(A.iG(17161464,null),$.o1P()))
+w($,"Pdr","wRU",()=>$.o61())
+w($,"Pdo","wRR",()=>{var v=$.rpk()
+return A.b("Once your app or game is enrolled, you can provide users with the choice to pay through your own billing system or external web links alongside Google Play's billing system. You will be able to render your own user choice screens or use Google Play's. "+v+"Learn more</a>",null,"BillingChoiceEnrollmentGetStartedComponent_getStartedText",A.a([v,"</a>"],x.f),null)})
+w($,"Pdi","wRL",()=>{var v=G.a9C("https://developer.android.com/google/play/billing/billingchoice",$.wRK())
+return A.b('<span class="pc-static-button-text">Enrolled apps must integrate with the '+v+"billing choice API</a></span>",null,"BillingChoiceEnrollmentGetStartedComponent__apiRequirementText",A.a([v,"</a>",'<span class="pc-static-button-text">',"</span>"],x.f),null)})
+w($,"Pdm","wRP",()=>{var v=$.rpk()
+return A.b('<span class="pc-static-button-text">You understand the '+v+"billing choice requirements and fees</a></span>",null,"BillingChoiceEnrollmentGetStartedComponent_feesRequirementText",A.a([v,"</a>",'<span class="pc-static-button-text">',"</span>"],x.f),null)})
+w($,"Pdn","wRQ",()=>{var v=null
+return A.b("Enroll in billing choice",v,v,v,v)})
+w($,"Pdk","wRN",()=>{var v=null
+return A.b("Enroll in the billing choice program",v,v,v,v)})
+w($,"Pdg","wRK",()=>{var v=null
+return A.b("billing choice API (opens in a new window)",v,v,v,v)})
+w($,"PdZ","wSp",()=>{var v=null
+return A.b("Manage your billing choice settings.",v,v,v,v)})
+w($,"PdY","wSo",()=>{var v=null
+return A.b("Once your app or game is enrolled, you can provide users with the choice to pay through your own billing system or external web links alongside Google Play's billing system. You will be able to render your own user choice screens or use Google Play's.",v,v,v,v)})
+w($,"Ruq","yP4",()=>{var v=M.zF(50)
+v.ses(10)
+return v})
+w($,"Ru3","yOK",()=>A.V(["programs",$.aos()],x.N,A.t("F(B?,B?)")))
+w($,"Ruu","yP8",()=>$.age().kw(O.azm(P.ra)))
+w($,"Ru9","rEk",()=>A.iG(17161464,null))
+w($,"Ru8","yOM",()=>$.f9())
+w($,"Rup","yP0",()=>$.aKh())
+w($,"Ruh","yOW",()=>{var v=null
+return A.b("Apps approved for billing choice",v,v,v,v)})
+w($,"Rul","yP_",()=>{var v=null
+return A.b("See which apps have been approved for billing choice.",v,v,v,v)})
+w($,"Rud","rEl",()=>{var v=null
+return A.b("Learn more about billing choice (opens in new window)",v,v,v,v)})
+w($,"Ru7","yOL",()=>{var v=null
+return A.b("You haven't set up any apps yet. Once you create an eligible app and it's approved for billing choice, it will appear here.",v,v,v,v)})
+w($,"Ruy","yPc",()=>{var v=null
+return A.b("Manage apps enrolled in billing choice",v,v,v,v)})
+w($,"RuC","yPg",()=>{var v=null
+return A.b("Search app name",v,v,v,v)})
+w($,"RtL","yOr",()=>{var v=null
+return A.b("App",v,v,v,v)})
+w($,"RtW","yOz",()=>{var v=null
+return A.b("Billing choice",v,v,v,v)})
+w($,"RtX","yOA",()=>{var v=null
+return A.b("Shows which apps have been approved for billing choice",v,v,v,v)})
+w($,"RtQ","yOw",()=>{var v=null
+return A.b("Manage",v,v,v,v)})
+w($,"RtV","yOy",()=>{var v=null
+return A.b("Play-provided user choice screen",v,v,v,v)})
+w($,"RtP","yOs",()=>{var v=null
+return A.b("your own user choice screen",v,v,v,v)})
+w($,"RtU","yOx",()=>{var v=null
+return A.b("Not enrolled",v,v,v,v)})})()};
+(a=>{a["5hYDC1fTriuy6lFfqMp6aL0L97E="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5418.part.js.map

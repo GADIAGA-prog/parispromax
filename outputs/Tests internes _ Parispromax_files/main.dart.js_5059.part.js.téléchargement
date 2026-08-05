@@ -1,0 +1,33 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A,C,D={
+bcY(d,e,f){switch(d){case A.Bi:switch(e){case A.jk:case A.iX:case A.fi:return null
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}case A.py:switch(e){case A.iX:case A.fi:return $.yq8()
+case A.h6:return f?$.in3():$.nWr()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}case A.Bj:switch(e){case A.iX:case A.fi:return $.yq5()
+case A.h6:return f?$.in3():$.nWr()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}case A.px:switch(e){case A.iX:case A.fi:case A.h6:return $.yq6()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}case A.kt:switch(e){case A.iX:return $.rC2()
+case A.fi:return $.rC1()
+case A.h6:return $.in3()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}case A.II:case A.EX:switch(e){case A.iX:case A.fi:case A.h6:return $.nWr()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}case A.uV:switch(e){case A.iX:case A.fi:case A.h6:return $.yq7()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}default:switch(e){case A.jk:return null
+case A.iX:return $.rC2()
+case A.fi:return $.rC1()
+case A.h6:return $.in3()
+default:throw B.a3(B.b6(d.a1(0)+" "+e.a1(0)))}}}}
+B=c[0]
+A=c[2]
+C=c[2262]
+D=a.updateHolder(c[1318],D)
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"R2x","yq8",()=>B.fp("schedule",C.ii,!1,null,!1))
+y($,"R2t","yq6",()=>B.fp("error",A.fd,!0,null,!1))
+y($,"R2q","yq5",()=>B.fp("timelapse",C.ii,!1,null,!1))
+y($,"R2w","rC2",()=>B.fp("data_usage",C.ii,!1,null,!1))
+y($,"R2r","rC1",()=>B.fp("check_circle",A.dR,!1,null,!1))
+y($,"R2s","in3",()=>B.fp("do_not_disturb_on",C.ii,!1,null,!1))
+y($,"R2v","nWr",()=>B.fp("do_not_disturb_on",C.ii,!1,null,!1))
+y($,"R2u","yq7",()=>B.fp("info",C.ii,!1,null,!1))})()};
+(a=>{a["5z88qTG7tMFJlm5ywncjvR5Q13I="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5059.part.js.map

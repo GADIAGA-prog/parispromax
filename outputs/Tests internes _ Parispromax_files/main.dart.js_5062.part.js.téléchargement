@@ -1,0 +1,36 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var C,D,A={
+cbs(){var x=new A.aTa()
+x.R()
+return x},
+DZ6(){return A.cbs()},
+aTa:function aTa(){this.a=$},
+alG:function alG(d,e){this.a=d
+this.b=e}},B
+C=c[0]
+D=c[2]
+A=a.updateHolder(c[1369],A)
+B=c[2554]
+A.aTa.prototype={
+T(d){return C.z(this,y.c)},
+gP(){return $.yGa()}}
+A.alG.prototype={}
+var z=a.updateTypes(["w()"]);(function installTearOffs(){var x=a._static_0
+x(A,"KSU","DZ6",0)})();(function inheritance(){var x=a.inherit
+x(A.aTa,C.w)
+x(A.alG,C.ac)})()
+C.an(b.typeUniverse,JSON.parse('{"aTa":{"w":[]},"alG":{"ac":[]}}'))
+var y={c:C.t("aTa")};(function constants(){var x=a.makeConstList
+B.l6P=new A.alG(0,"RELEASE_SUMMARY_VIEW_UNSPECIFIED")
+B.aHg=new A.alG(1,"RELEASE_SUMMARY_VIEW_BASIC")
+B.l6O=new A.alG(2,"RELEASE_SUMMARY_VIEW_SUPPORTED_DEVICES")
+B.bj9=new A.alG(3,"RELEASE_SUMMARY_VIEW_ADDED_ARTIFACTS")
+B.d0j=new A.alG(5,"RELEASE_SUMMARY_VIEW_INSTALL_BASE")
+B.Ov=new A.alG(4,"RELEASE_SUMMARY_VIEW_FULL")
+B.cwF=x([B.l6P,B.aHg,B.l6O,B.bj9,B.d0j,B.Ov],C.t("r<alG>"))})();(function lazyInitializers(){var x=a.lazyFinal
+x($,"Rk2","yGa",()=>{var w=null,v=C.A("ListReleaseSummariesRequest",A.KSU(),w,w,D.bN,w,w)
+v.M(1,"trackReference",C.Dy(),C.t("ph"))
+v.ak(2,"view",B.cwF,C.t("alG"))
+return v})})()};
+(a=>{a["q8IZxhvXT/OHMD3SyoVdYI66xDw="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5062.part.js.map

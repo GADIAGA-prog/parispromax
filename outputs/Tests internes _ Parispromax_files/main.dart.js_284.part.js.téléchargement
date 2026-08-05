@@ -1,0 +1,24 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A={
+pa(d,e){var y=new A.eoG(B.aI(),d,e)
+y.aCw(d,e)
+return y},
+eoG:function eoG(d,e,f){this.a=d
+this.b=e
+this.c=f},
+kDQ:function kDQ(d,e){this.a=d
+this.b=e}}
+B=c[0]
+A=a.updateHolder(c[1548],A)
+A.eoG.prototype={
+lQ(d){var y=this.b.az
+this.a.bu(new B.k(y,B.v(y).n("k<1>")).J(0,new A.kDQ(this,d)))}}
+var z=a.updateTypes([])
+A.kDQ.prototype={
+$1(d){this.b.$1(this.a.b.x1)},
+$S:69};(function inheritance(){var y=a.inherit
+y(A.eoG,B.aza)
+y(A.kDQ,B.aL)})()
+B.an(b.typeUniverse,JSON.parse('{"eoG":{"h3":["o"]}}'))};
+(a=>{a["FjDOBWdf0F7P70p4XOYXV6QXmz4="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_284.part.js.map

@@ -2,18 +2,33 @@ const express = require('express');
 const prisma = require('../db');
 const { requireAuth, optionalAuth } = require('../auth');
 const { getAccess } = require('../services/subscription');
-const { groupPicks: buildGroups } = require('../services/predictionSelection');
+const {
+  groupPicks: buildGroups,
+  preRacePredictionPicks,
+} = require('../services/predictionSelection');
 const { getNationalGame } = require('../../../shared/nationalGameRules');
 const { buildNationalBetProposal } = require('../../../shared/nationalBetProposal');
-const { getEcdProfile } = require('../../../shared/ecdRules');
+const { getEcdProfile, ecdPredictionFormat } = require('../../../shared/ecdRules');
 const { formatRaceReference } = require('../../../shared/raceReference');
 const { evaluateGrandCarnet } = require('../../../shared/grandCarnetOutcome');
-const { evaluateEcdTickets } = require('../../../shared/ecdTicketOutcome');
+const {
+  evaluateEcdTickets,
+  payoutRowsForCountry,
+  playablePayoutRows,
+  validateOfficialPayouts,
+} = require('../../../shared/ecdTicketOutcome');
 const {
   groupSelectedRaces,
 } = require('../services/ecdProgram');
-const { syncOfficialEcdProgram, raceParts } = require('../services/ecdOfficialSource');
+const {
+  syncOfficialEcdProgram,
+  raceParts,
+  raceRunnerCount,
+} = require('../services/ecdOfficialSource');
 const { parisStartIso, gmtTimeLabel } = require('../services/raceTime');
+const { resolveCanonicalPrediction } = require('../services/predictionResolver');
+const { triggerOfficialCatchup } = require('../services/officialCatchup');
+const { storedNationalReport } = require('../services/nationalOfficialSource');
 
 const router = express.Router();
 
@@ -23,6 +38,20 @@ function parse(json, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function grandCarnetOfficialReport(report, { operator = null } = {}) {
+  // No stored rows means that the operator has not published (or we have not
+  // fetched) a report yet. It is pending, not a partially parsed publication.
+  if (!report || report.status === 'pending') return null;
+  const firstRow = report.payouts?.[0] || null;
+  return {
+    status: report.status,
+    payouts: report.payouts,
+    arrivals: report.arrivals,
+    operator: firstRow?.operator || operator,
+    sourceUrl: firstRow?.sourceUrl || null,
+  };
 }
 
 // GET /races — list of today's (latest) races, grouped by track. Public.
@@ -152,7 +181,8 @@ router.get('/national', optionalAuth, async (req, res) => {
   const full = race ? parse(race.raw, {}) : {};
   const betType = game?.label || pick.betType || 'Course du jour';
   const nonPartants = race?.nonPartants ? parse(race.nonPartants, []) : [];
-  const predictionCandidates = parse(race?.predictions?.[0]?.topPicks, []);
+  let predictionCandidates = [];
+  let predictionSource = 'market-ranking';
   const horseCandidates = (full.horses || [])
     .slice()
     .sort((a, b) => {
@@ -162,10 +192,15 @@ router.get('/national', optionalAuth, async (req, res) => {
         - (Number.isFinite(oddsB) && oddsB > 0 ? oddsB : 999);
     });
   const access = req.userId ? await getAccess(req.userId) : { hasAccess: false };
+  if (access.hasAccess && race) {
+    const resolved = await resolveCanonicalPrediction(race);
+    predictionCandidates = resolved.picks;
+    if (predictionCandidates.length) predictionSource = resolved.source;
+  }
   const proposal = access.hasAccess && game
     ? buildNationalBetProposal(game, [...predictionCandidates, ...horseCandidates], {
         nonPartants,
-        source: predictionCandidates.length ? 'latest-analysis' : 'market-ranking',
+        source: predictionSource,
       })
     : null;
   const nationalGame = game ? { ...game, proposal } : null;
@@ -183,6 +218,7 @@ router.get('/national', optionalAuth, async (req, res) => {
             name: race.name,
             number: formatRaceReference({ ...full, id: race.externalId }),
             time: gmtTimeLabel(race.date, full.time),
+            startsAt: parisStartIso(race.date, full.time),
             prize: full.prize ?? null,
             betType,
             bets: full.bets || [],
@@ -278,72 +314,177 @@ router.get('/history', optionalAuth, async (req, res) => {
   const country = String(req.query.country || 'bf').trim().toLowerCase();
   const ecdProfile = getEcdProfile(country);
   if (!ecdProfile) return res.status(400).json({ error: 'country invalide' });
+  // Select the country's products before loading Result rows. A global Result
+  // limit could otherwise hide a quiet country's entire history behind races
+  // ingested for other markets.
+  const [ecdPicks, nationalPicks] = await Promise.all([
+    prisma.ecdPick.findMany({
+      where: { country },
+      orderBy: { date: 'desc' },
+      take: 300,
+      select: { date: true, externalId: true },
+    }),
+    prisma.nationalPick.findMany({
+      where: { country },
+      orderBy: { date: 'desc' },
+      take: 300,
+      select: { date: true, externalId: true, betType: true },
+    }),
+  ]);
+  const relevantExternalIds = [...new Set(
+    [...ecdPicks, ...nationalPicks].map((pick) => pick.externalId).filter(Boolean)
+  )];
   const resultQuery = {
-    orderBy: { createdAt: 'desc' },
-    take: 300,
+    where: { race: { externalId: { in: relevantExternalIds } } },
+    orderBy: [{ race: { date: 'desc' } }, { createdAt: 'desc' }],
+    take: 600,
     include: {
       race: { include: { predictions: { orderBy: { createdAt: 'desc' }, take: 50 } } },
     },
   };
-  let results = await prisma.result.findMany(resultQuery);
-
-  const dates = [...new Set(results.map((result) => result.race.date).filter(Boolean))];
-  for (const date of dates.slice(0, 2)) {
-    try { await syncOfficialEcdProgram(country, date); }
-    catch (error) { console.warn(`[ecd/history] source officielle ${country}/${date}:`, error.message); }
-  }
-  // The official sync can publish payouts during this very request. Reload so
-  // the user immediately sees the new reports and the corresponding ticket balance.
-  results = await prisma.result.findMany(resultQuery);
-  const [nationalPicks, ecdPicks] = dates.length
-    ? await Promise.all([
-        prisma.nationalPick.findMany({
-          where: { country, date: { in: dates } },
-          select: { date: true, externalId: true },
-        }),
-        prisma.ecdPick.findMany({
-          where: { country, date: { in: dates } },
-          select: { date: true, externalId: true },
-        }),
-      ])
-    : [[], []];
-  const nationalIds = new Set(
-    nationalPicks.map((pick) => `${pick.date}:${pick.externalId}`)
+  const results = relevantExternalIds.length ? await prisma.result.findMany(resultQuery) : [];
+  const nationalById = new Map(
+    nationalPicks.map((pick) => [`${pick.date}:${pick.externalId}`, pick.betType])
   );
   const ecdIds = new Set(
     ecdPicks.map((pick) => `${pick.date}:${pick.externalId}`)
   );
 
+  // Retry only dates whose expected official product report is actually
+  // absent or incomplete. Include picks without a Result so older pending
+  // dates do not disappear behind an arbitrary seven-date window.
+  const resultById = new Map(results.map((result) => [result.race.externalId, result]));
+  const pendingDates = [];
+  if (ecdProfile.verified) {
+    for (const pick of ecdPicks) {
+      const result = resultById.get(pick.externalId);
+      if (!result) {
+        pendingDates.push(pick.date);
+        continue;
+      }
+      const rows = payoutRowsForCountry(parse(result.payouts, []), country, 'bf', 'ecd');
+      const storedPodium = Number(rows.find((row) => Number(row?.podium))?.podium);
+      const podium = [2, 3].includes(storedPodium)
+        ? storedPodium
+        : ecdPredictionFormat(raceRunnerCount(result.race)).podium;
+      if (!podium || validateOfficialPayouts({ payouts: rows, arrival: parse(result.winners, []), podiumSize: podium }).status !== 'complete') {
+        pendingDates.push(pick.date);
+      }
+    }
+  }
+  if (country === 'bf') {
+    for (const pick of nationalPicks) {
+      const result = resultById.get(pick.externalId);
+      const game = getNationalGame(country, pick.date, { betType: pick.betType });
+      const report = storedNationalReport(
+        parse(result?.payouts, []),
+        country,
+        pick.date,
+        Number(game?.podium) || null
+      );
+      if (!result || report.status !== 'complete') pendingDates.push(pick.date);
+    }
+  }
+  triggerOfficialCatchup({
+    country,
+    dates: [...new Set(pendingDates.filter(Boolean))].sort().reverse().slice(0, 30),
+  });
+
   const history = results.map((r) => {
-    const winners = parse(r.winners, []);
+    const winners = parse(r.winners, []).map(Number).filter(Number.isFinite);
     const full = parse(r.race.raw, {});
     const snapshot = parse(r.predictionSnapshot, null);
-    // For legacy rows without a snapshot, use the prediction that existed
-    // when the result was recorded instead of a later recalculation.
-    const historicalPrediction = r.race.predictions.find(
-      (prediction) => prediction.createdAt <= r.createdAt
-    ) || r.race.predictions.at(-1);
-    const picks = parse(historicalPrediction?.topPicks, []);
-    const groups = snapshot?.groups || buildGroups(picks, r.race, Math.min(winners.length, 5));
     const identity = `${r.race.date}:${r.race.externalId}`;
-    const isNational = nationalIds.has(identity);
+    const isNational = nationalById.has(identity);
     const isEcd = ecdIds.has(identity);
     const category = isNational ? 'national' : isEcd ? 'ecd' : null;
     if (!category) return null;
-    const game = category === 'national' ? getNationalGame(country, r.race.date) : null;
-    const topPicks = snapshot?.topPicks || groups.selected;
-    const payouts = parse(r.payouts, []);
-    const grandCarnetOutcome = country === 'bf' && game
-      ? evaluateGrandCarnet(game, topPicks, winners)
+    const game = isNational
+      ? getNationalGame(country, r.race.date, { betType: nationalById.get(identity) })
       : null;
-    const ecdTicketOutcome = isEcd
+    // For legacy rows without a snapshot, only a ranking published before the
+    // scheduled start is eligible; a later recalculation must never rewrite history.
+    const historicalPicks = preRacePredictionPicks(r.race);
+    const ranking = Array.isArray(snapshot?.ranking) && snapshot.ranking.length
+      ? snapshot.ranking
+      : historicalPicks.length
+        ? historicalPicks
+        : snapshot?.topPicks || [];
+    const storedPayouts = parse(r.payouts, []);
+    const storedEcdPayouts = isEcd
+      ? payoutRowsForCountry(storedPayouts, country, 'bf', 'ecd')
+      : [];
+    const storedEcdPodium = Number(storedEcdPayouts.find((row) => Number(row?.podium))?.podium);
+    const nationalPlaces = game?.verified && Number.isInteger(Number(game?.podium))
+      ? Number(game.podium)
+      : null;
+    const ecdPlaces = isEcd && ecdProfile.verified
+      ? ([2, 3].includes(storedEcdPodium)
+          ? storedEcdPodium
+          : ecdPredictionFormat(raceRunnerCount(r.race)).podium)
+      : null;
+    const places = isNational ? nationalPlaces : ecdPlaces;
+    const nationalGroups = isNational && nationalPlaces
+      ? buildGroups(ranking, r.race, nationalPlaces)
+      : null;
+    const ecdGroups = isEcd && ecdPlaces ? buildGroups(ranking, r.race, ecdPlaces) : null;
+    const groups = nationalGroups || ecdGroups || null;
+    const topPicks = groups?.selected || ranking.slice(0, 5);
+    const ecdTopPicks = ecdGroups?.selected || [];
+    const aiHit = topPicks[0] && places && winners.length >= places
+      ? winners.slice(0, places).includes(Number(topPicks[0].number))
+      : null;
+    const ecdAiHit = ecdTopPicks[0] && ecdPlaces && winners.length >= ecdPlaces
+      ? winners.slice(0, ecdPlaces).includes(Number(ecdTopPicks[0].number))
+      : null;
+    const countryPayouts = isEcd && ecdProfile.verified && ecdPlaces
+      ? storedEcdPayouts
+      : [];
+    let reportValidation;
+    if (!isEcd) reportValidation = { status: 'not-ecd' };
+    else if (!ecdProfile.verified) reportValidation = { status: 'rules-unverified' };
+    else if (!ecdPlaces) reportValidation = { status: 'format-unavailable' };
+    else {
+      reportValidation = validateOfficialPayouts({
+        payouts: countryPayouts,
+        arrival: winners,
+        podiumSize: ecdPlaces,
+      });
+    }
+    // A partial parse must never be exposed as a final report. Once the full
+    // PDF shape is validated, only variants actually playable for this field
+    // size are shown and used in the illustrative balance.
+    const payouts = reportValidation.status === 'complete'
+      ? playablePayoutRows(countryPayouts, ecdPlaces)
+      : [];
+    const nationalReportData = isNational && nationalPlaces
+      ? storedNationalReport(storedPayouts, country, r.race.date, nationalPlaces)
+      : null;
+    const nationalReportRow = nationalReportData?.payouts?.[0] || null;
+    const nationalOutcomeReport = grandCarnetOfficialReport(nationalReportData, {
+      operator: country === 'bf' ? 'LONAB' : null,
+    });
+    const grandCarnetOutcome = country === 'bf' && game?.verified
+      ? evaluateGrandCarnet(game, topPicks, winners, {
+          officialReport: nationalOutcomeReport,
+        })
+      : null;
+    const ecdTicketOutcome = isEcd && ecdProfile.verified && ecdPlaces
       ? evaluateEcdTickets({
           payouts,
-          predictions: topPicks,
+          predictions: ecdTopPicks,
+          podiumSize: ecdPlaces,
+          officialArrival: winners,
+          reportStatus: reportValidation.status,
           unitStake: ecdProfile.unitStake,
           currency: ecdProfile.currency,
         })
       : null;
+    const nationalArrivalComplete = isNational && nationalPlaces
+      ? winners.length >= nationalPlaces
+      : null;
+    const ecdArrivalComplete = isEcd && ecdPlaces ? winners.length >= ecdPlaces : null;
+    const arrivalComplete = category === 'national' ? nationalArrivalComplete : ecdArrivalComplete;
     return {
       id: r.id,
       raceId: r.race.externalId,
@@ -355,10 +496,36 @@ router.get('/history', optionalAuth, async (req, res) => {
       winners, // finishing order [num, num, ...]
       category,
       isEcd,
+      arrivalComplete,
+      nationalArrivalComplete,
+      ecdArrivalComplete,
+      officialResultStatus: arrivalComplete === true
+        ? 'complete'
+        : arrivalComplete === false
+          ? 'partial'
+          : 'unknown',
       ...(access.hasAccess ? {
+        ranking,
         topPicks,
         groups,
-        aiHit: r.predicted,
+        aiHit,
+        nationalTopPicks: nationalGroups?.selected || [],
+        nationalGroups,
+        nationalAiHit: nationalGroups ? aiHit : null,
+        ecdTopPicks,
+        ecdGroups,
+        ecdAiHit: ecdGroups ? ecdAiHit : null,
+        ecdReport: isEcd ? {
+          status: reportValidation.status,
+          country,
+          operator: countryPayouts.find((row) => row?.operator)?.operator || (country === 'bf' ? 'LONAB' : null),
+        } : null,
+        nationalReport: isNational ? {
+          status: nationalReportData?.status || 'pending',
+          country,
+          operator: nationalReportRow?.operator || (country === 'bf' ? 'LONAB' : null),
+          sourceUrl: nationalReportRow?.sourceUrl || null,
+        } : null,
         grandCarnetOutcome,
         ecdTicketOutcome,
       } : {}),
@@ -398,6 +565,7 @@ router.get('/:externalId', async (req, res) => {
     name: race.name,
     date: race.date,
     time: gmtTimeLabel(race.date, full.time),
+    startsAt: parisStartIso(race.date, full.time),
     discipline: race.discipline,
     type: full.type || race.discipline || null, // Trot Attelé / Plat / Obstacle…
     autostart: Boolean(full.autostart),
@@ -423,23 +591,7 @@ router.get('/:externalId', async (req, res) => {
   });
 });
 
-// Map the LTR microservice output to the app's `topPicks` shape (unchanged
-// contract: number/name/aiScore/rank + proba* — so the app needs no change).
-function ltrToTopPicks(preds) {
-  return (preds || [])
-    .slice()
-    .sort((a, b) => (a.rang_predit || 999) - (b.rang_predit || 999))
-    .map((p) => ({
-      number: p.number,
-      name: p.name,
-      aiScore: Math.round((Number(p.proba_win) || 0) * 1000) / 10,
-      rank: p.rang_predit,
-      probaGagnant: Number(p.proba_win) || 0,
-      probaPodium: Number(p.proba_podium) || 0,
-      valueBet: !!p.value_bet,
-    }));
-}
-
+// Canonical prediction contract: number/name/aiScore/rank + probabilities.
 // GET /races/:externalId/prediction — AI top picks. GATED: requires an active
 // subscription or trial. Serves the trained LTR model when the IA microservice
 // is enabled (IA_URL), and falls back to the stored JS-engine predictions.
@@ -454,26 +606,21 @@ router.get('/:externalId/prediction', requireAuth, async (req, res) => {
   });
   if (!race) return res.status(404).json({ error: 'Pronostic indisponible' });
 
-  // Prefer the trained LTR model (guarded: only when the IA service is wired).
-  if (process.env.IA_URL) {
-    try {
-      const { getPredictions } = require('../services/iaClient');
-      const ia = await getPredictions(req.params.externalId);
-      if (ia && Array.isArray(ia.predictions) && ia.predictions.length) {
-        const picks = ltrToTopPicks(ia.predictions);
-        return res.json({ raceId: race.externalId, source: 'ltr', topPicks: picks, groups: buildGroups(picks, race) });
-      }
-    } catch (e) {
-      console.error('[prediction] IA fallback ->', e.message);
-    }
-  }
-
-  // Fallback — stored JS-engine predictions.
-  if (!race.predictions.length) {
+  // The same canonical provider also feeds the national proposal: trained LTR
+  // when available, then stored ranking, then a persisted raw-data fallback.
+  const resolved = await resolveCanonicalPrediction(race);
+  if (!resolved.picks.length) {
     return res.status(404).json({ error: 'Pronostic indisponible' });
   }
-  const picks = parse(race.predictions[0].topPicks, []);
-  res.json({ raceId: race.externalId, source: 'js', topPicks: picks, groups: buildGroups(picks, race) });
+  const source = resolved.source === 'stored' ? 'js' : resolved.source;
+  res.json({
+    raceId: race.externalId,
+    source,
+    topPicks: resolved.picks,
+    groups: buildGroups(resolved.picks, race),
+  });
 });
+
+router._test = { grandCarnetOfficialReport };
 
 module.exports = router;

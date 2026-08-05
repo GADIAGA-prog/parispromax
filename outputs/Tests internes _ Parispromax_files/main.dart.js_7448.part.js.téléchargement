@@ -1,0 +1,30 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,C,B={b66:function b66(){},
+cRD(d,e){var x=new B.e3d(A.a2(d,e,0)),w=$.tIR
+x.b=w==null?$.tIR=A.ad(C.a,null):w
+x.c=b.G.document.createElement("console-block-3-2")
+return x},
+e3d:function e3d(d){var _=this
+_.c=_.b=_.a=$
+_.d=d}}
+A=c[0]
+C=c[2]
+B=a.updateHolder(c[1009],B)
+B.b66.prototype={}
+B.e3d.prototype={
+gu(){return"ConsoleBlock32Component"},
+gcV(){var x=y.h
+return A.a([A.a([],x),A.a([],x)],y.f)},
+q(){var x,w=this.ag(),v=b.G.document,u=A.Y(v,w)
+A.c(u,"ratio-3-5","")
+this.cg(u,0)
+x=A.Y(v,w)
+A.c(x,"ratio-2-5","")
+this.cg(x,1)}}
+var z=a.updateTypes([]);(function inheritance(){var x=a.inherit
+x(B.b66,A.B)
+x(B.e3d,A.b0)})()
+A.an(b.typeUniverse,JSON.parse('{"e3d":{"j":[]}}'))
+var y={f:A.t("r<N<B>>"),h:A.t("r<B>")};(function staticFields(){$.tIR=null})()};
+(a=>{a["KF7JT9d2Ug9tvLoZ7my5bn6xLg4="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_7448.part.js.map

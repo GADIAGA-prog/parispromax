@@ -1,0 +1,10 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+eGb(d,e){var x=null,w="Release notes provided for "+d
+return A.aB(e,A.a([d,e],y.d),x,x,x,x,"ReleaseMessages_releaseNotesCount",w+" language",w+" of "+e+" languages",x,x,x)}}
+A=c[0]
+B=a.updateHolder(c[1043],B)
+var z=a.updateTypes([])
+var y={d:A.t("r<B>")}};
+(a=>{a["V09iUcp7WqgCdLevIvTLUYHQobU="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_4858.part.js.map

@@ -1,0 +1,8 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C
+A=c[0]
+B=c[2]
+C=c[2558]
+var z=a.updateTypes([]);(function constants(){C.n6=new A.c5("slow_motion_video",B.bP,null,!1,!1)})()};
+(a=>{a["jHmU2Gxs7LVKPEWwV0G1DP964Jg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_4871.part.js.map

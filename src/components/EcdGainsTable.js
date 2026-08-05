@@ -30,19 +30,21 @@ function pairs(values) {
   return `${values[0]} - ${values[1]} / ${values[0]} - ${values[2]} / ${values[1]} - ${values[2]}`;
 }
 
-function predictionFor(kind, prediction) {
+function predictionFor(kind, prediction, podiumSize = 3) {
+  const podium = Math.max(2, Math.min(3, Number(podiumSize) || 3));
   if (kind === 'win') return String(prediction[0] || '—');
-  if (kind === 'place') return prediction.slice(0, 3).join(' - ') || '—';
+  if (kind === 'place') return prediction.slice(0, podium).join(' - ') || '—';
   if (kind === 'jum-place') return pairs(prediction.slice(0, 3)) || '—';
   if (kind === 'trio') return prediction.slice(0, 3).join(' - ') || '—';
   return prediction.slice(0, 2).join(' - ') || '—';
 }
 
-function isCovered(kind, officialValue, prediction) {
+function isCovered(kind, officialValue, prediction, podiumSize = 3) {
+  const podium = Math.max(2, Math.min(3, Number(podiumSize) || 3));
   const official = numbers(officialValue);
   if (!official.length || !prediction.length) return false;
   if (kind === 'win') return official[0] === prediction[0];
-  if (kind === 'place') return prediction.slice(0, 3).includes(official[0]);
+  if (kind === 'place') return prediction.slice(0, podium).includes(official[0]);
   if (kind === 'jum-order') return official[0] === prediction[0] && official[1] === prediction[1];
   if (kind === 'jum-win') {
     const expected = new Set(prediction.slice(0, 2));
@@ -51,26 +53,41 @@ function isCovered(kind, officialValue, prediction) {
   return official.every((value) => prediction.slice(0, 3).includes(value));
 }
 
-function fallbackRows(arrival) {
-  const [first, second, third] = arrival;
-  return [
+function fallbackRows(arrival, podiumSize = 3) {
+  const podium = Math.max(2, Math.min(3, Number(podiumSize) || 3));
+  const [first, second, third] = arrival.slice(0, podium);
+  const rows = [
     { bet: 'Gagnant', numbers: first },
-    ...arrival.slice(0, 3).map((number) => ({ bet: 'Placé', numbers: number })),
-    { bet: 'Jumelé ordre', numbers: `${first} - ${second}` },
-    { bet: 'Jumelé gagnant', numbers: `${first} - ${second}` },
-    { bet: 'Jumelé placé', numbers: `${first} - ${second}` },
-    { bet: 'Jumelé placé', numbers: `${first} - ${third}` },
-    { bet: 'Jumelé placé', numbers: `${second} - ${third}` },
-    { bet: 'Trio', numbers: `${first} - ${second} - ${third}` },
-  ].filter((row) => !String(row.numbers).includes('undefined'));
+    ...arrival.slice(0, podium).map((number) => ({ bet: 'Placé', numbers: number })),
+  ];
+  if (podium === 2) {
+    rows.push({ bet: 'Jumelé ordre', numbers: `${first} - ${second}` });
+  } else {
+    rows.push(
+      { bet: 'Jumelé gagnant', numbers: `${first} - ${second}` },
+      { bet: 'Jumelé placé', numbers: `${first} - ${second}` },
+      { bet: 'Jumelé placé', numbers: `${first} - ${third}` },
+      { bet: 'Jumelé placé', numbers: `${second} - ${third}` },
+      { bet: 'Trio', numbers: `${first} - ${second} - ${third}` }
+    );
+  }
+  return rows.filter((row) => !String(row.numbers).includes('undefined'));
 }
 
 function amount(value, reportsAvailable) {
   if (!reportsAvailable) return 'En attente';
+  if (Number.isFinite(Number(value)) && Number(value) <= 0) return 'Non calculable';
   return `${Number(value || 0).toLocaleString('fr-FR')} FCFA`;
 }
 
-export default function EcdGainsTable({ arrival = [], payouts = [], predictions = [], countryName = 'votre pays' }) {
+export default function EcdGainsTable({
+  arrival = [],
+  payouts = [],
+  predictions = [],
+  countryName = 'votre pays',
+  podiumSize = 3,
+  reportStatus = 'pending',
+}) {
   const prediction = useMemo(
     () => predictions
       .slice()
@@ -79,14 +96,17 @@ export default function EcdGainsTable({ arrival = [], payouts = [], predictions 
       .filter(Number.isFinite),
     [predictions]
   );
-  const reportsAvailable = payouts.length > 0;
-  const rows = reportsAvailable ? payouts : fallbackRows(arrival);
+  const reportsAvailable = reportStatus === 'complete' && payouts.length > 0;
+  const rows = reportsAvailable ? payouts : fallbackRows(arrival, podiumSize);
+  const pendingLabel = reportStatus === 'partial' || reportStatus === 'arrival-incomplete'
+    ? 'Rapport partiel · calcul suspendu'
+    : 'Rapports en attente';
 
   return (
     <View style={styles.section}>
       <View style={styles.heading}>
         <Text style={styles.kicker}>GAINS ECD · {String(countryName).toUpperCase()}</Text>
-        {!reportsAvailable ? <Text style={styles.pending}>Rapports en attente</Text> : null}
+        {!reportsAvailable ? <Text style={styles.pending}>{pendingLabel}</Text> : null}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator>
         <View style={styles.table}>
@@ -99,7 +119,7 @@ export default function EcdGainsTable({ arrival = [], payouts = [], predictions 
           </View>
           {rows.map((row, index) => {
             const kind = betKind(row.bet);
-            const covered = isCovered(kind, row.numbers, prediction);
+            const covered = isCovered(kind, row.numbers, prediction, podiumSize);
             return (
               <View key={`${row.bet}-${row.numbers}-${index}`} style={styles.row}>
                 <Text style={[styles.cell, styles.betCell, styles.betText]}>{String(row.bet).toUpperCase()}</Text>
@@ -108,7 +128,7 @@ export default function EcdGainsTable({ arrival = [], payouts = [], predictions 
                 <Text style={[styles.cell, styles.countCell]}>{reportsAvailable ? row.winnerCount ?? 0 : '—'}</Text>
                 <View style={[styles.cell, styles.predictionCell, covered && styles.coveredCell]}>
                   <Text style={[styles.predictionText, covered && styles.coveredText]}>
-                    {predictionFor(kind, prediction)}{covered ? '  ✓ Couvert' : ''}
+                    {predictionFor(kind, prediction, podiumSize)}{covered ? '  ✓ Couvert' : ''}
                   </Text>
                 </View>
               </View>
@@ -122,9 +142,9 @@ export default function EcdGainsTable({ arrival = [], payouts = [], predictions 
 
 const styles = StyleSheet.create({
   section: { marginTop: SPACING.md },
-  heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm, marginBottom: SPACING.sm },
-  kicker: { color: COLORS.primary, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 },
-  pending: { color: COLORS.gold, fontSize: FONT.sm - 2, fontWeight: '900' },
+  heading: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm, marginBottom: SPACING.sm },
+  kicker: { flexShrink: 1, color: COLORS.primary, fontSize: 10, fontWeight: '900', letterSpacing: 0.7 },
+  pending: { flexShrink: 1, color: COLORS.gold, fontSize: FONT.sm - 2, fontWeight: '900', textAlign: 'right' },
   table: { minWidth: 720, borderWidth: 1, borderColor: COLORS.primary, borderRadius: RADIUS.sm, overflow: 'hidden' },
   row: { minHeight: 38, flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: COLORS.border },
   headerRow: { minHeight: 34, backgroundColor: COLORS.primary },

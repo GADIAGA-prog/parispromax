@@ -2,7 +2,9 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { buildRaceInsights } from '../services/raceInsights';
+import { hasVerifiedEcdRules } from '../services/raceContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
+const { buildNationalBetProposal } = require('../../shared/nationalBetProposal');
 
 function HorseLine({ horse, accent = COLORS.text }) {
   if (!horse) return null;
@@ -31,18 +33,36 @@ function Group({ title, horses, color }) {
   );
 }
 
-export default function RaceInsightsCard({ race, advanced = false, game = null }) {
-  const insights = useMemo(() => buildRaceInsights(race), [race]);
+function EcdRulesUnavailable({ race }) {
+  const countryName = race?.ecdProfile?.countryName || 'ce pays';
+  return (
+    <View style={[styles.card, styles.rulesUnavailable]}>
+      <View style={styles.rulesUnavailableHead}>
+        <Ionicons name="shield-outline" size={22} color={COLORS.gold} />
+        <Text style={styles.rulesUnavailableTitle}>Règle ECD non disponible</Text>
+      </View>
+      <Text style={styles.rulesUnavailableText}>
+        Le format Jumelé ordre / Trio n’est pas encore validé pour {countryName}. ParisPromax n’applique pas les règles du Burkina Faso à cette course et suspend le pronostic de jeu ainsi que la simulation des rapports.
+      </Text>
+    </View>
+  );
+}
+
+export default function RaceInsightsCard(props) {
+  if (props.mode === 'ecd' && !hasVerifiedEcdRules(props.race)) {
+    return <EcdRulesUnavailable race={props.race} />;
+  }
+  return <RaceInsightsContent {...props} />;
+}
+
+function RaceInsightsContent({ race, advanced = false, game = null, mode = null }) {
+  const activeGame = mode === 'national' ? game : null;
+  const insights = useMemo(
+    () => buildRaceInsights(race, { game: activeGame, mode }),
+    [activeGame, mode, race]
+  );
   const smartSelection = useMemo(() => {
-    if (!game?.recommendedSelectionSize) return insights.selected;
-    const proposalHorses = game?.proposal?.grandCarnet?.horses || [];
-    if (proposalHorses.length) {
-      return proposalHorses.map((proposalHorse) => (
-        (race?.horses || []).find(
-          (horse) => String(horse.number) === String(proposalHorse.number)
-        ) || proposalHorse
-      ));
-    }
+    if (!activeGame?.recommendedSelectionSize) return insights.selected;
     const ranked = [...(race?.horses || [])].sort(
       (a, b) => Number(a.rank || 999) - Number(b.rank || 999)
         || Number(b.aiScore || 0) - Number(a.aiScore || 0)
@@ -55,10 +75,17 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
       seen.add(key);
       unique.push(horse);
     }
-    return unique.slice(0, game.recommendedSelectionSize);
-  }, [game?.proposal, game?.recommendedSelectionSize, insights.selected, race?.horses]);
+    return unique.slice(0, activeGame.recommendedSelectionSize);
+  }, [activeGame?.recommendedSelectionSize, insights.selected, race?.horses]);
+  const currentCouples = useMemo(() => {
+    if (!activeGame) return [];
+    return buildNationalBetProposal(activeGame, smartSelection, {
+      nonPartants: race?.nonPartants || [],
+      source: 'current-analysis',
+    })?.couples || [];
+  }, [activeGame, race?.nonPartants, smartSelection]);
   const stars = `${'★'.repeat(insights.confidence.stars)}${'☆'.repeat(5 - insights.confidence.stars)}`;
-  const selectionSize = game ? smartSelection.length : insights.selectionSize;
+  const selectionSize = activeGame ? smartSelection.length : insights.selectionSize;
 
   return (
     <View style={styles.card}>
@@ -75,29 +102,29 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
         </View>
       </View>
 
-      {game && (
+      {activeGame && (
         <View style={styles.smartGame}>
           <View style={styles.smartGameHead}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.smartGameKicker}>JEU INTELLIGENT · {game.countryName?.toUpperCase()}</Text>
-              <Text style={styles.smartGameTitle}>{game.label} en couverture</Text>
+              <Text style={styles.smartGameKicker}>JEU INTELLIGENT · {activeGame.countryName?.toUpperCase()}</Text>
+              <Text style={styles.smartGameTitle}>{activeGame.label} en couverture</Text>
             </View>
-            <Text style={styles.smartGamePodium}>{game.podium} à l’arrivée</Text>
+            <Text style={styles.smartGamePodium}>{activeGame.podium} à l’arrivée</Text>
           </View>
           <Text style={styles.help}>
-            Sélection conseillée : {game.recommendedSelectionSize} chevaux, soit {game.recommendedCombinations} combinaison{game.recommendedCombinations > 1 ? 's' : ''}.
-            {game.recommendedCost != null ? ` Budget complet : ${game.recommendedCost.toLocaleString('fr-FR')} FCFA.` : ''}
+            Sélection conseillée : {activeGame.recommendedSelectionSize} chevaux, soit {activeGame.recommendedCombinations} combinaison{activeGame.recommendedCombinations > 1 ? 's' : ''}.
+            {activeGame.recommendedCost != null ? ` Budget complet : ${activeGame.recommendedCost.toLocaleString('fr-FR')} FCFA.` : ''}
           </Text>
           <View style={styles.smartNumbers}>
             {smartSelection.map((horse, index) => (
-              <View key={horse.number} style={[styles.smartNumber, index < game.podium && styles.smartNumberPodium]}>
+              <View key={horse.number} style={[styles.smartNumber, index < activeGame.podium && styles.smartNumberPodium]}>
                 <Text style={styles.smartNumberText}>{horse.number}</Text>
               </View>
             ))}
           </View>
-          {!!game.proposal?.couples?.length && (
+          {!!currentCouples.length && (
             <View style={styles.smartCouples}>
-              {game.proposal.couples.map((ticket) => (
+              {currentCouples.map((ticket) => (
                 <View key={ticket.id} style={styles.smartCouple}>
                   <Text style={styles.smartCoupleLabel}>{ticket.label}</Text>
                   <Text style={styles.smartCoupleNumbers}>
@@ -114,9 +141,9 @@ export default function RaceInsightsCard({ race, advanced = false, game = null }
       {insights.bases.map((horse) => <HorseLine key={horse.number} horse={horse} accent={COLORS.accent} />)}
 
       <View style={styles.divider} />
-      <Text style={styles.sectionTitle}>Pronostic final · {game?.label || insights.format.label}</Text>
+      <Text style={styles.sectionTitle}>Pronostic final · {insights.format.label}</Text>
       <Text style={styles.help}>
-        Le podium attendu + 2 chevaux complémentaires, soit {game?.recommendedSelectionSize || 5} chevaux au maximum.
+        Le podium attendu + 2 chevaux complémentaires, soit {activeGame?.recommendedSelectionSize || insights.selectionSize} chevaux au maximum.
       </Text>
       <Group title="Couplé recommandé" horses={insights.couple} color={COLORS.accent} />
       <Group title="Chances régulières" horses={insights.chances} color={COLORS.info} />
@@ -202,4 +229,8 @@ const styles = StyleSheet.create({
   tip: { flexDirection: 'row', gap: SPACING.sm, paddingVertical: SPACING.sm },
   tipName: { color: COLORS.text, fontWeight: '800' },
   tipReason: { color: COLORS.gold, fontSize: FONT.sm, marginTop: 2 },
+  rulesUnavailable: { borderColor: 'rgba(251,191,36,0.55)', backgroundColor: 'rgba(251,191,36,0.08)' },
+  rulesUnavailableHead: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  rulesUnavailableTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900' },
+  rulesUnavailableText: { color: COLORS.textMuted, fontSize: FONT.sm, lineHeight: 19, marginTop: SPACING.sm },
 });

@@ -1,0 +1,13 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+vpf(d){var x=null,w=""+d
+return A.aB(d,A.a([d],y.d),x,x,x,x,"deviceModelPluralFieldLabel",w+" device model",w+" device models",x,x,x)}}
+A=c[0]
+B=a.updateHolder(c[1465],B)
+var z=a.updateTypes(["o(F)"]);(function installTearOffs(){var x=a._static_1
+x(B,"vq1","vpf",0)})()
+var y={d:A.t("r<B>")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"Vtx","o3m",()=>{var w=null
+return A.b("Device model",w,w,w,w)})})()};
+(a=>{a["I7GkCNj8M7l4x+ULQyyJZ1TeOSE="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3492.part.js.map

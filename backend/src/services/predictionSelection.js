@@ -1,3 +1,5 @@
+const { parisStartIso } = require('./raceTime');
+
 function parse(json, fallback = {}) {
   try {
     return JSON.parse(json);
@@ -21,44 +23,31 @@ function predictionFormat(race) {
   return { label: 'Podium', places: 3 };
 }
 
-// Pronostic publié : un podium attendu + 2 compléments, soit cinq chevaux au
-// maximum. Le format de la course reste exposé à titre de contexte, mais ne
-// modifie plus la taille de la sélection finale.
-function groupPicks(picks, race, _placesOverride = null) {
+// Pronostic publié : le nombre de places du jeu + 2 compléments.
+// Tiercé = 5 chevaux, Quarté = 6 chevaux, Quinté = 7 chevaux.
+function groupPicks(picks, race, placesOverride = null) {
   const sorted = (picks || []).slice().sort((a, b) => (a.rank || 999) - (b.rank || 999));
   const raceFormat = predictionFormat(race);
-  const format = { label: 'Podium + 2', places: 3, raceLabel: raceFormat.label };
-  const selectionSize = Math.min(sorted.length, 5);
-  const bases = sorted.slice(0, Math.min(1, selectionSize));
-  const used = new Set(bases.map((p) => p.number));
-  const couplePartner = sorted.find((p) => !used.has(p.number)) || null;
-  if (couplePartner) used.add(couplePartner.number);
-  const couple = couplePartner ? [...bases, couplePartner] : [...bases];
-
-  const tocard = sorted
-    .filter((p) => !used.has(p.number))
+  const places = Number.isInteger(Number(placesOverride)) && Number(placesOverride) > 0
+    ? Number(placesOverride)
+    : raceFormat.places;
+  const format = { label: 'Podium + 2', places, raceLabel: raceFormat.label };
+  const selectionSize = Math.min(sorted.length, places + 2);
+  // ECD et nationale partagent le meme classement canonique. Seule la
+  // longueur du prefixe publie varie selon le jeu.
+  const selected = sorted.slice(0, selectionSize);
+  const bases = selected.slice(0, 1);
+  const couple = selected.slice(0, 2);
+  const remaining = selected.slice(2);
+  const tocard = remaining
     .filter((p) => Number(p.odds) >= 15 || p.valueBet)
     .filter((p) => p.probaPodium == null || p.probaPodium >= 0.1)
     .sort((a, b) => (b.probaPodium || 0) - (a.probaPodium || 0) || (b.aiScore || 0) - (a.aiScore || 0))[0] || null;
-
-  const fixedCount = bases.length + (couplePartner ? 1 : 0);
-  const reserveForTocard = tocard && selectionSize - fixedCount >= 2 ? 1 : 0;
-  const reserveForRegret = selectionSize - fixedCount - reserveForTocard >= 1 ? 1 : 0;
-  const chanceCount = Math.max(0, selectionSize - fixedCount - reserveForTocard - reserveForRegret);
-  const chances = sorted
-    .filter((p) => !used.has(p.number) && p.number !== tocard?.number)
-    .slice(0, chanceCount);
-  chances.forEach((p) => used.add(p.number));
-  const tocards = reserveForTocard ? [tocard] : [];
-  tocards.forEach((p) => used.add(p.number));
-  const regret = reserveForRegret ? sorted.find((p) => !used.has(p.number)) || null : null;
-  const selected = [...bases, ...(couplePartner ? [couplePartner] : []), ...chances, ...tocards];
-  if (regret && selected.length < selectionSize) selected.push(regret);
-  while (selected.length < selectionSize) {
-    const next = sorted.find((p) => !selected.some((item) => item.number === p.number));
-    if (!next) break;
-    selected.push(next);
-  }
+  const tocards = tocard ? [tocard] : [];
+  const regret = [...remaining].reverse().find((p) => p.number !== tocard?.number) || null;
+  const chances = remaining.filter(
+    (p) => p.number !== tocard?.number && p.number !== regret?.number
+  );
 
   return {
     format,
@@ -76,7 +65,41 @@ function groupPicks(picks, race, _placesOverride = null) {
 
 function buildPredictionSnapshot(picks, race, placesOverride = null) {
   const groups = groupPicks(picks, race, placesOverride);
-  return { topPicks: groups.selected, groups };
+  const ranking = (picks || []).slice().sort((a, b) => (a.rank || 999) - (b.rank || 999));
+  const first = ranking[0] || {};
+  return {
+    ranking,
+    topPicks: groups.selected,
+    groups,
+    predictionMeta: {
+      source: first.predictionSource || 'legacy-unversioned',
+      modelVersion: first.modelVersion || 'legacy-unversioned',
+    },
+  };
 }
 
-module.exports = { predictionFormat, groupPicks, buildPredictionSnapshot };
+function preRacePredictionPicks(race) {
+  const full = parse(race?.raw, {});
+  const startMs = Date.parse(parisStartIso(race?.date, full?.time) || '');
+  if (!Number.isFinite(startMs)) return [];
+  const eligible = (race?.predictions || [])
+    .filter((prediction) => {
+      const createdMs = new Date(prediction?.createdAt).getTime();
+      return Number.isFinite(createdMs) && createdMs <= startMs;
+    })
+    .sort((left, right) => (
+      new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    ));
+  for (const prediction of eligible) {
+    const picks = parse(prediction?.topPicks, []);
+    if (Array.isArray(picks) && picks.length) return picks;
+  }
+  return [];
+}
+
+module.exports = {
+  predictionFormat,
+  preRacePredictionPicks,
+  groupPicks,
+  buildPredictionSnapshot,
+};

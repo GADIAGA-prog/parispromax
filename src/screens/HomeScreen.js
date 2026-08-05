@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
   Image,
   Pressable,
 } from 'react-native';
@@ -16,7 +15,6 @@ import TrialBanner from '../components/TrialBanner';
 import NationalGameCard from '../components/NationalGameCard';
 import TrackCard from '../components/TrackCard';
 import TrackCardSkeleton from '../components/Skeleton';
-import { loadRaces } from '../services/dataService';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { countryFlags } from '../services/countries';
@@ -29,31 +27,52 @@ const { formatRaceReference } = require('../../shared/raceReference');
 export default function HomeScreen({ navigation }) {
   const { country, hasPaid, hasAccess } = useAuth();
   const [tracks, setTracks] = useState([]);
-  const [source, setSource] = useState(null);
   const [offline, setOffline] = useState(false);
+  const [ecdError, setEcdError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // Course PMU du jour du pays de l'abonné (Quarté LONAB au Burkina…).
   const [national, setNational] = useState(null);
   const [nationalGame, setNationalGame] = useState(null);
+  const [nationalError, setNationalError] = useState(null);
   const [ecdProfile, setEcdProfile] = useState(null);
   const [ecdSelectionMode, setEcdSelectionMode] = useState(null);
 
   const fetchData = useCallback(async () => {
-    const [{ data, source: src, offline: off }, nationalResult, ecdResult] = await Promise.all([
-      loadRaces(),
-      country ? api.nationalRace(country).catch(() => null) : Promise.resolve(null),
-      country ? api.ecdRaces(country).catch(() => null) : Promise.resolve(null),
+    const [nationalState, ecdState] = await Promise.allSettled([
+      country ? api.nationalRace(country) : Promise.resolve(null),
+      country ? api.ecdRaces(country) : Promise.resolve(null),
     ]);
-    setSource(src);
-    setOffline(off);
+    const nationalResult = nationalState.status === 'fulfilled' ? nationalState.value : null;
+    const ecdResult = ecdState.status === 'fulfilled' ? ecdState.value : null;
+    const failures = [nationalState, ecdState]
+      .filter((state) => state.status === 'rejected')
+      .map((state) => state.reason);
+    setOffline(failures.some((error) => error?.code === 'NETWORK_ERROR' || error?.code === 'TIMEOUT'));
     const today = new Date().toISOString().slice(0, 10);
     const fallbackGame = country === 'bf' ? getNationalGame(country, today) : null;
-    setNational(nationalResult?.pick || null);
-    setNationalGame(nationalResult?.game || fallbackGame);
-    setTracks(ecdResult?.racetracks || data.racetracks || []);
-    setEcdProfile(ecdResult?.profile || null);
-    setEcdSelectionMode(ecdResult?.selectionMode || null);
+    if (nationalState.status === 'fulfilled') {
+      setNational(nationalResult?.pick || null);
+      setNationalGame(nationalResult?.game || fallbackGame);
+      setNationalError(null);
+    } else {
+      setNational(null);
+      setNationalGame(null);
+      setNationalError(nationalState.reason || new Error('Course nationale indisponible.'));
+    }
+    if (ecdState.status === 'fulfilled') {
+      setTracks(Array.isArray(ecdResult?.racetracks) ? ecdResult.racetracks : []);
+      setEcdProfile(ecdResult?.profile || null);
+      setEcdSelectionMode(ecdResult?.selectionMode || null);
+      setEcdError(null);
+    } else {
+      // A generic /races/full payload is not a country-validated ECD program.
+      // An honest empty state is safer than relabelling unrelated races.
+      setTracks([]);
+      setEcdProfile(null);
+      setEcdSelectionMode(null);
+      setEcdError(ecdState.reason || new Error('Programme ECD indisponible.'));
+    }
   }, [country]);
 
   useEffect(() => {
@@ -69,14 +88,20 @@ export default function HomeScreen({ navigation }) {
     setRefreshing(false);
   }, [fetchData]);
 
-  const onRacePress = (track, race, game = null) => {
+  const openRaceDetail = (track, race, predictionMode, game = null) => {
     navigation.navigate('RaceDetail', {
       trackName: track.name,
       condition: track.condition,
       race,
       nationalGame: game,
+      predictionMode,
     });
   };
+  const openEcdRace = (track, race) => openRaceDetail(
+    track,
+    { ...race, ecdProfile },
+    'ecd'
+  );
 
   // Ouvre la course nationale (retrouvée dans le programme chargé).
   const openNationalRace = () => {
@@ -85,14 +110,15 @@ export default function HomeScreen({ navigation }) {
     for (const t of tracks) {
       const race = (t.races || []).find((r) => r.id === target.id);
       if (race) {
-        return onRacePress(
+        return openRaceDetail(
           t,
           { ...race, betType: national.betType || target.betType || null },
+          'national',
           nationalGame
         );
       }
     }
-    return onRacePress(
+    return openRaceDetail(
       {
         name: target.track,
         condition: null,
@@ -101,6 +127,7 @@ export default function HomeScreen({ navigation }) {
         ...target,
         betType: national.betType || target.betType || null,
       },
+      'national',
       nationalGame
     );
   };
@@ -154,9 +181,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.offline}>
           <Ionicons name="cloud-offline" size={14} color={COLORS.gold} />
           <Text style={styles.offlineText}>
-            {source === 'cache'
-              ? 'Mode hors-ligne — dernières données vérifiées en cache'
-              : 'Mode hors-ligne — aucune donnée de course vérifiée disponible'}
+            Connexion dégradée — certaines données officielles n’ont pas pu être actualisées.
           </Text>
         </View>
       )}
@@ -191,6 +216,14 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
             <View style={styles.nationalBundle}>
+              {nationalError ? (
+                <View style={styles.nationalUnavailable}>
+                  <Ionicons name="warning-outline" size={17} color={COLORS.gold} />
+                  <Text style={styles.nationalUnavailableText}>
+                    Course nationale momentanément indisponible. Aucun pronostic de remplacement n’est affiché.
+                  </Text>
+                </View>
+              ) : null}
               {national?.race && (
                 <Pressable style={styles.national} onPress={openNationalRace}>
                   <View style={{ flex: 1 }}>
@@ -219,12 +252,25 @@ export default function HomeScreen({ navigation }) {
                 </Pressable>
               )}
               {hasAccess && nationalGame ? <NationalGameCard game={nationalGame} /> : null}
+              {(national?.race || nationalGame) ? (
+                <Pressable
+                  style={styles.nationalSummaryButton}
+                  onPress={() => navigation.navigate('Nationale')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ouvrir la synthèse de la course nationale"
+                >
+                  <Ionicons name="analytics-outline" size={16} color={COLORS.onAccent} />
+                  <Text style={styles.nationalSummaryText}>Voir la synthèse nationale et son taux</Text>
+                </Pressable>
+              ) : null}
             </View>
             <View style={styles.ecdHeading}>
               <Text style={styles.sectionKicker}>ECD · COURSES EN DIRECT</Text>
               <Text style={styles.sectionTitle}>Courses proposées pour votre pays</Text>
               <Text style={styles.ecdHelp}>
-                {ecdSelectionMode === 'official-country-program'
+                {ecdError
+                  ? 'Programme ECD officiel momentanément indisponible. Aucun programme générique n’est affiché à sa place.'
+                  : ecdSelectionMode === 'official-country-program'
                   ? 'Programme officiel de votre opérateur national.'
                   : ecdSelectionMode === 'country-validated'
                     ? 'Programme national validé.'
@@ -233,11 +279,19 @@ export default function HomeScreen({ navigation }) {
                   ? ` Mise de base : ${ecdProfile.unitStake.toLocaleString('fr-FR')} FCFA.`
                   : ''}
               </Text>
+              {ecdError ? (
+                <View style={styles.ecdUnavailable}>
+                  <Ionicons name="warning-outline" size={17} color={COLORS.gold} />
+                  <Text style={styles.ecdUnavailableText}>
+                    {ecdError.message || 'Le programme ECD officiel ne peut pas être chargé pour le moment.'}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
         }
         renderItem={({ item, index }) => (
-          <TrackCard track={item} meetingNumber={index + 1} onRacePress={onRacePress} />
+          <TrackCard track={item} meetingNumber={index + 1} onRacePress={openEcdRace} />
         )}
         refreshControl={
           <RefreshControl
@@ -250,7 +304,9 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.empty}>
             <Ionicons name="calendar-outline" size={40} color={COLORS.textFaint} />
             <Text style={styles.emptyText}>
-              Aucune course disponible pour le moment. Tirez pour actualiser.
+              {ecdError
+                ? 'Aucun programme ECD officiel affiché. Tirez pour réessayer.'
+                : 'Aucune course ECD officielle publiée pour le moment. Tirez pour actualiser.'}
             </Text>
           </View>
         }
@@ -294,7 +350,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.sm,
   },
-  offlineText: { color: COLORS.gold, fontSize: FONT.sm - 1, fontWeight: '600' },
+  offlineText: { flexShrink: 1, color: COLORS.gold, fontSize: FONT.sm - 1, fontWeight: '600' },
   national: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -344,11 +400,39 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     marginBottom: SPACING.xl,
   },
+  nationalUnavailable: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm,
+    padding: SPACING.sm, borderRadius: RADIUS.sm,
+    borderWidth: 1, borderColor: 'rgba(251,191,36,0.45)',
+    backgroundColor: 'rgba(251,191,36,0.10)',
+  },
+  nationalUnavailableText: { flex: 1, color: COLORS.text, fontSize: FONT.sm - 1, lineHeight: 17 },
+  nationalSummaryButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.pill, backgroundColor: COLORS.accent,
+  },
+  nationalSummaryText: {
+    flexShrink: 1, color: COLORS.onAccent, fontSize: FONT.sm,
+    fontWeight: '900', textAlign: 'center',
+  },
   ecdHeading: {
     paddingHorizontal: 2,
     paddingBottom: SPACING.md,
   },
   ecdHelp: { color: COLORS.textMuted, fontSize: FONT.sm - 1, lineHeight: 17, marginTop: 4 },
+  ecdUnavailable: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+    padding: SPACING.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.45)',
+    borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(251,191,36,0.10)',
+  },
+  ecdUnavailableText: { flex: 1, color: COLORS.text, fontSize: FONT.sm - 1, lineHeight: 17 },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
