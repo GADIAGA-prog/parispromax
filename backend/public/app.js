@@ -1956,6 +1956,47 @@ async function loadYengaOperators() {
   updateOtpUi();
 }
 
+function yengaPaymentGuide(country, operator, amount) {
+  const op = String(operator || '').toUpperCase();
+  const total = Math.max(0, Number(amount) || 0);
+  if (op === 'ORANGE' && country === 'bf') {
+    return `1. Depuis le numéro Orange Money, composez *144*4*6*${total}#. 2. Validez sur votre téléphone avec votre code secret Orange Money. 3. Vous recevrez un OTP : saisissez uniquement cet OTP dans ParisPromax.`;
+  }
+  if (op === 'ORANGE') {
+    return `Ouvrez le menu USSD ou l'application Orange Money, choisissez le paiement en ligne pour ${formatXof(total)}, puis saisissez ici l'OTP obtenu.`;
+  }
+  if (op === 'MOOV') {
+    return 'Saisissez votre numéro puis appuyez sur « Recevoir le code OTP ». Moov Money enverra le code par SMS; saisissez ensuite ce code pour valider.';
+  }
+  if (op === 'CORISM' || op === 'SANKM') {
+    const name = op === 'CORISM' ? 'Coris Money' : 'Sank Money';
+    return `Saisissez votre numéro puis appuyez sur « Recevoir le code OTP ». ${name} enverra le code par SMS; saisissez ensuite ce code pour valider.`;
+  }
+  if (op === 'TELECEL') {
+    return "Générez le code de paiement depuis le menu USSD ou l'application Telecel Money, puis saisissez uniquement cet OTP dans ParisPromax.";
+  }
+  if (op === 'MTN') {
+    return 'Aucun OTP à générer : après envoi, confirmez directement la demande MTN MoMo reçue sur votre téléphone.';
+  }
+  return 'Suivez la demande affichée par votre opérateur sur le téléphone associé à votre compte Mobile Money.';
+}
+
+function updatePaymentGuide() {
+  const guide = $('#payment-guide');
+  if (!guide) return;
+  const isYenga = state.payment.provider === 'yengapay' && Boolean(state.payment.operator);
+  guide.classList.toggle('hidden', !isYenga);
+  if (!isYenga) return;
+  const activeOperator = $('.operator-chip.active');
+  const operatorName = activeOperator?.textContent?.trim() || state.payment.operator;
+  $('#payment-guide-title').textContent = `Comment payer avec ${operatorName}`;
+  $('#payment-guide-text').textContent = yengaPaymentGuide(
+    state.me?.user?.country,
+    state.payment.operator,
+    state.selectedPlan?.pricePromo
+  );
+}
+
 function renderGenericProvider(providers) {
   $('#operator-list').innerHTML = providers.map((provider, index) => `<button class="operator-chip ${index === 0 ? 'active' : ''}" type="button" data-provider="${escapeHtml(provider.id)}">${escapeHtml(provider.label)}</button>`).join('');
   $$('.operator-chip').forEach((button) => button.addEventListener('click', () => {
@@ -1964,6 +2005,7 @@ function renderGenericProvider(providers) {
     state.payment.provider = button.dataset.provider;
   }));
   $('#otp-field').classList.add('hidden');
+  $('#payment-guide').classList.add('hidden');
   $('#payment-submit').textContent = 'Ouvrir le paiement sécurisé';
 }
 
@@ -1974,6 +2016,7 @@ function updateOtpUi() {
   $('#payment-submit').textContent = state.payment.otpMode === 'server' && !state.payment.transactionId
     ? 'Recevoir le code OTP'
     : state.payment.otpMode === 'none' ? 'Envoyer la demande' : 'Valider le paiement';
+  updatePaymentGuide();
 }
 
 async function submitPayment(form) {

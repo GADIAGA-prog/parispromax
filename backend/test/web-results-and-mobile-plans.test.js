@@ -67,6 +67,17 @@ test('Android charge les tarifs officiels et affiche le montant réellement fact
   assert.match(paywall, /fmtXOF\(referralPrice\(plan\)\)/);
 });
 
+test('le paiement explique comment obtenir le code OTP pour chaque operateur', () => {
+  assert.match(html, /id="payment-guide"/);
+  assert.match(webApp, /function yengaPaymentGuide/);
+  assert.match(webApp, /\*144\*4\*6\*\$\{total\}#/);
+  assert.match(webApp, /Comment payer avec \$\{operatorName\}/);
+  assert.match(webApp, /Recevoir le code OTP/);
+  assert.match(webApp, /saisissez uniquement cet OTP dans ParisPromax/);
+  assert.match(styles, /\.payment-guide/);
+  assert.match(paywall, /\*144\*4\*6\*\$\{amount\}#/);
+});
+
 test('les tarifs officiels défilent en haut du site sans figer les petits écrans', () => {
   assert.match(html, /id="plan-ticker-track"/);
   assert.match(webApp, /plan-ticker-group/);
@@ -81,8 +92,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260804-5/);
-  assert.match(serviceWorker, /parispromax-shell-20260804-5/);
+  assert.match(html, /styles\.css\?v=20260804-6/);
+  assert.match(serviceWorker, /parispromax-shell-20260804-6/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {

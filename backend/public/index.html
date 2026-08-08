@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260804-5" />
+  <link rel="stylesheet" href="/styles.css?v=20260804-6" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -507,6 +507,10 @@
     <span class="section-kicker">PAIEMENT SÉCURISÉ</span><h2 id="payment-title">Activer votre accès</h2><p id="payment-summary">Sélectionnez votre opérateur Mobile Money.</p>
     <form id="payment-form" class="form-stack">
       <div id="operator-list" class="operator-list"></div>
+      <aside id="payment-guide" class="payment-guide hidden" aria-live="polite">
+        <strong id="payment-guide-title">Comment obtenir votre code OTP</strong>
+        <p id="payment-guide-text"></p>
+      </aside>
       <label>Numéro Mobile Money<input id="payment-phone" name="phone" type="tel" required /></label>
       <label id="otp-field" class="hidden">Code OTP<input id="payment-otp" name="otp" inputmode="numeric" autocomplete="one-time-code" /></label>
       <p class="payment-help" id="payment-help">Votre code PIN Mobile Money ne doit jamais être saisi sur ParisPromax.</p>
@@ -525,6 +529,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260804-5" defer></script>
+  <script src="/app.js?v=20260804-6" defer></script>
 </body>
 </html>
