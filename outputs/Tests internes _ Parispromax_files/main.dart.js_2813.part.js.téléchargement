@@ -1,0 +1,10 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A
+A=c[0]
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"W8v","tlc",()=>{var x=null
+return A.b("Phones",x,x,x,x)})
+y($,"WqZ","tps",()=>{var x=null
+return A.b("Tablets",x,x,x,x)})})()};
+(a=>{a["MVnQc6OLjhovCZAh0PDjUsT21Co="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_2813.part.js.map

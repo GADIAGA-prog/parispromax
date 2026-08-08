@@ -1,0 +1,16 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A={nPb:function nPb(){}}
+B=c[0]
+A=a.updateHolder(c[1479],A)
+var z=a.updateTypes([])
+A.nPb.prototype={
+$1(d){var y,x=null
+d.goN().b="ZZ"
+y=B.b("Rest of World",x,x,x,x)
+d.goN().c=y
+return d},
+$S:103};(function inheritance(){var y=a.inherit
+y(A.nPb,B.aL)})();(function lazyInitializers(){var y=a.lazyFinal
+y($,"Wiw","aow",()=>B.aIX(new A.nPb()))})()};
+(a=>{a["8R2Fotbj+D3Ub3P7LAQLXqqgZ6Q="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3404.part.js.map

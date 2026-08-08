@@ -1,0 +1,16 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C={
+vcf(d){var x,w,v="about:invalid#Safe"
+if(d==null||B.o.cH(d).length===0){x=$.ii()
+return new A.eA(x.b.test(y.a)?y.a:v)}x="https://support.google.com/googleplay/android-developer/contact/adv_note?aid="+d
+w=$.ii()
+return new A.eA(w.b.test(x)?x:v)}}
+A=c[0]
+B=c[2]
+C=a.updateHolder(c[923],C)
+var z=a.updateTypes([])
+var y={a:"https://support.google.com/googleplay/android-developer/contact/adv_note"};(function lazyInitializers(){var x=a.lazyFinal
+x($,"V0V","t5X",()=>{var w=null
+return A.b("Go to advance notice form",w,w,w,w)})})()};
+(a=>{a["oHZnlZaKghqdGJ6TQohzccGHDQ4="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_2504.part.js.map

@@ -1,0 +1,490 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,B,E,H,C,F,A={aMO:function aMO(d,e){this.a=d
+this.b=e},Ku:function Ku(d,e){this.a=d
+this.b=e},a3k:function a3k(d,e){this.a=d
+this.b=e},
+ai0(d,e,f,g,h){var x=y.N
+x=new A.b7F(B.J(x,x))
+x.sbAX(d)
+x.sbAZ(e)
+x.sawM(g)
+x.sym(f)
+x.szy(0,h)
+x.sNw(null)
+x.sDq(null)
+return x},
+ab8:function ab8(d,e,f){this.c=d
+this.a=e
+this.b=f},
+b7F:function b7F(d){this.a=d},
+jFg:function jFg(){},
+jEI:function jEI(){},
+jEJ:function jEJ(d){this.a=d},
+jFh:function jFh(){},
+jFi:function jFi(){},
+jFj:function jFj(){},
+jFk:function jFk(){},
+jEK:function jEK(){},
+jEL:function jEL(d){this.a=d},
+jEM:function jEM(){},
+jEX:function jEX(){},
+jF7:function jF7(){},
+jFa:function jFa(){},
+jFb:function jFb(){},
+jFc:function jFc(){},
+jFd:function jFd(){},
+jFe:function jFe(){},
+jFf:function jFf(){},
+jEN:function jEN(d){this.a=d},
+jEO:function jEO(){},
+jEP:function jEP(){},
+jEQ:function jEQ(){},
+jER:function jER(){},
+jES:function jES(){},
+jET:function jET(){},
+jEU:function jEU(){},
+jEV:function jEV(){},
+jEW:function jEW(){},
+jEY:function jEY(){},
+jEZ:function jEZ(){},
+jF_:function jF_(){},
+jF0:function jF0(){},
+jF1:function jF1(){},
+jF2:function jF2(){},
+jF3:function jF3(){},
+jF4:function jF4(){},
+jF5:function jF5(d){this.a=d},
+jF6:function jF6(d){this.a=d},
+jF8:function jF8(d){this.a=d},
+jF9:function jF9(d){this.a=d},
+jEG:function jEG(){},
+jEH:function jEH(){},
+jEE:function jEE(d){this.a=d},
+jEF:function jEF(){},
+jED:function jED(d,e){this.a=d
+this.b=e}},D,G
+J=c[1]
+B=c[0]
+E=c[2]
+H=c[1591]
+C=c[1568]
+F=c[2350]
+A=a.updateHolder(c[1473],A)
+D=c[2342]
+G=c[1537]
+A.aMO.prototype={}
+A.Ku.prototype={}
+A.a3k.prototype={}
+A.ab8.prototype={
+b5(){return"CatalogMode."+this.b}}
+A.b7F.prototype={
+sbAX(d){if(d==null)return
+this.a.V(0,"buildBrand",d)},
+sbAZ(d){if(d==null)return
+this.a.V(0,"buildDevice",d)},
+sawM(d){if(d==null)return
+this.a.V(0,"releaseTrackId",d.cB(10))},
+sym(d){if(d==null)return
+this.a.V(0,"releaseId",d.cB(10))},
+gzy(d){return this.a.E(0,"variant")==="true"},
+szy(d,e){if(e==null)return
+this.a.V(0,"variant",String(e))},
+sws(d){var x=d.length!==0?d:null
+this.dJ("searchQuery",x,new A.jFg())},
+sDq(d){this.dJ("mode",d,new A.jEI())},
+gDq(){return this.ec("mode",new A.jEJ(this))},
+sBg(d){this.dJ("sortBy",d,new A.jFh())},
+gBg(){return this.ec("sortBy",new A.jFi())},
+soK(d){this.dJ("order",d,new A.jFj())},
+goK(){return this.ec("order",new A.jFk())},
+sNw(d){var x,w,v,u,t=this
+if(d==null)d=G.Hu()
+x=y.V
+w=d.a
+t.dJ("ram",B.el(w.H(0,x),new A.jEK()),new A.jEL(t))
+v=w.H(0,x)
+t.lk("sdk",new B.c8(v,new A.jEM(),v.$ti.n("c8<aa.E,F>")),new A.jEX(),y.q)
+v=w.H(0,x)
+t.lk("soc",new B.c8(v,new A.jF7(),v.$ti.n("c8<aa.E,AW>")),t.geWs(),y.e)
+v=w.H(0,x)
+u=y.N
+t.ia("manufacturer",new B.c8(v,new A.jFa(),v.$ti.n("c8<aa.E,o>")),u)
+v=w.H(0,x)
+t.lk("formFactor",new B.c8(v,new A.jFb(),v.$ti.n("c8<aa.E,jT>")),new A.jFc(),y.d)
+v=w.H(0,x)
+t.lk("abi",new B.c8(v,new A.jFd(),v.$ti.n("c8<aa.E,na>")),new A.jFe(),y.S)
+t.dJ("dpi",B.el(w.H(0,x),new A.jFf()),new A.jEN(t))
+v=w.H(0,x)
+t.lk("screenSize",new B.c8(v,new A.jEO(),v.$ti.n("c8<aa.E,np>")),new A.jEP(),y.p)
+v=w.H(0,x)
+t.lk("openGlEsVersion",new B.c8(v,new A.jEQ(),v.$ti.n("c8<aa.E,nL>")),t.geWq(),y.T)
+t.dJ("launchDate",B.el(w.H(0,x),new A.jER()),new A.jES())
+v=w.H(0,x)
+t.ia("device",new B.c8(v,new A.jET(),v.$ti.n("c8<aa.E,o>")),u)
+v=w.H(0,x)
+t.ia("systemFeatures",new B.c8(v,new A.jEU(),v.$ti.n("c8<aa.E,o>")),u)
+v=w.H(0,x)
+t.ia("openGlExtensions",new B.c8(v,new A.jEV(),v.$ti.n("c8<aa.E,o>")),u)
+t.dJ("certificationStatus",B.el(w.H(0,x),new A.jEW()),new A.jEY())
+v=w.H(0,x)
+t.ia("sharedLibraries",new B.c8(v,new A.jEZ(),v.$ti.n("c8<aa.E,o>")),u)
+t.dJ("androidGo",B.el(w.H(0,x),new A.jF_()),new A.jF0())
+v=w.H(0,x)
+t.ia("brand",new B.c8(v,new A.jF1(),v.$ti.n("c8<aa.E,o>")),u)
+v=w.H(0,x)
+t.ia("marketingName",new B.c8(v,new A.jF2(),v.$ti.n("c8<aa.E,o>")),u)
+x=w.H(0,x)
+t.lk("badBehaviorMetrics",new B.c8(x,new A.jF3(),x.$ti.n("c8<aa.E,mY>")),new A.jF4(),y.x)},
+gNw(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0,a1,a2=this,a3=G.Hu(),a4=a2.ec("ram",a2.geHm())
+if(a4!=null){x=a3.a.H(0,y.V)
+w=C.mP()
+v=C.omb()
+v.a.L(1,a4)
+w.a.L(1,v)
+x.W(0,w)}x=y.q
+u=a2.li("sdk",B.anS(),x)
+if(J.dv(u)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.do7()
+t.a.H(0,x).a2(0,u)
+v.a.L(2,t)
+w.W(0,v)}x=y.e
+s=a2.li("soc",a2.geV4(),x)
+if(J.dv(s)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.lOA()
+t.a.H(0,x).a2(0,s)
+v.a.L(3,t)
+w.W(0,v)}x=y.N
+r=a2.hm("manufacturer",x)
+if(J.dv(r)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.kBz()
+t.a.H(0,x).a2(0,r)
+v.a.L(4,t)
+w.W(0,v)}w=y.d
+q=a2.li("formFactor",new A.jF5(a2),w)
+if(J.dv(q)){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.k6Q()
+p.a.H(0,w).a2(0,q)
+t.a.L(5,p)
+v.W(0,t)}w=y.S
+o=a2.li("abi",new A.jF6(a2),w)
+if(J.dv(o)){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.itv()
+p.a.H(0,w).a2(0,o)
+t.a.L(6,p)
+v.W(0,t)}n=a2.ec("dpi",a2.geIz())
+if(n!=null){w=a3.a.H(0,y.V)
+v=C.mP()
+v.a.L(7,n)
+w.W(0,v)}w=y.p
+m=a2.li("screenSize",new A.jF8(a2),w)
+if(J.dv(m)){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.lHE()
+p.a.H(0,w).a2(0,m)
+t.a.L(8,p)
+v.W(0,t)}w=y.T
+l=a2.li("openGlEsVersion",a2.geLL(),w)
+if(J.dv(l)){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.kUB()
+p.a.H(0,w).a2(0,l)
+t.a.L(9,p)
+v.W(0,t)}k=a2.ec("launchDate",B.ozt())
+if(k!=null){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.oi8()
+t.a.af(0,k)
+v.a.L(10,t)
+w.W(0,v)}j=a2.hm("device",x)
+w=J.bT(j)
+if(w.gbA(j)){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.jII()
+p.a.H(0,y.f).a2(0,new B.eB(w.bT(j,B.nT_(),y.u),y.K))
+t.a.L(20,p)
+v.W(0,t)}i=a2.hm("systemFeatures",x)
+if(J.dv(i)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.lZ7()
+t.a.H(0,x).a2(0,i)
+v.a.L(12,t)
+w.W(0,v)}h=a2.hm("openGlExtensions",x)
+if(J.dv(h)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.kUF()
+t.a.H(0,x).a2(0,h)
+v.a.L(13,t)
+w.W(0,v)}w=a2.geG5()
+g=a2.ec("certificationStatus",w)
+if(g!=null){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.obS()
+p.a.af(0,g)
+t.a.L(14,p)
+v.W(0,t)}f=a2.hm("sharedLibraries",x)
+if(J.dv(f)){v=a3.a.H(0,y.V)
+t=C.mP()
+p=C.lNf()
+p.a.H(0,x).a2(0,f)
+t.a.L(15,p)
+v.W(0,t)}e=a2.ec("androidGo",w)
+if(e!=null){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.dVh()
+t.a.af(0,e)
+v.a.L(16,t)
+w.W(0,v)}d=a2.hm("brand",x)
+if(J.dv(d)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.j2v()
+t.a.H(0,x).a2(0,d)
+v.a.L(17,t)
+w.W(0,v)}a0=a2.hm("marketingName",x)
+if(J.dv(a0)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.kBL()
+t.a.H(0,x).a2(0,a0)
+v.a.L(18,t)
+w.W(0,v)}x=y.x
+a1=a2.li("badBehaviorMetrics",new A.jF9(a2),x)
+if(J.dv(a1)){w=a3.a.H(0,y.V)
+v=C.mP()
+t=C.e_0()
+t.a.H(0,x).a2(0,a1)
+v.a.L(19,t)
+w.W(0,v)}return a3},
+boD(d){var x=$.rwd(),w=d.a
+return B.eG([x.a.E(0,w.k(0)),w.ah(1).cB(10)],y.v).bX(0,"+")},
+eG6(d){if(d.toLowerCase()==="true")return!0
+if(d.toLowerCase()==="false")return!1
+return null},
+cIK(d){var x,w,v,u,t=d.split("+")
+if(t.length!==2)return null
+x=$.rwd().gj_(0).a.E(0,E.c.gaF(t))
+if(x==null)return null
+w=C.e2m()
+v=w.a
+v.L(1,x)
+u=B.kf(E.c.gbB(t),10,!0)
+u.toString
+v.af(1,u)
+return w},
+eWt(d){var x=d.a
+return E.c.bX(B.a([x.O(0),x.O(1)],y.s),"+")},
+eV5(d){var x,w,v,u=d.split("+")
+if(u.length!==2)return null
+x=C.onr()
+w=E.c.gaF(u)
+v=x.a
+v.af(0,w)
+v.af(1,E.c.gbB(u))
+return x},
+eWr(d){var x=d.a
+return E.c.bX(B.a([E.v.a1(x.aq(0)),E.v.a1(x.aq(1))],y.s),"+")},
+eLM(d){var x,w=new B.X(B.a(d.split("+"),y.s),new A.jEG(),y.z),v=new A.jEH()
+if(w.gaw(0)!==2)return null
+x=H.ok4()
+x.bW(0,v.$1(w.gaF(0)))
+x.bW(1,v.$1(w.gbB(0)))
+return x},
+eIA(d){var x,w,v,u=new B.K(B.a(d.split(","),y.s),new A.jEE(this),y.G).iU(0,new A.jEF())
+if(u.gaw(0)!==2)return null
+x=C.oes()
+w=u.gaF(0)
+w.toString
+v=x.a
+v.L(1,w)
+w=u.gbB(0)
+w.toString
+v.L(2,w)
+return x},
+akn(d,e,f,g){var x=B.el(e,new A.jED(d,g))
+return x==null?f:x}}
+var z=a.updateTypes(["N<o>(is)","I(is)","o(is)","azP?(o)","I?(o)","o(AW)","AW?(o)","o(nL)","nL?(o)","bxs?(o)","o(ab8)","ab8?(o)","o?(Ku)","Ku?(o)","o?(a3k)","a3k?(o)","N<F>(is)","N<AW>(is)","N<jT>(is)","N<na>(is)","N<np>(is)","N<nL>(is)","a_<o>(is)","N<mY>(is)","I(azP?)"])
+A.jFg.prototype={
+$1(d){return d},
+$S:6}
+A.jEI.prototype={
+$1(d){return d.b},
+$S:z+10}
+A.jEJ.prototype={
+$1(d){return this.a.akn("CatalogMode."+d,D.il2,null,y.U)},
+$S:z+11}
+A.jFh.prototype={
+$1(d){return $.rwe().a.E(0,d)},
+$S:z+12}
+A.jFi.prototype={
+$1(d){return $.rwe().gj_(0).a.E(0,d)},
+$S:z+13}
+A.jFj.prototype={
+$1(d){return $.rwf().a.E(0,d)},
+$S:z+14}
+A.jFk.prototype={
+$1(d){return $.rwf().gj_(0).a.E(0,d)},
+$S:z+15}
+A.jEK.prototype={
+$1(d){return d.a.a3(0)},
+$S:z+1}
+A.jEL.prototype={
+$1(d){return this.a.boD(d.a.k(0).a.k(0))},
+$S:z+2}
+A.jEM.prototype={
+$1(d){return d.a.k(1).a.H(0,y.q)},
+$S:z+16}
+A.jEX.prototype={
+$1(d){return E.v.a1(d)},
+$S:32}
+A.jF7.prototype={
+$1(d){return d.a.k(2).a.H(0,y.e)},
+$S:z+17}
+A.jFa.prototype={
+$1(d){return d.a.k(3).a.H(0,y.N)},
+$S:z+0}
+A.jFb.prototype={
+$1(d){return d.a.k(4).a.H(0,y.d)},
+$S:z+18}
+A.jFc.prototype={
+$1(d){return d.a1(0)},
+$S:842}
+A.jFd.prototype={
+$1(d){return d.a.k(5).a.H(0,y.S)},
+$S:z+19}
+A.jFe.prototype={
+$1(d){return d.a1(0)},
+$S:2791}
+A.jFf.prototype={
+$1(d){return d.a.a3(6)},
+$S:z+1}
+A.jEN.prototype={
+$1(d){var x=this.a,w=d.a.k(6).a
+return E.c.bX(B.a([x.boD(w.k(0)),x.boD(w.k(1))],y.s),",")},
+$S:z+2}
+A.jEO.prototype={
+$1(d){return d.a.k(7).a.H(0,y.p)},
+$S:z+20}
+A.jEP.prototype={
+$1(d){return d.a1(0)},
+$S:2792}
+A.jEQ.prototype={
+$1(d){return d.a.k(8).a.H(0,y.T)},
+$S:z+21}
+A.jER.prototype={
+$1(d){return d.a.a3(9)},
+$S:z+1}
+A.jES.prototype={
+$1(d){return d.a.k(9).a.ah(0).cB(10)},
+$S:z+2}
+A.jET.prototype={
+$1(d){var x=d.a.k(19).a.H(0,y.f)
+return new B.K(x,B.cAs(),x.$ti.n("K<aa.E,o>"))},
+$S:z+22}
+A.jEU.prototype={
+$1(d){return d.a.k(11).a.H(0,y.N)},
+$S:z+0}
+A.jEV.prototype={
+$1(d){return d.a.k(12).a.H(0,y.N)},
+$S:z+0}
+A.jEW.prototype={
+$1(d){return d.a.a3(13)},
+$S:z+1}
+A.jEY.prototype={
+$1(d){return E.br.a1(d.a.k(13).a.an(0))},
+$S:z+2}
+A.jEZ.prototype={
+$1(d){return d.a.k(14).a.H(0,y.N)},
+$S:z+0}
+A.jF_.prototype={
+$1(d){return d.a.a3(15)},
+$S:z+1}
+A.jF0.prototype={
+$1(d){return E.br.a1(d.a.k(15).a.an(0))},
+$S:z+2}
+A.jF1.prototype={
+$1(d){return d.a.k(16).a.H(0,y.N)},
+$S:z+0}
+A.jF2.prototype={
+$1(d){return d.a.k(17).a.H(0,y.N)},
+$S:z+0}
+A.jF3.prototype={
+$1(d){return d.a.k(18).a.H(0,y.x)},
+$S:z+23}
+A.jF4.prototype={
+$1(d){return d.a1(0)},
+$S:1022}
+A.jF5.prototype={
+$1(d){return this.a.akn(d,E.rL,E.rk,y.d)},
+$S:843}
+A.jF6.prototype={
+$1(d){return this.a.akn(d,E.a_r,E.PS,y.S)},
+$S:2794}
+A.jF8.prototype={
+$1(d){return this.a.akn(d,E.SV,E.UQ,y.p)},
+$S:2795}
+A.jF9.prototype={
+$1(d){return this.a.akn(d,E.MK,E.K1,y.x)},
+$S:2796}
+A.jEG.prototype={
+$1(d){return d.length!==0},
+$S:5}
+A.jEH.prototype={
+$1(d){return B.iW(d,null,null)},
+$S:251}
+A.jEE.prototype={
+$1(d){return this.a.cIK(d)},
+$S:z+3}
+A.jEF.prototype={
+$1(d){return d!=null},
+$S:z+24}
+A.jED.prototype={
+$1(d){return J.d6(d)===this.a},
+$S(){return this.b.n("I(0)")}};(function installTearOffs(){var x=a._instance_1u
+var w
+x(w=A.b7F.prototype,"geG5","eG6",4)
+x(w,"geHm","cIK",3)
+x(w,"geWs","eWt",5)
+x(w,"geV4","eV5",6)
+x(w,"geWq","eWr",7)
+x(w,"geLL","eLM",8)
+x(w,"geIz","eIA",9)})();(function inheritance(){var x=a.inheritMany,w=a.inherit
+x(B.ac,[A.aMO,A.Ku,A.a3k])
+w(A.ab8,B.e_)
+w(A.b7F,B.ea)
+x(B.aL,[A.jFg,A.jEI,A.jEJ,A.jFh,A.jFi,A.jFj,A.jFk,A.jEK,A.jEL,A.jEM,A.jEX,A.jF7,A.jFa,A.jFb,A.jFc,A.jFd,A.jFe,A.jFf,A.jEN,A.jEO,A.jEP,A.jEQ,A.jER,A.jES,A.jET,A.jEU,A.jEV,A.jEW,A.jEY,A.jEZ,A.jF_,A.jF0,A.jF1,A.jF2,A.jF3,A.jF4,A.jF5,A.jF6,A.jF8,A.jF9,A.jEG,A.jEH,A.jEE,A.jEF,A.jED])})()
+B.an(b.typeUniverse,JSON.parse('{"aMO":{"ac":[]},"Ku":{"ac":[]},"a3k":{"ac":[]},"b7F":{"ea":[]}}'))
+var y=(function rtii(){var x=B.t
+return{S:x("na"),x:x("mY"),U:x("ab8"),V:x("is"),d:x("jT"),s:x("r<o>"),G:x("K<o,azP?>"),K:x("eB<i1>"),T:x("nL"),f:x("i1"),p:x("np"),e:x("AW"),N:x("o"),z:x("X<o>"),q:x("F"),u:x("i1?"),v:x("o?")}})();(function constants(){var x=a.makeConstList
+D.aQC=new A.aMO(2,"CATALOG_MODE_EXCLUDED_DEVICES")
+D.aQD=new A.aMO(3,"CATALOG_MODE_TARGETED_DEVICES")
+D.bFH=new A.aMO(1,"CATALOG_MODE_SUPPORTED_DEVICES")
+D.zI=new A.ab8(D.bFH,1,"supportedDevices")
+D.bFG=new A.aMO(0,"CATALOG_MODE_ALL_DEVICES")
+D.aQE=new A.ab8(D.bFG,0,"allDevices")
+D.Kn=new A.ab8(D.aQC,2,"excludedDevices")
+D.a7E=new A.ab8(D.aQD,3,"targetedDevices")
+D.bl9=new A.a3k(1,"SORT_ORDER_INCREASING")
+D.kT=new A.a3k(2,"SORT_ORDER_DECREASING")
+D.il2=x([D.aQE,D.zI,D.Kn,D.a7E],B.t("r<ab8>"))
+D.mT=new A.Ku(1,"SORT_FIELD_INSTALLS_BASE")
+D.bl_=new A.Ku(2,"SORT_FIELD_DEVICE_MODEL")
+D.bl0=new A.Ku(3,"SORT_FIELD_USER_PERCEIVED_ANR")
+D.bl4=new A.Ku(4,"SORT_FIELD_USER_PERCEIVED_CRASH")
+D.bl1=new A.Ku(5,"SORT_FIELD_RENDERING_30FPS")
+D.bl2=new A.Ku(6,"SORT_FIELD_RENDERING_20FPS")
+D.bl3=new A.Ku(7,"SORT_FIELD_LAUNCH_DATE")
+D.bl5=new A.Ku(8,"SORT_FIELD_EXCESSIVE_WATCHFACE_BATTERY_USAGE")})();(function lazyInitializers(){var x=a.lazyFinal
+x($,"Q3u","rwd",()=>{var w=B.t("ahl"),v=y.N,u=B.Br(w,v)
+u.a2(0,B.V([F.QV,"LE",F.QW,"ME",F.a7P,"LT",F.a7Q,"MT"],w,v))
+return u})
+x($,"Q3v","rwe",()=>{var w=B.t("Ku"),v=y.N,u=B.Br(w,v)
+u.a2(0,B.V([D.mT,"INSTALLS",D.bl0,"ANRS",D.bl4,"CRASHES",D.bl_,"DEVICE_MODEL",D.bl2,"RENDERING_20FPS",D.bl1,"RENDERING_30FPS",D.bl3,"LAUNCH_DATE",D.bl5,"EXCESSIVE_BATTERY_USAGE"],w,v))
+return u})
+x($,"Q3w","rwf",()=>{var w=B.t("a3k"),v=y.N,u=B.Br(w,v)
+u.a2(0,B.V([D.kT,"DESC",D.bl9,"ASC"],w,v))
+return u})})()};
+(a=>{a["M23g9Sqt/3CFzE9AiOdxipfdabg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3374.part.js.map

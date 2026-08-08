@@ -1,0 +1,8 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A
+A=c[0]
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"Wqx","ay2",()=>{var x=null
+return A.b("System on Chip",x,x,x,x)})})()};
+(a=>{a["q/ap3uHmSAleRIqzAoi06qRS7wI="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3525.part.js.map

@@ -26,6 +26,7 @@ const trialBanner = fs.readFileSync(path.join(root, 'src', 'components', 'TrialB
 
 const navigator = fs.readFileSync(path.join(root, 'src', 'navigation', 'RootNavigator.js'), 'utf8');
 const historyScreen = fs.readFileSync(path.join(root, 'src', 'screens', 'HistoryScreen.js'), 'utf8');
+const historyPrediction = fs.readFileSync(path.join(root, 'shared', 'historyPrediction.js'), 'utf8');
 test('le site expose une section publique pour les arrivées officielles', () => {
   assert.match(html, /id="resultats"/);
   assert.match(html, /id="results-grid"/);
@@ -41,7 +42,7 @@ test('le site affiche les références réunion/course et les gains Burkina', ()
   assert.match(webApp, /Rapports officiels en attente/);
   assert.match(styles, /\.ecd-gains-table/);
   assert.match(webApp, /BILAN DES TICKETS PARISPROMAX/);
-  assert.match(webApp, /Tickets gagnants du pronostic/);
+  assert.match(webApp, /Sélections correctes du pronostic/);
   assert.match(webApp, /Solde théorique/);
   assert.match(styles, /\.ecd-ticket-outcome/);
   assert.match(ecdTicketOutcomeCard, /outcome\.winningTickets/);
@@ -52,7 +53,11 @@ test('le site publie le bilan de gain du Grand Carnet après la course', () => {
   assert.match(webApp, /BILAN GRAND CARNET PARISPROMAX/);
   assert.match(webApp, /gainStatus === 'confirmed'/);
   assert.match(webApp, /Pronostic gagnant · gain officiel en attente/);
+  assert.match(webApp, /Sélection correcte · montant officiel non calculable/);
+  assert.match(webApp, /Calcul suspendu · rapport officiel incomplet/);
   assert.match(webApp, /Pronostic non gagnant · gain 0 FCFA/);
+  assert.match(webApp, /Combinaisons gagnantes/);
+  assert.match(webApp, /Solde théorique/);
   assert.match(styles, /\.grand-carnet-outcome/);
 });
 
@@ -76,8 +81,8 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260802-3/);
-  assert.match(serviceWorker, /parispromax-shell-20260802-3/);
+  assert.match(html, /styles\.css\?v=20260804-5/);
+  assert.match(serviceWorker, /parispromax-shell-20260804-5/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -101,7 +106,7 @@ test('les surfaces vertes Android utilisent un texte blanc suffisamment contrast
   assert.match(login, /buttonText: \{ color: COLORS\.onAccent/);
   assert.match(onboarding, /nextText: \{ color: COLORS\.onAccent/);
   assert.match(paywall, /payText: \{ color: COLORS\.onAccent/);
-  assert.match(history, /rateText: \{ color: COLORS\.onAccent/);
+  assert.match(history, /rateText: \{[\s\S]{0,160}color: COLORS\.onAccent/);
   assert.match(quinte, /comboNum: \{ color: COLORS\.onAccent/);
   assert.match(insightsCard, /selectionCountValue: \{ color: COLORS\.onAccent/);
   assert.match(trialBanner, /ctaText: \{ color: COLORS\.onAccent/);
@@ -157,6 +162,10 @@ test('les résultats et le contact séparent les parcours utiles', () => {
   assert.match(profile, /facebook\.com\/parispromax/);
   assert.match(profile, /Share\.share/);
   assert.match(webApp, /result\.isEcd \|\| result\.category === 'ecd'/);
+  assert.match(historyPrediction, /function historyPredictionVariant/);
+  assert.match(historyPrediction, /topPicks: item\.ecdTopPicks/);
+  assert.match(historyPrediction, /groups: item\.ecdGroups \|\| item\.groups/);
+  assert.match(historyScreen, /const displayItem = historyPredictionVariant\(item, category\)/);
 });
 
 test('le téléchargement Android reste visible en haut du site sur tous les écrans', () => {

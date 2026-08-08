@@ -15,6 +15,7 @@ Lancer :  uvicorn app_ia:app --host 0.0.0.0 --port 8100
 from __future__ import annotations
 
 import hmac
+import hashlib
 import os
 from typing import List, Optional
 
@@ -44,6 +45,35 @@ MAX_RUNNERS = int(os.environ.get("PPM_MAX_RUNNERS", "40"))
 
 app = FastAPI(title="ParisPromax IA — LTR", version="1.1.0")
 _model = None
+_model_fingerprint = None
+
+
+def _model_version() -> str:
+    """Return a stable version for the deployed artifact and its calibration.
+
+    Every retrained model therefore starts a distinct performance series in
+    the backend, even when its first ranking happens to match the prior one.
+    """
+    global _model_fingerprint
+    configured = os.environ.get("PPM_MODEL_VERSION", "").strip()
+    if configured:
+        return configured
+    if _model_fingerprint is not None:
+        return _model_fingerprint
+
+    digest = hashlib.sha256()
+    with open(MODEL_PATH, "rb") as artifact:
+        for chunk in iter(lambda: artifact.read(1024 * 1024), b""):
+            digest.update(chunk)
+    digest.update(
+        (
+            f"|api=1.1|temperature={SOFTMAX_TEMPERATURE}"
+            f"|weight={MODEL_WEIGHT}|edge={VALUE_EDGE}"
+            f"|min_cote={VALUE_MIN_COTE}|min_proba={VALUE_MIN_PROBA}"
+        ).encode("utf-8")
+    )
+    _model_fingerprint = f"ltr-{digest.hexdigest()[:16]}"
+    return _model_fingerprint
 
 
 def _load_model():
@@ -148,7 +178,12 @@ def ready():
                 "detail": type(exc).__name__,
             },
         )
-    return {"ok": True, "model": MODEL_PATH, "loaded": True}
+    return {
+        "ok": True,
+        "model": MODEL_PATH,
+        "model_version": _model_version(),
+        "loaded": True,
+    }
 
 
 @app.post("/predict")
@@ -214,4 +249,9 @@ def predict(req: PredictRequest, authorization: Optional[str] = Header(default=N
     for rank, r in enumerate(rows, start=1):
         r["rang_predit"] = rank
 
-    return {"race_id": req.race_id, "n_partants": len(rows), "predictions": rows}
+    return {
+        "race_id": req.race_id,
+        "model_version": _model_version(),
+        "n_partants": len(rows),
+        "predictions": rows,
+    }

@@ -1,0 +1,20 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,A,C,B={a0z:function a0z(){}},D
+J=c[1]
+A=c[0]
+C=c[2]
+B=a.updateHolder(c[1535],B)
+D=c[1559]
+B.a0z.prototype={
+hS(d){var x,w,v=J.d6(d.ga6(d))
+try{D.tWs(C.o.cH(v).toLowerCase())}catch(x){w=A.V(["email-address-validator",$.xLx()],y.g,y.b)
+return w}return null},
+$imM:1}
+var z=a.updateTypes([]);(function inheritance(){var x=a.inherit
+x(B.a0z,A.B)})()
+A.an(b.typeUniverse,JSON.parse('{"a0z":{"mM":[]}}'))
+var y={g:A.t("o"),b:A.t("@")};(function lazyInitializers(){var x=a.lazy
+x($,"QiH","xLx",()=>{var w=null
+return A.b("Enter a valid email address",w,w,w,w)})})()};
+(a=>{a["XDmrObRoknSpXMZ7m81ueGCEw2M="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_722.part.js.map

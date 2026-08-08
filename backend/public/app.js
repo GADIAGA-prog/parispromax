@@ -7,6 +7,7 @@ const state = {
   plans: [],
   racetracks: [],
   results: [],
+  successStats: null,
   resultCategory: 'ecd',
   raceDate: null,
   ecdProfile: null,
@@ -17,6 +18,7 @@ const state = {
   me: null,
   notifications: [],
   selectedRaceId: null,
+  selectedRaceMode: null,
   selectedPlan: null,
   recovery: { phone: '', country: 'bf' },
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
@@ -694,21 +696,24 @@ function predictionNumbers(result = {}) {
     .filter(Number.isFinite);
 }
 
-function predictionForBet(kind, prediction) {
+function predictionForBet(kind, prediction, podiumSize = 3) {
+  const podium = Math.max(2, Math.min(3, Number(podiumSize) || 3));
   const pair = (values) => values.length < 3
     ? values.slice(0, 2).join(' - ')
     : `${values[0]} - ${values[1]} / ${values[0]} - ${values[2]} / ${values[1]} - ${values[2]}`;
   if (kind === 'win') return String(prediction[0] || '—');
-  if (kind === 'place' || kind === 'trio') return prediction.slice(0, 3).join(' - ') || '—';
+  if (kind === 'place') return prediction.slice(0, podium).join(' - ') || '—';
+  if (kind === 'trio') return prediction.slice(0, 3).join(' - ') || '—';
   if (kind === 'jum-place') return pair(prediction.slice(0, 3)) || '—';
   return prediction.slice(0, 2).join(' - ') || '—';
 }
 
-function predictionCovers(kind, officialValue, prediction) {
+function predictionCovers(kind, officialValue, prediction, podiumSize = 3) {
+  const podium = Math.max(2, Math.min(3, Number(podiumSize) || 3));
   const official = resultNumbers(officialValue);
   if (!official.length || !prediction.length) return false;
   if (kind === 'win') return official[0] === prediction[0];
-  if (kind === 'place') return prediction.slice(0, 3).includes(official[0]);
+  if (kind === 'place') return prediction.slice(0, podium).includes(official[0]);
   if (kind === 'jum-order') return official[0] === prediction[0] && official[1] === prediction[1];
   if (kind === 'jum-win') {
     const expected = new Set(prediction.slice(0, 2));
@@ -717,44 +722,83 @@ function predictionCovers(kind, officialValue, prediction) {
   return official.every((number) => prediction.slice(0, 3).includes(number));
 }
 
-function fallbackPayoutRows(arrival = []) {
-  const [first, second, third] = arrival;
-  return [
+function fallbackPayoutRows(arrival = [], podiumSize = 3) {
+  const podium = Math.max(2, Math.min(3, Number(podiumSize) || 3));
+  const [first, second, third] = arrival.slice(0, podium);
+  const rows = [
     { bet: 'Gagnant', numbers: first },
-    ...arrival.slice(0, 3).map((number) => ({ bet: 'Placé', numbers: number })),
-    { bet: 'Jumelé ordre', numbers: `${first} - ${second}` },
-    { bet: 'Jumelé gagnant', numbers: `${first} - ${second}` },
-    { bet: 'Jumelé placé', numbers: `${first} - ${second}` },
-    { bet: 'Jumelé placé', numbers: `${first} - ${third}` },
-    { bet: 'Jumelé placé', numbers: `${second} - ${third}` },
-    { bet: 'Trio', numbers: `${first} - ${second} - ${third}` },
-  ].filter((row) => !String(row.numbers).includes('undefined'));
+    ...arrival.slice(0, podium).map((number) => ({ bet: 'Placé', numbers: number })),
+  ];
+  if (podium === 2) {
+    rows.push({ bet: 'Jumelé ordre', numbers: `${first} - ${second}` });
+  } else {
+    rows.push(
+      { bet: 'Jumelé gagnant', numbers: `${first} - ${second}` },
+      { bet: 'Jumelé placé', numbers: `${first} - ${second}` },
+      { bet: 'Jumelé placé', numbers: `${first} - ${third}` },
+      { bet: 'Jumelé placé', numbers: `${second} - ${third}` },
+      { bet: 'Trio', numbers: `${first} - ${second} - ${third}` }
+    );
+  }
+  return rows.filter((row) => !String(row.numbers).includes('undefined'));
 }
 
 function ecdGainsTableMarkup(result = {}) {
   const prediction = predictionNumbers(result);
-  const reportsAvailable = Array.isArray(result.payouts) && result.payouts.length > 0;
-  const rows = reportsAvailable ? result.payouts : fallbackPayoutRows(result.winners || []);
+  const podiumSize = Math.max(2, Math.min(3, Number(result.ecdTicketOutcome?.podiumSize) || 3));
+  const reportStatus = result.ecdReport?.status ?? null;
+  const reportsAvailable = reportStatus === 'complete'
+    && Array.isArray(result.payouts)
+    && result.payouts.length > 0;
+  const reportLabel = reportsAvailable
+    ? 'Rapport complet validé'
+    : reportStatus === 'partial' || reportStatus === 'arrival-incomplete'
+      ? 'Rapport partiel · calcul suspendu'
+      : reportStatus === 'pending'
+        ? 'Rapports officiels en attente'
+        : 'Statut du rapport à confirmer';
+  const reportClass = reportsAvailable
+    ? 'published'
+    : reportStatus === 'partial' || reportStatus === 'arrival-incomplete'
+      ? 'partial'
+      : 'pending';
+  const rows = reportsAvailable
+    ? result.payouts
+    : fallbackPayoutRows(result.winners || [], podiumSize);
   return `<section class="ecd-gains" aria-label="Tableau des gains ECD pour ${escapeHtml(countryDetails(state.nationalCountry).name)}">
     <div class="ecd-gains-head">
       <div><span>GAINS ECD · ${escapeHtml(countryDetails(state.nationalCountry).name.toUpperCase())}</span><strong>Rapports de la course et pronostic ParisPromax</strong></div>
-      <em class="${reportsAvailable ? 'published' : 'pending'}">${reportsAvailable ? 'Rapports publiés' : 'Rapports officiels en attente'}</em>
+      <em class="${reportClass}">${escapeHtml(reportLabel)}</em>
     </div>
-    <div class="ecd-gains-scroll"><table class="ecd-gains-table">
+    <p class="horizontal-scroll-hint">Faites glisser le tableau vers la gauche pour voir les montants et le pronostic.</p>
+    <div class="ecd-gains-scroll" tabindex="0" aria-label="Tableau des rapports ECD, défilement horizontal"><table class="ecd-gains-table">
       <thead><tr><th>Pari</th><th>N°</th><th>Montant</th><th>NB</th><th>Pronostic ParisPromax</th></tr></thead>
       <tbody>${rows.map((row) => {
         const kind = betKind(row.bet);
-        const covered = predictionCovers(kind, row.numbers, prediction);
-        const amount = reportsAvailable ? `${Number(row.amount || 0).toLocaleString('fr-FR')} FCFA` : 'En attente';
-        return `<tr><th>${escapeHtml(String(row.bet || 'Pari').toUpperCase())}</th><td>${escapeHtml(row.numbers || '—')}</td><td>${escapeHtml(amount)}</td><td>${reportsAvailable ? escapeHtml(row.winnerCount ?? 0) : '—'}</td><td class="prediction-cell ${covered ? 'covered' : ''}">${escapeHtml(predictionForBet(kind, prediction))}${covered ? ' <b>✓ Couvert</b>' : ''}</td></tr>`;
+        const covered = predictionCovers(kind, row.numbers, prediction, podiumSize);
+        const reportIndeterminate = reportsAvailable
+          && Number.isFinite(Number(row.amount))
+          && Number(row.amount) <= 0;
+        const amount = reportsAvailable
+          ? reportIndeterminate
+            ? 'Non calculable'
+            : `${Number(row.amount || 0).toLocaleString('fr-FR')} FCFA`
+          : 'En attente';
+        return `<tr><th>${escapeHtml(String(row.bet || 'Pari').toUpperCase())}</th><td>${escapeHtml(row.numbers || '—')}</td><td>${escapeHtml(amount)}</td><td>${reportsAvailable ? escapeHtml(row.winnerCount ?? 0) : '—'}</td><td class="prediction-cell ${covered ? 'covered' : ''}">${escapeHtml(predictionForBet(kind, prediction, podiumSize))}${covered ? ' <b>✓ Couvert</b>' : ''}</td></tr>`;
       }).join('')}</tbody>
     </table></div>
-    <p>Montants officiels publiés par l’opérateur. La colonne ParisPromax compare le pronostic archivé à l’arrivée ; elle ne représente pas un pari encaissé.</p>
+    <p>${reportsAvailable ? 'Montants officiels publiés par l’opérateur.' : 'Aucun solde n’est calculé tant que le rapport complet n’est pas validé.'} La colonne ParisPromax compare le pronostic archivé à l’arrivée ; elle ne représente pas un pari encaissé.</p>
   </section>`;
 }
 
 function ecdTicketOutcomeMarkup(outcome) {
-  if (!outcome || outcome.status === 'prediction-unavailable') {
+  if (!outcome) {
+    return `<section class="ecd-ticket-outcome unknown">
+      <div class="ecd-ticket-outcome-head"><div><span>BILAN DES TICKETS PARISPROMAX</span><strong>Statut officiel à confirmer</strong></div><em>Calcul non lancé</em></div>
+      <p>Aucun gain ni aucune perte ne sont affichés tant que les données officielles nécessaires ne sont pas disponibles.</p>
+    </section>`;
+  }
+  if (outcome.status === 'prediction-unavailable') {
     return `<section class="ecd-ticket-outcome pending">
       <div class="ecd-ticket-outcome-head"><div><span>BILAN DES TICKETS PARISPROMAX</span><strong>Pronostic archivé indisponible</strong></div></div>
       <p>Le bilan des tickets ne peut pas être calculé pour cette course.</p>
@@ -766,47 +810,145 @@ function ecdTicketOutcomeMarkup(outcome) {
     ? 'En attente'
     : `${Number(value || 0).toLocaleString('fr-FR')} ${currency}`;
   const settled = outcome.status === 'settled';
+  const indeterminate = outcome.status === 'settled-indeterminate';
+  const partial = outcome.status === 'reports-partial';
   const positive = settled && Number(outcome.netReturn || 0) >= 0;
   const winningTickets = outcome.winningTickets || [];
+  const outcomeClass = settled
+    ? positive ? 'positive' : 'negative'
+    : indeterminate
+      ? 'indeterminate'
+      : partial
+        ? 'partial'
+        : 'pending';
   const status = settled
     ? `${Number(outcome.winningCount || 0)} ticket${Number(outcome.winningCount || 0) > 1 ? 's' : ''} gagnant${Number(outcome.winningCount || 0) > 1 ? 's' : ''} sur ${Number(outcome.ticketsCount || 0)}`
-    : `${Number(outcome.ticketsCount || 0)} tickets proposés · rapports en attente`;
+    : indeterminate
+      ? `${Number(outcome.winningCount || 0)} sélection${Number(outcome.winningCount || 0) > 1 ? 's' : ''} correcte${Number(outcome.winningCount || 0) > 1 ? 's' : ''} · rapport non calculable`
+      : partial
+        ? `${Number(outcome.ticketsCount || 0)} tickets proposés · rapport officiel partiel`
+        : `${Number(outcome.ticketsCount || 0)} tickets proposés · rapports en attente`;
 
-  return `<section class="ecd-ticket-outcome ${settled ? (positive ? 'positive' : 'negative') : 'pending'}">
+  return `<section class="ecd-ticket-outcome ${outcomeClass}">
     <div class="ecd-ticket-outcome-head">
       <div><span>BILAN DES TICKETS PARISPROMAX</span><strong>${escapeHtml(status)}</strong></div>
-      <em>${settled ? 'Calcul terminé' : 'À confirmer'}</em>
+      <em>${settled ? 'Calcul terminé' : indeterminate ? 'Montant indéterminable' : partial ? 'Calcul suspendu' : 'À confirmer'}</em>
     </div>
     <div class="ecd-ticket-metrics">
-      <span><small>Tickets gagnants</small><b>${settled ? `${Number(outcome.winningCount || 0)} / ${Number(outcome.ticketsCount || 0)}` : '—'}</b></span>
-      <span><small>Retour théorique</small><b>${money(outcome.totalReturn)}</b></span>
+      <span><small>Sélections correctes</small><b>${settled || indeterminate ? `${Number(outcome.winningCount || 0)} / ${Number(outcome.ticketsCount || 0)}` : '—'}</b></span>
+      <span><small>Retour théorique</small><b>${indeterminate ? 'Non calculable' : money(outcome.totalReturn)}</b></span>
       <span><small>Mise illustrative</small><b>${money(outcome.totalStake)}</b></span>
       <span><small>Solde théorique</small><b>${money(outcome.netReturn)}</b></span>
     </div>
-    ${settled ? `<div class="ecd-winning-tickets">
-      <strong>Tickets gagnants du pronostic</strong>
+    ${settled || indeterminate ? `<div class="ecd-winning-tickets">
+      <strong>Sélections correctes du pronostic</strong>
       ${winningTickets.length
-        ? `<ul>${winningTickets.map((ticket) => `<li><span>${escapeHtml(ticket.bet)} · ${escapeHtml((ticket.numbers || []).join(' - '))}</span><b>${money(ticket.returnAmount)}</b></li>`).join('')}</ul>`
-        : '<p>Aucun ticket gagnant pour ce pronostic.</p>'}
+        ? `<ul>${winningTickets.map((ticket) => `<li><span>${escapeHtml(ticket.bet)} · ${escapeHtml((ticket.numbers || []).join(' - '))}</span><b>${ticket.reportIndeterminate ? 'Rapport non calculable' : money(ticket.returnAmount)}</b></li>`).join('')}</ul>`
+        : '<p>Aucune sélection correcte pour ce pronostic.</p>'}
     </div>` : '<p>Les tickets gagnants et les montants apparaîtront dès la publication des rapports officiels.</p>'}
-    <p>Simulation du pronostic ParisPromax archivé, avec une mise de ${money(outcome.unitStake)} par ticket. Aucun pari n’est effectué ou encaissé par ParisPromax.</p>
+    <p>Simulation du pronostic ParisPromax archivé, avec une mise de ${money(outcome.unitStake)} par ticket.${indeterminate ? ' Un rapport à zéro gagnant reste non calculable, car un ticket supplémentaire aurait modifié le partage du pari mutuel.' : ''} Aucun pari n’est effectué ou encaissé par ParisPromax.</p>
   </section>`;
 }
 
-function grandCarnetOutcomeMarkup(outcome) {
+function resultPredictionVariant(result = {}) {
+  if (state.resultCategory !== 'ecd' || !Array.isArray(result.ecdTopPicks)) return result;
+  const podiumSize = Math.max(2, Math.min(3, Number(result.ecdTicketOutcome?.podiumSize) || 3));
+  const baseNumber = Number(result.ecdTopPicks[0]?.number);
+  const basePlaced = Number.isFinite(baseNumber)
+    && (result.winners || []).slice(0, podiumSize).map(Number).includes(baseNumber);
+  return {
+    ...result,
+    topPicks: result.ecdTopPicks,
+    groups: result.ecdGroups || null,
+    aiHit: typeof result.ecdAiHit === 'boolean' ? result.ecdAiHit : basePlaced,
+  };
+}
+
+function grandCarnetFallbackMarkup(result = {}) {
+  const arrivalStatus = result.nationalArrivalComplete;
+  const reportStatus = result.nationalReport?.status ?? null;
+  const partialReport = reportStatus === 'report-partial' || reportStatus === 'partial';
+  const title = arrivalStatus === false
+    ? 'Arrivée officielle partielle · calcul suspendu'
+    : partialReport
+        ? 'Rapport officiel incomplet · calcul suspendu'
+      : arrivalStatus == null
+        ? 'Statut de l’arrivée officielle à confirmer'
+        : 'Pronostic archivé indisponible';
+  const detail = arrivalStatus === false
+    ? 'Aucun gain ni aucune perte ne sont calculés avant la publication de l’arrivée complète.'
+    : partialReport
+        ? 'Les montants restent en attente jusqu’à la publication du rapport complet.'
+      : arrivalStatus == null
+        ? 'Le résultat n’est pas présenté comme vérifié tant que son état officiel n’est pas connu.'
+        : 'Le gain illustratif ne peut pas être calculé pour cette course.';
+  return `<section class="grand-carnet-outcome ${arrivalStatus === false || partialReport ? 'partial' : 'unknown'}"><div class="grand-carnet-outcome-head"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>${title}</strong></div><em>${arrivalStatus === false || partialReport ? 'Calcul suspendu' : 'À confirmer'}</em></div><p>${detail}</p></section>`;
+}
+
+function grandCarnetOutcomeMarkup(outcome, result = {}) {
   if (!outcome) {
-    return `<section class="grand-carnet-outcome pending"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>Pronostic archivé indisponible</strong></div><p>Le gain illustratif ne peut pas être calculé pour cette course.</p></section>`;
+    return grandCarnetFallbackMarkup(result);
   }
   const confirmed = outcome.gainStatus === 'confirmed';
   const pending = outcome.gainStatus === 'pending-official-report';
+  const indeterminate = outcome.gainStatus === 'official-report-indeterminate';
+  const partial = outcome.gainStatus === 'report-partial';
+  const notWinning = outcome.gainStatus === 'not-winning';
+  const outcomeClass = confirmed
+    ? 'confirmed'
+    : pending
+      ? 'pending'
+      : indeterminate
+        ? 'indeterminate'
+        : partial
+          ? 'partial'
+          : notWinning
+            ? 'not-winning'
+            : 'unknown';
   const status = confirmed
     ? `Gain officiel : ${Number(outcome.gain || 0).toLocaleString('fr-FR')} ${escapeHtml(outcome.currency || 'FCFA')}`
     : pending
       ? 'Pronostic gagnant · gain officiel en attente'
-      : 'Pronostic non gagnant · gain 0 FCFA';
-  return `<section class="grand-carnet-outcome ${outcome.isWinning ? 'winning' : 'not-winning'}">
-    <div class="grand-carnet-outcome-head"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>${status}</strong></div><em>${escapeHtml(outcome.matchedHorses || 0)} / ${escapeHtml(outcome.arrival?.length || 0)} chevaux trouvés</em></div>
-    <div class="grand-carnet-outcome-lines"><span><small>Pronostic</small><b>${escapeHtml((outcome.selection || []).join(' - '))}</b></span><span><small>Arrivée</small><b>${escapeHtml((outcome.arrival || []).join(' - '))}</b></span><span><small>Mise illustrative</small><b>${outcome.totalStake != null ? `${Number(outcome.totalStake).toLocaleString('fr-FR')} ${escapeHtml(outcome.currency || 'FCFA')}` : '—'}</b></span></div>
+      : indeterminate
+        ? 'Sélection correcte · montant officiel non calculable'
+        : partial
+          ? 'Calcul suspendu · rapport officiel incomplet'
+          : notWinning
+            ? 'Pronostic non gagnant · gain 0 FCFA'
+            : 'Bilan officiel à confirmer';
+  const badge = confirmed
+    ? 'Rapport complet'
+    : pending
+      ? 'Rapport en attente'
+      : indeterminate
+        ? 'Montant indéterminable'
+        : partial
+          ? 'Rapport partiel'
+          : notWinning
+            ? 'Aucune combinaison gagnante'
+            : 'À confirmer';
+  const currency = escapeHtml(outcome.currency || 'FCFA');
+  const amount = (value, fallback = '—') => value == null
+    ? fallback
+    : `${Number(value).toLocaleString('fr-FR')} ${currency}`;
+  const gain = confirmed || notWinning
+    ? amount(outcome.gain, notWinning ? `0 ${currency}` : '—')
+    : indeterminate
+      ? 'Non calculable'
+      : 'En attente';
+  const netGain = confirmed || notWinning
+    ? amount(outcome.netGain)
+    : indeterminate
+      ? 'Non calculable'
+      : 'En attente';
+  const breakdown = Object.entries(outcome.winningBreakdown || {}).filter(([, item]) => Number(item?.count) > 0);
+  const outcomeLabels = { order: 'Ordre', disorder: 'Désordre', bonus: 'Bonus' };
+  const winningCount = Number(outcome.winningCombinations || 0);
+  return `<section class="grand-carnet-outcome ${outcomeClass}">
+    <div class="grand-carnet-outcome-head"><div><span>BILAN GRAND CARNET PARISPROMAX</span><strong>${status}</strong></div><em>${badge}</em></div>
+    <p class="grand-carnet-match">${escapeHtml(outcome.matchedHorses || 0)} / ${escapeHtml(outcome.arrival?.length || 0)} chevaux trouvés · ${escapeHtml(winningCount)} combinaison${winningCount > 1 ? 's' : ''} gagnante${winningCount > 1 ? 's' : ''}</p>
+    <div class="grand-carnet-outcome-lines"><span><small>Pronostic</small><b>${escapeHtml((outcome.selection || []).join(' - '))}</b></span><span><small>Arrivée</small><b>${escapeHtml((outcome.arrival || []).join(' - '))}</b></span><span><small>Mise illustrative</small><b>${amount(outcome.totalStake)}</b></span><span><small>Gain officiel</small><b>${gain}</b></span><span><small>Solde théorique</small><b>${netGain}</b></span></div>
+    ${breakdown.length ? `<div class="grand-carnet-winning"><strong>Combinaisons gagnantes</strong><ul>${breakdown.map(([kind, item]) => `<li><span>${escapeHtml(outcomeLabels[kind] || kind)}</span><b>${escapeHtml(item.count)}${item.gain == null ? indeterminate ? ' · montant non calculable' : ' · montant en attente' : ` · ${amount(item.gain)}`}</b></li>`).join('')}</ul></div>` : ''}
     <p>Simulation basée sur le Grand Carnet ParisPromax archivé avant la course. Aucun pari n’est encaissé par ParisPromax.</p>
   </section>`;
 }
@@ -835,7 +977,7 @@ function renderRaces() {
       </button>`;
     }).join('')}
   `).join('');
-  $$('.race-item', list).forEach((button) => button.addEventListener('click', () => selectRace(button.dataset.raceId)));
+  $$('.race-item', list).forEach((button) => button.addEventListener('click', () => selectRace(button.dataset.raceId, 'ecd')));
 }
 
 function renderResults() {
@@ -853,17 +995,25 @@ function renderResults() {
   }
 
   grid.innerHTML = visibleResults.map((result) => {
+    const displayResult = resultPredictionVariant(result);
     const winners = (result.winners || []).slice(0, 5);
     const hasAccess = Boolean(state.me?.access?.hasAccess);
-    const comparison = hasAccess && result.aiHit
-      ? '<span class="result-hit success">Base ParisPromax placée</span>'
-      : '<span class="result-hit neutral">Résultat officiel vérifié</span>';
+    const arrivalComplete = state.resultCategory === 'ecd'
+      ? result.ecdArrivalComplete
+      : result.nationalArrivalComplete;
+    const comparison = arrivalComplete === false
+      ? '<span class="result-hit neutral">Arrivée officielle en cours de complétion</span>'
+      : arrivalComplete == null
+        ? '<span class="result-hit unknown">Statut officiel à confirmer</span>'
+        : hasAccess && displayResult.aiHit === true
+        ? '<span class="result-hit success">Base ParisPromax placée</span>'
+        : '<span class="result-hit neutral">Résultat officiel vérifié</span>';
     const reference = raceReference(result);
-    const resultDetails = hasAccess ? `${result.category === 'national'
-      ? grandCarnetOutcomeMarkup(result.grandCarnetOutcome)
-      : ''}${result.isEcd || result.category === 'ecd'
-      ? `${ecdTicketOutcomeMarkup(result.ecdTicketOutcome)}${ecdGainsTableMarkup(result)}`
-      : ''}` : '';
+    const resultDetails = !hasAccess
+      ? ''
+      : state.resultCategory === 'national'
+        ? grandCarnetOutcomeMarkup(result.grandCarnetOutcome, result)
+        : `${ecdTicketOutcomeMarkup(result.ecdTicketOutcome)}${ecdGainsTableMarkup(displayResult)}`;
     return `<article class="result-card result-card-detailed">
       <div class="result-card-head">
         <div><span>${escapeHtml([reference, result.track].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(result.race)}</h3><time>${escapeHtml(dateLabel(result.date))}</time></div>
@@ -878,7 +1028,7 @@ function renderResults() {
   }).join('');
 
   $$('[data-result-race]', grid).forEach((button) => button.addEventListener('click', async () => {
-    await selectRace(button.dataset.resultRace);
+    await selectRace(button.dataset.resultRace, state.resultCategory);
     $('.race-workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
 }
@@ -897,6 +1047,78 @@ async function loadResults(silent = false) {
     if (!silent) {
       grid.innerHTML = `<div class="results-empty"><strong>Résultats momentanément indisponibles</strong><p>${escapeHtml(error.message)}</p></div>`;
     }
+  }
+}
+
+function measuredRate(value) {
+  if (value == null || value === '') return 'En cours de mesure';
+  const rate = Number(value);
+  return Number.isFinite(rate) ? `${Math.round(rate)} %` : 'En cours de mesure';
+}
+
+function measuredSample(value, singular = 'résultat', plural = `${singular}s`) {
+  const sample = Math.max(0, Math.round(Number(value) || 0));
+  return sample
+    ? `Échantillon : ${sample.toLocaleString('fr-FR')} ${sample > 1 ? plural : singular}`
+    : 'Échantillon en cours de constitution';
+}
+
+function renderSuccessRate(stats = null, error = null) {
+  const ecdRate = $('#success-rate-ecd');
+  const ecdSample = $('#success-rate-ecd-sample');
+  const nationalRate = $('#success-rate-national');
+  const nationalSample = $('#success-rate-national-sample');
+  const allRate = $('#success-rate-all');
+  const allSample = $('#success-rate-all-sample');
+  const recentRate = $('#success-rate-30');
+  const recentSample = $('#success-rate-30-sample');
+  const status = $('#success-rate-status');
+  if (
+    !ecdRate || !ecdSample || !nationalRate || !nationalSample
+    || !allRate || !allSample || !recentRate || !recentSample || !status
+  ) return;
+
+  ecdRate.textContent = measuredRate(stats?.byContext?.ecd?.rate);
+  ecdSample.textContent = measuredSample(
+    stats?.byContext?.ecd?.sampleSize,
+    'pronostic ECD archivé',
+    'pronostics ECD archivés'
+  );
+  nationalRate.textContent = measuredRate(stats?.byContext?.national?.rate);
+  nationalSample.textContent = measuredSample(
+    stats?.byContext?.national?.sampleSize,
+    'pronostic national archivé',
+    'pronostics nationaux archivés'
+  );
+  allRate.textContent = measuredRate(stats?.rate);
+  allSample.textContent = measuredSample(stats?.sampleSize, 'contexte archivé', 'contextes archivés');
+  recentRate.textContent = measuredRate(stats?.last30Days?.rate);
+  recentSample.textContent = measuredSample(stats?.last30Days?.sampleSize, 'pronostic comparable', 'pronostics comparables');
+  const baseStatus = error
+    ? 'Mesure momentanément indisponible. Les résultats officiels restent visibles ci-dessous.'
+    : stats?.window?.truncated
+      ? `Mesure bornée aux ${Number(stats.window.resultLimit).toLocaleString('fr-FR')} dernières courses pertinentes pour le pays.`
+      : 'Mesure recalculée à partir des arrivées officielles et des contextes ECD/nationale du pays.';
+  const modelRows = !error && Array.isArray(stats?.byModel) ? stats.byModel : [];
+  const displayedModels = modelRows.slice(0, 3);
+  const archivedModelCount = modelRows.length - displayedModels.length;
+  const modelSummary = displayedModels.length
+    ? ` Versions suivies : ${displayedModels.map((model) => `${model.modelVersion} (${model.sampleSize} pronostic${model.sampleSize > 1 ? 's' : ''}, ${measuredRate(model.rate)})`).join(' · ')}.${archivedModelCount > 0 ? ` ${archivedModelCount} ancienne${archivedModelCount > 1 ? 's' : ''} version${archivedModelCount > 1 ? 's' : ''} archivée${archivedModelCount > 1 ? 's' : ''}.` : ''}`
+    : '';
+  status.textContent = `${baseStatus}${modelSummary}`;
+  status.classList.toggle('error', Boolean(error));
+}
+
+async function loadSuccessRate() {
+  try {
+    state.successStats = await api(
+      `/stats/success-rate?country=${encodeURIComponent(state.nationalCountry)}`,
+      { auth: false }
+    );
+    renderSuccessRate(state.successStats);
+  } catch (error) {
+    state.successStats = null;
+    renderSuccessRate(null, error);
   }
 }
 
@@ -1083,7 +1305,7 @@ function nationalProposalMarkup(game) {
   const horseNumbers = (horses) => horses
     .map((horse) => `<b title="${escapeHtml(horse.name)}">${escapeHtml(horse.number)}</b>`)
     .join('<i>–</i>');
-  const sourceLabel = proposal.source === 'latest-analysis'
+  const sourceLabel = proposal.source && proposal.source !== 'market-ranking'
     ? 'Pronostic ParisPromax à jour'
     : 'Ordre provisoire selon les cotes';
   const budgetLine = (play) => play.cost != null
@@ -1300,7 +1522,7 @@ async function loadNationalSpotlight() {
     setupNationalBudget(node);
     const button = $('[data-national-race]', node);
     if (button) button.addEventListener('click', async () => {
-      await selectRace(button.dataset.nationalRace);
+      await selectRace(button.dataset.nationalRace, 'national');
       $('.race-workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   } catch (error) {
@@ -1334,8 +1556,13 @@ function findRace(id) {
   return null;
 }
 
-async function selectRace(id) {
+async function selectRace(id, requestedMode = null) {
   state.selectedRaceId = id;
+  state.selectedRaceMode = requestedMode === 'national' || requestedMode === 'ecd'
+    ? requestedMode
+    : String(id) === String(state.nationalRaceId)
+      ? 'national'
+      : 'ecd';
   renderRaces();
   const context = findRace(id);
   const detailNode = $('#race-detail');
@@ -1394,30 +1621,98 @@ function roleCard(label, subtitle, items, role, tone = '') {
   </article>`;
 }
 
+function predictionSelectionProfile(detail = {}, availablePicks = 0) {
+  const activeRunners = (detail.horses || []).filter((horse) => !horse.nonPartant).length
+    || Math.max(0, Number(detail.runners) || 0)
+    || Math.max(0, Number(availablePicks) || 0);
+  const isNational = Boolean(
+    state.selectedRaceMode === 'national'
+    &&
+    detail.id
+    && state.nationalRaceId
+    && String(detail.id) === String(state.nationalRaceId)
+    && Number(state.nationalGame?.podium) > 0
+  );
+  const podium = isNational
+    ? Number(state.nationalGame.podium)
+    : activeRunners > 0 && activeRunners < 8
+      ? 2
+      : 3;
+  const desiredSize = podium + 2;
+  const selectionSize = activeRunners > 0 ? Math.min(activeRunners, desiredSize) : desiredSize;
+  return {
+    isNational,
+    podium,
+    selectionSize,
+    label: isNational
+      ? `${state.nationalGame.label || 'Course nationale'} + 2`
+      : podium === 2 ? 'Jumelé ordre + 2' : 'Trio + 2',
+  };
+}
+
+function canonicalPredictionPicks(prediction, detail = {}) {
+  const horses = detail.horses || [];
+  const seen = new Set();
+  return (prediction?.topPicks || [])
+    .map((pick, index) => ({ pick, index }))
+    .sort((left, right) => (
+      Number(left.pick?.rank || 999) - Number(right.pick?.rank || 999)
+      || left.index - right.index
+    ))
+    .map(({ pick }) => enrichPick(pick, horses))
+    .filter((pick) => {
+      const key = String(pick?.number ?? '');
+      if (!pick || !key || pick.nonPartant || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function finalPickLabel(index, podium) {
+  if (index >= podium) return `Complément ${index - podium + 1}`;
+  return index === 0 ? '1er choix' : `${index + 1}e choix`;
+}
+
+function canonicalPredictionRoles(selected = []) {
+  const base = selected.slice(0, 1);
+  const couple = selected.slice(0, 2);
+  const remaining = selected.slice(2);
+  const tocard = remaining
+    .filter((pick) => Number(pick.odds) >= 15 || pick.valueBet)
+    .filter((pick) => pick.probaPodium == null || Number(pick.probaPodium) >= 0.1)
+    .sort((left, right) => (
+      Number(right.probaPodium || 0) - Number(left.probaPodium || 0)
+      || Number(right.aiScore || 0) - Number(left.aiScore || 0)
+    ))[0] || null;
+  const tip = [...remaining].reverse().find((pick) => pick.number !== tocard?.number)
+    || selected[selected.length - 1]
+    || null;
+  const chances = remaining.filter((pick) => (
+    pick.number !== tocard?.number && pick.number !== tip?.number
+  ));
+  const marketFavorite = selected
+    .filter((pick) => Number(pick.odds) > 1)
+    .sort((left, right) => Number(left.odds) - Number(right.odds))[0] || null;
+  return { base, couple, chances, tocards: tocard ? [tocard] : [], marketFavorite, tip };
+}
+
 function predictionMarkup(prediction, error, detail) {
+  if (state.selectedRaceMode === 'ecd' && state.ecdProfile?.verified !== true) {
+    return '<section class="prediction-block locked-prediction"><h4>Format ECD non validé pour ce pays</h4><p>ParisPromax n’applique pas automatiquement les règles Jumelé ordre / Trio du Burkina Faso. Le pronostic de jeu reste suspendu jusqu’à validation des règles locales.</p></section>';
+  }
   if (prediction?.topPicks?.length) {
-    const horses = detail?.horses || [];
-    const groups = prediction.groups || {};
-    const enrich = (pick) => enrichPick(pick, horses);
-    const selectedSource = groups.selected?.length ? groups.selected : prediction.topPicks;
-    const selected = selectedSource.slice(0, 5).map(enrich).filter(Boolean);
-    const base = (groups.bases || selected.slice(0, 1)).map(enrich);
-    const couple = (groups.couple || selected.slice(0, 2)).map(enrich);
-    const chances = (groups.chances || selected.slice(2, 4)).map(enrich);
-    const tocards = (groups.tocards || groups.outsiders || []).map(enrich);
-    const marketFavorite = horses
-      .filter((horse) => !horse.nonPartant && Number(horse.odds) > 1)
-      .sort((a, b) => Number(a.odds) - Number(b.odds))[0];
-    const tip = enrich(selected.find((pick) => pick.valueBet) || groups.regret || selected[4]);
-    const finalLabels = ['1er podium', '2e podium', '3e podium', 'Complément 1', 'Complément 2'];
+    const canonical = canonicalPredictionPicks(prediction, detail);
+    const profile = predictionSelectionProfile(detail, canonical.length);
+    const selected = canonical.slice(0, profile.selectionSize);
+    const { base, couple, chances, tocards, marketFavorite, tip } = canonicalPredictionRoles(selected);
     return `<section class="prediction-block">
       <div class="prediction-title"><div><small>POURQUOI CES CHEVAUX</small><h4>Pronostic ParisPromax</h4></div><span>REPÈRES DE COURSE</span></div>
-      <div class="final-verdict"><div><span>PRONOSTIC FINAL</span><h5>Podium + 2</h5><p>Cinq chevaux classés par ordre de préférence.</p></div><div class="final-five">
-        ${selected.map((pick, index) => `<div class="final-pick ${index < 3 ? 'podium' : 'complement'}"><small>${finalLabels[index]}</small><b>${escapeHtml(pick.number)}</b><span>${escapeHtml(pick.name)}</span></div>`).join('')}
+      <div class="final-verdict"><div><span>PRONOSTIC FINAL</span><h5>${escapeHtml(profile.label)}</h5><p>${selected.length} chevaux, préfixe du même classement de référence.</p></div><div class="final-five final-size-${selected.length}">
+        ${selected.map((pick, index) => `<div class="final-pick ${index < profile.podium ? 'podium' : 'complement'}"><small>${escapeHtml(finalPickLabel(index, profile.podium))}</small><b>${escapeHtml(pick.number)}</b><span>${escapeHtml(pick.name)}</span></div>`).join('')}
       </div></div>
       <div class="analysis-grid">
         ${roleCard('Base', 'Point d’appui', base, 'base', 'role-base')}
-        ${roleCard('Favori', 'Lecture du marché', marketFavorite ? [enrich(marketFavorite)] : [], 'favorite', 'role-favorite')}
+        ${roleCard('Favori', 'Lecture du marché', marketFavorite ? [marketFavorite] : [], 'favorite', 'role-favorite')}
         ${roleCard('Couplé', 'Duo recommandé', couple, 'couple', 'role-couple')}
         ${roleCard('Chances régulières', 'Profils solides', chances, 'chance', 'role-chance')}
         ${roleCard('Tocard', 'Risque assumé', tocards, 'tocard', 'role-tocard')}
@@ -1435,12 +1730,32 @@ function predictionMarkup(prediction, error, detail) {
 
 function officialResultMarkup(detail) {
   const winners = (detail?.result?.winners || []).slice(0, 5);
-  if (!winners.length) return '';
+  if (!winners.length) {
+    const startsAt = detail?.startsAt ? new Date(detail.startsAt).getTime() : NaN;
+    if (!Number.isFinite(startsAt) || startsAt > Date.now()) return '';
+    return `<section class="official-result partial">
+      <div class="official-result-head">
+        <div><span>ARRIVÉE EN VALIDATION</span><h4>Résultat officiel en attente</h4></div>
+        <small>La course est passée · actualisation automatique</small>
+      </div>
+      <p>Le résultat apparaîtra dès sa publication par l’opérateur officiel. Aucun bilan n’est calculé entre-temps.</p>
+    </section>`;
+  }
   const horses = detail.horses || [];
-  return `<section class="official-result">
+  const activeRunnerCount = horses.filter((horse) => !horse.nonPartant).length;
+  const nationalPlaces = state.selectedRaceMode === 'national'
+    && String(detail?.id || '') === String(state.nationalRaceId || '')
+    ? Number(state.nationalGame?.podium) || 0
+    : 0;
+  const ecdPlaces = state.selectedRaceMode === 'ecd' && state.ecdProfile?.verified === true
+    ? (activeRunnerCount > 0 && activeRunnerCount < 8 ? 2 : 3)
+    : 0;
+  const expectedPlaces = nationalPlaces || ecdPlaces || Math.min(3, activeRunnerCount || 3);
+  const resultComplete = winners.length >= expectedPlaces;
+  return `<section class="official-result ${resultComplete ? 'complete' : 'partial'}">
     <div class="official-result-head">
-      <div><span>ARRIVÉE VALIDÉE</span><h4>Résultat officiel</h4></div>
-      <small>Source officielle · ${escapeHtml(dateLabel(detail.date))}</small>
+      <div><span>${resultComplete ? 'ARRIVÉE VALIDÉE' : 'ARRIVÉE OFFICIELLE PARTIELLE'}</span><h4>${resultComplete ? 'Résultat officiel' : 'Résultat en cours de complétion'}</h4></div>
+      <small>${resultComplete ? `Source officielle · ${escapeHtml(dateLabel(detail.date))}` : `${winners.length}/${expectedPlaces} positions disponibles · bilan suspendu`}</small>
     </div>
     <div class="official-result-list">
       ${winners.map((number, index) => {
@@ -1456,7 +1771,10 @@ function officialResultMarkup(detail) {
 }
 
 function nationalStrategyMarkup(detail) {
-  const game = detail?.id === state.nationalRaceId ? state.nationalGame : null;
+  const game = state.selectedRaceMode === 'national'
+    && detail?.id === state.nationalRaceId
+    ? state.nationalGame
+    : null;
   if (!game?.strategies?.length) return '';
   return `<section class="national-smart-play">
     <div>
@@ -1476,12 +1794,15 @@ function nationalStrategyMarkup(detail) {
 
 function renderRaceDetail(context, detail, prediction, predictionError) {
   const horses = detail.horses || [];
+  const activeRunnerCount = horses.filter((horse) => !horse.nonPartant).length;
+  const nonRunnerCount = horses.length - activeRunnerCount;
   const reference = raceReference(context?.race || detail);
-  $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml([reference, context?.track?.name || detail.track || 'COURSE'].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><div class="detail-badges"><span class="race-discipline-badge race-discipline-prominent">${escapeHtml(raceDiscipline(detail))}</span><span class="race-badge">${horses.length} PARTANTS</span></div></div>
+  $('#race-detail').innerHTML = `<div class="detail-head"><div><span class="section-kicker">${escapeHtml([reference, context?.track?.name || detail.track || 'COURSE'].filter(Boolean).join(' · '))}</span><h3>${escapeHtml(detail.name)}</h3><p>${[detail.time, detail.distance, detail.type || detail.discipline, dateLabel(detail.date)].filter(Boolean).map(escapeHtml).join(' · ')}</p></div><div class="detail-badges"><span class="race-discipline-badge race-discipline-prominent">${escapeHtml(raceDiscipline(detail))}</span><span class="race-badge">${activeRunnerCount} PARTANTS ACTIFS${nonRunnerCount > 0 ? ` · ${nonRunnerCount} NP` : ''}</span></div></div>
     ${officialResultMarkup(detail)}
     ${nationalStrategyMarkup(detail)}
     ${predictionMarkup(prediction, predictionError, detail)}
-    <div class="table-wrap"><table class="horse-table"><thead><tr><th>N°</th><th>Cheval</th><th>Jockey / entraîneur</th><th>Forme</th><th>Cote</th></tr></thead><tbody>
+    <p class="horizontal-scroll-hint">Faites glisser le tableau vers la gauche pour voir toutes les colonnes.</p>
+    <div class="table-wrap" tabindex="0" aria-label="Tableau des partants, défilement horizontal"><table class="horse-table"><thead><tr><th>N°</th><th>Cheval</th><th>Jockey / entraîneur</th><th>Forme</th><th>Cote</th></tr></thead><tbody>
       ${horses.map((horse) => `<tr><td><span class="horse-num">${escapeHtml(horse.number)}</span></td><td><span class="horse-name">${escapeHtml(horse.name)}</span>${horse.nonPartant ? '<span class="horse-sub">Non-partant</span>' : ''}</td><td><span>${escapeHtml(horse.jockey || '—')}</span><span class="horse-sub">${escapeHtml(horse.trainer || '')}</span></td><td>${escapeHtml(horse.form || '—')}</td><td class="odds">${horse.odds != null ? escapeHtml(horse.odds) : '—'}</td></tr>`).join('')}
     </tbody></table></div>`;
   hydrateRaceCarousels($('#race-detail'));
@@ -1508,7 +1829,7 @@ async function login(form) {
   }
   closeDialogs();
   toast('Connexion réussie');
-  if (state.selectedRaceId) selectRace(state.selectedRaceId);
+  if (state.selectedRaceId) selectRace(state.selectedRaceId, state.selectedRaceMode);
 }
 
 async function register(form) {
@@ -1586,7 +1907,7 @@ function logout() {
   renderSession();
   toast('Vous êtes déconnecté');
   window.location.hash = 'accueil';
-  if (state.selectedRaceId) selectRace(state.selectedRaceId);
+  if (state.selectedRaceId) selectRace(state.selectedRaceId, state.selectedRaceMode);
 }
 
 async function startPayment(planId) {
@@ -1844,7 +2165,9 @@ function bindEvents() {
   $('#quinte-country').addEventListener('change', (event) => {
     state.nationalCountry = event.target.value;
     localStorage.setItem('ppm_quinte_country', state.nationalCountry);
-    loadRaces().then(() => loadResults()).catch(() => {});
+    loadRaces()
+      .then(() => Promise.all([loadResults(), loadSuccessRate()]))
+      .catch(() => {});
   });
   $('#logout-button').addEventListener('click', logout);
   $('#account-button').addEventListener('click', () => { window.location.hash = 'espace'; });
@@ -1898,10 +2221,10 @@ async function boot() {
   try { await loadCatalogs(); }
   catch (error) { toast(`Configuration indisponible : ${error.message}`); }
   await loadRaces();
-  await Promise.all([loadResults(), refreshMe(), loadReviewSummary()]);
+  await Promise.all([loadResults(), refreshMe(), loadReviewSummary(), loadSuccessRate()]);
   window.setInterval(() => {
     if (document.visibilityState === 'visible') {
-      loadRaces().then(() => loadResults(true)).catch(() => {});
+      loadRaces().then(() => Promise.all([loadResults(true), loadSuccessRate()])).catch(() => {});
     }
   }, 120000);
   applyReferralInvitation();

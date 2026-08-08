@@ -1,0 +1,157 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,B,C,E,A={
+uE9(d){var w=d.a
+return new B.K(w,new A.lvc(),B.a8(w).n("K<1,o>")).bX(0,"\n")},
+lv8(d,e){var w,v,u,t,s,r,q=B.a4(d.b,x.g)
+C.c.eR(q)
+w=d.a
+C.c.be(q,w)
+C.c.hK(q,0,w)
+w=x.b
+v=B.oV(e.a,new A.lv9(),null,w,w)
+v.eU(v,new A.lva())
+w=B.a([],x.c)
+for(u=q.length,t=x.h,s=0;s<q.length;q.length===u||(0,B.bF)(q),++s){r=q[s]
+if(v.b3(0,r))w.push(v.E(0,r))
+else w.push(new A.JY(r,B.b("Enter or paste your release notes for "+r+" here",null,y.b,B.a([r],t),null)))}return A.uE9(new A.bIN(w))},
+lvb(d){var w,v,u=null
+switch(d.c.a){case 0:w=d.b
+return B.b("Line "+w+": the start tag is repeated.",u,"ReleaseNotesFormatter_repeatedStartTagError",B.a([w],x.h),u)
+case 1:w=d.b
+return B.b("Line "+w+": text outside language tags.",u,"ReleaseNotesFormatter_textOutsideTagsError",B.a([w],x.h),u)
+case 2:w=d.b
+v=d.d.c
+return B.b("Line "+w+": tag not closed for "+v+".",u,"ReleaseNotesFormatter_missingEndTagError",B.a([w,v],x.h),u)
+case 3:w=d.b
+return B.b("Line "+w+": unexpected end tag.",u,"ReleaseNotesFormatter_unexpectedEndTagError",B.a([w],x.h),u)
+case 4:w=d.b
+v="</"+d.d.c+">"
+return B.b("Line "+w+": expected "+v+".",u,"ReleaseNotesFormatter_endTagDoesNotMatchError",B.a([w,v],x.h),u)
+case 5:w=d.b
+v=d.a
+return B.b("Line "+w+": bad language tag: "+v+".",u,"ReleaseNotesFormatter_badLanguageTagError",B.a([w,v],x.h),u)}},
+bIO(d){var w,v,u,t,s,r=null,q=B.a([],x.c),p=B.a([],x.k),o=C.o.cH(d).split("\n")
+for(w=r,v=0;u=o.length,v<u;){t=o[v];++v
+s=A.DSK(v,t)
+if(s!=null)if(!s.a){if(w!=null)throw B.a3(A.deX(t,v,D.kOD,r))
+w=s}else{if(w==null)throw B.a3(A.deX(t,v,D.kOJ,r))
+u=w.c
+if(u!==s.c)throw B.a3(A.deX(t,v,D.kOL,w))
+q.push(new A.JY(u,C.c.bX(p,"\n")))
+C.c.aV(p)
+w=r}else if(C.o.cH(t).length!==0&&w==null)throw B.a3(A.deX(t,v,D.kOF,r))
+else p.push(t)}if(w!=null)throw B.a3(A.deX("",u,D.kOH,w))
+return A.EqC(new A.bIN(q))},
+EqC(d){var w=d.a,v=B.a8(w).n("X<1>"),u=B.a4(new B.X(w,new A.lv7(),v),v.n("a_.E"))
+return new A.bIN(u)},
+lvd(d){var w,v,u,t,s,r,q=null,p="Release note for ",o=x.g,n=B.cz(o)
+for(w=d.a,v=w.length,u=0;u<w.length;w.length===v||(0,B.bF)(w),++u){t=w[u]
+s=t.a
+if(n.a8(0,s))return B.V(["duplicate-release-note-languages",B.b("Multiple release notes found for "+s,q,"ReleaseNotesFormatter_duplicateLanguageError",B.a([s],x.h),q)],o,x.b)
+n.W(0,s)
+if(!E.lu.a8(0,s))return B.V(["unknown-release-note-languages",B.b("Unsupported language translation found: "+s+". Delete this language translation to continue.",q,"ReleaseNotesFormatter_unknownLanguageErrorV2",B.a([s],x.h),q)],o,x.b)
+r=t.b.length
+if(r>500)return B.V(["release-note-too-long",B.b(p+s+" is too long",q,"ReleaseNotesFormatter_releaseNoteTooLongError",B.a([s],x.h),q)],o,x.b)
+if(r===0)return B.V(["release-note-empty",B.b(p+s+" is empty",q,"ReleaseNotesFormatter_releaseNoteEmptyError",B.a([s],x.h),q)],o,x.b)}return q},
+EqD(d){return B.b("Enter or paste your release notes for "+d+" here",null,y.b,B.a([d],x.h),null)},
+deX(d,e,f,g){return new A.aZV(d,e,f,g)},
+DSK(d,e){var w,v
+e=C.o.cH(e)
+if(C.o.dI(e,"<")&&C.o.ll(e,">")){w=C.o.dI(e,"</")
+v=C.o.cO(e,1,e.length-1)
+if(C.o.dI(v,"/"))v=C.o.cl(v,1)
+if(C.o.a8(v,"-")&&v.length<5)B.aj(A.deX(e,d,D.kON,null))
+return new A.dAS(w,d,v)}return null},
+bIN:function bIN(d){this.a=d},
+JY:function JY(d,e){this.a=d
+this.b=e},
+caq:function caq(d,e){this.a=d
+this.b=e},
+lvc:function lvc(){},
+lv9:function lv9(){},
+lva:function lva(){},
+lv7:function lv7(){},
+bFI:function bFI(){},
+bC4:function bC4(){},
+bgP:function bgP(d,e){this.a=d
+this.b=e},
+aZV:function aZV(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+dAS:function dAS(d,e,f){this.a=d
+this.b=e
+this.c=f}},D
+J=c[1]
+B=c[0]
+C=c[2]
+E=c[2143]
+A=a.updateHolder(c[993],A)
+D=c[2817]
+A.bIN.prototype={}
+A.JY.prototype={
+gfv(d){return this.a},
+gcX(d){return this.b}}
+A.caq.prototype={}
+A.bFI.prototype={$ijo:1,$iam:1}
+A.bC4.prototype={$iam:1}
+A.bgP.prototype={
+b5(){return"ParseExceptionType."+this.b}}
+A.aZV.prototype={
+ab(d,e){var w=this
+if(e==null)return!1
+if(e===w)return!0
+return e instanceof A.aZV&&w.a===e.a&&w.b===e.b&&w.c===e.c&&J.ai(w.d,e.d)},
+gal(d){var w=this
+return B.cc(B.a7(B.a7(B.a7(B.a7(0,C.o.gal(w.a)),C.v.gal(w.b)),B.eI(w.c)),J.aE(w.d)))},
+a1(d){var w=this,v=$.ce().$1("ParseException"),u=J.bp(v)
+u.am(v,"line",w.a)
+u.am(v,"lineNumber",w.b)
+u.am(v,"type",w.c)
+u.am(v,"otherTag",w.d)
+return u.a1(v)},
+gaO(d){return this.c}}
+A.dAS.prototype={
+ab(d,e){var w=this
+if(e==null)return!1
+if(e===w)return!0
+return e instanceof A.dAS&&w.a===e.a&&w.b===e.b&&w.c===e.c},
+gal(d){return B.cc(B.a7(B.a7(B.a7(0,C.br.gal(this.a)),C.v.gal(this.b)),C.o.gal(this.c)))},
+a1(d){var w=$.ce().$1("LanguageTag"),v=J.bp(w)
+v.am(w,"isEnd",this.a)
+v.am(w,"lineNumber",this.b)
+v.am(w,"locale",this.c)
+return v.a1(w)}}
+var z=a.updateTypes(["o(JY)","I(JY)"])
+A.lvc.prototype={
+$1(d){var w=d.a
+return"<"+w+">\n"+d.b+"\n</"+w+">"},
+$S:z+0}
+A.lv9.prototype={
+$1(d){return J.b1K(d)},
+$S:33}
+A.lva.prototype={
+$2(d,e){return J.d8(J.dSB(e))},
+$S:581}
+A.lv7.prototype={
+$1(d){return d.b!==A.EqD(d.a)},
+$S:z+1};(function inheritance(){var w=a.inheritMany,v=a.inherit
+w(B.B,[A.bIN,A.JY,A.caq,A.bFI,A.bC4])
+w(B.aL,[A.lvc,A.lv9,A.lv7])
+v(A.lva,B.ej)
+v(A.bgP,B.e_)
+v(A.aZV,A.bFI)
+v(A.dAS,A.bC4)})()
+B.an(b.typeUniverse,JSON.parse('{"bFI":{"jo":[],"am":["bFI","okm"]},"bC4":{"am":["bC4","oi3"]},"okm":{"aJ":["bFI","okm"]},"oi3":{"aJ":["bC4","oi3"]},"aZV":{"jo":[],"am":["bFI","okm"]},"dAS":{"am":["bC4","oi3"]}}'))
+var y={b:"ReleaseNotesFormatter_placeholderReleaseNote"}
+var x={c:B.t("r<JY>"),h:B.t("r<B>"),k:B.t("r<o>"),g:B.t("o"),b:B.t("@")};(function constants(){D.kOD=new A.bgP(0,"repeatedStartTag")
+D.kOF=new A.bgP(1,"textOutsideTags")
+D.kOH=new A.bgP(2,"missingEndTag")
+D.kOJ=new A.bgP(3,"unexpectedEndTag")
+D.kOL=new A.bgP(4,"endTagDoesNotMatch")
+D.kON=new A.bgP(5,"badLanguageTag")})();(function lazyInitializers(){var w=a.lazyFinal
+w($,"SQa","inL",()=>{var v=null
+return B.b("Let users know what's in your release. Enter release notes for each language within the language tags. ",v,v,v,v)})})()};
+(a=>{a["WM/xJPnfwMb9dNvCh/OIrN7yirg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_4756.part.js.map

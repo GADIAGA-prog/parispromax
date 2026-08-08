@@ -5,7 +5,20 @@ const cheerio = require('cheerio');
 const { PDFParse } = require('pdf-parse');
 const prisma = require('../db');
 const { formatRaceReference } = require('../../../shared/raceReference');
-const { buildPredictionSnapshot } = require('./predictionSelection');
+const { ecdPodiumSize } = require('../../../shared/ecdRules');
+const {
+  payoutRowsForCountry,
+  validateOfficialPayouts,
+} = require('../../../shared/ecdTicketOutcome');
+const {
+  buildPredictionSnapshot,
+  preRacePredictionPicks,
+} = require('./predictionSelection');
+const {
+  arrivalsCompatible,
+  mergeCompatibleArrival,
+  serializableTransaction,
+} = require('./officialResultState');
 
 const HTTP = axios.create({
   timeout: 25000,
@@ -27,6 +40,11 @@ const DEFAULT_SOURCES = Object.freeze({
 
 const discoveryCache = new Map();
 const DISCOVERY_TTL_MS = 10 * 60 * 1000;
+const DEFAULT_DISCOVERY_MAX_PAGES = Math.max(
+  4,
+  Math.min(16, Number.parseInt(process.env.ECD_RESULTS_MAX_PAGES || '10', 10) || 10)
+);
+const documentPageCache = new Map();
 
 function officialSource(countryValue) {
   const country = String(countryValue || '').trim().toLowerCase();
@@ -80,7 +98,7 @@ function parseDocumentLinks(html, pageUrl, date, kind) {
     const href = $(link).attr('href');
     if (!href) return;
     const identity = documentIdentity(`${title} ${href}`);
-    if (!identity || identity.date !== date) return;
+    if (!identity || (date && identity.date !== date)) return;
     let url;
     try { url = new URL(href, pageUrl).toString(); }
     catch { return; }
@@ -91,6 +109,47 @@ function parseDocumentLinks(html, pageUrl, date, kind) {
       (candidate) => candidate.meeting === document.meeting && candidate.url === document.url
     ) === index)
     .sort((a, b) => a.meeting - b.meeting);
+}
+
+function paginatedDocumentUrl(baseUrl, page) {
+  const url = new URL(baseUrl);
+  if (page > 0) url.searchParams.set('page', String(page));
+  else url.searchParams.delete('page');
+  return url.toString();
+}
+
+async function cachedDocumentPage(url, { force = false, http = HTTP } = {}) {
+  const cached = documentPageCache.get(url);
+  if (!force && cached && Date.now() - cached.savedAt < DISCOVERY_TTL_MS) return cached.html;
+  const response = await http.get(url);
+  const html = String(response.data || '');
+  documentPageCache.set(url, { savedAt: Date.now(), html });
+  return html;
+}
+
+async function discoverPaginatedDocuments(baseUrl, date, kind, {
+  force = false,
+  http = HTTP,
+  maxPages = DEFAULT_DISCOVERY_MAX_PAGES,
+} = {}) {
+  if (!baseUrl) return [];
+  const limit = Math.max(1, Math.min(16, Number(maxPages) || DEFAULT_DISCOVERY_MAX_PAGES));
+  const seenPages = new Set();
+  for (let page = 0; page < limit; page += 1) {
+    const url = paginatedDocumentUrl(baseUrl, page);
+    const documents = parseDocumentLinks(
+      await cachedDocumentPage(url, { force, http }),
+      url,
+      null,
+      kind
+    );
+    const signature = documents.map((document) => document.url).sort().join('|');
+    if (page > 0 && (!documents.length || seenPages.has(signature))) break;
+    if (signature) seenPages.add(signature);
+    const matches = documents.filter((document) => document.date === date);
+    if (matches.length) return matches;
+  }
+  return [];
 }
 
 function meetingOneCandidate(document) {
@@ -114,13 +173,13 @@ function meetingOneCandidate(document) {
   };
 }
 
-async function includePublishedMeetingOne(documents) {
+async function includePublishedMeetingOne(documents, http = HTTP) {
   if (!documents?.length || documents.some((document) => document.meeting === 1)) return documents;
   for (const document of documents) {
     const candidate = meetingOneCandidate(document);
     if (!candidate) continue;
     try {
-      const response = await HTTP.head(candidate.url);
+      const response = await http.head(candidate.url);
       if (response.status >= 200 && response.status < 300) {
         return [candidate, ...documents].sort((a, b) => a.meeting - b.meeting);
       }
@@ -131,27 +190,35 @@ async function includePublishedMeetingOne(documents) {
   return documents;
 }
 
-async function discoverOfficialDocuments(countryValue, date, { force = false } = {}) {
+async function discoverOfficialDocuments(countryValue, date, {
+  force = false,
+  http = HTTP,
+  maxPages = DEFAULT_DISCOVERY_MAX_PAGES,
+} = {}) {
   const source = officialSource(countryValue);
   if (!source) return null;
   const cacheKey = `${source.country}:${date}`;
   const cached = discoveryCache.get(cacheKey);
   if (!force && cached && Date.now() - cached.savedAt < DISCOVERY_TTL_MS) return cached.value;
 
-  const [programResponse, resultsResponse] = await Promise.all([
-    HTTP.get(source.programUrl),
+  const [programDocuments, reportDocuments] = await Promise.all([
+    discoverPaginatedDocuments(source.programUrl, date, 'program', { force, http, maxPages }),
     source.resultsUrl
-      ? HTTP.get(source.resultsUrl).catch(() => null)
-      : Promise.resolve(null),
+      ? discoverPaginatedDocuments(source.resultsUrl, date, 'report', { force, http, maxPages })
+        .catch(() => [])
+      : Promise.resolve([]),
   ]);
-  let programs = parseDocumentLinks(programResponse.data, source.programUrl, date, 'program');
-  if (source.operator === 'LONAB') programs = await includePublishedMeetingOne(programs);
+  let programs = programDocuments;
+  if (source.operator === 'LONAB') programs = await includePublishedMeetingOne(programs, http);
+  let reports = reportDocuments;
+  // The operator page has occasionally exposed only R3 even though the
+  // companion R1 PDF was already online. Apply the same verified HEAD lookup
+  // to reports so a missing index link cannot leave valid gains pending.
+  if (source.operator === 'LONAB') reports = await includePublishedMeetingOne(reports, http);
   const value = {
     source,
     programs,
-    reports: resultsResponse
-      ? parseDocumentLinks(resultsResponse.data, source.resultsUrl, date, 'report')
-      : [],
+    reports,
   };
   discoveryCache.set(cacheKey, { savedAt: Date.now(), value });
   return value;
@@ -253,6 +320,80 @@ function normalizedReportLines(text) {
     .filter(Boolean);
 }
 
+function uniqueRunnerNumbers(values) {
+  const seen = new Set();
+  return (Array.isArray(values) ? values : []).flatMap((value) => {
+    const number = Number(value);
+    if (!Number.isInteger(number) || number <= 0 || seen.has(number)) return [];
+    seen.add(number);
+    return [number];
+  });
+}
+
+function raceRunnerCount(race) {
+  let full = {};
+  let nonPartants = [];
+  try { full = JSON.parse(race?.raw || '{}'); }
+  catch { full = {}; }
+  try { nonPartants = JSON.parse(race?.nonPartants || '[]'); }
+  catch { nonPartants = []; }
+  const excluded = new Set(uniqueRunnerNumbers(nonPartants));
+  return uniqueRunnerNumbers((full.horses || []).map((horse) => horse?.number))
+    .filter((number) => !excluded.has(number))
+    .length;
+}
+
+function mergeOfficialArrival(official, existing) {
+  return mergeCompatibleArrival(existing, official).arrival;
+}
+
+function taggedPayoutRows(rows, {
+  country,
+  operator,
+  reportDate = null,
+  sourceUrl = null,
+  podiumSize = null,
+  arrival = [],
+} = {}) {
+  return (Array.isArray(rows) ? rows : []).map((row) => ({
+    ...row,
+    country: String(country || '').trim().toLowerCase(),
+    context: 'ecd',
+    operator: String(operator || '').trim() || null,
+    reportStatus: 'complete',
+    reportDate,
+    sourceUrl,
+    podium: Number(podiumSize) || null,
+    arrivals: arrival?.length ? [uniqueRunnerNumbers(arrival)] : [],
+  }));
+}
+
+function mergeCountryPayoutRows(existingRows, replacementRows, countryValue) {
+  const country = String(countryValue || '').trim().toLowerCase();
+  const preserved = (Array.isArray(existingRows) ? existingRows : []).filter((row) => {
+    // Untagged historical rows are LONAB/Burkina Faso rows.
+    const rowCountry = String(row?.country || 'bf').trim().toLowerCase();
+    const rowContext = String(row?.context || 'ecd').trim().toLowerCase();
+    return rowCountry !== country || rowContext !== 'ecd';
+  });
+  return [...preserved, ...(Array.isArray(replacementRows) ? replacementRows : [])];
+}
+
+function officialReportValidation(race, country) {
+  let payouts = [];
+  let winners = [];
+  try { payouts = JSON.parse(race?.result?.payouts || '[]'); }
+  catch { payouts = []; }
+  try { winners = JSON.parse(race?.result?.winners || '[]'); }
+  catch { winners = []; }
+  const countryRows = payoutRowsForCountry(payouts, country, 'bf', 'ecd');
+  const storedPodium = Number(countryRows.find((row) => Number(row?.podium))?.podium);
+  const podiumSize = [2, 3].includes(storedPodium)
+    ? storedPodium
+    : ecdPodiumSize(raceRunnerCount(race));
+  return validateOfficialPayouts({ payouts: countryRows, arrival: winners, podiumSize });
+}
+
 function parseArrivalLine(line) {
   const match = String(line || '').match(
     /^(\d+)(?:ere|ère|ieme|ième)\s+(\d+)\s*-\s*(\d+)\s*-\s*(?:(\d+)\s+)?\3\s+\d+(?:\s+\d{3})*\s+\d+/i
@@ -260,8 +401,11 @@ function parseArrivalLine(line) {
   if (!match) return null;
   return {
     course: Number(match[1]),
-    arrival: [Number(match[2]), Number(match[3]), match[4] ? Number(match[4]) : null]
-      .filter(Number.isFinite),
+    arrival: uniqueRunnerNumbers([
+      Number(match[2]),
+      Number(match[3]),
+      match[4] ? Number(match[4]) : null,
+    ]),
   };
 }
 
@@ -293,9 +437,7 @@ function money(value) {
 }
 
 function payoutRowsFromBlock(block, arrivalValue) {
-  const arrival = (arrivalValue?.length ? arrivalValue : block?.arrival || [])
-    .map(Number)
-    .filter(Number.isFinite);
+  const arrival = uniqueRunnerNumbers(arrivalValue?.length ? arrivalValue : block?.arrival || []);
   const [first, second, third] = arrival;
   if (!block || !first || !second) return [];
   const lines = block.lines || [];
@@ -358,12 +500,12 @@ function payoutRowsFromBlock(block, arrivalValue) {
 
   const orderLine = lines.find((line) => /^JUM ORDRE/i.test(line));
   const order = orderLine?.match(new RegExp(
-    `^JUM ORDRE\\s+${pair(first, second)}\\s+${amount}\\s+${count}\\s+TRIO\\s+ARRIV[EÉ]E\\s+${amount}\\s+${count}$`,
+    `^JUM ORDRE\\s+${pair(first, second)}\\s+${amount}\\s+${count}(?:\\s+TRIO\\s+ARRIV[EÉ]E\\s+${amount}\\s+${count})?$`,
     'i'
   ));
   if (order) {
     push('Jumelé ordre', `${first} - ${second}`, order[1], order[2]);
-    push('Trio', arrival.slice(0, 3).join(' - '), order[3], order[4]);
+    if (third && order[3]) push('Trio', arrival.slice(0, 3).join(' - '), order[3], order[4]);
   }
   return rows;
 }
@@ -379,16 +521,35 @@ async function pdfText(buffer) {
 }
 
 function predictionSnapshot(race, winners) {
-  const latest = race.predictions?.[0];
-  if (!latest) return { predicted: false, snapshot: null };
+  let frozen = null;
+  try { frozen = JSON.parse(race.result?.predictionSnapshot || 'null'); }
+  catch { frozen = null; }
   let picks = [];
-  try { picks = JSON.parse(latest.topPicks || '[]'); }
-  catch { picks = []; }
+  if (Array.isArray(frozen?.ranking) && frozen.ranking.length) picks = frozen.ranking;
+  else if (Array.isArray(frozen?.topPicks) && frozen.topPicks.length) picks = frozen.topPicks;
+  else picks = preRacePredictionPicks(race);
+  if (!picks.length) return { predicted: false, snapshot: null };
+  const places = ecdPodiumSize(raceRunnerCount(race));
   const top = picks[0];
   return {
-    predicted: top ? winners.slice(0, 3).includes(Number(top.number)) : false,
-    snapshot: JSON.stringify(buildPredictionSnapshot(picks, race, Math.min(winners.length, 5))),
+    predicted: top ? winners.slice(0, places).includes(Number(top.number)) : false,
+    snapshot: JSON.stringify(buildPredictionSnapshot(picks, race, places)),
   };
+}
+
+async function stampOfficialFinishPositions(db, raceId, winnersValue, { preserveLaterPlaces = true } = {}) {
+  const winners = uniqueRunnerNumbers(winnersValue);
+  const where = preserveLaterPlaces && winners.length
+    ? { raceId, finishPos: { lte: winners.length } }
+    : { raceId };
+  await db.runner.updateMany({ where, data: { finishPos: null } });
+  for (let index = 0; index < winners.length; index += 1) {
+    await db.runner.updateMany({
+      where: { raceId, number: winners[index] },
+      data: { finishPos: index + 1 },
+    });
+  }
+  return winners.length;
 }
 
 async function syncOfficialEcdPayouts(country, date, { db = prisma, force = false } = {}) {
@@ -400,51 +561,131 @@ async function syncOfficialEcdPayouts(country, date, { db = prisma, force = fals
     where: { date },
     include: {
       result: true,
-      predictions: { orderBy: { createdAt: 'desc' }, take: 1 },
+      predictions: { orderBy: { createdAt: 'desc' }, take: 50 },
     },
   });
   let updated = 0;
+  const failures = [];
   for (const report of documents.reports) {
-    const meetingRaces = races.filter((race) => raceParts(race)?.meeting === report.meeting);
-    const reportsAlreadyStored = meetingRaces.length > 0 && meetingRaces.every((race) => {
-      try { return JSON.parse(race.result?.payouts || '[]').length > 0; }
-      catch { return false; }
-    });
-    if (!force && reportsAlreadyStored) continue;
-    const response = await HTTP.get(report.url, { responseType: 'arraybuffer' });
-    const blocks = parseLonabReportText(await pdfText(response.data));
-    const byCourse = new Map(blocks.map((block) => [block.course, block]));
-    for (const race of meetingRaces) {
-      const parts = raceParts(race);
-      const block = byCourse.get(parts.course);
-      if (!block?.arrival?.length) continue;
-      let existingArrival = [];
-      try { existingArrival = JSON.parse(race.result?.winners || '[]'); }
-      catch { existingArrival = []; }
-      const winners = block.arrival.length >= 2 ? block.arrival : existingArrival;
-      const payouts = payoutRowsFromBlock(block, winners);
-      if (payouts.length < 4) continue;
-      if (race.result) {
-        await db.result.update({
-          where: { id: race.result.id },
-          data: { winners: JSON.stringify(winners), payouts: JSON.stringify(payouts) },
-        });
-      } else {
-        const prediction = predictionSnapshot(race, winners);
-        await db.result.create({
-          data: {
-            raceId: race.id,
-            winners: JSON.stringify(winners),
-            payouts: JSON.stringify(payouts),
-            predictionSnapshot: prediction.snapshot,
-            predicted: prediction.predicted,
-          },
-        });
+    try {
+      const meetingRaces = races.filter((race) => raceParts(race)?.meeting === report.meeting);
+      const reportsAlreadyStored = meetingRaces.length > 0
+        && meetingRaces.every((race) => officialReportValidation(race, country).status === 'complete');
+      if (!force && reportsAlreadyStored) continue;
+      const response = await HTTP.get(report.url, { responseType: 'arraybuffer' });
+      const blocks = parseLonabReportText(await pdfText(response.data));
+      const byCourse = new Map(blocks.map((block) => [block.course, block]));
+      for (const race of meetingRaces) {
+        try {
+          const parts = raceParts(race);
+          const block = byCourse.get(parts.course);
+          if (!block?.arrival?.length) continue;
+          let existingArrival = [];
+          try { existingArrival = JSON.parse(race.result?.winners || '[]'); }
+          catch { existingArrival = []; }
+          const podiumSize = ecdPodiumSize(raceRunnerCount(race));
+          const officialArrival = uniqueRunnerNumbers(block.arrival).slice(0, podiumSize);
+          if (officialArrival.length !== podiumSize) {
+            failures.push({
+              meeting: report.meeting,
+              raceId: race.externalId,
+              error: `arrivee officielle incomplete (${officialArrival.length}/${podiumSize})`,
+            });
+            continue;
+          }
+          const payouts = payoutRowsFromBlock(block, officialArrival);
+          const validation = validateOfficialPayouts({
+            payouts,
+            arrival: officialArrival,
+            podiumSize,
+          });
+          if (validation.status !== 'complete') {
+            failures.push({
+              meeting: report.meeting,
+              raceId: race.externalId,
+              error: `rapport officiel ${validation.status} (${payouts.length}/${validation.expectedRows})`,
+            });
+            continue;
+          }
+          const taggedRows = taggedPayoutRows(payouts, {
+            country,
+            operator: documents.source.operator,
+            reportDate: date,
+            sourceUrl: report.url,
+            podiumSize,
+            arrival: officialArrival,
+          });
+          await serializableTransaction(db, async (tx) => {
+            const current = await tx.result.findUnique({ where: { raceId: race.id } });
+            let currentArrival = existingArrival;
+            let currentPayouts = [];
+            try { currentArrival = JSON.parse(current?.winners || '[]'); }
+            catch { currentArrival = existingArrival; }
+            try { currentPayouts = JSON.parse(current?.payouts || '[]'); }
+            catch { currentPayouts = []; }
+            if (!arrivalsCompatible(currentArrival, officialArrival)) {
+              throw new Error('arrivee ECD incompatible avec l\'arrivee deja enregistree');
+            }
+            const arrivalState = mergeCompatibleArrival(currentArrival, officialArrival);
+            const winners = arrivalState.arrival;
+            const mergedPayouts = mergeCountryPayoutRows(currentPayouts, taggedRows, country);
+            const prediction = predictionSnapshot({ ...race, result: current }, winners);
+            const updateWithoutArrival = {
+              payouts: JSON.stringify(mergedPayouts),
+              predictionSnapshot: prediction.snapshot,
+              predicted: prediction.predicted,
+            };
+            const arrivalNeedsWrite = arrivalState.changed;
+            if (!current) {
+              await tx.result.upsert({
+                where: { raceId: race.id },
+                // If another writer created the row after our read, never
+                // replace its potentially longer arrival from this ECD prefix.
+                update: updateWithoutArrival,
+                create: {
+                  raceId: race.id,
+                  winners: JSON.stringify(winners),
+                  ...updateWithoutArrival,
+                },
+              });
+            } else if (arrivalNeedsWrite) {
+              const changed = await tx.result.updateMany({
+                where: { id: current.id, winners: current.winners },
+                data: { ...updateWithoutArrival, winners: JSON.stringify(winners) },
+              });
+              if (!changed.count) {
+                // A concurrent result completion won the compare-and-set. Keep
+                // that arrival and update only the report metadata.
+                await tx.result.update({
+                  where: { id: current.id },
+                  data: updateWithoutArrival,
+                });
+              }
+            } else {
+              await tx.result.update({
+                where: { id: current.id },
+                data: updateWithoutArrival,
+              });
+            }
+            await stampOfficialFinishPositions(tx, race.id, officialArrival);
+          });
+          updated += 1;
+        } catch (error) {
+          failures.push({ meeting: report.meeting, raceId: race.externalId, error: error.message });
+        }
       }
-      updated += 1;
+    } catch (error) {
+      failures.push({ meeting: report.meeting, error: error.message });
     }
   }
-  return { country, date, reports: documents.reports.length, updated };
+  return {
+    country,
+    date,
+    reports: documents.reports.length,
+    updated,
+    failed: failures.length,
+    failures: failures.slice(0, 10),
+  };
 }
 
 async function syncOfficialEcdData({ dates = [], countries = ['bf'], force = false } = {}) {
@@ -468,14 +709,32 @@ module.exports = {
   officialSource,
   documentIdentity,
   parseDocumentLinks,
+  paginatedDocumentUrl,
+  discoverPaginatedDocuments,
   meetingOneCandidate,
   discoverOfficialDocuments,
   raceParts,
   selectOfficialRaces,
   syncOfficialEcdProgram,
+  uniqueRunnerNumbers,
+  raceRunnerCount,
+  mergeOfficialArrival,
+  taggedPayoutRows,
+  mergeCountryPayoutRows,
+  officialReportValidation,
   parseArrivalLine,
   parseLonabReportText,
   payoutRowsFromBlock,
+  predictionSnapshot,
+  stampOfficialFinishPositions,
   syncOfficialEcdPayouts,
   syncOfficialEcdData,
+  _test: {
+    discoveryCache,
+    documentPageCache,
+    resetCachesForTests() {
+      discoveryCache.clear();
+      documentPageCache.clear();
+    },
+  },
 };

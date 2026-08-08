@@ -1,0 +1,25 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C={
+rfw(d){var x=null,w=""+d
+return A.aB(d,A.a([d],y.d),x,x,x,x,"otherAppVersions",w+" other",w+" others",x,x,x)},
+tXi(d){switch(d){case B.Yj:return""
+case B.CJ:return $.xNB()
+case B.L9:case B.Yk:return $.xNC()
+case B.Yl:return $.xND()}throw A.a3(A.fv("Unreachable code"))}}
+A=c[0]
+B=c[2]
+C=a.updateHolder(c[634],C)
+var z=a.updateTypes([])
+var y={d:A.t("r<B>")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"Vlz","taJ",()=>{var w=null
+return A.b("Issue",w,w,w,w)})
+x($,"V9E","t7G",()=>{var w=null
+return A.b("Affected versions",w,w,w,w)})
+x($,"Ql9","xNB",()=>{var w=null
+return A.b("ANR",w,w,w,w)})
+x($,"Qla","xNC",()=>{var w=null
+return A.b("Crash",w,w,w,w)})
+x($,"Qlb","xND",()=>{var w=null
+return A.b("Non-fatal",w,w,w,w)})})()};
+(a=>{a["cYXuGdQJ4dr5vn3ZGic5Y+iILyI="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_7995.part.js.map

@@ -1,0 +1,14 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A
+A=c[0]
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"SPT","aoe",()=>{var x=null
+return A.b("Create new release",x,x,x,x)})
+y($,"SPy","inG",()=>{var x=null
+return A.b("Edit release",x,x,x,x)})
+y($,"SQE","nYp",()=>{var x=null
+return A.b("View release details",x,x,x,x)})
+y($,"SPO","inI",()=>{var x=null
+return A.b("Manage release",x,x,x,x)})})()};
+(a=>{a["FqXkoqGSAFqSe6Xts6G54lT/YYw="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5049.part.js.map

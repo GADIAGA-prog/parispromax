@@ -119,6 +119,42 @@ function computeValueIndex(aiScore, odds) {
   return aiScore * Math.log10(Math.max(1.1, o));
 }
 
+function splitRunnerField(race) {
+  const excluded = new Set(
+    (Array.isArray(race?.nonPartants) ? race.nonPartants : [])
+      .map((number) => String(number))
+  );
+  const active = [];
+  const nonRunners = [];
+  (race?.horses || []).forEach((horse) => {
+    if (horse?.nonPartant === true || excluded.has(String(horse?.number))) {
+      nonRunners.push({ ...horse, nonPartant: true });
+    } else {
+      active.push(horse);
+    }
+  });
+  return { active, nonRunners };
+}
+
+function restoreNonRunners(analyzedRace, nonRunners) {
+  if (!nonRunners.length) return analyzedRace;
+  return {
+    ...analyzedRace,
+    horses: [
+      ...(analyzedRace.horses || []),
+      ...nonRunners.map((horse) => ({
+        ...horse,
+        rank: null,
+        aiScore: null,
+        probaGagnant: null,
+        probaPodium: null,
+        valueIndex: 0,
+        badges: [],
+      })),
+    ],
+  };
+}
+
 // Rank + badge a set of horses that ALREADY carry `aiScore` (+ valueIndex).
 // Shared by analyzeRace (local scoring) and applyBackendPredictions (server
 // scoring) so both produce an identically-shaped, consistently-badged race.
@@ -203,10 +239,12 @@ export function analyzeRace(race) {
   if (!race || !Array.isArray(race.horses) || !race.horses.length) {
     return { ...race, horses: [] };
   }
-  const ctx = buildContext(race.horses);
-  const scores = race.horses.map((h) => scoreHorse(h, ctx));
+  const { active, nonRunners } = splitRunnerField(race);
+  if (!active.length) return restoreNonRunners({ ...race, horses: [] }, nonRunners);
+  const ctx = buildContext(active);
+  const scores = active.map((h) => scoreHorse(h, ctx));
   const modelP = softmax(scores);
-  const market = marketProbs(race.horses);
+  const market = marketProbs(active);
   let winP = modelP;
   if (market) {
     const blended = modelP.map((p, i) => MODEL_WEIGHT * p + (1 - MODEL_WEIGHT) * market[i]);
@@ -214,14 +252,14 @@ export function analyzeRace(race) {
     winP = blended.map((p) => p / sum);
   }
   const podiumP = harvillePodium(winP);
-  const scored = race.horses.map((h, i) => ({
+  const scored = active.map((h, i) => ({
     ...h,
     aiScore: scores[i],
     probaGagnant: Math.round(winP[i] * 1000) / 1000,
     probaPodium: Math.round(podiumP[i] * 1000) / 1000,
     valueIndex: computeValueIndex(scores[i], h.odds),
   }));
-  return annotateRace({ ...race, horses: scored });
+  return restoreNonRunners(annotateRace({ ...race, horses: scored }), nonRunners);
 }
 
 // Overlay the backend's predictions (the trained LightGBM/CatBoost ranker, or
@@ -233,13 +271,16 @@ export function applyBackendPredictions(race, picks) {
   if (!race || !Array.isArray(race.horses) || !race.horses.length) return race;
   if (!Array.isArray(picks) || !picks.length) return race;
 
+  const { active, nonRunners } = splitRunnerField(race);
+  if (!active.length) return restoreNonRunners({ ...race, horses: [] }, nonRunners);
+
   const byNumber = new Map();
   picks.forEach((p) => {
-    if (p && p.number != null) byNumber.set(p.number, p);
+    if (p && p.number != null) byNumber.set(String(p.number), p);
   });
 
-  const merged = race.horses.map((h) => {
-    const p = byNumber.get(h.number);
+  const merged = active.map((h) => {
+    const p = byNumber.get(String(h.number));
     if (!p) return h;
     const aiScore = num(p.aiScore, h.aiScore);
     return {
@@ -254,7 +295,7 @@ export function applyBackendPredictions(race, picks) {
     };
   });
 
-  return annotateRace({ ...race, horses: merged });
+  return restoreNonRunners(annotateRace({ ...race, horses: merged }), nonRunners);
 }
 
 export function getTopPicks(race, n = 3) {

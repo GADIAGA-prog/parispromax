@@ -1,0 +1,29 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,C,B={
+eMU(){var x=new B.bKS()
+x.R()
+return x},
+EBv(){return B.eMU()},
+bKS:function bKS(){this.a=$},
+l8Y(){return A.l8X()},
+ux6(){return A.ol2()}}
+A=c[0]
+C=c[2]
+B=a.updateHolder(c[1532],B)
+B.bKS.prototype={
+T(d){return A.z(this,y.d)},
+gP(){return $.Asg()}}
+var z=a.updateTypes(["w()"]);(function installTearOffs(){var x=a._static_0
+x(B,"Fv8","EBv",0)})();(function inheritance(){var x=a.inherit
+x(B.bKS,A.w)})()
+A.an(b.typeUniverse,JSON.parse('{"bKS":{"w":[]}}'))
+var y={d:A.t("bKS")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"ToJ","Asg",()=>{var w=null,v=A.A("SubmitPolicyDeclarationRequest",B.Fv8(),w,w,C.cb,w,w)
+v.M(1,"policyDeclarationReference",A.ikg(),A.t("bhI"))
+v.ap(2,"responses",A.aJO(),A.t("ng"))
+v.M(3,"lastUpdateTime",A.cr(),A.t("ia"))
+v.M(4,"releaseReference",A.rp(),A.t("nY"))
+v.aE(5,"draft")
+return v})})()};
+(a=>{a["v8Rhx3n977fxN31pOZUIqxYc0hI="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_2946.part.js.map

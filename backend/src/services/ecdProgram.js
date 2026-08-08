@@ -12,9 +12,25 @@ function parse(json, fallback) {
   }
 }
 
+function activeRunnerCount(race, full) {
+  const nonPartants = parse(race?.nonPartants, []);
+  const excluded = new Set(
+    (Array.isArray(nonPartants) ? nonPartants : []).map(Number).filter(Number.isFinite)
+  );
+  const seen = new Set();
+  return (full?.horses || []).reduce((count, horse) => {
+    const number = Number(horse?.number);
+    if (!Number.isInteger(number) || number <= 0 || excluded.has(number) || seen.has(number)) {
+      return count;
+    }
+    seen.add(number);
+    return count + 1;
+  }, 0);
+}
+
 function raceSummary(race, profile) {
   const full = parse(race.raw, {});
-  const runners = (full.horses || []).length;
+  const runners = activeRunnerCount(race, full);
   const variants = availableVariants(profile, runners);
   return {
     id: race.externalId,
@@ -89,6 +105,7 @@ function automaticSelection(races, profile, nationalRaceId) {
 }
 
 module.exports = {
+  activeRunnerCount,
   raceSummary,
   groupSelectedRaces,
   automaticSelection,

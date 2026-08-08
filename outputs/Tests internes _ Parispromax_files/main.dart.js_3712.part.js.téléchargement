@@ -1,0 +1,15 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+ayE(d){var x=y.c
+x=A.J(x,x)
+x.a2(0,d)
+return new C.b3E(x)}},C
+A=c[0]
+B=a.updateHolder(c[1556],B)
+C=c[1579]
+var z=a.updateTypes([])
+var y={c:A.t("o")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"SQe","cBn",()=>{var w=null
+return A.b("Review release",w,w,w,w)})})()};
+(a=>{a["5LLjv1/bpGz8AgDHrL0l1oGQFOQ="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3712.part.js.map

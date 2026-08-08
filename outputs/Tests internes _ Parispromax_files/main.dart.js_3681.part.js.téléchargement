@@ -1,0 +1,15 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C={
+cAf(d,e){var y
+if(e&&d===B.Uq)return $.CBB()
+y=$.b15().E(0,d)
+y.toString
+return y}}
+A=c[0]
+B=c[2]
+C=a.updateHolder(c[1108],C)
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"Wwm","CBB",()=>{var x=null
+return A.b("Used to send news or notifications about you or your app, or marketing communications",x,x,x,x)})})()};
+(a=>{a["Ne4bW7DSd9fnDFbcIm93SkKbsyw="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3681.part.js.map

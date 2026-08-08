@@ -1,0 +1,18 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B
+A=c[1562]
+B=c[2691]
+var z=a.updateTypes([]);(function constants(){B.aaP=new A.xP(1,"IMAGE_TYPE_STORE_LISTING_ICON")
+B.cgW=new A.xP(24,"IMAGE_TYPE_STORE_LISTING_TABLET_IMMERSIVE_HEADER")
+B.fUS=new A.xP(21,"IMAGE_TYPE_STORE_LISTING_ANDROID_XR_SCREENSHOT")
+B.b3h=new A.xP(20,"IMAGE_TYPE_STORE_LISTING_WEAR_SCREENSHOT")
+B.cgX=new A.xP(23,"IMAGE_TYPE_STORE_LISTING_PHONE_IMMERSIVE_HEADER")
+B.fUT=new A.xP(3,"IMAGE_TYPE_STORE_LISTING_TV_BANNER")
+B.fUU=new A.xP(15,"IMAGE_TYPE_STORE_LISTING_CHROMEBOOK_SCREENSHOT")
+B.fUV=new A.xP(22,"IMAGE_TYPE_STORE_LISTING_BATTLESTAR_IAP_BACKGROUND_IMAGE")
+B.fUX=new A.xP(19,"IMAGE_TYPE_STORE_LISTING_BATTLESTAR_LOGO")
+B.b3i=new A.xP(2,"IMAGE_TYPE_STORE_LISTING_FEATURE_GRAPHIC")
+B.fUY=new A.xP(13,"IMAGE_TYPE_STORE_LISTING_BATTLESTAR_FEATURE_GRAPHIC")
+B.fUZ=new A.xP(9,"IMAGE_TYPE_STORE_LISTING_AUTOMOTIVE_SCREENSHOT")})()};
+(a=>{a["KL1h/5tS78EhtpFOEQweGTgL/HU="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_1210.part.js.map

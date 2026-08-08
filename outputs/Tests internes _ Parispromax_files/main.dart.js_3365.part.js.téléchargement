@@ -1,0 +1,31 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,A={
+ok4(){var x=new A.nL()
+x.R()
+return x},
+E9J(){return A.ok4()},
+nL:function nL(){this.a=$},
+EuO(d){var x
+if(d<0||d>=$.rO6().length)x=null
+else{x=$.rO6()
+if(!(d>=0&&d<x.length))return B.H(x,d)
+x=x[d]}return x}}
+B=c[0]
+C=c[2]
+A=a.updateHolder(c[1591],A)
+A.nL.prototype={
+T(d){return B.z(this,y.a)},
+gP(){return $.z9Z()}}
+var z=a.updateTypes(["w()","np?(F)"]);(function installTearOffs(){var x=a._static_0,w=a._static_1
+x(A,"ox2","E9J",0)
+w(A,"vpR","EuO",1)})();(function inheritance(){var x=a.inherit
+x(A.nL,B.w)})()
+B.an(b.typeUniverse,JSON.parse('{"nL":{"w":[]}}'))
+var y={a:B.t("nL")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"RTv","z9Z",()=>{var w=null,v=B.A("OpenGlEsVersion",A.ox2(),w,w,C.fH,w,w)
+v.bn(1,"majorVersion")
+v.bn(2,"minorVersion")
+return v})
+x($,"T5k","rO6",()=>B.fd(C.SV,4,B.t("np")))})()};
+(a=>{a["PV9HpSZnJgr+HmZOPqzVeCxEoK8="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3365.part.js.map

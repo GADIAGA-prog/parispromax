@@ -1,0 +1,494 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,A,C,K,L,B={
+tNz(d,e,f,g,h,i,j,k,l){var x,w,v,u,t,s,r=null,q=new B.jvm()
+q.a=""
+q.b=D.dhj
+x=y.M
+w=d.a.b.a8(0,C.RF)
+v=y.y
+v=l.bt(K.aPi,v)&&l.bt(C.tP,v)
+u=A.bu(j.bj(),r,A.v(j).n("aO.T"))
+t=A.bu(k.bj(),r,A.v(k).n("aO.T"))
+t=new A.uL(t,new B.jvi(),t.$ti.n("uL<t9.T,I?>"))
+s=A.aI()
+s.fs(t)
+return new B.c1S(e,g,f,h,i,q,w,v,new A.G(r,r,x),new A.G(r,r,x),t,new A.uL(u,new B.jvj(),u.$ti.n("uL<t9.T,I?>")),s)},
+c1S:function c1S(d,e,f,g,h,i,j,k,l,m,n,o,p){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h
+_.f=i
+_.r=$
+_.w=!1
+_.x=j
+_.y=k
+_.z=$
+_.ay=_.ax=_.at=_.as=_.Q=null
+_.ch=l
+_.CW=m
+_.cx=n
+_.cy=o
+_.a$=p},
+jvj:function jvj(){},
+jvi:function jvi(){},
+jvk:function jvk(){},
+jvl:function jvl(){},
+jvm:function jvm(){this.b=this.a=null},
+eOS:function eOS(d,e){this.a=d
+this.b=e},
+fAp:function fAp(){},
+tNA(d,e){var x=new B.e5Y(A.a2(d,e,16)),w=$.tNB
+x.b=w==null?$.tNB=A.ad(C.a,null):w
+x.c=b.G.document.createElement("create-track-dialog")
+return x},
+Mu5(d,e){return new B.fAo(A.S(),A.q(d,e,y.R))},
+e5Y:function e5Y(d){var _=this
+_.cy=_.cx=_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=$
+_.fx=_.fr=_.dy=_.dx=_.db=null
+_.c=_.b=_.a=$
+_.d=d},
+jvh:function jvh(d){this.a=d},
+fAo:function fAo(d,e){var _=this
+_.b=d
+_.x=_.w=_.r=_.f=_.e=_.d=_.c=$
+_.as=_.Q=_.z=_.y=null
+_.ax=_.at=$
+_.a=e},
+mCt:function mCt(d){this.a=d},
+tGO(d){var x=y.N
+x=new M.b5E(A.J(x,x))
+x.m4("releaseType",A.lvM(d),y.v)
+return x},
+ooB(d){var x=y.N
+x=A.J(x,x)
+x.a2(0,d)
+return new A.F0(x)}},D,M,N,G,F,H,E,I
+J=c[1]
+A=c[0]
+C=c[2]
+K=c[2024]
+L=c[1541]
+B=a.updateHolder(c[632],B)
+D=c[2550]
+M=c[829]
+N=c[827]
+G=c[958]
+F=c[2367]
+H=c[1750]
+E=c[1759]
+I=c[2132]
+B.c1S.prototype={
+G(){var x=0,w=A.i(y.H),v=this,u,t
+var $async$G=A.d(function(d,e){if(d===1)return A.e(e,w)
+for(;;)switch(x){case 0:u=v.f
+t=y.z
+v.r=A.FW(A.V(["trackAliasControl",A.bb(u.a,A.aY([A.mH(50),A.hz()]),t),"testersInviteTypeControl",A.bb(u.b,A.hz(),t)],y.N,t),null)
+x=2
+return A.C(v.c.bU(0),$async$G)
+case 2:v.z=e.a.a.O(1)
+t=v.e
+u=A.a6S()
+u.a.L(1,v.a)
+x=3
+return A.C(t.aL(t.zE(u,null),y.q,y.V).ga6(0),$async$G)
+case 3:v.Q=!e.a.an(0)
+return A.f(null,w)}})
+return A.h($async$G,w)},
+fa(){this.ch.W(0,!1)},
+gc_E(){var x,w=this,v=w.Q,u=!1
+if(v!=null)if(v){v=!0
+if(!w.x){u=w.cx
+x=u.a
+x=u.b.$1(x.ga6(x))
+if(!(x==null?!1:x))if(w.y){v=w.cy
+u=v.a
+u=v.b.$1(u.ga6(u))
+v=u==null?!1:u}else v=!1}v=v&&w.ay===C.dN&&w.ax!=null}else v=u
+else v=u
+return v},
+apg(){var x=0,w=A.i(y.H),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d
+var $async$apg=A.d(function(a0,a1){if(a0===1){t.push(a1)
+x=u}for(;;)switch(x){case 0:e=s.f
+if(C.c.a8($.DaZ,e.a.toLowerCase())){e=s.r
+e===$&&A.n()
+e=e.z.E(0,"trackAliasControl")
+e.toString
+e.fG(A.V(["track-error",$.dQa()],y.N,y.z))
+x=1
+break}r=null
+u=4
+s.w=!0
+A.ue(s.at,null)
+A.ue(s.ay,null)
+n=$.o71().b.E(0,s.at)
+if(n==null)n=""
+m=A.awu()
+l=A.a91()
+k=s.a.a
+j=k.k(1)
+i=l.a
+i.L(2,j)
+i.L(1,k.k(0))
+k=m.a
+k.L(1,l)
+l=e.a
+l.toString
+k.af(2,n+l)
+l=s.at
+l.toString
+k.L(6,l)
+l=s.ay
+l.toString
+k.L(4,l)
+if(s.ay===C.dV){e=A.bLv()
+l=A.euZ()
+e.a.L(1,l)
+k.L(5,e)}else if(s.gc_E()&&e.b===D.dhk){e=A.bLv()
+l=A.ttm()
+e.a.L(7,l)
+k.L(5,e)}e=N.ode()
+e.a.L(1,m)
+x=7
+return A.C(s.d.dqf(e).ga6(0),$async$apg)
+case 7:r=a1
+u=2
+x=6
+break
+case 4:u=3
+d=t.pop()
+e=A.bh(d)
+if(e instanceof A.e1){q=e
+e=q.a.a.H(2,y.O)
+l=e.$ti.n("X<aa.E>")
+p=new A.c8(new A.X(e,new B.jvk(),l),new B.jvl(),l.n("c8<a_.E,Iz>"))
+for(e=p,l=e.$ti,e=new A.yA(J.c7(e.a),e.b,C.rb,l.n("yA<1,2>")),k=s.ch,j=s.CW,l=l.y[1],i=y.N,g=y.z;e.ai();){f=e.d
+o=f==null?l.a(f):f
+switch(o.a.k(0)){case F.aKu:f=s.r
+f===$&&A.n()
+f=f.z.E(0,"trackAliasControl")
+f.toString
+f.fG(A.V(["track-error",$.dQa()],i,g))
+break
+case F.dma:f=s.r
+f===$&&A.n()
+f=f.z.E(0,"trackAliasControl")
+f.toString
+f.fG(A.V(["track-error",$.zZm()],i,g))
+break
+case F.dm9:if(!j.gp5())A.aj(j.oZ())
+j.kC(!0)
+if(!k.gp5())A.aj(k.oZ())
+k.kC(!1)
+break
+default:throw A.a3(o)}}}else throw d
+x=6
+break
+case 3:x=2
+break
+case 6:x=r!=null?8:10
+break
+case 8:x=11
+return A.C(s.b.bp(0,$.r6().b8(A.r1(r.a.k(0)))),$async$apg)
+case 11:x=9
+break
+case 10:s.w=!1
+case 9:case 1:return A.f(v,w)
+case 2:return A.e(t.at(-1),w)}})
+return A.h($async$apg,w)},
+bom(){var x,w=this.ax
+if(w!=null){x=w.a.ah(1).fC(0,this.ax.a.ah(0)).aD(0)
+return x>=10?x:0}return 0}}
+B.jvm.prototype={}
+B.eOS.prototype={
+b5(){return"TestersInvitationType."+this.b}}
+B.fAp.prototype={}
+B.e5Y.prototype={
+gu(){return"CreateTrackDialogComponent"},
+q(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d=this,a0=null,a1=d.a,a2=d.ag(),a3=d.r=A.dN(d,0),a4=a3.c
+a2.append(a4)
+A.c(a4,"width","wide")
+A.c(a4,"yesButtonMsg",$.ruX())
+a4=d.d
+x=a4.a
+a4=a4.b
+w=d.w=A.dM(x.i(C.ah,a4),x.p(C.p,a4))
+v=d.x=A.a1(d,1)
+u=v.c
+A.c(u,"extra-bottom-padding","")
+t=new A.a0()
+d.y=t
+s=b.G.document.createElement("div")
+A.c(s,"container1","")
+r=d.z=A.e6(d,3)
+q=r.c
+s.append(q)
+p=d.Q=A.fR(a0,a0,r)
+o=A.e5(x.p(C.bp,a4),p,x.p(C.bq,a4))
+d.as=o
+n=d.at=A.da(d,4)
+m=n.c
+n.aa("pc-full-width themeable")
+A.c(m,"debug-id","track-name")
+A.c(m,"outlined","")
+l=d.ax=new A.bK(A.a([],y.J))
+k=y.f
+j=A.a([l],k)
+d.ay=j
+i=y.m
+h=new A.G(a0,a0,i)
+j=d.ch=new A.bU(p,h,A.bq(a0),A.aY(j))
+a4=d.CW=A.d9(a0,a0,a0,a0,j,x.p(C.i,a4),n,l,x.i(C.h,a4))
+d.cx=A.cw(a4,j)
+j=y.Q
+n.t(a4,A.a([C.a,C.a],j))
+a4=A.x(d,5,a0,B.Gk2())
+d.cy=a4
+r.t(o,A.a([A.a([m,a4.a],k)],j))
+v.t(t,A.a([A.a([s],k)],j))
+a3.t(w,A.a([C.a,A.a([u],k)],j))
+j=w.b
+k=a1.gfK()
+u=y.L
+g=new A.k(j,A.v(j).n("k<1>")).J(0,d.a7(k,u))
+j=w.d
+f=new A.k(j,A.v(j).n("k<1>")).J(0,d.a7(k,u))
+w=w.c
+e=new A.k(w,A.v(w).n("k<1>")).J(0,d.a7(a1.gh3v(),u))
+u=y.z
+a1=y.A
+q.addEventListener("submit",A.U(d.ar(p.gdC(p),u,a1)))
+q.addEventListener("reset",A.U(d.ar(p.ge_(p),u,a1)))
+d.ba(A.a([g,f,e,new A.k(h,i.n("k<1>")).J(0,d.X(new B.jvh(d),u,u))],y.x))},
+Y(d,e,f){var x,w,v,u=this
+if(3<=e&&e<=5){if(4===e){if(d===C.a8)return u.ax
+if(d===C.a4)return u.ay
+if(d===C.J)return u.ch
+if(d===C.ag||d===C.z||d===C.ac||d===C.r||d===C.as)return u.CW
+if(d===A.E(C.f,A.M())){x=u.f
+if(x===$){w=u.d
+v=w.a
+w=w.b
+x=u.f=A.aP(v.p(A.E(C.f,A.M()),w),v.p(C.I,w),v.i(C.h,w),v.i(C.q,w))}return x}}if(d===C.c2||d===C.bz)return u.Q
+if(d===C.X){x=u.e
+return x===$?u.e=C.bg:x}}return f},
+v(){var x,w,v,u,t,s,r,q,p=this,o=p.a,n=(p.d.f&1)!==0
+if(n){x=p.w
+x.fy=$.ruX()
+x.sdr(0,"wide")}w=o.as
+if(p.db!=w){p.db=p.w.y=w
+v=!0}else v=n
+x=o.r
+x===$&&A.n()
+u=x.f!=="VALID"||o.w
+if(p.dx!==u){p.dx=p.w.ch=u
+v=!0}t=o.w
+if(p.dy!==t){p.dy=p.w.ok=t
+v=!0}if(n)p.w.G()
+x=o.r
+s=p.fr!==x
+if(s){r=p.Q
+r.y=x
+r.x=!0
+p.fr=x
+v=!0}if(s)p.Q.a4()
+if(n)p.as.G()
+if(n){p.ch.a="trackAliasControl"
+v=!0}q=o.f.a
+if(p.fx!=q){x=p.ch
+x.r=!0
+p.fx=x.w=q
+s=!0
+v=!0}else s=n
+if(s)p.ch.a4()
+if(n){x=$.nYo()
+r=p.CW
+r.k3=x
+r.aj=r.x2=!0
+r.p4=$.rMD()
+r.cK()
+r.seu($.nYn())
+r.sdE(50)
+v=!0}if(n)p.at.d.f|=32
+x=p.cy
+x.c.sI(o.gc_E())
+x.a.C()
+x=p.at
+x.U(n)
+p.r.l()
+p.x.l()
+p.z.l()
+x.l()
+if(n){p.CW.a0()
+p.w.a0()}$.u().F(v)},
+A(){var x=this
+x.cy.a.D()
+x.r.m()
+x.x.m()
+x.z.m()
+x.at.m()
+x.ch.B()
+x.CW.B()
+x.cx.B()
+x.as.B()
+x.w.B()}}
+B.fAo.prototype={
+gu(){return"CreateTrackDialogComponent"},
+q(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i=this,h=null,g="pc-with-help-text",f=b.G.document,e=f.createElement("div")
+i.S(e,"pc-center-vertically")
+A.O(A.ao(f,e,"p"),$.xo7())
+x=i.c=H.hq(i,3)
+w=x.c
+e.append(w)
+A.c(w,"aria-label","Testers invitation type Radio buttons")
+x.aa("pc-align-vertically")
+A.c(w,"debug-id","track-testers-options")
+w=i.a.c
+v=w.Q
+u=y.m
+t=new A.G(h,h,u)
+v=new A.bU(v,t,A.bq(h),A.aY(h))
+i.d=v
+v=i.e=H.hp(w.gh().i(C.h,w.gj()),v)
+s=i.f=E.dD(i,4)
+r=s.c
+s.aa(g)
+q=i.r=E.dC(r,s,v,h,w.gh().p(C.i,w.gj()))
+p=i.at=f.createElement("label")
+A.O(p,$.xo6())
+o=y.f
+n=y.Q
+s.t(q,A.a([A.a([p],o)],n))
+p=i.w=E.dD(i,7)
+m=p.c
+p.aa(g)
+w=i.x=E.dC(m,p,v,h,w.gh().p(C.i,w.gj()))
+l=i.ax=f.createElement("label")
+A.O(l,$.xo5())
+k=f.createElement("div")
+i.S(k,"pc-help-text")
+k.append(i.b.b)
+p.t(w,A.a([A.a([l,k],o)],n))
+l=$.bw()
+l.V(0,q,s)
+l.V(0,w,p)
+v.sen(A.a([q,w],y.j))
+x.t(v,A.a([A.a([r,m],o)],n))
+n=y.z
+j=new A.k(t,u.n("k<1>")).J(0,i.X(new B.mCt(i),n,n))
+i.a5(A.a([e],o),A.a([j],y.x))},
+Y(d,e,f){var x,w=this
+if(3<=e&&e<=11){x=d!==I.bZ
+if((!x||d===C.z)&&4<=e&&e<=6)return w.r
+if((!x||d===C.z)&&7<=e)return w.x
+if(d===C.J)return w.d
+if(d===I.c8||d===C.r)return w.e}return f},
+v(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k=this,j=null,i=k.a,h=i.a,g=(i.Q&1)!==0
+i=k.r
+x=k.x
+if(g)k.d.a="testersInviteTypeControl"
+w=h.f.b
+if(k.y!=w){v=k.d
+v.r=!0
+k.y=v.w=w
+u=!0
+t=!0}else{t=g
+u=t}if(u)k.d.a4()
+if(g){i.at=D.dhj
+t=!0}if(g)k.f.d.f|=32
+if(g){x.at=D.dhk
+t=!0}s=h.bom()<=0
+if(k.Q!==s){k.Q=x.as=s
+u=!0
+t=!0}else u=g
+if(u)k.w.d.f|=32
+if(g)k.e.bd()
+v=k.c
+v.U(g)
+r=k.f
+r.U(g)
+q=i.w
+if(k.z!==q){A.a5(k.at,"for",q)
+k.z=q
+t=!0}i=k.w
+i.U(g)
+p=x.w
+if(k.as!==p){A.a5(k.ax,"for",p)
+k.as=p
+t=!0}x=h.bom()
+o=$.xo4()
+n=o.au(h.bom())
+o=o.au(h.ax.a.ah(1))
+m=h.z
+m===$&&A.n()
+l="Generate access codes to share with testers. You have "+n+" remaining for "+m+"."
+k.b.a9(A.aB(x,A.a([x,n,o,m],y.f),j,j,j,j,"_accessCodesOptionDescription",l,l,j,j,"You've generated all "+o+" access codes for "+m+". You can still manage testers using email lists or Google Groups."))
+v.l()
+r.l()
+i.l()
+$.u().F(t)},
+A(){var x=this
+x.c.m()
+x.f.m()
+x.w.m()
+x.r.B()
+x.x.B()
+x.d.B()
+x.e.B()}}
+var z=a.updateTypes(["~()","N<Iz>(fQ)","l<~>(j,F)"])
+B.jvj.prototype={
+$1(d){return d==null?null:d.a.a.k(19).a.k(1).a.an(0)},
+$S:3261}
+B.jvi.prototype={
+$1(d){return d==null?null:d.w},
+$S:408}
+B.jvk.prototype={
+$1(d){var x=G.eRn(),w=d.a.O(0)
+return x.gP().a===A.hi(w)},
+$S:49}
+B.jvl.prototype={
+$1(d){return d.d9(G.dvu()).a.H(0,y.o)},
+$S:z+1}
+B.jvh.prototype={
+$1(d){this.a.a.f.a=d},
+$S:0}
+B.mCt.prototype={
+$1(d){this.a.a.a.f.b=d},
+$S:0};(function installTearOffs(){var x=a._instance_0u,w=a._static_2
+var v
+x(v=B.c1S.prototype,"gfK","fa",0)
+x(v,"gh3v","apg",0)
+w(B,"Gk2","Mu5",2)})();(function inheritance(){var x=a.mixin,w=a.inherit,v=a.inheritMany
+w(B.fAp,L.adD)
+w(B.c1S,B.fAp)
+v(A.aL,[B.jvj,B.jvi,B.jvk,B.jvl,B.jvh,B.mCt])
+w(B.jvm,A.B)
+w(B.eOS,A.e_)
+w(B.e5Y,A.b0)
+w(B.fAo,A.l)
+x(B.fAp,A.dU)})()
+A.an(b.typeUniverse,JSON.parse('{"e5Y":{"j":[]},"fAo":{"l":["c1S"],"j":[],"p":[]}}'))
+var y=(function rtii(){var x=A.t
+return{O:x("fQ"),R:x("c1S"),q:x("a15"),V:x("Jx"),j:x("r<k2>"),Q:x("r<N<B>>"),f:x("r<B>"),x:x("r<bt<~>>"),J:x("r<Q<o,@>?(bn<@>)>"),v:x("Kp"),N:x("o"),L:x("co"),o:x("Iz"),M:x("G<I>"),m:x("G<@>"),y:x("I"),z:x("@"),A:x("bD?"),H:x("~")}})();(function constants(){D.del=new A.hH([C.hP],A.t("hH<j2>"))
+D.dhj=new B.eOS(0,"EMAILS_OR_GOOGLE_GROPS")
+D.dhk=new B.eOS(1,"ACCESS_CODES")})();(function staticFields(){$.DaZ=A.a(["internal","beta"],A.t("r<o>"))
+$.tNB=null})();(function lazyInitializers(){var x=a.lazyFinal
+x($,"PRQ","xo4",()=>A.eS(null))
+x($,"PRT","xo7",()=>{var w=null
+return A.b("Choose how you want to manage testers for this track. This can't be changed once the track is created.",w,w,w,w)})
+x($,"PRS","xo6",()=>{var w=null
+return A.b("Email lists or Google Groups",w,w,w,w)})
+x($,"PRR","xo5",()=>{var w=null
+return A.b("Access codes",w,w,w,w)})
+x($,"PRP","ruX",()=>{var w=null
+return A.b("Create track",w,w,w,w)})
+x($,"SQo","zZm",()=>{var w=null
+return A.b("You cannot create multiple open testing tracks.",w,w,w,w)})
+x($,"SQq","rMD",()=>{var w=null
+return A.b("This is so you can identify the track, and isn\u2019t shown to testers",w,w,w,w)})
+x($,"SPM","rMs",()=>$.f9())
+x($,"SPw","rMp",()=>{var w=null
+return A.b("You are distributing a Windows app bundle for Google Play Games on PC. Test tracks and your Android releases for Google Play Games on PC are not available to users when you publish a Windows app bundle.",w,w,w,w)})})()};
+(a=>{a["xy6ATS/+T9lZyNxqyGqVXMZmjsw="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5598.part.js.map

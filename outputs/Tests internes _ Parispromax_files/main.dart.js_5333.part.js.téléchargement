@@ -1,0 +1,10 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+CQn(d,e){return A.b(d+". "+e,null,"AcxMessages_twoValuesWithPeriod",A.a([d,e],y.d),null)}}
+A=c[0]
+B=a.updateHolder(c[1392],B)
+var z=a.updateTypes(["o(o,o)"]);(function installTearOffs(){var x=a._static_2
+x(B,"axz","CQn",0)})()
+var y={d:A.t("r<B>")}};
+(a=>{a["yVnKIMwXmEAsG9IWx+ayLNIhnPo="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5333.part.js.map

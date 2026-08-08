@@ -1,0 +1,13 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A={nIR:function nIR(){}},C
+B=c[0]
+A=a.updateHolder(c[1452],A)
+C=c[1522]
+var z=a.updateTypes([])
+A.nIR.prototype={
+$1(d){return d.gwc()},
+$S:33};(function inheritance(){var y=a.inherit
+y(A.nIR,B.aL)})();(function lazyInitializers(){var y=a.lazyFinal
+y($,"VV_","aos",()=>C.aJJ(new A.nIR(),B.t("@"),B.t("B?")))})()};
+(a=>{a["BNm1VHj2uw+YJO6ovirTvcPhvxg="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3166.part.js.map

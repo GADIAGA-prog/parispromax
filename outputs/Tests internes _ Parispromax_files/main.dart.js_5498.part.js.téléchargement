@@ -1,0 +1,16 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A={nL4:function nL4(){}}
+B=c[0]
+A=a.updateHolder(c[1610],A)
+var z=a.updateTypes([])
+A.nL4.prototype={
+$1(d){var y,x=null
+d.goN().b="001"
+y=B.b("Other countries / regions",x,x,x,x)
+d.goN().c=y
+return d},
+$S:103};(function inheritance(){var y=a.inherit
+y(A.nL4,B.aL)})();(function lazyInitializers(){var y=a.lazyFinal
+y($,"W4Y","o68",()=>B.aIX(new A.nL4()))})()};
+(a=>{a["NMGx0OwE07wt1IXFNjRnQIghd18="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5498.part.js.map

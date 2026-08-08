@@ -1,0 +1,25 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,C,B={
+odY(){var x=new B.cVa()
+x.R()
+return x},
+Dgg(){return B.odY()},
+cVa:function cVa(){this.a=$}}
+A=c[0]
+C=c[2]
+B=a.updateHolder(c[505],B)
+B.cVa.prototype={
+T(d){return A.z(this,y.a)},
+gP(){return $.xvW()}}
+var z=a.updateTypes(["w()"]);(function installTearOffs(){var x=a._static_0
+x(B,"Gsx","Dgg",0)})();(function inheritance(){var x=a.inherit
+x(B.cVa,A.w)})()
+A.an(b.typeUniverse,JSON.parse('{"cVa":{"w":[]}}'))
+var y={a:A.t("cVa")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"Q0m","xvW",()=>{var w=null,v=A.A("DeveloperDetailsPageStartupDataResponse",B.Gsx(),w,w,C.cV,w,w)
+v.M(1,"aboutYouDetails",A.owH(),A.t("ahU"))
+v.M(2,"developerContactDetails",A.ijj(),A.t("ahV"))
+v.M(3,"identityProfileSwitch",A.ikk(),A.t("R3"))
+return v})})()};
+(a=>{a["AZR049SWj3/c52g5SRGw4d9BFP4="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3344.part.js.map

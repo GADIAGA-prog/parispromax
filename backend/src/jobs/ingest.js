@@ -13,6 +13,7 @@ const prisma = require('../db');
 const { rankRunners } = require('../services/aiEngine');
 const { availableProviders } = require('../services/paymentProvider');
 const { countriesForProviderIds } = require('../services/paymentCountries');
+const { enqueuePrediction } = require('../services/queue');
 const { computeRatings, ratingForHorse, ratingFrom, syncActorStats } = require('./ratings');
 
 const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.json');
@@ -83,9 +84,14 @@ async function ingestData(data) {
 
       // M1/M2 — persist one normalised Runner row per horse (feeds the LTR model).
       // Critical fields stay optional; ratings are imputed to 50 when unknown.
-      await prisma.runner.deleteMany({ where: { raceId: saved.id } });
+      const seenRunnerNumbers = new Set();
       const runners = (race.horses || [])
-        .filter((h) => Number.isFinite(Number(h.number)) && h.name)
+        .filter((h) => {
+          const number = Number(h.number);
+          if (!Number.isInteger(number) || !h.name || seenRunnerNumbers.has(number)) return false;
+          seenRunnerNumbers.add(number);
+          return true;
+        })
         .map((h) => ({
           raceId: saved.id,
           number: Number(h.number),
@@ -102,7 +108,21 @@ async function ingestData(data) {
           jockeyRating: ratingFrom(ratings.jockey.get(h.jockey)) || 50,
           trainerRating: ratingFrom(ratings.trainer.get(h.trainer)) || 50,
         }));
-      if (runners.length) await prisma.runner.createMany({ data: runners });
+      if (runners.length) {
+        await prisma.$transaction(runners.map((runner) => {
+          const { raceId, number, ...mutable } = runner;
+          return prisma.runner.upsert({
+            where: { raceId_number: { raceId, number } },
+            // finishPos is deliberately absent: refreshed odds/form must never
+            // erase an official training label already attached to the runner.
+            update: mutable,
+            create: { raceId, number, ...mutable, finishPos: null },
+          });
+        }));
+      }
+      // Precompute the trained ranking after fresh runners/odds are stored.
+      // HTTP prediction still has its direct fallback when Redis is absent.
+      if (process.env.REDIS_URL) await enqueuePrediction(externalId);
       raceCount++;
     }
   }

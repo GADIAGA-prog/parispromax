@@ -1,0 +1,18 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A={
+L0r(d){return new B.b2(d,C.WD(d),y.a)},
+nit:function nit(){}},C
+B=c[0]
+A=a.updateHolder(c[1491],A)
+C=c[1572]
+var z=a.updateTypes(["b2<F>(lu)","b2<F>(F)"])
+A.nit.prototype={
+$1(d){var x=d.b
+return new B.b2(x,C.WD(x),y.a)},
+$S:z+0};(function installTearOffs(){var x=a._static_1
+x(A,"vQ9","L0r",1)})();(function inheritance(){var x=a.inherit
+x(A.nit,B.aL)})()
+var y={a:B.t("b2<F>")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"UPM","t4P",()=>$.bVD().gCk(0).bT(0,new A.nit(),y.a).bR(0))})()};
+(a=>{a["0vpW3dYUONLIbXrg0JKX/YX7RhU="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3520.part.js.map

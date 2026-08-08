@@ -1,0 +1,52 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,C,A,D,E,B={
+nBh(d,e,f,g,h){var x=[$.tlc(),$.tps()]
+if(B.ikp(A.yX,d,e))x.push("Wear OS")
+if(B.ikp(A.wA,d,e))x.push("Android TV")
+if(!(e!=null&&J.iB(e,A.uW)))x.push(h?"Desktop":"Chrome OS")
+if(B.ikp(A.ku,d,e))x.push("Google Play Games on PC")
+if(g)x.push("Android Auto")
+if(B.ikp(A.wz,d,e))x.push("Android XR")
+if(B.ikp(A.uX,d,e))x.push("Android Automotive OS")
+if(f)x.push("Intelligent Eyewear")
+return A.o.cH(C.dR(x,y.b).b.bX(0,", "))},
+ikp(d,e,f){var x=!1
+if(e!=null)if(e.b.a8(0,d))x=!(f!=null&&J.iB(f,d))
+return x},
+aYX(d,e,f,g,h,i,j,k,l,m){var x,w,v,u
+if(d===A.dt){x=B.uR_(e,f)
+w=h?$.io8()+" - "+x:x}else if(d===A.dN){x=B.uR_(e,f)
+w=$.rRo()
+if(!(x===w))if(x!=="exclusive_access")w=$.cBv()+" - "+x
+else w=h?$.cBv()+" - "+x:x}else w=B.uQY(d)
+if(m)v=e!==A.d5||k
+else v=!1
+if(!v)return w
+u=e===A.d5&&k?B.nBh(g,l,!1,!1,j):E.aJy(e,i,j,k)
+if(k)return w+" - "+u
+return w+" ("+u+")"},
+uQY(d){switch(d){case A.cf:return $.ioa()
+case A.e1:return $.io9()
+case A.dN:return $.cBv()
+case A.dV:return $.nZv()
+case A.dt:return $.io8()
+default:throw C.a3(C.au("Unsupported track type",null))}},
+uR_(d,e){if(e==="alpha"||e==="instantAlpha")return"Alpha"
+if(e==="beta")return"Beta"
+if(e==="exclusive_access")return $.AHf()
+if(e==="catalog_access")return $.rRo()
+return D.ooA(d,e)}}
+J=c[1]
+C=c[0]
+A=c[2]
+D=c[1678]
+E=c[1685]
+B=a.updateHolder(c[1673],B)
+var z=a.updateTypes([])
+var y={b:C.t("@")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"TFu","AHf",()=>{var w=null
+return C.b("Pre-registration testing",w,w,w,w)})
+x($,"TFr","rRo",()=>{var w=null
+return C.b("Catalog Access Track",w,w,w,w)})})()};
+(a=>{a["xsJjxU15bysvwBGz6QYc80wjy3E="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3068.part.js.map

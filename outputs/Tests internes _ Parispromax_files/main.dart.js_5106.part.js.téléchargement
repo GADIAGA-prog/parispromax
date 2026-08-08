@@ -1,0 +1,25 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+vjR(){return A.b("View all information for this app, including any associated Play Games Services projects - but not financial data. <br/><br/>This permission does not allow users to edit information, or make any changes in Play Console. To grant access to financial data, give users the \u2018View financial data\u2019 permission.",null,"canViewNonFinancialDataDescriptionMessage",A.a(["<br/><br/>"],y.d),null)},
+ovd(){return A.b("Create, edit, and roll out releases to production; unpublish and republish apps; exclude devices in the device catalog; and use app signing by Google Play to sign APKs. <br/><br/>Users with this permission can publish apps to users on Google Play.",null,"canManagePublicApksDescriptionMessage",A.a(["<br/><br/>"],y.d),null)},
+ovg(){return A.b("Upload draft apps; create, edit, and rollout releases to testing tracks; unpublish and republish apps that have already been published to a testing track; upload and modify .obb files; edit release notes for apps which are not active in production; and upload app bundles for internal sharing.<br/><br/>This permission does not allow users to publish apps to production on Google Play.",null,"canManageTracksApksDescriptionMessage",A.a(["<br/><br/>"],y.d),null)},
+ovf(){return A.b("Manage users, groups, and domains on tester lists; disable testing tracks; update country targeting for testing tracks; and set up uploaders and testers for internal app sharing. <br/><br/>This permission does not allow users to publish apps to production on Google Play.",null,"canManageTrackUsersDescriptionMessage",A.a(["<br/><br/>"],y.d),null)},
+ove(){return A.b("Edit your store listing and run store listing experiments; edit pricing; manage in-app products; edit distribution information and content ratings; create and edit promotions; and create and save filters to sort the device catalog.<br/><br/>This permission does not allow users to exclude devices in the device catalog.",null,"canManagePublicListingDescriptionMessage",A.a(["<br/><br/>"],y.d),null)}}
+A=c[0]
+B=a.updateHolder(c[1216],B)
+var z=a.updateTypes([])
+var y={d:A.t("r<B>")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"Vfw","o25",()=>{var w=null
+return A.b("Users with this permission get all other permissions for this app. They can also invite new users to your developer account, and add and remove permissions for other users who have access to the same apps.",w,w,w,w)})
+x($,"Vfq","t8U",()=>{var w=null
+return A.b("This permission does not allow users to publish apps on Google Play",w,w,w,w)})
+x($,"VfM","t8Y",()=>{var w=null
+return A.b("View financial and sales reports; view buyer metrics on the User acquisition page; access the Purchases API;  and view revenue information for any associated Play Games Services projects",w,w,w,w)})
+x($,"Vfu","o24",()=>{var w=null
+return A.b("View orders, refund orders, and cancel subscriptions. Users also need the \u2018View financial data\u2019 permission to view aggregate financial reports.",w,w,w,w)})
+x($,"VfG","o26",()=>{var w=null
+return A.b("Reply to reviews on Google Play, report inappropriate reviews, and change the contact information used in suggested replies. Users without this permission can still view ratings and reviews, but can\u2019t reply to them.",w,w,w,w)})
+x($,"Vfo","o22",()=>{var w=null
+return A.b("Users with this permission can add, edit and manage deep links for this app on Play Console",w,w,w,w)})})()};
+(a=>{a["UMJPrwKCyzalHfzTkJVnjvRtTyM="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_5106.part.js.map

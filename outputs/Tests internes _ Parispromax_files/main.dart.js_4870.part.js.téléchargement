@@ -1,0 +1,25 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C={
+aWF(d){var y=d.a.k(1)
+switch(y){case B.cf:return $.zYQ()
+case B.dV:return $.zYP()
+case B.dN:return $.zYM()
+case B.e1:return $.zYO()
+case B.dt:return $.zYN()
+default:throw A.a3(A.au(y,null))}}}
+A=c[0]
+B=c[2]
+C=a.updateHolder(c[1044],C)
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"SP_","zYQ",()=>{var x=null
+return A.b("Create production release",x,x,x,x)})
+y($,"SOZ","zYP",()=>{var x=null
+return A.b("Create open testing release",x,x,x,x)})
+y($,"SOW","zYM",()=>{var x=null
+return A.b("Create closed testing release",x,x,x,x)})
+y($,"SOY","zYO",()=>{var x=null
+return A.b("Create internal testing release",x,x,x,x)})
+y($,"SOX","zYN",()=>{var x=null
+return A.b("Create early access release",x,x,x,x)})})()};
+(a=>{a["rxgUlzw9GzptVeGdq9SOf1AClJs="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_4870.part.js.map

@@ -1,4 +1,6 @@
 import { BADGES } from './aiEngine';
+import { countActiveRunners } from './raceContext';
+const { ecdPredictionFormat } = require('../../shared/ecdRules');
 
 const number = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -12,7 +14,20 @@ function betText(race) {
     .toLowerCase();
 }
 
-export function detectBetFormat(race) {
+export function detectBetFormat(race, { game = null, mode = null } = {}) {
+  if (mode === 'national' && game && Number(game.podium) > 0) {
+    return { label: game.label || 'Course nationale', places: Number(game.podium) };
+  }
+  if (mode === 'ecd' && race?.ecdProfile?.verified === false) {
+    return { label: 'Format ECD indisponible', places: 0, available: false };
+  }
+  if (mode === 'ecd' || (!mode && race?.ecd)) {
+    const ecd = ecdPredictionFormat(countActiveRunners(race));
+    return { label: ecd.label, places: ecd.podium };
+  }
+  if (!mode && game && Number(game.podium) > 0) {
+    return { label: game.label || 'Course nationale', places: Number(game.podium) };
+  }
   const text = betText(race);
   if (text.includes('quinte')) return { label: 'Quinté', places: 5 };
   if (text.includes('quarte')) return { label: 'Quarté', places: 4 };
@@ -67,53 +82,51 @@ function tipReasons(horse) {
   return reasons;
 }
 
-export function buildRaceInsights(race) {
-  const raceFormat = detectBetFormat(race);
-  const format = { label: 'Podium + 2', places: 3, raceLabel: raceFormat.label };
+export function buildRaceInsights(race, options = {}) {
+  const raceFormat = detectBetFormat(race, options);
+  const format = {
+    label: raceFormat.available === false ? raceFormat.label : `${raceFormat.label} + 2`,
+    places: raceFormat.places,
+    raceLabel: raceFormat.label,
+  };
   const sorted = [...(race?.horses || [])]
     .filter((horse) => horse && horse.nonPartant !== true)
     .sort((a, b) => number(a.rank, 999) - number(b.rank, 999) || number(b.aiScore) - number(a.aiScore));
-  const selectionSize = Math.min(sorted.length, 5);
-  const confidence = confidenceFor(sorted);
-  const bases = sorted.slice(0, Math.min(1, selectionSize));
-  const used = new Set(bases.map((horse) => horse.number));
-
-  // Le couplé associe la base au meilleur cheval restant. La base est répétée
-  // dans l'affichage du couplé mais ne compte qu'une fois dans la sélection.
-  const couplePartner = sorted.find((horse) => !used.has(horse.number)) || null;
-  if (couplePartner) used.add(couplePartner.number);
-  const couple = couplePartner ? [...bases, couplePartner] : [...bases];
-
-  const tocard = sorted
-    .filter((horse) => !used.has(horse.number))
-    .filter((horse) => number(horse.odds) >= 15 || horse.backendValueBet || hasBadge(horse, BADGES.VALUE.key))
-    .filter((horse) => horse.probaPodium == null || number(horse.probaPodium) >= 0.08)
-    .sort((a, b) => number(b.probaPodium) - number(a.probaPodium) || number(b.aiScore) - number(a.aiScore))[0];
-
-  const fixedCount = bases.length + (couplePartner ? 1 : 0);
-  const reserveForTocard = tocard && selectionSize - fixedCount >= 2 ? 1 : 0;
-  const reserveForRegret = selectionSize - fixedCount - reserveForTocard >= 1 ? 1 : 0;
-  const chanceCount = Math.max(0, selectionSize - fixedCount - reserveForTocard - reserveForRegret);
-  const chances = sorted
-    .filter((horse) => !used.has(horse.number) && horse.number !== tocard?.number)
-    .slice(0, chanceCount);
-  chances.forEach((horse) => used.add(horse.number));
-  const tocards = reserveForTocard ? [tocard] : [];
-  tocards.forEach((horse) => used.add(horse.number));
-  let regret = reserveForRegret ? sorted.find((horse) => !used.has(horse.number)) || null : null;
-
-  // La combinaison contient le podium attendu + 2 compléments, dans la limite
-  // du nombre réel de partants, sans compter deux fois la base du couplé.
-  const selected = [...bases, ...(couplePartner ? [couplePartner] : []), ...chances, ...tocards];
-  if (regret && selected.length < selectionSize) selected.push(regret);
-  while (selected.length < selectionSize) {
-    const next = sorted.find((horse) => !selected.some((item) => item.number === horse.number));
-    if (!next) break;
-    selected.push(next);
+  if (raceFormat.available === false) {
+    return {
+      format,
+      selectionSize: 0,
+      confidence: confidenceFor(sorted),
+      bases: [],
+      couple: [],
+      chances: [],
+      outsiders: [],
+      tocards: [],
+      tocard: null,
+      regret: null,
+      selected: [],
+      tips: [],
+    };
   }
-  if (!regret && selected.length) regret = selected[selected.length - 1];
+  const selectionSize = Math.min(sorted.length, raceFormat.places + 2);
+  const confidence = confidenceFor(sorted);
+  // Une course possede un classement canonique unique. Les vues ECD et
+  // nationale n'en prennent que des prefixes de longueurs differentes.
+  const selected = sorted.slice(0, selectionSize);
+  const bases = selected.slice(0, 1);
+  const couple = selected.slice(0, 2);
+  const remaining = selected.slice(2);
+  const tocard = remaining
+    .filter((horse) => number(horse.odds) >= 15 || horse.backendValueBet || hasBadge(horse, BADGES.VALUE.key))
+    .filter((horse) => horse.probaPodium == null || number(horse.probaPodium) >= 0.1)
+    .sort((a, b) => number(b.probaPodium) - number(a.probaPodium) || number(b.aiScore) - number(a.aiScore))[0];
+  const tocards = tocard ? [tocard] : [];
+  const regret = [...remaining].reverse().find((horse) => horse.number !== tocard?.number) || null;
+  const chances = remaining.filter(
+    (horse) => horse.number !== tocard?.number && horse.number !== regret?.number
+  );
 
-  const tips = sorted
+  const tips = selected
     .map((horse) => ({ horse, reasons: tipReasons(horse) }))
     .filter((tip) => tip.reasons.length >= 2)
     .sort((a, b) => tipReasons(b.horse).length - tipReasons(a.horse).length || number(b.horse.aiScore) - number(a.horse.aiScore))

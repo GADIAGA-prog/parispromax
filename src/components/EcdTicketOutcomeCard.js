@@ -18,6 +18,8 @@ export default function EcdTicketOutcomeCard({ outcome }) {
   }
 
   const settled = outcome.status === 'settled';
+  const indeterminate = outcome.status === 'settled-indeterminate';
+  const partial = outcome.status === 'reports-partial';
   const positive = settled && Number(outcome.netReturn || 0) >= 0;
   const currency = outcome.currency || 'FCFA';
 
@@ -29,35 +31,41 @@ export default function EcdTicketOutcomeCard({ outcome }) {
           <Text style={styles.title}>
             {settled
               ? `${outcome.winningCount || 0} ticket${Number(outcome.winningCount || 0) > 1 ? 's' : ''} gagnant${Number(outcome.winningCount || 0) > 1 ? 's' : ''} sur ${outcome.ticketsCount || 0}`
-              : `${outcome.ticketsCount || 0} tickets proposés · rapports en attente`}
+              : indeterminate
+                ? `${outcome.winningCount || 0} sélection${Number(outcome.winningCount || 0) > 1 ? 's' : ''} correcte${Number(outcome.winningCount || 0) > 1 ? 's' : ''} · rapport non calculable`
+                : partial
+                  ? `${outcome.ticketsCount || 0} tickets proposés · rapport officiel partiel`
+                  : `${outcome.ticketsCount || 0} tickets proposés · rapports en attente`}
           </Text>
         </View>
         <Text style={[styles.status, !settled && styles.statusPending]}>
-          {settled ? 'CALCUL TERMINÉ' : 'À CONFIRMER'}
+          {settled ? 'CALCUL TERMINÉ' : indeterminate ? 'MONTANT INDÉTERMINABLE' : partial ? 'CALCUL SUSPENDU' : 'À CONFIRMER'}
         </Text>
       </View>
 
       <View style={styles.metrics}>
-        <Metric label="Tickets gagnants" value={settled ? `${outcome.winningCount || 0} / ${outcome.ticketsCount || 0}` : '—'} />
-        <Metric label="Retour théorique" value={money(outcome.totalReturn, currency)} />
+        <Metric label="Sélections correctes" value={settled || indeterminate ? `${outcome.winningCount || 0} / ${outcome.ticketsCount || 0}` : '—'} />
+        <Metric label="Retour théorique" value={indeterminate ? 'Non calculable' : money(outcome.totalReturn, currency)} />
         <Metric label="Mise illustrative" value={money(outcome.totalStake, currency)} />
         <Metric label="Solde théorique" value={money(outcome.netReturn, currency)} positive={positive} />
       </View>
 
-      {settled ? (
+      {settled || indeterminate ? (
         <View style={styles.winners}>
-          <Text style={styles.winnersTitle}>Tickets gagnants du pronostic</Text>
+          <Text style={styles.winnersTitle}>Sélections correctes du pronostic</Text>
           {(outcome.winningTickets || []).length ? (outcome.winningTickets || []).map((ticket) => (
             <View key={ticket.id} style={styles.ticketRow}>
               <Text style={styles.ticketName}>{ticket.bet} · {(ticket.numbers || []).join(' - ')}</Text>
-              <Text style={styles.ticketAmount}>{money(ticket.returnAmount, currency)}</Text>
+              <Text style={styles.ticketAmount}>
+                {ticket.reportIndeterminate ? 'Rapport non calculable' : money(ticket.returnAmount, currency)}
+              </Text>
             </View>
-          )) : <Text style={styles.note}>Aucun ticket gagnant pour ce pronostic.</Text>}
+          )) : <Text style={styles.note}>Aucune sélection correcte pour ce pronostic.</Text>}
         </View>
       ) : null}
 
       <Text style={styles.note}>
-        Simulation du pronostic archivé à {money(outcome.unitStake, currency)} par ticket. Aucun pari n’est effectué ou encaissé par ParisPromax.
+        Simulation du pronostic archivé à {money(outcome.unitStake, currency)} par ticket. Un rapport à zéro gagnant reste non calculable, car un ticket supplémentaire aurait modifié le partage du pari mutuel. Aucun pari n’est effectué ou encaissé par ParisPromax.
       </Text>
     </View>
   );

@@ -1,0 +1,10 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B
+A=c[1605]
+B=c[2745]
+var z=a.updateTypes([]);(function constants(){B.nB=new A.rM(3,"PRIMITIVE_ASSET_TYPE_APP_ICON_IMAGE")
+B.oA=new A.rM(4,"PRIMITIVE_ASSET_TYPE_APP_FEATURE_GRAPHIC_IMAGE")
+B.mO=new A.rM(6,"PRIMITIVE_ASSET_TYPE_APP_LARGE_TABLET_SCREENSHOT_IMAGE")
+B.oB=new A.rM(8,"PRIMITIVE_ASSET_TYPE_APP_WEAR_SCREENSHOT_IMAGE")})()};
+(a=>{a["YlURJNnCZ81kcUjljeDqhmA4Zt0="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_1211.part.js.map

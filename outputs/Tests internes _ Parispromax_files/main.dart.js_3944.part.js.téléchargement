@@ -1,0 +1,88 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,A,B,C={
+nHU(d){switch(d){case B.aWC:return $.t2W()
+case B.aWD:return $.t2T()
+case B.aWE:return $.tei()
+case B.aWF:return $.t2V()
+case B.aWG:return $.t2S()
+case B.aWH:return $.t2U()
+case B.aWB:break}return null},
+vd6(d){var x,w=A.a([],y.l)
+for(x=J.c7(d);x.ai();)switch(x.gb6(x)){case B.OX:w.push($.B9W())
+break
+case B.OY:w.push($.BJ9())
+break
+case B.pB:w.push($.BJ7())
+break
+case B.pC:w.push($.BJd())
+break
+case B.V9:w.push($.BJb())
+break
+case B.z4:w.push($.B9V())
+break
+case B.aiq:break}return w},
+ozF(d){var x=d.$ti.n("K<aa.E,cB>"),w=A.a4(new A.K(d,new C.nHL(),x),x.n("aK.E"))
+return B.c.bi(w,B.c.geW(D.ic2))},
+vU7(d){return A.b("The target age group for your app is:  "+d,null,"tacTargetAgeGroupsDescription",A.a([d],y.h),null)},
+vU6(d){return A.b("You've requested to join the Designed for Families program. If approved, your app will be shown in the "+d+" category on Google Play.",null,"tacSummaryDesignedForFamiliesDescription",A.a([d],y.h),null)},
+nHL:function nHL(){}},D
+J=c[1]
+A=c[0]
+B=c[2]
+C=a.updateHolder(c[518],C)
+D=c[2219]
+var z=a.updateTypes([])
+C.nHL.prototype={
+$1(d){return d.a.k(0)},
+$S:575};(function inheritance(){var x=a.inherit
+x(C.nHL,A.aL)})()
+var y={h:A.t("r<B>"),l:A.t("r<o>"),k:A.t("r<xk>")};(function constants(){var x=a.makeConstList
+D.qp=x([B.pC,B.V9,B.z4],y.k)
+D.ic2=x([B.aKP,B.aKI,B.aKS,B.bpY,B.aKO,B.bqg,B.aKY],A.t("r<cB>"))
+D.lL=x([B.OX,B.OY,B.pB],y.k)})();(function lazyInitializers(){var x=a.lazyFinal
+x($,"Ul5","B9W",()=>{var w=null
+return A.b("5 and under",w,w,w,w)})
+x($,"V18","BJ9",()=>{var w=null
+return A.b("6-8",w,w,w,w)})
+x($,"V16","BJ7",()=>{var w=null
+return A.b("9-12",w,w,w,w)})
+x($,"V1c","BJd",()=>{var w=null
+return A.b("13-15",w,w,w,w)})
+x($,"V1a","BJb",()=>{var w=null
+return A.b("16-17",w,w,w,w)})
+x($,"Ul4","B9V",()=>{var w=null
+return A.b("18 and over",w,w,w,w)})
+x($,"Ux9","t2W",()=>{var w=null
+return A.b("Pretend Play",w,w,w,w)})
+x($,"Ux6","t2T",()=>{var w=null
+return A.b("Creativity",w,w,w,w)})
+x($,"VBI","tei",()=>{var w=null
+return A.b("Action and Adventure",w,w,w,w)})
+x($,"Ux8","t2V",()=>{var w=null
+return A.b("Music and Video",w,w,w,w)})
+x($,"Ux5","t2S",()=>{var w=null
+return A.b("Brain Games",w,w,w,w)})
+x($,"Ux7","t2U",()=>{var w=null
+return A.b("Education",w,w,w,w)})
+x($,"Wr9","tpz",()=>{var w=null
+return A.b("Target age",w,w,w,w)})
+x($,"Wr2","tpv",()=>{var w=null
+return A.b("Store presence",w,w,w,w)})
+x($,"Wr3","tpw",()=>{var w=null
+return A.b("Designed for Families",w,w,w,w)})
+x($,"Wrc","tpC",()=>{var w=null
+return A.b("Teacher Approved",w,w,w,w)})
+x($,"Wr5","tpy",()=>{var w=null
+return A.b("Your app is not enrolled in the Designed for Families program",w,w,w,w)})
+x($,"Wrb","tpB",()=>{var w=null
+return A.b("Your app is not included in the Teacher Approved program",w,w,w,w)})
+x($,"Wra","tpA",()=>{var w=null
+return A.b("Your app has been included for review in the Teacher Approved program",w,w,w,w)})
+x($,"Wr1","tpu",()=>{var w=null
+return A.b("Your app could unintentionally appeal to children. The 'Not designed for children' label will be shown next to your app on Google Play. ",w,w,w,w)})
+x($,"Wr4","tpx",()=>{var w=null
+return A.b("Your app doesn't appeal to children. If Google disagrees with your answer, you won't be able to update the app. If this happens, there are a number of ways you can resolve it. ",w,w,w,w)})
+x($,"V9S","t7K",()=>{var w=null
+return A.b("Learn more about the label shown on their app listing in the Play Store",w,w,w,w)})})()};
+(a=>{a["1v/E+0bTUVXerVPzt2F0xioFQBI="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3944.part.js.map

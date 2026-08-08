@@ -1,0 +1,15 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C={
+ooA(d,e){var y,x=null
+if(d===B.ht)A.aj(A.au(A.aX("Instant tracks have non-standard prefixes",x),x))
+if(d===B.d5)return e
+y=$.AHe().b4p(0,e)
+if(y==null)A.aj(A.au(A.aX(x,x),x))
+return B.o.cl(e,y.gdN(0))}}
+A=c[0]
+B=c[2]
+C=a.updateHolder(c[1678],C)
+var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
+y($,"TFq","AHe",()=>A.ef("\\w+:",!0,!1))})()};
+(a=>{a["9CSCYqNWUHz2bRZd78BaWdBXpV4="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_2543.part.js.map

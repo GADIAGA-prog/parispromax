@@ -1,0 +1,16 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B
+A=c[1605]
+B=c[2742]
+var z=a.updateTypes([]);(function constants(){B.ks=new A.rM(7,"PRIMITIVE_ASSET_TYPE_APP_CHROMEBOOK_SCREENSHOT_IMAGE")
+B.oC=new A.rM(9,"PRIMITIVE_ASSET_TYPE_APP_AUTOMOTIVE_SCREENSHOT_IMAGE")
+B.oy=new A.rM(10,"PRIMITIVE_ASSET_TYPE_APP_BATTLESTAR_SCREENSHOT_IMAGE")
+B.oz=new A.rM(11,"PRIMITIVE_ASSET_TYPE_APP_ANDROID_XR_SCREENSHOT_IMAGE")
+B.qN=new A.rM(12,"PRIMITIVE_ASSET_TYPE_APP_TV_BANNER_IMAGE")
+B.qL=new A.rM(13,"PRIMITIVE_ASSET_TYPE_APP_BATTLESTAR_LOGO_IMAGE")
+B.qM=new A.rM(14,"PRIMITIVE_ASSET_TYPE_APP_BATTLESTAR_FEATURE_GRAPHIC_IMAGE")
+B.tg=new A.rM(16,"PRIMITIVE_ASSET_TYPE_APP_BATTLESTAR_IAP_BACKGROUND_IMAGE")
+B.mQ=new A.rM(18,"PRIMITIVE_ASSET_TYPE_APP_PHONE_IMMERSIVE_HEADER_IMAGE")
+B.mP=new A.rM(19,"PRIMITIVE_ASSET_TYPE_APP_TABLET_IMMERSIVE_HEADER_IMAGE")})()};
+(a=>{a["LowL2NdVO+/9AmG0SMnlA//Hs8c="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_1213.part.js.map

@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260802-3" />
+  <link rel="stylesheet" href="/styles.css?v=20260804-5" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -240,6 +240,36 @@
         <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Résultats, tickets gagnants et gains.</h2></div>
         <p>Comparez l’arrivée et les rapports officiels avec le pronostic ParisPromax archivé avant la course.</p>
       </div>
+      <section class="prediction-performance" id="prediction-performance" aria-labelledby="prediction-performance-title" aria-live="polite">
+        <div class="prediction-performance-copy">
+          <span>PERFORMANCE MESURÉE</span>
+          <h3 id="prediction-performance-title">Taux de bases placées</h3>
+          <p>Part des pronostics où le cheval classé n°1 par ParisPromax a terminé dans le podium du jeu : Jumelé ordre à 2 pour 4–7 partants ou Trio à 3 dès 8 partants en ECD, Tiercé à 3, Quarté à 4 ou Quinté à 5 en nationale. Les taux et leurs échantillons sont affichés séparément, puis résumés globalement. Ils décrivent les résultats passés et ne garantissent aucun gain futur.</p>
+        </div>
+        <div class="prediction-performance-metrics">
+          <article>
+            <small>ECD · base placée</small>
+            <strong id="success-rate-ecd">En cours de mesure</strong>
+            <span id="success-rate-ecd-sample">Échantillon en cours de constitution</span>
+          </article>
+          <article>
+            <small>Nationale · base placée</small>
+            <strong id="success-rate-national">En cours de mesure</strong>
+            <span id="success-rate-national-sample">Échantillon en cours de constitution</span>
+          </article>
+          <article>
+            <small>Résumé global ECD + nationale</small>
+            <strong id="success-rate-all">En cours de mesure</strong>
+            <span id="success-rate-all-sample">Échantillon en cours de constitution</span>
+          </article>
+          <article>
+            <small>Résumé global · 30 derniers jours</small>
+            <strong id="success-rate-30">En cours de mesure</strong>
+            <span id="success-rate-30-sample">Échantillon en cours de constitution</span>
+          </article>
+        </div>
+        <p class="prediction-performance-status" id="success-rate-status" role="status">Chargement de la mesure réelle…</p>
+      </section>
       <div class="result-tabs" role="tablist" aria-label="Types de résultats">
         <button type="button" role="tab" aria-selected="false" data-results-category="national">Course nationale · Grand Carnet</button>
         <button class="active" type="button" role="tab" aria-selected="true" data-results-category="ecd">ECD · Tickets &amp; gains</button>
@@ -495,6 +525,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260802-3" defer></script>
+  <script src="/app.js?v=20260804-5" defer></script>
 </body>
 </html>

@@ -1,0 +1,11 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B={
+bU9(d){return A.b(""+d+" MB",null,"_ramMegabytes",A.a([d],y.d),null)}}
+A=c[0]
+B=a.updateHolder(c[1500],B)
+var z=a.updateTypes([])
+var y={d:A.t("r<B>")};(function lazyInitializers(){var x=a.lazyFinal
+x($,"WlM","bqW",()=>{var w=A.t("bO")
+return A.ag(A.a([A.oL(A.dg(256),B.bU9(256),w),A.oL(A.dg(512),B.bU9(512),w),A.oL(A.dg(768),B.bU9(768),w),A.oL(A.dg(1024),B.bU9(1024),w),A.oL(A.dg(1536),B.bU9(1536),w),A.oL(A.dg(2048),B.bU9(2048),w),A.oL(A.dg(3072),B.bU9(3072),w),A.oL(A.dg(4096),B.bU9(4096),w)],A.t("r<b2<bO>>")),A.t("b2<bO>"))})})()};
+(a=>{a["cRHC+GBF9wyghQ0UC6k5CDlkUbA="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3511.part.js.map

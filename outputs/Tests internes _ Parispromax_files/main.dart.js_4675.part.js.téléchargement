@@ -1,0 +1,21 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,A={
+ocz(d,e,f){var y=new A.cRL(d,e,B.aI(),f.n("cRL<0>"))
+y.adF(d,e,f.n("a_<ft<0>>"),f)
+return y},
+cRL:function cRL(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.a$=f
+_.$ti=g}}
+B=c[0]
+C=c[1596]
+A=a.updateHolder(c[1433],A)
+A.cRL.prototype={
+ay9(d){return d},
+Ht(d,e){return e}}
+var z=a.updateTypes([]);(function inheritance(){var y=a.inherit
+y(A.cRL,C.Fu)})()
+B.an(b.typeUniverse,JSON.parse('{"cRL":{"Fu":["a_<ft<1>>","1"],"h3":["a_<ft<1>>?"],"Fu.E":"1"}}'))};
+(a=>{a["cArAr/FB/aa2Oy74fPoXS1k8Wek="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_4675.part.js.map

@@ -1,0 +1,766 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,E,D,P,H,I,Q,R,S,T,C={Te:function Te(d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,a0){var _=this
+_.x1=d
+_.y1=_.xr=_.x2=!1
+_.ax=e
+_.ay=f
+_.ch=g
+_.CW=h
+_.cx=i
+_.cy=j
+_.db=k
+_.dy=_.dx=null
+_.fr=l
+_.fx=m
+_.fy=null
+_.go=!0
+_.id=!1
+_.k2=_.k1=null
+_.k3=n
+_.is$=o
+_.iZ$=p
+_.f=q
+_.r=r
+_.w=s
+_.x=t
+_.a=u
+_.b=v
+_.c=w
+_.d=x
+_.e=a0},
+LZn(d,e){return new C.f3F(A.q(d,e,y.d))},
+LZo(d,e){return new C.f3G(A.q(d,e,y.d))},
+LZp(d,e){return new C.f3H(A.q(d,e,y.d))},
+LZq(d,e){return new C.f3I(A.q(d,e,y.d))},
+LZr(d,e){return new C.f3J(A.q(d,e,y.d))},
+ESz(){return new C.cps(new A.bs())},
+G8f(){return new A.R("app-content-ad-id-declaration-page",C.FsG(),y.M)},
+dW7:function dW7(d){var _=this
+_.y=_.x=_.w=_.r=_.f=_.e=$
+_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=null
+_.c=_.b=_.a=$
+_.d=d},
+f3F:function f3F(d){var _=this
+_.e=_.d=_.c=_.b=$
+_.a=d},
+f3G:function f3G(d){var _=this
+_.d=_.c=_.b=$
+_.a=d},
+f3H:function f3H(d){var _=this
+_.k3=_.k2=_.k1=_.id=_.go=_.fy=_.fx=_.fr=_.dy=_.dx=_.db=_.cy=_.cx=_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=_.d=_.c=_.b=$
+_.p3=_.p2=_.p1=_.ok=_.k4=$
+_.xr=_.x2=_.x1=_.to=_.ry=_.rx=_.RG=_.R8=_.p4=null
+_.ao=_.aj=_.y2=_.y1=$
+_.a=d},
+f3I:function f3I(d){this.c=this.b=$
+this.a=d},
+f3J:function f3J(d){var _=this
+_.f=_.e=_.d=_.c=_.b=$
+_.r=null
+_.a=d},
+cps:function cps(d){var _=this
+_.a=_.ok=_.k4=_.k3=_.k2=_.k1=_.id=_.go=_.fy=_.fx=_.fr=_.dy=_.dx=_.db=_.cy=_.cx=_.CW=_.ch=_.ay=_.ax=_.at=_.as=_.Q=_.z=_.y=_.x=_.w=_.r=_.f=_.e=$
+_.c=_.b=$
+_.d=d}},K,U,V,F,L,M,N,G,O,W
+A=c[0]
+B=c[2]
+E=c[1781]
+D=c[2141]
+P=c[1780]
+H=c[1641]
+I=c[1020]
+Q=c[1533]
+R=c[2199]
+S=c[1555]
+T=c[2200]
+C=a.updateHolder(c[23],C)
+K=c[1019]
+U=c[2202]
+V=c[1782]
+F=c[1776]
+L=c[1745]
+M=c[1760]
+N=c[1750]
+G=c[1759]
+O=c[2132]
+W=c[2120]
+C.Te.prototype={
+t4(d){return this.hA4(d)},
+hA4(d){var x=0,w=A.i(y.H),v=this,u
+var $async$t4=A.d(function(e,f){if(e===1)return A.e(f,w)
+for(;;)switch(x){case 0:u=d.e.b
+v.x2=u.a8(0,B.bNt)
+u=u.a8(0,B.bNq)
+v.xr=u
+v.y1=v.x2&&!u
+if(!v.x1.a)v.dy.iz()
+return A.f(null,w)}})
+return A.h($async$t4,w)}}
+C.dW7.prototype={
+gu(){return"AppContentAdIdDeclarationPageComponent"},
+q(){var x,w,v,u=this,t=u.ag(),s=u.e=A.cF(u,0)
+t.append(s.c)
+x=u.d
+w=x.a
+x=x.b
+v=A.cE(w.p(B.D,x),s,w.i(B.h,x),w.i(B.Q,x),w.i(B.K,x),w.i(B.P,x),w.i(B.a9,x),new A.af(s,null),w.i(B.w,x),w.i(B.Z,x),w.p(B.au,x),w.p(B.N,x),w.i(B.p,x))
+u.f=v
+s.t(v,A.a([B.a,B.a,B.a,B.a,B.a],y.Q))
+v=u.r=new A.W(1,u,A.ah(t))
+u.w=new V.c6(v,new A.a9(v,C.FsH()),w.i(B.L,x))
+v=u.x=H.qD(u,2)
+t.append(v.c)
+x=H.qC(w.i(B.t,x),w.i(B.eH,x),w.i(B.h,x),w.i(B.af,x),w.i(B.p,x))
+u.y=x
+v.N(0,x)},
+v(){var x,w,v,u,t,s,r,q,p=this,o=p.a,n=(p.d.f&1)!==0
+if(n)p.f.x1=!0
+x=o.iZ$
+x===$&&A.n()
+if(p.z!==x){p.z=p.f.ax=x
+w=!0}else w=n
+x=o.is$
+x===$&&A.n()
+if(p.Q!==x){p.Q=p.f.ch=x
+w=!0}if(n)p.f.G()
+v=o.go
+if(p.as!==v){p.w.sbK(v)
+p.as=v
+w=!0}if(n){x=p.y
+x.at=o.giw(o)
+x.CW=o.gnx()
+w=!0}u=o.gE0()
+if(p.at!==u){p.at=p.y.as=u
+t=!0
+w=!0}else t=n
+s=o.gbJp()
+if(p.ax!==s){p.ax=p.y.ch=s
+t=!0
+w=!0}r=o.f.b
+if(p.ay!==r){p.ay=p.y.k4=r
+t=!0
+w=!0}q=o.fx
+if(p.ch!==q){p.ch=p.y.ok=q
+t=!0
+w=!0}if(t)p.y.a4()
+if(n)p.y.G()
+p.r.C()
+o=p.f
+o.ac()
+x=p.e
+x.U(n)
+x.l()
+p.x.l()
+if(n)o.a0()
+$.u().F(w)},
+A(){var x=this
+x.r.D()
+x.e.m()
+x.x.m()
+x.f.B()}}
+C.f3F.prototype={
+gu(){return"AppContentAdIdDeclarationPageComponent"},
+q(){var x,w,v=this,u=v.b=A.a1(v,0),t=u.c
+A.c(t,"no-top-padding","")
+x=new A.a0()
+v.c=x
+w=b.G.document.createElement("div")
+A.c(w,"container1","")
+v.d=A.x(v,2,w,C.FsI())
+v.e=A.x(v,3,w,C.FsJ())
+u.t(x,A.a([A.a([w],y.f)],y.Q))
+v.K(t)},
+v(){var x,w=this,v=w.a.a,u=w.d
+u.c.sI(!v.x1.a)
+x=w.e
+x.c.sI(!v.go)
+u.a.C()
+x.a.C()
+w.b.l()},
+A(){this.d.a.D()
+this.e.a.D()
+this.b.m()}}
+C.f3G.prototype={
+gu(){return"AppContentAdIdDeclarationPageComponent"},
+q(){var x=this,w=x.b=L.hM(x,0),v=w.c,u=x.a.c
+u=new A.fo(u.gh().gh().p(B.bQ,u.gh().gj()),u.gh().gh().p(B.ai,u.gh().gj()),u.gh().gh().p(B.bR,u.gh().gj()))
+x.c=u
+u=L.hL(u)
+x.d=u
+w.N(0,u)
+x.K(v)},
+Y(d,e,f){if(d===B.bU&&0===e)return this.c
+return f},
+v(){var x,w=(this.a.Q&1)!==0
+if(w){x=$.wrf()
+this.d.a=x}this.b.l()
+$.u().F(w)},
+A(){this.b.m()
+this.d.B()}}
+C.f3H.prototype={
+gu(){return"AppContentAdIdDeclarationPageComponent"},
+q(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0,a1,a2,a3,a4,a5=this,a6=null,a7="container1",a8="htmlTitle",a9="type",b0="dense-section",b1="pc-emphasized",b2="debug-id",b3="pc-description pc-indented",b4=a5.c=A.e6(a5,0),b5=b4.c,b6=a5.d=A.fR(a6,a6,b4),b7=a5.a.c,b8=A.e5(b7.gh().gh().p(B.bp,b7.gh().gj()),b6,b7.gh().gh().p(B.bq,b7.gh().gj()))
+a5.e=b8
+x=a5.f=F.aw(a5,1)
+w=x.c
+v=a5.r=F.av(w,b7.gh().gh().i(B.n,b7.gh().gj()),b7.gh().gh().i(B.i,b7.gh().gj()))
+u=b.G.document
+t=u.createElement("div")
+a5.S(t,"pc-description")
+s=a5.w=A.a1(a5,3)
+r=a5.y1=s.c
+t.append(r)
+A.c(r,"no-top-padding","")
+r=new A.a0()
+a5.x=r
+q=u.createElement("div")
+A.c(q,a7,"")
+p=a5.y=A.aR(a5,5)
+o=p.c
+q.append(o)
+A.c(o,a8,$.rUl())
+A.c(o,a9,b0)
+o=A.aQ(o)
+a5.z=o
+n=y.Q
+p.t(o,A.a([B.a,B.a,B.a,B.a,B.a],n))
+m=A.ao(u,q,"p")
+a5.S(m,b1)
+A.O(A.bP(u,m),$.B5i())
+o=a5.Q=A.dl(a5,9)
+p=o.c
+m.append(p)
+l=A.cU(b7.gh().gh().i(B.az,b7.gh().gj()),b7.gh().gh().p(B.ax,b7.gh().gj()),b7.gh().gh().p(B.aA,b7.gh().gj()),b7.gh().gh().p(B.ay,b7.gh().gj()),b7.gh().gh().p(B.aF,b7.gh().gj()),b7.gh().gh().p(B.aB,b7.gh().gj()),b7.gh().gh().p(B.av,b7.gh().gj()),b7.gh().gh().p(B.aG,b7.gh().gj()))
+a5.as=l
+k=b7.gh().gh().p(B.ao,b7.gh().gj())
+k=new A.ct(k===!0)
+a5.at=k
+k=A.dk(l,p,k,new A.af(o,a6),b7.gh().gh().p(B.aO,b7.gh().gj()),b7.gh().gh().p(B.aS,b7.gh().gj()),b7.gh().gh().p(B.aT,b7.gh().gj()),b7.gh().gh().p(B.aI,b7.gh().gj()),b7.gh().gh().p(B.aU,b7.gh().gj()),b7.gh().gh().p(B.aW,b7.gh().gj()),b7.gh().gh().p(A.E(B.aH,A.cW()),b7.gh().gj()))
+a5.ax=k
+o.N(0,k)
+k=a5.ay=A.aR(a5,10)
+o=k.c
+q.append(o)
+A.c(o,a8,$.rUm())
+A.c(o,a9,b0)
+o=A.aQ(o)
+a5.ch=o
+k.t(o,A.a([B.a,B.a,B.a,B.a,B.a],n))
+j=A.ao(u,q,"p")
+a5.S(j,b1)
+A.O(j,$.B5m())
+o=a5.CW=A.aR(a5,13)
+k=o.c
+q.append(k)
+A.c(k,a8,$.rUn())
+A.c(k,a9,b0)
+k=A.aQ(k)
+a5.cx=k
+o.t(k,A.a([B.a,B.a,B.a,B.a,B.a],n))
+i=A.ao(u,q,"p")
+a5.S(i,b1)
+A.O(i,$.B5n())
+k=a5.cy=A.aR(a5,16)
+o=k.c
+q.append(o)
+A.c(o,a8,$.rUo())
+A.c(o,a9,b0)
+o=A.aQ(o)
+a5.db=o
+k.t(o,A.a([B.a,B.a,B.a,B.a,B.a],n))
+h=A.ao(u,q,"p")
+a5.S(h,b1)
+A.O(h,$.B5o())
+g=u.createElement("div")
+A.c(g,a7,"")
+a5.dx=A.x(a5,20,g,C.FsK())
+o=y.f
+s.t(r,A.a([A.a([q,g],o)],n))
+r=a5.dy=N.hq(a5,21)
+s=r.c
+r.aa("pc-align-vertically")
+p=new A.bU(b6,new A.G(a6,a6,y.m),A.bq(a6),A.aY(a6))
+a5.fr=p
+p=a5.fx=N.hp(b7.gh().gh().i(B.h,b7.gh().gj()),p)
+l=a5.fy=G.dD(a5,22)
+k=l.c
+A.c(k,b2,"no-radio")
+f=a5.go=G.dC(k,l,p,a6,b7.gh().gh().p(B.i,b7.gh().gj()))
+e=a5.y2=u.createElement("label")
+A.O(e,$.B5p())
+l.t(f,A.a([A.a([e],o)],n))
+e=a5.id=G.dD(a5,25)
+d=e.c
+A.c(d,b2,"yes-radio")
+a0=a5.k1=G.dC(d,e,p,a6,b7.gh().gh().p(B.i,b7.gh().gj()))
+a1=a5.aj=u.createElement("label")
+A.O(a1,$.B5q())
+e.t(a0,A.a([A.a([a1],o)],n))
+a1=$.bw()
+a1.V(0,f,l)
+a1.V(0,a0,e)
+p.sen(A.a([f,a0],y.j))
+r.t(p,A.a([A.a([k,d],o)],n))
+a2=u.createElement("p")
+A.O(A.bP(u,a2),$.B5j())
+A.O(a2," ")
+d=a5.ao=A.ao(u,a2,"a")
+A.c(d,"rel","noopener")
+A.c(d,"target","_blank")
+A.O(d,$.wrb())
+d=a5.k2=A.nH(a5,34)
+k=d.c
+p=b7.gh().gh().i(B.q,b7.gh().gj())
+r=b7.gh().gh().i(B.h,b7.gh().gj())
+a0=b7.gh().gh().i(B.dG,b7.gh().gj())
+r=new A.ne(b7.gh().gh().i(B.i,b7.gh().gj()).ce(),p,a0,r)
+a5.k3=r
+a0=a5.k4=F.aw(a5,35)
+p=a0.c
+b7=a5.ok=F.av(p,b7.gh().gh().i(B.n,b7.gh().gj()),b7.gh().gh().i(B.i,b7.gh().gj()))
+a3=u.createElement("div")
+a5.S(a3,b3)
+A.O(a3,$.B5k())
+a4=u.createElement("div")
+a5.S(a4,b3)
+A.O(a4,$.B5l())
+f=a5.p1=I.c2a(a5,40)
+e=f.c
+f.aa("pc-indented")
+a1=new I.ahL()
+a5.p2=a1
+f.N(0,a1)
+a1=y.U
+b7.db=A.a([],a1)
+a0.t(b7,A.a([B.a,A.a([a3,a4,e],o)],n))
+e=A.x(a5,41,a6,C.FsL())
+a5.p3=e
+d.t(r,A.a([A.a([p,e.a],o)],n))
+v.db=A.a([],a1)
+x.t(v,A.a([B.a,A.a([t,s,a2,k],o)],n))
+b4.t(b8,A.a([A.a([w],o)],n))
+n=y.z
+o=y.A
+b5.addEventListener("submit",A.U(a5.ar(b6.gdC(b6),n,o)))
+b5.addEventListener("reset",A.U(a5.ar(b6.ge_(b6),n,o)))
+a5.K(b5)},
+Y(d,e,f){var x,w,v=this
+if(e<=41){if(9===e){if(d===B.y)return v.as
+if(d===B.ap)return v.at
+if(d===B.aY||d===B.b2||d===B.r)return v.ax}if(21<=e&&e<=27){x=d!==O.bZ
+if((!x||d===B.z)&&22<=e&&e<=24)return v.go
+if((!x||d===B.z)&&25<=e)return v.k1
+if(d===B.J)return v.fr
+if(d===O.c8||d===B.r)return v.fx}if(d===B.c2||d===B.bz)return v.d
+if(d===B.X){w=v.b
+return w===$?v.b=B.bg:w}}return f},
+v(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g=this,f="dense-section",e=g.a,d=e.a,a0=(e.Q&1)!==0
+e=g.go
+x=g.k1
+w=d.dy
+v=g.p4!=w
+if(v){u=g.d
+w.toString
+u.y=w
+u.x=!0
+g.p4=w}if(v)g.d.a4()
+if(a0){g.e.d=!1
+t=!0}else t=v
+if(a0)g.e.G()
+if(a0){g.r.r=!1
+t=!0}if(a0)g.r.G()
+if(a0){u=g.z
+u.id=2
+u.saO(0,f)
+u.sb4($.rUl())
+t=!0}if(a0)g.y.d.f|=32
+if(a0){u=g.ax
+u.d.c="6048248"
+u.dj()
+u.w=$.wrc()
+u.x=!0
+t=!0}if(a0)g.Q.d.f|=32
+if(a0)g.ax.G()
+if(a0){u=g.ch
+u.id=2
+u.saO(0,f)
+u.sb4($.rUm())
+t=!0}if(a0)g.ay.d.f|=32
+if(a0){u=g.cx
+u.id=2
+u.saO(0,f)
+u.sb4($.rUn())
+t=!0}if(a0)g.CW.d.f|=32
+if(a0){u=g.db
+u.id=2
+u.saO(0,f)
+u.sb4($.rUo())
+t=!0}if(a0)g.cy.d.f|=32
+u=g.dx
+u.c.sI(d.y1)
+s="control:"+B.afF.gbc(0)
+v=g.RG!==s
+if(v){g.fr.a=s
+g.RG=s
+t=!0}if(v)g.fr.a4()
+if(a0){e.at=!1
+t=!0}r=d.dy
+q=r.f==="DISABLED"
+if(g.rx!==q){g.rx=e.as=q
+v=!0
+t=!0}else v=a0
+r=r.fx
+r===$&&A.n()
+p=r.jr(B.afF)===!1
+if(g.ry!==p){e.sdD(0,p)
+g.ry=p
+v=!0
+t=!0}if(v)g.fy.d.f|=32
+if(a0){x.at=!0
+t=!0}r=d.dy.fx
+r===$&&A.n()
+o=r.jr(B.afF)===!0
+if(g.x1!==o){x.sdD(0,o)
+g.x1=o
+v=!0
+t=!0}else v=a0
+if(v)g.id.d.f|=32
+n=d.qM(B.bfO)
+v=g.xr!==n
+if(v){g.k3.sj4(0,n)
+g.xr=n
+t=!0}if(v)g.k2.d.f|=32
+if(a0){g.ok.r=!1
+t=!0}if(a0)g.ok.G()
+if(a0){g.p2.a=B.bfO
+t=!0}r=g.p3
+m=d.xr&&d.qM(B.beo)
+r.c.sI(m)
+u.a.C()
+r.a.C()
+if(a0)g.fx.bd()
+g.ok.ac()
+if(a0)g.k3.bd()
+g.r.ac()
+u=g.f
+u.U(a0)
+l=d.y1
+if(g.R8!==l){r=g.y1
+A.a5(r,"extra-bottom-padding",l?"":null)
+g.R8=l
+t=!0}r=g.dy
+r.U(a0)
+m=g.fy
+m.U(a0)
+k=e.w
+if(g.to!==k){A.a5(g.y2,"for",k)
+g.to=k
+t=!0}e=g.id
+e.U(a0)
+j=x.w
+if(g.x2!==j){A.a5(g.aj,"for",j)
+g.x2=j
+t=!0}if(a0){x=$.wre()
+i=g.ao
+h=A.e2(x)
+i.href=h
+A.a5(i,"aria-label",$.wrd())
+t=!0}x=g.k4
+x.U(a0)
+g.c.l()
+u.l()
+g.w.l()
+g.y.l()
+g.Q.l()
+g.ay.l()
+g.CW.l()
+g.cy.l()
+r.l()
+m.l()
+e.l()
+g.k2.l()
+x.l()
+g.p1.l()
+if(a0){g.z.a0()
+g.ch.a0()
+g.cx.a0()
+g.db.a0()}$.u().F(t)},
+A(){var x=this
+x.dx.a.D()
+x.p3.a.D()
+x.c.m()
+x.f.m()
+x.w.m()
+x.y.m()
+x.Q.m()
+x.ay.m()
+x.CW.m()
+x.cy.m()
+x.dy.m()
+x.fy.m()
+x.id.m()
+x.k2.m()
+x.k4.m()
+x.p1.m()
+x.ax.B()
+x.go.B()
+x.k1.B()
+x.fr.B()
+x.fx.B()
+x.ok.B()
+x.k3.B()
+x.r.B()
+x.e.B()}}
+C.f3I.prototype={
+gu(){return"AppContentAdIdDeclarationPageComponent"},
+q(){var x=this,w=x.b=A.cj(x,0),v=w.c,u=x.a.c
+u=A.ci(u.gh().gh().gh().i(A.E(B.f,A.M()),u.gh().gh().gj()),w,u.gh().gh().gh().i(B.h,u.gh().gh().gj()))
+x.c=u
+w.N(0,u)
+x.K(v)},
+v(){var x,w,v=this,u=(v.a.Q&1)!==0
+if(u){x=v.c
+x.e=B.aV
+w=$.wrg()
+w=A.be(w,new A.bc(B.U))
+w=new A.b5(w,A.aU(w))
+x.y=w}if(u)v.b.d.f|=32
+x=v.c
+x.av()
+w=v.b
+w.U(u)
+w.l()
+if(u)x.a0()
+$.u().F(u)},
+A(){this.b.m()
+this.c.B()}}
+C.f3J.prototype={
+gu(){return"AppContentAdIdDeclarationPageComponent"},
+q(){var x,w,v,u,t=this,s=null,r=t.b=F.aw(t,0),q=r.c,p=t.a.c,o=t.c=F.av(q,p.gh().gh().gh().i(B.n,p.gh().gh().gj()),p.gh().gh().gh().i(B.i,p.gh().gh().gj())),n=b.G.document.createElement("p")
+t.S(n,"pc-emphasized pc-indented")
+A.O(n,$.B5r())
+x=t.d=M.fm(t,3)
+w=x.c
+x.aa("pc-indented pc-align-top")
+A.c(w,"debug-id","ack-checkbox")
+v=p.d
+v=new A.bU(v,new A.G(s,s,y.m),A.bq(s),A.aY(s))
+t.e=v
+p=M.fl(x,v,p.gh().gh().gh().i(B.h,p.gh().gh().gj()),p.gh().gh().gh().p(B.i,p.gh().gh().gj()),s)
+t.f=p
+v=y.f
+u=y.Q
+x.t(p,A.a([A.a([A.bo($.B5s())],v)],u))
+o.db=A.a([],y.U)
+r.t(o,A.a([B.a,A.a([n,w],v)],u))
+t.K(q)},
+Y(d,e,f){if(3<=e&&e<=4){if(d===B.J)return this.e
+if(d===B.r)return this.f}return f},
+v(){var x,w,v,u,t,s=this,r=(s.a.Q&1)!==0
+if(r)s.c.r=!1
+if(r)s.c.G()
+x="control:"+B.beo.gbc(0)
+w=s.r!==x
+if(w){s.e.a=x
+s.r=x
+v=!0}else v=r
+if(w)s.e.a4()
+s.c.ac()
+u=s.b
+u.U(r)
+t=s.d
+t.U(r)
+u.l()
+t.l()
+$.u().F(v)},
+A(){var x=this
+x.b.m()
+x.d.m()
+x.e.B()
+x.f.B()
+x.c.B()}}
+C.cps.prototype={
+gchF(){var x,w,v=this.r
+if(v===$){x=this.i(B.e,null)
+w=x.$ti
+w=E.dp(A.L(x.b,w.c,w.y[1]))
+w.toString
+v=this.r=w}return v},
+gaE5(){var x,w,v=this.x
+if(v===$){x=this.i(B.e,null)
+w=x.$ti
+w=A.dd(A.L(x.b,w.c,w.y[1]))
+w.toString
+v=this.x=w}return v},
+gchG(){var x,w,v=this.y
+if(v===$){x=this.i(B.e,null)
+w=x.$ti
+w=A.dm(A.L(x.b,w.c,w.y[1]))
+w.toString
+v=this.y=w}return v},
+gchH(){var x,w,v=this.CW
+if(v===$){x=this.i(B.e,null)
+w=x.$ti
+w=E.dn(A.L(x.b,w.c,w.y[1]))
+w.toString
+v=this.CW=w}return v},
+q(){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i=this,h=null,g=new C.dW7(A.a2(i,0,16)),f=$.txs
+g.b=f==null?$.txs=A.ad(B.a,h):f
+x=b.G.document.createElement("app-content-ad-id-declaration-page")
+g.c=x
+i.b=g
+w=$.az
+if(w==null)w=$.az=new A.bL(A.J(y.N,y.O))
+i.cy=w
+v=$.aA
+w=v==null?$.aA=A.bQ(w):v
+i.db=w
+w=new A.bM(w,A.a([],y.q))
+i.dx=w
+g=i.dy=new A.bS(w,new A.af(g,h))
+w=i.i(B.e,h)
+v=i.i(B.L,h)
+u=new A.cf(w,g,v)
+i.fr=u
+t=i.i(B.e,h)
+s=t.$ti
+s=A.b1(A.L(t.b,s.c,s.y[1]))
+s.toString
+i.fx=s
+t=i.fy=i.i(B.aj,h).E(0,s)
+r=i.i(B.b1,h).E(0,s)
+i.go=r
+q=i.i(B.j,h)
+p=i.i(B.N,h)
+o=i.i(B.Q,h)
+n=i.i(B.t,h)
+m=i.i(B.w,h)
+m=i.id=new E.dj(q,s,A.bf(q,s),p,t,r,o,n,m)
+u=i.k1=new E.di(u,m)
+n=i.i(B.ak,h)
+n=A.cg(n.a,n.b,i.p(B.e,h))
+i.k2=n
+n=i.k3=new Q.AN(n)
+o=i.i(B.ae,h)
+r=i.i(B.eW,h)
+i.i(B.w,h)
+i.k4=new K.bhH(u,g,o,r,n)
+q=i.i(B.ai,h)
+s=new S.xb(q.bD(s,B.fo),q.bD(s,B.cI))
+i.ok=s
+q=A.a([],y.P)
+l=A.b("Loading...",h,h,h,h)
+k=A.aI()
+j=y.N
+v=new C.Te(s,B.yM,!1,!1,g,o,r,n,q,W.aR,l,$,$,m,A.bu(p.bj(),h,A.v(p).n("aO.T")),A.bu(t.bj(),h,A.v(t).n("aO.T")),k,w,A.bI(B.a2,j,j),new A.aW(new A.ay($.bz,y.D),y.F),g,v)
+v.cA(u)
+i.a=v
+i.K(x)},
+Y(d,e,f){var x,w,v,u=this,t=null
+if(0===e){if(d===B.aa)return u.cy
+if(d===B.a7)return u.db
+if(d===B.ab)return u.dx
+if(d===B.a3)return u.dy
+if(d===B.al)return u.fr
+if(d===B.a5)return u.fx
+if(d===B.af)return u.fy
+if(d===D.b8)return u.go
+if(d===D.b6)return u.id
+if(d===D.aZ)return u.k1
+if(d===B.p)return u.k2
+if(d===R.kZ)return u.k3
+if(d===U.aja)return u.k4
+if(d===T.f1)return u.ok
+if(d===B.a_){x=u.e
+return x===$?u.e="polite":x}if(d===D.b0){x=u.f
+if(x===$){w=u.i(B.e,t)
+v=w.$ti
+x=u.f=new A.aM(A.b1(A.L(w.b,v.c,v.y[1])),y.L)}return x}if(d===D.b4)return u.gchF()
+if(d===D.b5){x=u.w
+return x===$?u.w=E.dr(u.i(B.j,t),u.fx,u.gchF()):x}if(d===D.bc)return u.gaE5()
+if(d===D.bb)return u.gchG()
+if(d===D.b_){x=u.z
+if(x===$){w=u.i(B.e,t)
+v=w.$ti
+v=A.db(A.L(w.b,v.c,v.y[1]))
+v.toString
+x=u.z=v}return x}if(d===D.b7){x=u.Q
+if(x===$){w=u.i(B.e,t)
+v=w.$ti
+v=A.de(A.L(w.b,v.c,v.y[1]))
+v.toString
+x=u.Q=v}return x}if(d===D.H){x=u.as
+return x===$?u.as=A.bf(u.i(B.j,t),u.fx):x}if(d===D.bd){x=u.at
+return x===$?u.at=E.dq(u.i(B.j,t),u.fx,u.gaE5()):x}if(d===D.b3){x=u.ax
+return x===$?u.ax=A.du(u.i(B.j,t),u.fx,u.gaE5(),u.gchG()):x}if(d===D.b9){x=u.ay
+if(x===$){w=u.i(B.e,t)
+v=w.$ti
+v=A.dc(A.L(w.b,v.c,v.y[1]))
+v.toString
+x=u.ay=v}return x}if(d===D.ba){x=u.ch
+if(x===$){w=u.i(B.e,t)
+v=w.$ti
+v=A.df(A.L(w.b,v.c,v.y[1]))
+v.toString
+x=u.ch=v}return x}if(d===D.be)return u.gchH()
+if(d===D.bf){x=u.cx
+return x===$?u.cx=P.ds(u.i(B.j,t),u.fx,u.gaE5(),u.gchH()):x}}return f},
+v(){var x=this,w=(x.d.d&1)!==0
+if(w)x.a.G()
+x.b.l()
+if(w)x.a.a0()},
+A(){this.a.B()}}
+var z=a.updateTypes(["l<~>(j,F)","cps()"]);(function installTearOffs(){var x=a._static_2,w=a._static_0
+x(C,"FsH","LZn",0)
+x(C,"FsI","LZo",0)
+x(C,"FsJ","LZp",0)
+x(C,"FsK","LZq",0)
+x(C,"FsL","LZr",0)
+w(C,"FsG","ESz",1)})();(function inheritance(){var x=a.inherit,w=a.inheritMany
+x(C.Te,K.aFV)
+x(C.dW7,A.b0)
+w(A.l,[C.f3F,C.f3G,C.f3H,C.f3I,C.f3J])
+x(C.cps,A.ab)})()
+A.an(b.typeUniverse,JSON.parse('{"Te":{"oR":[],"aN":[],"bJ":["d3"]},"cps":{"ab":["Te"],"p":[],"ab.T":"Te"},"dW7":{"j":[]},"f3F":{"l":["Te"],"j":[],"p":[]},"f3G":{"l":["Te"],"j":[],"p":[]},"f3H":{"l":["Te"],"j":[],"p":[]},"f3I":{"l":["Te"],"j":[],"p":[]},"f3J":{"l":["Te"],"j":[],"p":[]}}'))
+var y=(function rtii(){var x=A.t
+return{d:x("Te"),M:x("R<Te>"),P:x("r<yn>"),q:x("r<cv<@>>"),j:x("r<k2>"),Q:x("r<N<B>>"),U:x("r<dE<@>>"),f:x("r<B>"),L:x("aM<bi>"),N:x("o"),m:x("G<@>"),D:x("ay<~>"),F:x("aW<~>"),z:x("@"),O:x("@()"),A:x("bD?"),H:x("~")}})();(function staticFields(){$.txs=null})();(function lazyInitializers(){var x=a.lazyFinal
+x($,"OKu","wrb",()=>$.f9())
+x($,"OKx","wre",()=>A.qZ("https://developer.android.com/studio/build/manage-manifests#merge-manifests"))
+x($,"OKz","wrg",()=>{var w=null
+return A.b("Your manifest file includes the com.google.android.gms.permission.AD_ID permission. This means your app declares the use of advertising ID. Answer 'yes' or remove this permission from your manifest.",w,w,w,w)})
+x($,"OKy","wrf",()=>$.tl6())
+x($,"OKv","wrc",()=>A.nI5($.dQY().b))
+x($,"OKw","wrd",()=>{var w=null
+return A.b("Learn more about merging multiple manifest files (opens in a new tab)",w,w,w,w)})
+x($,"U7V","rUl",()=>{var w=null
+return A.b("Android 13 (API 33) introduces changes to advertising ID",w,w,w,w)})
+x($,"U7W","B5i",()=>{var w=null
+return A.b("Apps that use advertising ID and target Android 13 or later must declare the com.google.android.gms.permission.AD_ID permission in their app manifest. If you don't include this permission, your advertising identifier will be zeroed out, any attempts to access the identifier will receive a string of zeros instead of the identifier.",w,w,w,w)})
+x($,"U8_","rUm",()=>{var w=null
+return A.b("We'll use this declaration to provide safeguards in Play Console",w,w,w,w)})
+x($,"U80","B5m",()=>{var w=null
+return A.b("If you say that your app uses advertising ID, we will block releases that don't include the com.google.android.gms.permission.AD_ID permission in the manifest file when targeting Android 13. When we block these releases, we will remind you to add the permission. If your release doesn't need advertising ID, you'll be able to skip the error and release. You can also update the declaration to turn off advertising ID release errors.",w,w,w,w)})
+x($,"U81","rUn",()=>{var w=null
+return A.b("Declaration",w,w,w,w)})
+x($,"U82","B5n",()=>{var w=null
+return A.b("You can't rollout releases with artifacts targeting Android 13 until you have completed this declaration.",w,w,w,w)})
+x($,"U83","rUo",()=>{var w=null
+return A.b("Does your app use advertising ID?",w,w,w,w)})
+x($,"U84","B5o",()=>{var w=null
+return A.b("This includes any SDKs that your app imports that use advertising ID",w,w,w,w)})
+x($,"U85","B5p",()=>{var w=null
+return A.b("No",w,w,w,w)})
+x($,"U86","B5q",()=>{var w=null
+return A.b("Yes",w,w,w,w)})
+x($,"U7X","B5j",()=>{var w=null
+return A.b("When you answer this question, make sure to verify if any third-party SDK code in your app uses advertising ID. If so, you must declare that your app uses it. Some SDKs, such as the Google Mobile Ads SDK (Play Services-ads) may already declare the com.google.android.gms.permission.AD_ID permission in the SDK's library manifest. If your app uses these SDKs as dependencies, the com.google.android.gms.permission.AD_ID permission from the SDK's library manifest will be merged with your app's main manifest by default, even if you don't explicitly declare the permission in your app's main manifest.",w,w,w,w)})
+x($,"U7Y","B5k",()=>{var w=null
+return A.b("Why does your app need to use advertising ID? This includes any SDKs your app imports that use advertising IDs.",w,w,w,w)})
+x($,"U7Z","B5l",()=>{var w=null
+return A.b("Select all that apply",w,w,w,w)})
+x($,"U87","B5r",()=>{var w=null
+return A.b("Turn off release errors",w,w,w,w)})
+x($,"U88","B5s",()=>{var w=null
+return A.b("I understand the ramifications of not including the com.google.android.gms.permission.AD_ID permission in the manifest file when targeting Android 13 and would like to turn off release errors",w,w,w,w)})})()};
+(a=>{a["mmJzLds4+I3pAjc6GCBJyvFQ690="]=a.current})($__dart_deferred_initializers__);
+//# sourceMappingURL=main.dart.js_3719.part.js.map

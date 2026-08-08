@@ -146,13 +146,17 @@ export const api = {
   // Races
   races: (date) => request(`/races${date ? `?date=${date}` : ''}`),
   // Course PMU du jour du pays (Quarté LONAB…) + journal national.
-  nationalRace: (country) => request(`/races/national?country=${encodeURIComponent(country || '')}`),
+  nationalRace: (country) => request(
+    `/races/national?country=${encodeURIComponent(country || '')}`,
+    { auth: true }
+  ),
   // Autres courses classées ECD selon le programme du pays.
   ecdRaces: (country, date) => request(
     `/races/ecd?country=${encodeURIComponent(country || '')}${date ? `&date=${encodeURIComponent(date)}` : ''}`
   ),
   raceHistory: (country) => request(
-    `/races/history${country ? `?country=${encodeURIComponent(country)}` : ''}`
+    `/races/history${country ? `?country=${encodeURIComponent(country)}` : ''}`,
+    { auth: true }
   ),
   raceDetail: (externalId) => request(`/races/${externalId}`),
   prediction: (externalId) => request(`/races/${externalId}/prediction`, { auth: true }),
@@ -188,7 +192,9 @@ export const api = {
     }),
 
   // Stats
-  successRate: () => request('/stats/success-rate'),
+  successRate: (country) => request(
+    `/stats/success-rate${country ? `?country=${encodeURIComponent(country)}` : ''}`
+  ),
 };
 
 export default api;
