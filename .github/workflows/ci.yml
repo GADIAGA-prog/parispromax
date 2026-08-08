@@ -33,7 +33,7 @@ jobs:
       - name: Publish backend test failure
         if: failure()
         run: |
-          node -e "const fs=require('fs');const s=fs.readFileSync('test-output.log','utf8');const failed=[...s.matchAll(/^test at ([^\r\n]+)$/gm)].map(m=>m[1]);const names=[...new Set(failed)].join(', ')||'échec sans fichier identifié';console.log('::error title=Backend tests en échec::'+names)"
+          node -e "const fs=require('fs');const s=fs.readFileSync('test-output.log','utf8');const failed=[...s.matchAll(/^(?:not ok \d+ - |✖ )([^\r\n]+)$/gm)].map(m=>m[1]);const names=[...new Set(failed)].join(', ')||'échec sans test identifié';console.log('::error title=Backend tests en échec::'+names)"
       - run: npm run check:prod
         env:
           DATABASE_URL: postgresql://check:check@localhost:5432/check
