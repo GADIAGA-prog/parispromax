@@ -25,7 +25,15 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npm run prisma:generate
-      - run: npm test
+      - name: Run backend tests
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.log
+      - name: Publish backend test failure
+        if: failure()
+        run: |
+          node -e "const fs=require('fs');const s=fs.readFileSync('test-output.log','utf8');const failed=[...s.matchAll(/^test at ([^\r\n]+)$/gm)].map(m=>m[1]);const names=[...new Set(failed)].join(', ')||'échec sans fichier identifié';console.log('::error title=Backend tests en échec::'+names)"
       - run: npm run check:prod
         env:
           DATABASE_URL: postgresql://check:check@localhost:5432/check
