@@ -1,8 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A
-A=c[0]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"W7S","aou",()=>{var x=null
-return A.b("You need permission to edit this page",x,x,x,x)})})()};
-(a=>{a["ma06j6+fuMHh90gl2QeQtugMsSU="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_3653.part.js.map

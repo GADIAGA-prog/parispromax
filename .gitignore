@@ -48,6 +48,13 @@ backend/test-e2e.js
 
 # verification artifacts
 dist-verify/
+tmp/
+
+# local media, exports and communication drafts
+outputs/
+social-media/
+facebook-post.png
+vlc-help.txt
 
 # local Android store/test artifacts (large generated binaries)
 builds/

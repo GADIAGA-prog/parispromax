@@ -1,8 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A
-A=c[0]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"SP7","rMi",()=>{var x=null
-return A.b("Supported Android devices",x,x,x,x)})})()};
-(a=>{a["ZE5cnk959Uzb9bJ+gkHqk7E5FhI="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_4830.part.js.map

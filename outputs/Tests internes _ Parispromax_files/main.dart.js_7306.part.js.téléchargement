@@ -1,8 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C
-A=c[0]
-B=c[2]
-C=c[2474]
-var z=a.updateTypes([]);(function constants(){C.a7X=new A.c5("calendar_today",B.bP,null,!1,!1)})()};
-(a=>{a["WsP+UKD/wAKWlTPKMBDGkqoup3E="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_7306.part.js.map

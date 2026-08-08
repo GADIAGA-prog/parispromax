@@ -1,9 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var B,A
-B=c[0]
-A=c[2]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"Wgq","o71",()=>{var x=B.t("j2"),w=B.t("o")
-return B.e0(B.V([A.uX,"automotive:",A.ku,"google_play_games_pc:",A.wA,"tv:",A.yX,"wear:",A.UM,"go2phone:",A.UK,"go:",A.uW,"chrome_os:",A.wz,"android_xr:"],x,w),x,w)})})()};
-(a=>{a["zVcd1O7eSy3ZflP3d69GRo/1iXA="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_2646.part.js.map

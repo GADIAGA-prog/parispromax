@@ -1,8 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A
-A=c[0]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"VjQ","tae",()=>{var x=null
-return A.b("Your app bundle will be discarded and you will need to start a new upload.",x,x,x,x)})})()};
-(a=>{a["9S41OaibTSEhhiCbFYW2M2vvqsA="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_4818.part.js.map

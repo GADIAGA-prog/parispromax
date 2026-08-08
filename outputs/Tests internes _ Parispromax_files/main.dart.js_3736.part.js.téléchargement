@@ -1,8 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A
-A=c[0]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"V7N","bqk",()=>{var x=null
-return A.b("App store content",x,x,x,x)})})()};
-(a=>{a["xIygrEp55wpbg3bZ3PYz6ZLyyV8="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_3736.part.js.map

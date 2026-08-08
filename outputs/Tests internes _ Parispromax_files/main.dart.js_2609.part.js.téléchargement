@@ -1,8 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A
-A=c[0]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"VfR","ipR",()=>{var x=null
-return A.b("View app information and download bulk reports (read-only)",x,x,x,x)})})()};
-(a=>{a["GGOIHMvdSIKgbr+wQBTZTpyBgT8="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_2609.part.js.map

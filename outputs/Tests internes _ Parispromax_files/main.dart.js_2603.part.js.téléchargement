@@ -1,9 +1,0 @@
-((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B
-A=c[0]
-B=c[2]
-var z=a.updateTypes([]);(function lazyInitializers(){var y=a.lazyFinal
-y($,"QjE","bpS",()=>{var x=null
-return A.V([B.bn1,A.b("Tips, news, and opportunities",x,x,x,x),B.bn2,A.b("Feedback and surveys",x,x,x,x),B.bn3,A.b("Payments and tax",x,x,x,x),B.bn4,A.b("Policy",x,x,x,x)],A.t("qI"),A.t("o"))})})()};
-(a=>{a["s+oTKyor+dYCMTnnudbm+2lsOs8="]=a.current})($__dart_deferred_initializers__);
-//# sourceMappingURL=main.dart.js_2603.part.js.map
