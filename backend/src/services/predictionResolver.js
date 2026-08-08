@@ -23,8 +23,9 @@ function raceContext(race) {
 }
 
 function nonPartantNumbers(race) {
+  const parsed = parseJson(race?.nonPartants, []);
   return new Set(
-    parseJson(race?.nonPartants, [])
+    (Array.isArray(parsed) ? parsed : [])
       .map(runnerNumber)
       .filter(Boolean)
   );

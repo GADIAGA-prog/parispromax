@@ -46,6 +46,19 @@ test('calcule et persiste un pronostic de repli depuis les partants actifs', asy
   assert.deepEqual(JSON.parse(saved[0].topPicks).map((pick) => pick.number), [3, 2, 1]);
 });
 
+test('une course sans champ nonPartants conserve un pronostic disponible', async () => {
+  const currentRace = race({ nonPartants: null });
+  assert.deepEqual(activeHorses(currentRace).map((horse) => horse.number), [1, 2, 3, 4]);
+
+  const result = await resolveCanonicalPrediction(currentRace, {
+    iaEnabled: false,
+    db: { prediction: { create: async () => undefined } },
+  });
+
+  assert.equal(result.source, 'heuristic-fallback');
+  assert.equal(result.picks.length, 4);
+});
+
 test('prefere le LTR et versionne une Prediction legacy au classement identique', async () => {
   let creates = 0;
   const currentRace = race({
