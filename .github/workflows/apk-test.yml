@@ -52,12 +52,14 @@ jobs:
         shell: bash
         run: |
           APK_URL="$(node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('eas-build.json','utf8'));const b=Array.isArray(d)?d[0]:d;process.stdout.write(b.artifacts.applicationArchiveUrl)")"
-          curl --fail --location "$APK_URL" --output parispromax-production.apk
+          curl --fail --location "$APK_URL" --output ParisPromax-Android.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: parispromax-production-apk
-          path: parispromax-production.apk
+          path: |
+            ParisPromax-Android.apk
+            eas-build.json
           if-no-files-found: error
           retention-days: 14
