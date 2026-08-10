@@ -33,7 +33,20 @@ jobs:
         run: npx expo install --check
 
       - name: Build signed APK with EAS
-        run: npx eas-cli@latest build --platform android --profile production-apk --non-interactive --wait --json > eas-build.json
+        shell: bash
+        run: |
+          if [[ -z "${EXPO_TOKEN:-}" ]]; then
+            echo "::error title=EAS authentication::Le secret EXPO_TOKEN est absent"
+            exit 1
+          fi
+          set +e
+          npx eas-cli@latest build --platform android --profile production-apk --non-interactive --wait --json > eas-build.json 2> eas-build-error.log
+          code=$?
+          set -e
+          if [[ $code -ne 0 ]]; then
+            node -e "const fs=require('fs');const s=fs.readFileSync('eas-build-error.log','utf8');let category='Erreur EAS non classée';if(/not logged in|invalid token|authentication|expo user account/i.test(s))category='Authentification Expo refusée';else if(/permission|not authorized|forbidden/i.test(s))category='Permissions du projet Expo refusées';else if(/limit|quota|concurrent build/i.test(s))category='Quota ou limite de builds EAS atteint';else if(/credential|keystore|signing/i.test(s))category='Identifiants de signature Android indisponibles';else if(/projectId|project config|configuration/i.test(s))category='Configuration du projet EAS invalide';console.log('::error title=Catégorie de l’échec EAS::'+category)"
+            exit $code
+          fi
 
       - name: Download APK
         shell: bash
