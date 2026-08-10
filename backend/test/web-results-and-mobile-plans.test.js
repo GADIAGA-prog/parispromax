@@ -8,6 +8,10 @@ const html = fs.readFileSync(path.join(root, 'backend', 'public', 'index.html'),
 const webApp = fs.readFileSync(path.join(root, 'backend', 'public', 'app.js'), 'utf8');
 const paywall = fs.readFileSync(path.join(root, 'src', 'screens', 'PaywallScreen.js'), 'utf8');
 const profile = fs.readFileSync(path.join(root, 'src', 'screens', 'ProfileScreen.js'), 'utf8');
+const appConfig = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
+const easConfig = JSON.parse(fs.readFileSync(path.join(root, 'eas.json'), 'utf8'));
+const mobilePackage = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const mobilePackageLock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'));
 const nationalCard = fs.readFileSync(path.join(root, 'src', 'components', 'NationalGameCard.js'), 'utf8');
 const styles = fs.readFileSync(path.join(root, 'backend', 'public', 'styles.css'), 'utf8');
 const serviceWorker = fs.readFileSync(path.join(root, 'backend', 'public', 'sw.js'), 'utf8');
@@ -188,6 +192,44 @@ test('le téléchargement Android reste visible en haut du site sur tous les éc
   assert.match(html, />Installer Android</);
   assert.match(styles, /\.header-android-download-mobile \{ display: none; \}/);
   assert.match(styles, /@media \(max-width: 1180px\)[\s\S]*\.header-android-download-mobile \{ display: inline-flex; \}/);
+});
+
+test('Android permet de partager le lien officiel de l’application', () => {
+  assert.match(profile, /const ANDROID_DOWNLOAD_URL = 'https:\/\/www\.parispromax\.com\/download\/android'/);
+  assert.match(profile, /const onShareAndroidApp = useCallback/);
+
+  const blockStart = profile.indexOf("{Platform.OS === 'android' && (");
+  const blockEnd = profile.indexOf('<Text style={styles.sectionLabel}>Nous contacter</Text>', blockStart);
+  assert.notEqual(blockStart, -1);
+  assert.notEqual(blockEnd, -1);
+
+  const appShareBlock = profile.slice(blockStart, blockEnd);
+  assert.match(appShareBlock, /onPress=\{onShareAndroidApp\}/);
+  assert.match(appShareBlock, />Partager l’application</);
+  assert.match(appShareBlock, /accessibilityLabel="Partager l’application Android ParisPromax"/);
+  assert.doesNotMatch(appShareBlock, /github\.com\/GADIAGA-prog\/parispromax\/releases/);
+  assert.match(profile, /Share\.share\([\s\S]{0,400}ANDROID_DOWNLOAD_URL[\s\S]{0,200}dialogTitle: 'Partager ParisPromax'/);
+});
+
+test('Android affiche la version native installée et le build EAS', () => {
+  assert.match(profile, /from 'expo-application'/);
+  assert.match(profile, /Application\.nativeApplicationVersion/);
+  assert.match(profile, /Application\.nativeBuildVersion/);
+  assert.match(profile, /Constants\.executionEnvironment === 'storeClient'/);
+  assert.match(profile, />Version installée</);
+  assert.match(profile, /build Android/);
+  assert.match(profile, />Télécharger la version la plus récente</);
+  assert.match(profile, /const onDownloadLatestAndroid = useCallback/);
+  assert.match(profile, /Linking\.openURL\(ANDROID_DOWNLOAD_URL\)/);
+  assert.match(profile, /onPress=\{onDownloadLatestAndroid\}/);
+  assert.equal(appConfig.expo.version, '1.1.0');
+  assert.equal(mobilePackage.version, appConfig.expo.version);
+  assert.equal(mobilePackageLock.version, appConfig.expo.version);
+  assert.equal(mobilePackageLock.packages[''].version, appConfig.expo.version);
+  assert.equal(mobilePackage.dependencies['expo-application'], '~56.0.3');
+  assert.equal(easConfig.cli.appVersionSource, 'remote');
+  assert.equal(easConfig.build['production-apk'].autoIncrement, true);
+  assert.equal(Object.hasOwn(appConfig.expo.android, 'versionCode'), false);
 });
 
 test('les actions de l’en-tête restent compactes et sur une seule ligne', () => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, Share, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,10 +18,18 @@ const STATUS_LABEL = {
   cancelled: 'Annulé',
 };
 
+const ANDROID_DOWNLOAD_URL = 'https://www.parispromax.com/download/android';
+
 export default function ProfileScreen({ navigation }) {
   const { phone, profile, hasPaid, plan, paidUntil, referral, logout, refreshAccess } = useAuth();
   const showPaymentHistory = Platform.OS !== 'android';
-  const appVersion = Constants.expoConfig?.version || '1.0.0';
+  const usesHostAppVersion = Constants.executionEnvironment === 'storeClient';
+  const appVersion = (
+    !usesHostAppVersion && Application.nativeApplicationVersion
+  ) || Constants.expoConfig?.version || '—';
+  const androidBuildVersion = Platform.OS === 'android' && !usesHostAppVersion
+    ? Application.nativeBuildVersion
+    : null;
 
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
@@ -49,6 +58,28 @@ export default function ProfileScreen({ navigation }) {
     ]);
     setRefreshing(false);
   };
+
+  const onShareAndroidApp = useCallback(async () => {
+    try {
+      await Share.share(
+        {
+          title: 'ParisPromax pour Android',
+          message: `Découvre ParisPromax et télécharge l’application Android officielle : ${ANDROID_DOWNLOAD_URL}`,
+        },
+        { dialogTitle: 'Partager ParisPromax' }
+      );
+    } catch (error) {
+      Alert.alert('Partage indisponible', "Impossible d’ouvrir le partage pour le moment. Réessayez.");
+    }
+  }, []);
+
+  const onDownloadLatestAndroid = useCallback(async () => {
+    try {
+      await Linking.openURL(ANDROID_DOWNLOAD_URL);
+    } catch (error) {
+      Alert.alert('Téléchargement indisponible', "Impossible d’ouvrir la dernière version pour le moment. Réessayez.");
+    }
+  }, []);
 
   const statusLabel = hasPaid ? 'Abonné VIP' : 'Non abonné';
 
@@ -161,6 +192,49 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.actionText}>Activer les notifications</Text>
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
+
+        {Platform.OS === 'android' && (
+          <>
+            <Text style={styles.sectionLabel}>Application Android</Text>
+
+            <View
+              accessible
+              style={styles.action}
+              accessibilityLabel={`Version Android installée ${appVersion}${androidBuildVersion ? ` build ${androidBuildVersion}` : ''}`}
+            >
+              <Ionicons name="logo-android" size={20} color={COLORS.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.actionText, styles.actionTextStacked]}>Version installée</Text>
+                <Text style={styles.actionSub}>
+                  ParisPromax v{appVersion}{androidBuildVersion ? ` · build Android ${androidBuildVersion}` : ''}
+                </Text>
+              </View>
+            </View>
+
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Télécharger la version Android la plus récente"
+              style={styles.action}
+              onPress={onDownloadLatestAndroid}
+            >
+              <Ionicons name="download-outline" size={20} color={COLORS.accent} />
+              <Text style={styles.actionText}>Télécharger la version la plus récente</Text>
+              <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Partager l’application Android ParisPromax"
+              style={styles.action}
+              onPress={onShareAndroidApp}
+            >
+              <Ionicons name="share-social-outline" size={20} color={COLORS.accent} />
+              <Text style={styles.actionText}>Partager l’application</Text>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+            </Pressable>
+          </>
+        )}
+
         <Text style={styles.sectionLabel}>Nous contacter</Text>
         <Pressable style={styles.action} onPress={() => WebBrowser.openBrowserAsync('https://www.parispromax.com/#contact')}>
           <Ionicons name="mail-outline" size={20} color={COLORS.info} />
@@ -268,7 +342,9 @@ export default function ProfileScreen({ navigation }) {
           <Text style={[styles.actionText, { color: COLORS.danger }]}>Supprimer mon compte</Text>
         </Pressable>
 
-        <Text style={styles.version}>ParisPromax v{appVersion}</Text>
+        {Platform.OS !== 'android' && (
+          <Text style={styles.version}>ParisPromax v{appVersion}</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
