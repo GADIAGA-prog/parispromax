@@ -56,7 +56,7 @@ export default function ProfileScreen({ navigation }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Contact & compte</Text>
+          <Text style={styles.title}>Mon compte</Text>
           <Pressable onPress={onRefresh} hitSlop={10}>
             <Ionicons name={refreshing ? 'sync' : 'refresh'} size={22} color={COLORS.textMuted} />
           </Pressable>

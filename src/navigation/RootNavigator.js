@@ -51,7 +51,7 @@ function MainTabs() {
             'Courses du jour': 'home',
             'Résultats': 'trophy',
             'Abonnements': 'diamond',
-            'Contact': 'chatbubbles',
+            'Compte': 'person-circle',
           };
           return <Ionicons name={icons[route.name]} size={size} color={color} />;
         },
@@ -60,7 +60,7 @@ function MainTabs() {
       <Tab.Screen name="Courses du jour" component={HomeScreen} />
       <Tab.Screen name="Résultats" component={HistoryScreen} />
       <Tab.Screen name="Abonnements" component={PaywallScreen} />
-      <Tab.Screen name="Contact" component={ProfileScreen} />
+      <Tab.Screen name="Compte" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

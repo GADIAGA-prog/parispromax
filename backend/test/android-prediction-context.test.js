@@ -13,6 +13,7 @@ const detailScreen = fs.readFileSync(path.join(root, 'src', 'screens', 'RaceDeta
 const insightsCard = fs.readFileSync(path.join(root, 'src', 'components', 'RaceInsightsCard.js'), 'utf8');
 const insightsServicePath = path.join(root, 'src', 'services', 'raceInsights.js');
 const raceContextPath = path.join(root, 'src', 'services', 'raceContext.js');
+const raceProgramPath = path.join(root, 'src', 'services', 'raceProgram.js');
 const aiEnginePath = path.join(root, 'src', 'services', 'aiEngine.js');
 const ecdGainsTable = fs.readFileSync(path.join(root, 'src', 'components', 'EcdGainsTable.js'), 'utf8');
 const quinteScreen = fs.readFileSync(path.join(root, 'src', 'screens', 'QuintePlusScreen.js'), 'utf8');
@@ -44,6 +45,7 @@ function loadTranspiledModule(sourcePath, stubs = {}) {
 }
 
 const raceContext = loadTranspiledModule(raceContextPath);
+const raceProgram = loadTranspiledModule(raceProgramPath);
 
 function loadRaceInsights() {
   return loadTranspiledModule(insightsServicePath, {
@@ -61,6 +63,48 @@ function horses(count) {
     probaPodium: 0.4 - index * 0.02,
   }));
 }
+
+test('Android fusionne toutes les courses avec le marquage ECD officiel', () => {
+  const complete = [
+    {
+      id: 'track-r2',
+      name: 'Réunion 2',
+      races: [{ id: 'R2C1', number: 'R2C1', name: 'Course générique' }],
+    },
+    {
+      id: 'track-r1',
+      name: 'Réunion 1',
+      races: [
+        { id: 'R1C2', number: 'R1C2', name: 'Course 2' },
+        { id: 'R1C1', number: 'R1C1', name: 'Course 1' },
+      ],
+    },
+  ];
+  const official = [{
+    id: 'track-r1',
+    name: 'Réunion 1',
+    races: [{ id: 'R1C1', number: 'R1C1', ecd: { unitStake: 500 } }],
+  }];
+
+  const merged = raceProgram.mergeRacePrograms(complete, official);
+
+  assert.equal(merged.length, 2);
+  assert.deepEqual(merged.flatMap((track) => track.races.map((race) => race.id)), [
+    'R1C1', 'R1C2', 'R2C1',
+  ]);
+  assert.equal(merged[0].races[0].ecd.unitStake, 500);
+  assert.equal(merged[1].races[0].ecd, undefined);
+  assert.equal(raceProgram.mergeRacePrograms(complete, []).length, 2);
+  assert.deepEqual(
+    raceProgram.mergeRacePrograms([], official).flatMap((track) => track.races.map((race) => race.id)),
+    ['R1C1']
+  );
+  const staleEcd = raceProgram.mergeRacePrograms(complete, official, {
+    programDate: '2026-08-09',
+    ecdDate: '2026-08-08',
+  });
+  assert.equal(staleEcd[0].races[0].ecd, undefined);
+});
 
 test('l historique colore uniquement le podium contextuel de chaque jeu', () => {
   const hybrid = {
@@ -130,7 +174,12 @@ test('Android compte uniquement les partants actifs et bloque une regle ECD non 
   assert.match(detailScreen, /Arrivée officielle partielle/);
   assert.match(detailScreen, /le bilan reste suspendu/);
   assert.match(detailScreen, /Partants actifs \(\{displayedRunnerCount\}\)/);
+  assert.match(detailScreen, /api\.raceDetail\(race\.id\)/);
+  assert.match(detailScreen, /const predictionReady = Boolean\(shown\?\.horses\?\.length\)/);
   assert.doesNotMatch(detailScreen, /horses\.length \|\| displayedRace\.runners/);
+  assert.match(insightsCard, /const hasDetailedRunners = Array\.isArray\(props\.race\?\.horses\)/);
+  assert.match(insightsCard, /if \(!hasDetailedRunners\) return <PredictionPending \/>/);
+  assert.match(insightsCard, /Pronostic en préparation/);
   assert.match(insightsCard, /mode === 'ecd' && !hasVerifiedEcdRules\(props\.race\)/);
   assert.match(insightsCard, /Règle ECD non disponible/);
 });
@@ -155,7 +204,9 @@ test('le repli Android ne classe jamais un non-partant', () => {
 });
 
 test('le contexte ECD ou national traverse la navigation jusqu a la synthese', () => {
-  assert.match(homeScreen, /openRaceDetail\([\s\S]{0,100}\{ \.\.\.race, ecdProfile \},[\s\S]{0,40}'ecd'/);
+  assert.match(homeScreen, /const isOfficialEcd = Boolean\(race\?\.ecd && ecdProfile\)/);
+  assert.match(homeScreen, /isOfficialEcd \? \{ \.\.\.race, ecdProfile \} : race/);
+  assert.match(homeScreen, /isOfficialEcd \? 'ecd' : 'program'/);
   assert.match(homeScreen, /'national',[\s\S]{0,80}nationalGame/);
   assert.match(detailScreen, /predictionMode: requestedPredictionMode/);
   assert.match(detailScreen, /mode=\{predictionMode\}/);
@@ -187,12 +238,13 @@ test('l historique charge resultats et taux independamment dans un en-tete defil
   assert.match(historyScreen, /Taux de succès momentanément indisponible/);
 });
 
-test('Android ne remplace jamais le programme ECD pays par le programme generique', () => {
+test('Android charge le programme complet sans relabeller les courses generiques en ECD', () => {
   assert.match(homeScreen, /Promise\.allSettled/);
   assert.match(homeScreen, /api\.ecdRaces\(country\)/);
-  assert.match(homeScreen, /setTracks\(\[\]\)/);
-  assert.match(homeScreen, /Programme ECD officiel momentanément indisponible/);
-  assert.match(homeScreen, /Aucun programme ECD officiel affiché/);
+  assert.match(homeScreen, /api\.races\(\)/);
+  assert.match(homeScreen, /mergeRacePrograms\(programTracks, ecdTracks, \{ programDate, ecdDate \}\)/);
+  assert.match(homeScreen, /The full programme remains useful/);
+  assert.match(homeScreen, /Toutes les courses du jour/);
   assert.match(homeScreen, /setNationalError/);
   assert.match(homeScreen, /Course nationale momentanément indisponible/);
   assert.match(homeScreen, /offlineText: \{ flexShrink: 1/);

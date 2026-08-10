@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import TrackCardSkeleton from '../components/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { countryFlags } from '../services/countries';
+import { mergeRacePrograms } from '../services/raceProgram';
 import { COLORS, SPACING, FONT, RADIUS } from '../theme/colors';
 
 const FLAGS = countryFlags();
@@ -28,6 +29,7 @@ export default function HomeScreen({ navigation }) {
   const { country, hasPaid, hasAccess } = useAuth();
   const [tracks, setTracks] = useState([]);
   const [offline, setOffline] = useState(false);
+  const [programError, setProgramError] = useState(null);
   const [ecdError, setEcdError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,13 +41,15 @@ export default function HomeScreen({ navigation }) {
   const [ecdSelectionMode, setEcdSelectionMode] = useState(null);
 
   const fetchData = useCallback(async () => {
-    const [nationalState, ecdState] = await Promise.allSettled([
+    const [nationalState, ecdState, programState] = await Promise.allSettled([
       country ? api.nationalRace(country) : Promise.resolve(null),
       country ? api.ecdRaces(country) : Promise.resolve(null),
+      api.races(),
     ]);
     const nationalResult = nationalState.status === 'fulfilled' ? nationalState.value : null;
     const ecdResult = ecdState.status === 'fulfilled' ? ecdState.value : null;
-    const failures = [nationalState, ecdState]
+    const programResult = programState.status === 'fulfilled' ? programState.value : null;
+    const failures = [nationalState, ecdState, programState]
       .filter((state) => state.status === 'rejected')
       .map((state) => state.reason);
     setOffline(failures.some((error) => error?.code === 'NETWORK_ERROR' || error?.code === 'TIMEOUT'));
@@ -60,18 +64,37 @@ export default function HomeScreen({ navigation }) {
       setNationalGame(null);
       setNationalError(nationalState.reason || new Error('Course nationale indisponible.'));
     }
-    if (ecdState.status === 'fulfilled') {
-      setTracks(Array.isArray(ecdResult?.racetracks) ? ecdResult.racetracks : []);
+    const programDate = programResult?.meta?.date || null;
+    const ecdDate = ecdResult?.date || null;
+    const programmesShareDate = !programDate || !ecdDate || programDate === ecdDate;
+    const ecdTracks = ecdState.status === 'fulfilled'
+      && programmesShareDate
+      && Array.isArray(ecdResult?.racetracks)
+      ? ecdResult.racetracks
+      : [];
+    const programTracks = programState.status === 'fulfilled' && Array.isArray(programResult?.racetracks)
+      ? programResult.racetracks
+      : [];
+    setTracks(mergeRacePrograms(programTracks, ecdTracks, { programDate, ecdDate }));
+    setProgramError(
+      programState.status === 'rejected'
+        ? programState.reason || new Error('Programme complet indisponible.')
+        : null
+    );
+    if (ecdState.status === 'fulfilled' && programmesShareDate) {
       setEcdProfile(ecdResult?.profile || null);
       setEcdSelectionMode(ecdResult?.selectionMode || null);
       setEcdError(null);
     } else {
-      // A generic /races/full payload is not a country-validated ECD program.
-      // An honest empty state is safer than relabelling unrelated races.
-      setTracks([]);
+      // The full programme remains useful, but its races are not relabelled as
+      // ECD when the official country payload cannot be verified.
       setEcdProfile(null);
       setEcdSelectionMode(null);
-      setEcdError(ecdState.reason || new Error('Programme ECD indisponible.'));
+      setEcdError(
+        !programmesShareDate
+          ? new Error('Le programme ECD est encore daté de la journée précédente.')
+          : ecdState.reason || new Error('Programme ECD indisponible.')
+      );
     }
   }, [country]);
 
@@ -97,11 +120,23 @@ export default function HomeScreen({ navigation }) {
       predictionMode,
     });
   };
-  const openEcdRace = (track, race) => openRaceDetail(
-    track,
-    { ...race, ecdProfile },
-    'ecd'
-  );
+  const openProgramRace = (track, race) => {
+    const isOfficialEcd = Boolean(race?.ecd && ecdProfile);
+    return openRaceDetail(
+      track,
+      isOfficialEcd ? { ...race, ecdProfile } : race,
+      isOfficialEcd ? 'ecd' : 'program'
+    );
+  };
+
+  const programmeStats = useMemo(() => {
+    const races = tracks.flatMap((track) => track.races || []);
+    return {
+      races: races.length,
+      meetings: tracks.length,
+      ecdRaces: races.filter((race) => race?.ecd).length,
+    };
+  }, [tracks]);
 
   // Ouvre la course nationale (retrouvée dans le programme chargé).
   const openNationalRace = () => {
@@ -140,7 +175,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Aujourd'hui</Text>
-            <Text style={styles.subtitle}>Course nationale · ECD</Text>
+            <Text style={styles.subtitle}>Course nationale · Toutes les courses</Text>
           </View>
           <Image
             source={require('../../assets/logo-emblem-app.png')}
@@ -162,7 +197,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Aujourd'hui</Text>
-          <Text style={styles.subtitle}>Course nationale · ECD</Text>
+          <Text style={styles.subtitle}>Course nationale · Toutes les courses</Text>
         </View>
         <Pressable
           style={styles.subscribeBtn}
@@ -265,25 +300,30 @@ export default function HomeScreen({ navigation }) {
               ) : null}
             </View>
             <View style={styles.ecdHeading}>
-              <Text style={styles.sectionKicker}>ECD · COURSES EN DIRECT</Text>
-              <Text style={styles.sectionTitle}>Courses proposées pour votre pays</Text>
+              <Text style={styles.sectionKicker}>PROGRAMME COMPLET · COURSES EN DIRECT</Text>
+              <Text style={styles.sectionTitle}>Toutes les courses du jour</Text>
               <Text style={styles.ecdHelp}>
-                {ecdError
-                  ? 'Programme ECD officiel momentanément indisponible. Aucun programme générique n’est affiché à sa place.'
-                  : ecdSelectionMode === 'official-country-program'
-                  ? 'Programme officiel de votre opérateur national.'
-                  : ecdSelectionMode === 'country-validated'
-                    ? 'Programme national validé.'
-                    : 'Programme officiel du pays en attente de publication.'}
+                {programmeStats.races
+                  ? `${programmeStats.races} courses dans ${programmeStats.meetings} réunion${programmeStats.meetings > 1 ? 's' : ''}. `
+                  : ''}
+                {programError
+                  ? 'Le programme complet est momentanément indisponible ; les courses ECD déjà publiées restent affichées.'
+                  : ecdError
+                    ? 'Les courses restent disponibles, mais le marquage ECD officiel est momentanément indisponible.'
+                    : ecdSelectionMode === 'official-country-program'
+                      ? `${programmeStats.ecdRaces} courses appartiennent au programme ECD officiel de votre opérateur.`
+                      : ecdSelectionMode === 'country-validated'
+                        ? `${programmeStats.ecdRaces} courses ECD sont validées pour votre pays.`
+                        : 'Le programme ECD officiel du pays est en attente de publication.'}
                 {ecdProfile?.unitStake
-                  ? ` Mise de base : ${ecdProfile.unitStake.toLocaleString('fr-FR')} FCFA.`
+                  ? ` Mise de base ECD : ${ecdProfile.unitStake.toLocaleString('fr-FR')} FCFA.`
                   : ''}
               </Text>
               {ecdError ? (
                 <View style={styles.ecdUnavailable}>
                   <Ionicons name="warning-outline" size={17} color={COLORS.gold} />
                   <Text style={styles.ecdUnavailableText}>
-                    {ecdError.message || 'Le programme ECD officiel ne peut pas être chargé pour le moment.'}
+                    {ecdError.message || 'Le marquage ECD officiel ne peut pas être chargé pour le moment.'}
                   </Text>
                 </View>
               ) : null}
@@ -291,7 +331,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         }
         renderItem={({ item, index }) => (
-          <TrackCard track={item} meetingNumber={index + 1} onRacePress={openEcdRace} />
+          <TrackCard track={item} meetingNumber={index + 1} onRacePress={openProgramRace} />
         )}
         refreshControl={
           <RefreshControl
@@ -304,9 +344,9 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.empty}>
             <Ionicons name="calendar-outline" size={40} color={COLORS.textFaint} />
             <Text style={styles.emptyText}>
-              {ecdError
-                ? 'Aucun programme ECD officiel affiché. Tirez pour réessayer.'
-                : 'Aucune course ECD officielle publiée pour le moment. Tirez pour actualiser.'}
+              {programError || ecdError
+                ? 'Aucune course disponible pour le moment. Tirez pour réessayer.'
+                : 'Aucune course publiée pour le moment. Tirez pour actualiser.'}
             </Text>
           </View>
         }

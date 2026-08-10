@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { buildRaceInsights } from '../services/raceInsights';
-import { hasVerifiedEcdRules } from '../services/raceContext';
+import { countActiveRunners, hasVerifiedEcdRules } from '../services/raceContext';
 import { COLORS, SPACING, RADIUS, FONT } from '../theme/colors';
 const { buildNationalBetProposal } = require('../../shared/nationalBetProposal');
 
@@ -48,7 +48,25 @@ function EcdRulesUnavailable({ race }) {
   );
 }
 
+function PredictionPending() {
+  return (
+    <View style={[styles.card, styles.rulesUnavailable]}>
+      <View style={styles.rulesUnavailableHead}>
+        <Ionicons name="time-outline" size={22} color={COLORS.gold} />
+        <Text style={styles.rulesUnavailableTitle}>Pronostic en préparation</Text>
+      </View>
+      <Text style={styles.rulesUnavailableText}>
+        Les partants doivent être chargés avant de calculer le pronostic. Actualisez la course dans quelques instants.
+      </Text>
+    </View>
+  );
+}
+
 export default function RaceInsightsCard(props) {
+  const hasDetailedRunners = Array.isArray(props.race?.horses)
+    && props.race.horses.length > 0
+    && countActiveRunners(props.race) > 0;
+  if (!hasDetailedRunners) return <PredictionPending />;
   if (props.mode === 'ecd' && !hasVerifiedEcdRules(props.race)) {
     return <EcdRulesUnavailable race={props.race} />;
   }

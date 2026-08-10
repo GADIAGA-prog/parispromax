@@ -155,7 +155,9 @@ test('la navigation principale suit les quatre parcours demandés', () => {
   assert.match(navigator, /name="Courses du jour"/);
   assert.match(navigator, /name="Résultats"/);
   assert.match(navigator, /name="Abonnements"/);
-  assert.match(navigator, /name="Contact"/);
+  assert.match(navigator, /name="Compte"/);
+  assert.doesNotMatch(navigator, /name="Contact"/);
+  assert.match(profile, />Mon compte</);
 });
 
 test('les résultats et le contact séparent les parcours utiles', () => {

@@ -14,6 +14,7 @@ function formatXOF(amount) {
 // onRacePress(track, race).
 export default function TrackCard({ track, meetingNumber, onRacePress }) {
   const cond = TRACK_CONDITIONS[track.condition] || TRACK_CONDITIONS.dry;
+  const isOfficialEcd = (track.races || []).some((race) => Boolean(race?.ecd));
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -35,7 +36,9 @@ export default function TrackCard({ track, meetingNumber, onRacePress }) {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.name}>{track.name}</Text>
-          <Text style={styles.discipline}>ECD · {track.discipline}</Text>
+          <Text style={styles.discipline}>
+            {isOfficialEcd ? 'ECD OFFICIEL' : 'PROGRAMME'} · {track.discipline}
+          </Text>
         </View>
         <View style={[styles.condition, { backgroundColor: cond.color }]}>
           <Ionicons name={cond.icon} size={13} color="#0f172a" />
