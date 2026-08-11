@@ -1563,3 +1563,84 @@ html { scroll-padding-top: 82px; }
   .plans-section { width: calc(100% - 16px); }
   .community-disclosure > summary small { display: none; }
 }
+
+/* 2026-08-11 - rappel permanent de la derniere version Android. */
+body { padding-top: 44px; }
+html { scroll-padding-top: 126px; }
+.site-header { top: 44px; }
+.android-download-banner {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  color: #ffffff;
+  border-bottom: 1px solid #7f1d1d;
+  background: #b42318;
+  box-shadow: 0 7px 24px rgba(127, 29, 29, .34);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
+  animation: android-download-attention 1.6s ease-in-out infinite;
+}
+.android-download-banner:hover { color: #ffffff; background: #8f1d15; animation-play-state: paused; }
+.android-download-banner:focus-visible { outline: 3px solid #ffffff; outline-offset: -4px; }
+.android-download-banner__signal {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, .2);
+}
+.android-download-banner strong { font-size: 13px; font-weight: 950; white-space: nowrap; }
+.android-download-banner__cta {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  color: #991b1b;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+  box-shadow: 0 4px 13px rgba(69, 10, 10, .24);
+}
+.android-download-banner__arrow { flex: 0 0 auto; font-size: 16px; font-weight: 950; }
+
+@keyframes android-download-attention {
+  0%, 100% { background: #991b1b; box-shadow: 0 7px 20px rgba(127, 29, 29, .3); }
+  50% { background: #c62828; box-shadow: 0 7px 32px rgba(198, 40, 40, .58); }
+}
+
+@media (max-width: 1180px) {
+  .mobile-nav { top: 116px; max-height: calc(100dvh - 130px); }
+}
+
+@media (max-width: 760px) {
+  html { scroll-padding-top: 118px; }
+  .mobile-nav { top: 114px; max-height: calc(100dvh - 126px); }
+}
+
+@media (max-width: 480px) {
+  .android-download-banner { gap: 7px; font-size: 11px; }
+  .android-download-banner strong { min-width: 0; overflow: hidden; font-size: 11px; text-overflow: ellipsis; }
+  .android-download-banner__cta { padding: 6px 9px; font-size: 9px; }
+  .android-download-banner__arrow { display: none; }
+}
+
+@media (max-width: 360px) {
+  .android-download-banner { gap: 6px; padding-inline: 8px; }
+  .android-download-banner__signal { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .android-download-banner { background: #b42318; animation: none; }
+}

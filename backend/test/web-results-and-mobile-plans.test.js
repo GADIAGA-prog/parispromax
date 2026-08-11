@@ -101,11 +101,11 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260810-1/);
-  assert.match(html, /app\.js\?v=20260810-1/);
-  assert.match(serviceWorker, /parispromax-shell-20260810-1/);
-  assert.match(serviceWorker, /styles\.css\?v=20260810-1/);
-  assert.match(serviceWorker, /app\.js\?v=20260810-1/);
+  assert.match(html, /styles\.css\?v=20260811-1/);
+  assert.match(html, /app\.js\?v=20260811-1/);
+  assert.match(serviceWorker, /parispromax-shell-20260811-1/);
+  assert.match(serviceWorker, /styles\.css\?v=20260811-1/);
+  assert.match(serviceWorker, /app\.js\?v=20260811-1/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -217,6 +217,26 @@ test('le téléchargement Android reste visible en haut du site sur tous les éc
   assert.match(html, />Installer Android</);
   assert.match(styles, /\.header-android-download-mobile \{ display: none; \}/);
   assert.match(styles, /@media \(max-width: 1180px\)[\s\S]*\.header-android-download-mobile \{ display: inline-flex; \}/);
+});
+
+test('un bandeau rouge anime rappelle la derniere version Android a chaque visite', () => {
+  assert.equal((html.match(/data-android-download-banner/g) || []).length, 1);
+  const bannerStart = html.indexOf('<a class="android-download-banner"');
+  const bannerEnd = html.indexOf('</a>', bannerStart);
+  assert.notEqual(bannerStart, -1);
+  assert.notEqual(bannerEnd, -1);
+
+  const openingTag = html.slice(bannerStart, html.indexOf('>', bannerStart) + 1);
+  const banner = html.slice(bannerStart, bannerEnd);
+  assert.doesNotMatch(openingTag, /\bhidden\b|aria-hidden="true"/);
+  assert.match(banner, /href="\/download\/android"/);
+  assert.match(banner, /Derni&egrave;re version Android/);
+  assert.match(banner, /T&eacute;l&eacute;charger maintenant/);
+  assert.match(styles, /\.android-download-banner \{[\s\S]{0,900}position: fixed;[\s\S]{0,900}background: #b42318;[\s\S]{0,900}animation: android-download-attention 1\.6s ease-in-out infinite;/);
+  assert.match(styles, /@keyframes android-download-attention/);
+  assert.match(styles, /body \{ padding-top: 44px; \}/);
+  assert.match(styles, /\.site-header \{ top: 44px; \}/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*\.android-download-banner \{ background: #b42318; animation: none; \}/);
 });
 
 test('Android permet de partager le lien officiel de l’application', () => {

@@ -104,9 +104,9 @@ test('la couche responsive finale laisse le programme et les tableaux accessible
 });
 
 test('le cache du site est renouvelé avec les nouveaux fichiers', () => {
-  assert.match(html, /styles\.css\?v=20260810-1/);
-  assert.match(html, /app\.js\?v=20260810-1/);
-  assert.match(serviceWorker, /parispromax-shell-20260810-1/);
-  assert.match(serviceWorker, /styles\.css\?v=20260810-1/);
-  assert.match(serviceWorker, /app\.js\?v=20260810-1/);
+  assert.match(html, /styles\.css\?v=20260811-1/);
+  assert.match(html, /app\.js\?v=20260811-1/);
+  assert.match(serviceWorker, /parispromax-shell-20260811-1/);
+  assert.match(serviceWorker, /styles\.css\?v=20260811-1/);
+  assert.match(serviceWorker, /app\.js\?v=20260811-1/);
 });
