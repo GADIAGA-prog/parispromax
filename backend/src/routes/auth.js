@@ -113,7 +113,7 @@ router.post('/register', ipLimitLogin, async (req, res) => {
     return res.status(400).json({ error: 'Numéro invalide' });
   }
   if (!validPassword(password)) {
-    return res.status(400).json({ error: 'Mot de passe : 8 caractères minimum' });
+    return res.status(400).json({ error: 'Mot de passe : entre 8 et 72 caractères' });
   }
   const profile = validateRegistrationProfile(req.body);
   if (!profile.ok) return res.status(400).json({ error: profile.error });
@@ -202,7 +202,7 @@ router.post('/reset-password', ipLimitLogin, async (req, res) => {
     return res.status(400).json({ error: 'Numéro ou code de récupération invalide' });
   }
   if (!validPassword(newPassword)) {
-    return res.status(400).json({ error: 'Mot de passe : 8 caractères minimum' });
+    return res.status(400).json({ error: 'Mot de passe : entre 8 et 72 caractères' });
   }
   if (await pwdLocked(phone)) {
     return res.status(429).json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' });

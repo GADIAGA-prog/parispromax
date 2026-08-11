@@ -34,6 +34,7 @@ export default function ProfileScreen({ navigation }) {
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [sharingAndroidApp, setSharingAndroidApp] = useState(false);
 
   const loadPayments = useCallback(async () => {
     try {
@@ -60,6 +61,8 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const onShareAndroidApp = useCallback(async () => {
+    if (sharingAndroidApp) return;
+    setSharingAndroidApp(true);
     try {
       await Share.share(
         {
@@ -70,8 +73,10 @@ export default function ProfileScreen({ navigation }) {
       );
     } catch (error) {
       Alert.alert('Partage indisponible', "Impossible d’ouvrir le partage pour le moment. Réessayez.");
+    } finally {
+      setSharingAndroidApp(false);
     }
-  }, []);
+  }, [sharingAndroidApp]);
 
   const onDownloadLatestAndroid = useCallback(async () => {
     try {
@@ -91,26 +96,6 @@ export default function ProfileScreen({ navigation }) {
           <Pressable onPress={onRefresh} hitSlop={10}>
             <Ionicons name={refreshing ? 'sync' : 'refresh'} size={22} color={COLORS.textMuted} />
           </Pressable>
-        </View>
-
-        <View style={styles.referralCard}>
-          <Ionicons name="gift" size={26} color={COLORS.gold} />
-          <Text style={styles.referralTitle}>Parrainez vos proches</Text>
-          <Text style={styles.referralText}>Ils économisent jusqu’à {referral?.discountPercent || 10}% sur leur premier paiement (hors formule à 200 XOF) et vous recevez la moitié de la durée d'abonnement achetée.</Text>
-          <Text style={styles.referralCode} selectable>{referral?.code || 'Chargement…'}</Text>
-          <Pressable
-            style={styles.shareButton}
-            disabled={!referral?.code}
-            onPress={() => Share.share({
-              message: `Rejoins ParisPromax avec mon code ${referral.code} : https://www.parispromax.com/?ref=${encodeURIComponent(referral.code)}\nProfite de jusqu’à ${referral.discountPercent}% de réduction sur ton premier paiement (hors formule à 200 XOF).`,
-            })}
-          >
-            <Ionicons name="share-social" size={18} color={COLORS.onAccent} />
-            <Text style={styles.shareText}>Partager mon code</Text>
-          </Pressable>
-          {!!referral?.successfulReferrals && (
-            <Text style={styles.referralCount}>{referral.successfulReferrals} parrainage(s) récompensé(s)</Text>
-          )}
         </View>
 
         {/* Account card */}
@@ -138,6 +123,77 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.paidUntil}>
               Valable jusqu'au {new Date(paidUntil).toLocaleDateString('fr-FR')}
             </Text>
+          )}
+        </View>
+
+        {Platform.OS === 'android' && (
+          <View style={styles.androidAppCard}>
+            <View style={styles.androidAppHeader}>
+              <View style={styles.androidAppIcon}>
+                <Ionicons name="logo-android" size={26} color={COLORS.accent} />
+              </View>
+              <View style={styles.androidAppHeading}>
+                <Text style={styles.androidAppTitle}>ParisPromax Android</Text>
+                <Text style={styles.androidAppVersion}>
+                  v{appVersion}{androidBuildVersion ? ` · build ${androidBuildVersion}` : ''}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.androidAppHelp}>Envoyez le lien officiel de téléchargement à vos proches.</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Partager ParisPromax pour Android"
+              accessibilityHint="Ouvre la feuille de partage avec le lien officiel de téléchargement"
+              accessibilityState={{ disabled: sharingAndroidApp, busy: sharingAndroidApp }}
+              android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+              disabled={sharingAndroidApp}
+              style={({ pressed }) => [
+                styles.androidShareButton,
+                pressed && styles.androidShareButtonPressed,
+                sharingAndroidApp && styles.androidShareButtonDisabled,
+              ]}
+              onPress={onShareAndroidApp}
+            >
+              {sharingAndroidApp ? (
+                <ActivityIndicator size="small" color={COLORS.onAccent} />
+              ) : (
+                <Ionicons name="share-social" size={20} color={COLORS.onAccent} />
+              )}
+              <Text style={styles.androidShareText}>
+                {sharingAndroidApp ? 'Ouverture du partage…' : 'Partager ParisPromax'}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Télécharger la dernière version Android"
+              accessibilityHint="Ouvre le téléchargement officiel dans le navigateur"
+              style={({ pressed }) => [styles.androidDownloadLink, pressed && styles.androidDownloadLinkPressed]}
+              onPress={onDownloadLatestAndroid}
+            >
+              <Ionicons name="download-outline" size={18} color={COLORS.accent} />
+              <Text style={styles.androidDownloadText}>Télécharger la dernière version</Text>
+              <Ionicons name="open-outline" size={16} color={COLORS.accent} />
+            </Pressable>
+          </View>
+        )}
+
+        <View style={styles.referralCard}>
+          <Ionicons name="gift" size={26} color={COLORS.gold} />
+          <Text style={styles.referralTitle}>Parrainez vos proches</Text>
+          <Text style={styles.referralText}>Ils économisent jusqu’à {referral?.discountPercent || 10}% sur leur premier paiement (hors formule à 200 XOF) et vous recevez la moitié de la durée d'abonnement achetée.</Text>
+          <Text style={styles.referralCode} selectable>{referral?.code || 'Chargement…'}</Text>
+          <Pressable
+            style={styles.shareButton}
+            disabled={!referral?.code}
+            onPress={() => Share.share({
+              message: `Rejoins ParisPromax avec mon code ${referral.code} : https://www.parispromax.com/?ref=${encodeURIComponent(referral.code)}\nProfite de jusqu’à ${referral.discountPercent}% de réduction sur ton premier paiement (hors formule à 200 XOF).`,
+            })}
+          >
+            <Ionicons name="share-social" size={18} color={COLORS.onAccent} />
+            <Text style={styles.shareText}>Partager mon code</Text>
+          </Pressable>
+          {!!referral?.successfulReferrals && (
+            <Text style={styles.referralCount}>{referral.successfulReferrals} parrainage(s) récompensé(s)</Text>
           )}
         </View>
 
@@ -192,48 +248,6 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.actionText}>Activer les notifications</Text>
           <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
         </Pressable>
-
-        {Platform.OS === 'android' && (
-          <>
-            <Text style={styles.sectionLabel}>Application Android</Text>
-
-            <View
-              accessible
-              style={styles.action}
-              accessibilityLabel={`Version Android installée ${appVersion}${androidBuildVersion ? ` build ${androidBuildVersion}` : ''}`}
-            >
-              <Ionicons name="logo-android" size={20} color={COLORS.accent} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.actionText, styles.actionTextStacked]}>Version installée</Text>
-                <Text style={styles.actionSub}>
-                  ParisPromax v{appVersion}{androidBuildVersion ? ` · build Android ${androidBuildVersion}` : ''}
-                </Text>
-              </View>
-            </View>
-
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel="Télécharger la version Android la plus récente"
-              style={styles.action}
-              onPress={onDownloadLatestAndroid}
-            >
-              <Ionicons name="download-outline" size={20} color={COLORS.accent} />
-              <Text style={styles.actionText}>Télécharger la version la plus récente</Text>
-              <Ionicons name="open-outline" size={18} color={COLORS.textMuted} />
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Partager l’application Android ParisPromax"
-              style={styles.action}
-              onPress={onShareAndroidApp}
-            >
-              <Ionicons name="share-social-outline" size={20} color={COLORS.accent} />
-              <Text style={styles.actionText}>Partager l’application</Text>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
-            </Pressable>
-          </>
-        )}
 
         <Text style={styles.sectionLabel}>Nous contacter</Text>
         <Pressable style={styles.action} onPress={() => WebBrowser.openBrowserAsync('https://www.parispromax.com/#contact')}>
@@ -370,6 +384,33 @@ const styles = StyleSheet.create({
   statusText: { color: '#06251c', fontWeight: '800', fontSize: FONT.sm },
   statusTextOnDanger: { color: COLORS.white },
   paidUntil: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: SPACING.sm },
+  androidAppCard: {
+    backgroundColor: '#e7f5ef', borderRadius: RADIUS.lg, padding: SPACING.lg,
+    borderWidth: 1.5, borderColor: COLORS.accent, marginBottom: SPACING.lg,
+  },
+  androidAppHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  androidAppIcon: {
+    width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border,
+  },
+  androidAppHeading: { flex: 1, minWidth: 0 },
+  androidAppTitle: { color: COLORS.text, fontSize: FONT.lg, fontWeight: '900', flexShrink: 1 },
+  androidAppVersion: { color: COLORS.textMuted, fontSize: FONT.sm, marginTop: 3 },
+  androidAppHelp: { color: COLORS.textMuted, fontSize: FONT.sm, lineHeight: 18, marginTop: SPACING.md },
+  androidShareButton: {
+    minHeight: 48, marginTop: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md, backgroundColor: COLORS.accent, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: SPACING.sm, overflow: 'hidden',
+  },
+  androidShareButtonPressed: { opacity: 0.88 },
+  androidShareButtonDisabled: { opacity: 0.65 },
+  androidShareText: { color: COLORS.onAccent, fontSize: FONT.md, fontWeight: '900', flexShrink: 1 },
+  androidDownloadLink: {
+    minHeight: 48, paddingHorizontal: SPACING.sm, paddingTop: SPACING.md,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
+  },
+  androidDownloadLinkPressed: { opacity: 0.65 },
+  androidDownloadText: { color: COLORS.accent, fontSize: FONT.sm, fontWeight: '800', flexShrink: 1 },
   referralCard: {
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
     alignItems: 'center', borderWidth: 1, borderColor: COLORS.gold, marginBottom: SPACING.lg,
@@ -385,8 +426,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
   },
   actionText: { color: COLORS.text, fontSize: FONT.md, fontWeight: '700', flex: 1 },
-  actionTextStacked: { flex: 0 },
-  actionSub: { color: COLORS.textMuted, fontSize: FONT.sm - 1, marginTop: 2 },
   sectionLabel: { color: COLORS.textMuted, fontSize: FONT.sm, fontWeight: '700', marginTop: SPACING.md, marginBottom: SPACING.sm },
   currencyRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm, flexWrap: 'wrap' },
   currencyChip: {

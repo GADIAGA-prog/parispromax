@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260804-6" />
+  <link rel="stylesheet" href="/styles.css?v=20260810-1" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -87,17 +87,15 @@
       <span><strong>PARISPRO</strong>MAX<small>Pronostics hippiques · Courses PMU</small></span>
     </a>
     <nav class="desktop-nav" aria-label="Navigation principale">
-      <a href="#courses-du-jour">Courses du jour</a>
-      <a href="#resultats">Résultats</a>
+      <a href="#courses-du-jour">Courses</a>
+      <a href="#quinte-pays">Pronostics</a>
       <a href="#abonnements">Abonnements</a>
-      <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
       <a class="button header-android-download header-android-download-desktop" href="/download/android" aria-label="Télécharger l’application Android ParisPromax">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M12 6v8m0 0 3-3m-3 3-3-3m1 4.5h4" /></svg>
         <span>Télécharger Android</span>
       </a>
-      <button class="button button-install" type="button" data-install-app>Installer</button>
       <button class="button button-ghost" type="button" data-open-auth="login">Connexion</button>
       <button class="button button-primary" type="button" data-open-auth="register">Créer un compte</button>
       <button class="notification-button hidden" type="button" data-open-notifications aria-label="Ouvrir les notifications" aria-haspopup="dialog" aria-controls="notification-dialog">
@@ -113,16 +111,6 @@
     <button class="menu-button" id="menu-button" type="button" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
   </header>
 
-  <aside class="plan-ticker" aria-label="Formules ParisPromax">
-    <span class="plan-ticker-label">FORMULES</span>
-    <div class="plan-ticker-window">
-      <div class="plan-ticker-track" id="plan-ticker-track" aria-live="polite">
-        <span class="plan-ticker-loading">Chargement des tarifs officiels…</span>
-      </div>
-    </div>
-    <a class="plan-ticker-link" href="#abonnements">Tous les tarifs</a>
-  </aside>
-
   <nav class="mobile-nav hidden" id="mobile-nav" aria-label="Navigation mobile">
     <div class="mobile-member-actions hidden" id="mobile-member-actions">
       <button type="button" data-open-account>Mon espace</button>
@@ -133,38 +121,18 @@
     </div>
     <button class="mobile-signup-cta" type="button" data-open-auth="register">Créer un compte</button>
     <button class="mobile-login-cta" type="button" data-open-auth="login">Connexion</button>
-    <a href="#courses-du-jour">Courses du jour</a><a href="#resultats">Résultats</a><a href="#abonnements">Abonnements</a><a href="#contact">Contact</a><button type="button" data-install-app>Installer l'application</button>
+    <a href="#courses-du-jour">Courses</a><a href="#quinte-pays">Pronostics</a><a href="#abonnements">Abonnements</a>
   </nav>
 
   <main>
-    <section class="section today-section" id="courses-du-jour">
-      <nav class="course-type-nav" aria-label="Types de courses du jour">
-        <a class="active" href="#quinte-pays">Course nationale</a>
-        <a href="#ecd">ECD</a>
-      </nav>
-      <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
-        <div class="national-spotlight-head">
-          <div><span class="spotlight-label"><i></i> COURSE NATIONALE</span><h2>Course nationale du jour</h2></div>
-          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du jeu national"></select></label>
-        </div>
-        <div class="race-carousel race-carousel-national reveal" data-race-carousel data-carousel-start="1" data-carousel-label="Course nationale du jour" aria-label="Images de courses hippiques">
-          <img class="race-carousel-slide active" src="/assets/race-harness.jpg" alt="Course de trot attelé en compétition" width="1600" height="900" />
-          <div class="race-carousel-bar"><span><small>EN IMAGES</small><strong>Course nationale du jour</strong></span></div>
-        </div>
-        <div id="national-race" class="national-race-content">
-          <div class="skeleton-line"></div><div class="skeleton-line"></div>
-        </div>
-      </article>
-    </section>
-
     <section class="hero section" id="accueil">
       <div class="hero-copy reveal">
-        <div class="eyebrow"><span></span> COURSE DU JOUR · PROPOSITIONS ILLUSTRATIVES</div>
-        <h1>La course PMU du jour.<br /><em>Les propositions analysées.</em></h1>
-        <p class="hero-lead">Retrouvez les partants, les numéros conseillés et des montants illustratifs. Aucun jeu ni pari n’est effectué sur ParisPromax.</p>
+        <div class="eyebrow"><span></span> COURSES · PRONOSTICS · ABONNEMENTS</div>
+        <h1>Vos courses et pronostics.<br /><em>Tout simplement.</em></h1>
+        <p class="hero-lead">Choisissez une course, consultez le pronostic puis activez la formule qui vous convient. Aucun jeu ni pari n’est effectué sur ParisPromax.</p>
         <div class="hero-actions">
-          <a class="button button-primary button-large" href="#quinte-pays">Voir les propositions du jour <span aria-hidden="true">→</span></a>
-          <button class="button button-outline button-large" type="button" data-open-auth="register">Créer un compte</button>
+          <a class="button button-primary button-large" href="#courses-du-jour">Voir les courses et pronostics <span aria-hidden="true">→</span></a>
+          <a class="button button-outline button-large" href="#abonnements">Voir les abonnements</a>
         </div>
         <div class="trust-row" aria-label="Engagements ParisPromax">
           <span>✓ Réservé aux 18+</span><span>✓ Aucun pari effectué ni encaissé</span><span>✓ Paiement Mobile Money sécurisé</span>
@@ -190,31 +158,39 @@
       </div>
     </section>
 
-
-    <section class="proof-strip" aria-label="Points forts">
-      <div><strong>24/7</strong><span>Accès Web et mobile</span></div>
-      <div><strong>Partants</strong><span>Cotes et forme</span></div>
-      <div><strong>Suivi</strong><span>Cotes et résultats</span></div>
-      <div><strong>Résultats</strong><span>Après la course</span></div>
+    <section class="section plans-section" id="abonnements">
+      <div class="plans-intro reveal">
+        <span class="section-kicker">ABONNEMENTS</span>
+        <h2>Choisissez votre formule.</h2>
+        <p>Un paiement prépayé, sans reconduction automatique, pour accéder aux pronostics complets sur le Web et Android.</p>
+        <ul><li>Pronostics et montants illustratifs</li><li>Courses, cotes et partants détaillés</li><li>Résultats et alertes avant le départ</li></ul>
+      </div>
+      <div class="plans-grid reveal delay-one" id="plans-grid"><div class="plan-placeholder"></div><div class="plan-placeholder"></div></div>
     </section>
 
-    <section class="section app-download-section" id="application-android">
-      <div class="app-download-card reveal">
-        <div class="app-download-icon" aria-hidden="true">A</div>
-        <div class="app-download-copy">
-          <span class="section-kicker">APPLICATION ANDROID</span>
-          <h2>ParisPromax directement sur votre téléphone.</h2>
-          <p>Téléchargez l'APK officiel depuis ce site, sans passer par le Play Store.</p>
+    <section class="section today-section" id="courses-du-jour">
+      <nav class="course-type-nav" aria-label="Types de courses du jour">
+        <a class="active" href="#quinte-pays">Nationale</a>
+        <a href="#ecd">ECD</a>
+      </nav>
+      <article class="national-spotlight reveal" id="quinte-pays" aria-live="polite">
+        <div class="national-spotlight-head">
+          <div><span class="spotlight-label"><i></i> COURSE &amp; PRONOSTIC</span><h2>Course nationale du jour</h2></div>
+          <label class="country-filter">Votre pays<select id="quinte-country" aria-label="Choisir le pays du jeu national"></select></label>
         </div>
-        <div class="app-download-actions">
-          <a class="button button-primary button-large" href="/download/android">Télécharger l'APK Android <span aria-hidden="true">↓</span></a>
+        <div class="race-carousel race-carousel-national reveal" data-race-carousel data-carousel-start="1" data-carousel-label="Course nationale du jour" aria-label="Images de courses hippiques">
+          <img class="race-carousel-slide active" src="/assets/race-harness.jpg" alt="Course de trot attelé en compétition" width="1600" height="900" />
+          <div class="race-carousel-bar"><span><small>EN IMAGES</small><strong>Course nationale du jour</strong></span></div>
         </div>
-      </div>
+        <div id="national-race" class="national-race-content">
+          <div class="skeleton-line"></div><div class="skeleton-line"></div>
+        </div>
+      </article>
     </section>
 
     <section class="section race-section" id="ecd">
       <div class="section-heading reveal">
-        <div><span class="section-kicker" id="program-kicker">PROGRAMME ECD</span><h2>Les courses ECD officielles de votre pays.</h2></div>
+        <div><span class="section-kicker" id="program-kicker">PROGRAMME ECD</span><h2>Courses et pronostics ECD.</h2></div>
         <p id="ecd-program-description">Choisissez une course pour voir sa discipline, ses partants, ses cotes et les propositions illustratives disponibles.</p>
         <div class="ecd-program-links" id="ecd-program-links" aria-label="Programmes ECD officiels"></div>
         <a class="ecd-results-link" href="#resultats" data-open-ecd-results>Voir les tickets gagnants et les gains ECD <span aria-hidden="true">↓</span></a>
@@ -240,7 +216,9 @@
         <div><span class="section-kicker">ARRIVÉES OFFICIELLES</span><h2>Résultats, tickets gagnants et gains.</h2></div>
         <p>Comparez l’arrivée et les rapports officiels avec le pronostic ParisPromax archivé avant la course.</p>
       </div>
-      <section class="prediction-performance" id="prediction-performance" aria-labelledby="prediction-performance-title" aria-live="polite">
+      <details class="performance-disclosure">
+        <summary>Voir la performance passée des pronostics</summary>
+        <section class="prediction-performance" id="prediction-performance" aria-labelledby="prediction-performance-title" aria-live="polite">
         <div class="prediction-performance-copy">
           <span>PERFORMANCE MESURÉE</span>
           <h3 id="prediction-performance-title">Taux de bases placées</h3>
@@ -269,7 +247,8 @@
           </article>
         </div>
         <p class="prediction-performance-status" id="success-rate-status" role="status">Chargement de la mesure réelle…</p>
-      </section>
+        </section>
+      </details>
       <div class="result-tabs" role="tablist" aria-label="Types de résultats">
         <button type="button" role="tab" aria-selected="false" data-results-category="national">Course nationale · Grand Carnet</button>
         <button class="active" type="button" role="tab" aria-selected="true" data-results-category="ecd">ECD · Tickets &amp; gains</button>
@@ -280,58 +259,26 @@
       <p class="results-updated" id="results-updated" role="status"></p>
     </section>
 
-    <section class="section guide-section" id="guide">
+    <section class="section journey-section" id="guide">
       <div class="section-heading reveal">
-        <div><span class="section-kicker">REPÈRES DE JEU</span><h2>Comment lire les choix.</h2></div>
-        <p>Base, favori, couplé et compléments : chaque mot correspond à un rôle simple.</p>
+        <div><span class="section-kicker">L’ESSENTIEL</span><h2>Trois étapes, sans détour.</h2></div>
+        <p>Tout le reste est secondaire : commencez par la course qui vous intéresse.</p>
       </div>
-      <div class="race-carousel race-carousel-section reveal" data-race-carousel data-carousel-start="2" data-carousel-label="Comprendre les profils de course" aria-label="Images de courses hippiques">
-        <img class="race-carousel-slide active" src="/assets/race-finish.jpg" alt="Chevaux à l’arrivée d’une course" width="1600" height="900" loading="lazy" />
-        <div class="race-carousel-bar"><span><small>EN IMAGES</small><strong>Comprendre les profils de course</strong></span></div>
+      <div class="journey-grid">
+        <a class="journey-card reveal" href="#courses-du-jour"><span>01</span><h3>Choisissez une course</h3><p>Nationale ou ECD, avec tous les partants.</p></a>
+        <a class="journey-card reveal delay-one" href="#quinte-pays"><span>02</span><h3>Consultez le pronostic</h3><p>La sélection et les explications utiles.</p></a>
+        <a class="journey-card reveal delay-two" href="#abonnements"><span>03</span><h3>Activez votre abonnement</h3><p>La durée et le prix sont affichés clairement.</p></a>
       </div>
-      <div class="guide-grid">
-        <article class="guide-card reveal"><span>01</span><h3>Base</h3><p>Le premier cheval retenu pour construire le jeu.</p></article>
-        <article class="guide-card reveal delay-one"><span>02</span><h3>Favori</h3><p>Le cheval le plus soutenu par le marché selon la cote disponible.</p></article>
-        <article class="guide-card reveal delay-two"><span>03</span><h3>Couplé</h3><p>Deux chevaux retenus ensemble pour le même jeu.</p></article>
-        <article class="guide-card reveal"><span>04</span><h3>Chances régulières</h3><p>Des chevaux à retenir pour compléter le jeu.</p></article>
-        <article class="guide-card reveal delay-one"><span>05</span><h3>Tocard</h3><p>Un cheval peu joué qui peut créer la surprise.</p></article>
-        <article class="guide-card reveal delay-two"><span>06</span><h3>Tuyau</h3><p>Un cheval à surveiller avant le départ.</p></article>
-      </div>
-    </section>
-
-    <section class="section method-section" id="methode">
-      <div class="section-heading reveal">
-        <div><span class="section-kicker">POUR CHAQUE COURSE</span><h2>Les informations utiles, sans détour.</h2></div>
-        <p>Type de course, partants, cotes et résultats : l’essentiel reste visible.</p>
-      </div>
-      <div class="race-carousel race-carousel-section reveal" data-race-carousel data-carousel-start="0" data-carousel-label="Les disciplines hippiques" aria-label="Images de courses hippiques">
-        <img class="race-carousel-slide active" src="/assets/race-flat.jpg" alt="Course de plat au galop" width="1600" height="900" loading="lazy" />
-        <div class="race-carousel-bar"><span><small>EN IMAGES</small><strong>Les disciplines hippiques</strong></span></div>
-      </div>
-      <div class="method-grid">
-        <article class="method-card reveal"><span>01</span><div class="method-icon">⌁</div><h3>Partants</h3><p>Cheval, jockey, entraîneur, numéro et forme récente.</p></article>
-        <article class="method-card reveal delay-one"><span>02</span><div class="method-icon">◇</div><h3>Type de course</h3><p>Plat, trot attelé, trot monté ou obstacle.</p></article>
-        <article class="method-card reveal delay-two"><span>03</span><div class="method-icon">↗</div><h3>Cotes</h3><p>Les cotes disponibles au moment de la consultation.</p></article>
-        <article class="method-card reveal delay-three"><span>04</span><div class="method-icon">✓</div><h3>Arrivée</h3><p>Le classement publié après la course.</p></article>
-      </div>
-    </section>
-
-    <section class="section plans-section" id="abonnements">
-      <div class="plans-intro reveal">
-        <span class="section-kicker">ACCÈS COMPLET</span>
-        <h2>Choisissez votre rythme.</h2>
-        <p>Accès aux propositions complètes sur le Web et l’application mobile. Paiement prépayé, sans reconduction automatique.</p>
-        <ul><li>Propositions et montants illustratifs</li><li>Cotes et partants détaillés</li><li>Historique des résultats</li><li>Alertes avant le départ</li></ul>
-      </div>
-      <div class="plans-grid reveal delay-one" id="plans-grid"><div class="plan-placeholder"></div><div class="plan-placeholder"></div></div>
     </section>
 
     <section class="section community-section" id="contact">
-      <div class="section-heading reveal">
-        <div><span class="section-kicker">À VOTRE ÉCOUTE</span><h2>Contactez-nous et partagez votre expérience.</h2></div>
-        <p>Une question, une difficulté ou une suggestion ? Votre message est transmis à l’équipe ParisPromax. Votre avis nous aide à améliorer le service.</p>
-      </div>
-      <div class="community-grid">
+      <details class="community-disclosure">
+        <summary><span>Besoin d’aide ?</span><strong>Contact, avis et partage</strong><small>Afficher les options</small></summary>
+        <div class="section-heading reveal">
+          <div><span class="section-kicker">AIDE ET COMMUNAUTÉ</span><h2>Contactez ParisPromax.</h2></div>
+          <p>WhatsApp, Telegram ou formulaire : choisissez simplement le moyen qui vous convient.</p>
+        </div>
+        <div class="community-grid">
         <article class="community-card reveal">
           <div class="community-card-head"><span>NOUS CONTACTER</span><h3>Comment pouvons-nous vous aider ?</h3><p>Réponse à l’adresse ou au numéro que vous indiquez.</p></div>
           <a class="facebook-link" href="https://www.facebook.com/parispromax" target="_blank" rel="noopener noreferrer" aria-label="Suivre ParisPromax sur Facebook, ouvre un nouvel onglet">
@@ -386,7 +333,7 @@
           <p class="referral-message" id="contact-referral-message" role="status" aria-live="polite"></p>
         </div>
       </div>
-      <div class="share-panel reveal" id="partager">
+        <div class="share-panel reveal" id="partager">
         <div class="share-copy"><span class="section-kicker">FAITES CONNAÎTRE PARISPROMAX</span><h3>Partagez le site en un geste.</h3><p>Envoyez ParisPromax à vos proches depuis votre application préférée.</p></div>
         <div class="share-actions" aria-label="Partager ParisPromax">
           <a class="share-button share-telegram" href="#" data-share-platform="telegram" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">TG</span>Telegram</a>
@@ -400,7 +347,8 @@
           <span><small>CANAL OFFICIEL</small><strong>Rejoignez ParisPromax sur Telegram</strong><em>Actualités, programmes et analyses hippiques.</em></span>
           <b>Rejoindre →</b>
         </a>
-      </div>
+        </div>
+      </details>
     </section>
 
     <section class="section security-section" id="securite">
@@ -450,7 +398,17 @@
       <div class="form-grid"><label>Date de naissance<input name="birthDate" type="date" required /></label><label>Lieu de naissance<input name="birthPlace" required minlength="2" /></label></div>
       <label>Pays<select name="country" class="country-select" required></select></label>
       <label>Numéro de téléphone<input name="phone" type="tel" autocomplete="tel" required /></label>
-      <label>Mot de passe<input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <div class="password-group">
+        <label for="register-password">Mot de passe</label>
+        <div class="password-field">
+          <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" aria-describedby="register-password-rules" required />
+          <button class="password-toggle" type="button" data-password-toggle="register-password" aria-controls="register-password" aria-pressed="false" aria-label="Afficher le mot de passe">Afficher</button>
+        </div>
+        <ul class="password-rules" id="register-password-rules" aria-label="Conditions du mot de passe" aria-live="polite">
+          <li class="password-rule" data-password-rule="min"><span>Au moins 8 caractères</span><strong data-password-rule-status>À respecter</strong></li>
+          <li class="password-rule" data-password-rule="max"><span>72 caractères maximum</span><strong data-password-rule-status>À respecter</strong></li>
+        </ul>
+      </div>
       <label>Code de parrainage <small>(facultatif)</small><input name="referralCode" autocomplete="off" /></label>
       <label class="check-label"><input name="adult" type="checkbox" required /> <span>Je confirme avoir au moins 18 ans et accepter les conditions d'utilisation.</span></label>
       <button class="button button-primary button-full" type="submit">Valider mon inscription <span>→</span></button>
@@ -475,7 +433,7 @@
     </form>
     <form id="recovery-reset-form" class="form-stack hidden">
       <label>Code de récupération<input name="recoveryCode" autocomplete="off" required minlength="8" maxlength="14" placeholder="XXXX-XXXX-XXXX" /></label>
-      <label>Nouveau mot de passe<input name="newPassword" type="password" autocomplete="new-password" required minlength="8" /></label>
+      <label>Nouveau mot de passe<input name="newPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="72" /></label>
       <button class="button button-primary button-full" type="submit">Changer mon mot de passe</button>
       <button class="auth-help-button" id="restart-recovery" type="button">Utiliser un autre numéro</button>
       <a class="auth-help-button" href="#contact" data-close-modal>Code perdu ? Contacter l’assistance</a>
@@ -529,6 +487,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260804-6" defer></script>
+  <script src="/app.js?v=20260810-1" defer></script>
 </body>
 </html>

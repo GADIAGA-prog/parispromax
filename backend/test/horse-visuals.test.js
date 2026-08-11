@@ -24,8 +24,11 @@ test('les visuels hippiques illustrent le site et Android', () => {
   assert.match(webApp, /race-flat\.jpg/);
   assert.match(webApp, /race-harness\.jpg/);
   assert.match(html, /race-finish\.jpg/);
-  assert.equal((html.match(/data-race-carousel/g) || []).length, 4);
-  assert.equal((html.match(/race-carousel-slide active/g) || []).length, 4);
+  assert.equal((html.match(/data-race-carousel/g) || []).length, 2);
+  assert.equal((html.match(/race-carousel-slide active/g) || []).length, 2);
+  assert.match(html, /data-carousel-label="Discipline de la course"/);
+  assert.match(html, /data-carousel-label="Course nationale du jour"/);
+  assert.doesNotMatch(html, /race-carousel-section/);
   assert.match(html, /Course nationale du jour/);
   assert.match(webApp, /function raceDiscipline/);
   assert.match(webApp, /TROT ATTELÉ/);

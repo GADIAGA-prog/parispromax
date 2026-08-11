@@ -1429,3 +1429,137 @@ footer {
   .result-tabs { padding: 4px; }
   .result-tabs button { padding-inline: 5px; font-size: 9px; }
 }
+
+/* Mot de passe d'inscription : visibilité et règles réelles du serveur. */
+.password-group { display: grid; gap: 7px; }
+.password-field { position: relative; }
+.form-stack .password-field input { margin-top: 0; padding-right: 92px; }
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  min-width: 76px;
+  min-height: 36px;
+  padding: 6px 9px;
+  transform: translateY(-50%);
+  color: #086747;
+  border: 0;
+  border-radius: 8px;
+  background: #e5f4ed;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.password-toggle:hover,
+.password-toggle:focus-visible { background: #d4ecdf; outline: 2px solid #0c7855; outline-offset: 1px; }
+.password-rules { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.password-rule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  color: #5f6f79;
+  border-radius: 8px;
+  background: #f3f6f7;
+  font-size: 10px;
+}
+.password-rule strong { color: #6a7881; font-size: 9px; white-space: nowrap; }
+.password-rule.is-valid { color: #086747; background: #e8f6f0; }
+.password-rule.is-valid strong { color: #086747; }
+.password-rule.is-invalid { color: #a52f2f; background: #fff0f0; }
+.password-rule.is-invalid strong { color: #a52f2f; }
+
+@media (max-width: 480px) {
+  .password-rule { align-items: flex-start; }
+  .password-rule strong { padding-top: 1px; }
+}
+
+/* 2026-08-10 — accueil recentré sur abonnements, courses et pronostics. */
+html { scroll-padding-top: 82px; }
+.plans-section {
+  position: relative;
+  top: auto;
+  gap: clamp(28px, 5vw, 64px);
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid #cfe0d8;
+  border-radius: 26px;
+  background: #f2f8f5;
+}
+.plans-intro { position: static; top: auto; }
+.plans-intro h2 { font-size: clamp(32px, 4vw, 48px); }
+.plans-intro ul { margin-top: 18px; }
+.plans-intro li { padding-block: 8px; }
+.today-section { padding-top: 54px; }
+
+.journey-section { padding-top: 48px; padding-bottom: 34px; }
+.journey-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.journey-card {
+  position: relative;
+  min-height: 150px;
+  padding: 22px;
+  color: #18242c;
+  border: 1px solid #dbe3e8;
+  border-radius: 18px;
+  background: #ffffff;
+  text-decoration: none;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.journey-card:hover,
+.journey-card:focus-visible { transform: translateY(-2px); border-color: #78bda3; box-shadow: 0 12px 28px rgba(16, 47, 61, .09); outline: none; }
+.journey-card > span { color: #087554; font-size: 10px; font-weight: 950; letter-spacing: 1.2px; }
+.journey-card h3 { margin: 24px 0 6px; font-size: 18px; line-height: 1.2; }
+.journey-card p { margin: 0; color: #5f6f79; font-size: 12px; line-height: 1.55; }
+
+.performance-disclosure { margin: 18px 0; }
+.performance-disclosure > summary,
+.community-disclosure > summary {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  color: #31566d;
+  border: 1px solid #d7e2e7;
+  border-radius: 14px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.performance-disclosure > summary:hover,
+.performance-disclosure > summary:focus-visible,
+.community-disclosure > summary:hover,
+.community-disclosure > summary:focus-visible { border-color: #78bda3; outline: none; }
+.performance-disclosure[open] > summary,
+.community-disclosure[open] > summary { border-color: #9fcdbb; background: #edf7f2; }
+.performance-disclosure .prediction-performance { margin-top: 10px; }
+
+.community-section { padding-top: 36px; }
+.community-disclosure > summary { display: grid; grid-template-columns: auto 1fr auto; }
+.community-disclosure > summary span { color: #087554; }
+.community-disclosure > summary strong { color: #18242c; font-size: 15px; }
+.community-disclosure > summary small { color: #687780; font-size: 10px; }
+.community-disclosure[open] > .section-heading { margin-top: 28px; }
+
+@media (max-width: 1180px) {
+  .mobile-nav { top: 72px; max-height: calc(100dvh - 86px); }
+}
+
+@media (max-width: 760px) {
+  html { scroll-padding-top: 74px; }
+  .mobile-nav { top: 70px; max-height: calc(100dvh - 82px); }
+  .hero-panel, .trust-row { display: none; }
+  .plans-section { width: calc(100% - 24px); gap: 26px; padding: 24px 18px; border-radius: 20px; }
+  .journey-grid { grid-template-columns: 1fr; }
+  .journey-card { min-height: 0; padding: 18px; }
+  .journey-card h3 { margin-top: 12px; }
+  .community-disclosure > summary { grid-template-columns: 1fr auto; }
+  .community-disclosure > summary span { grid-column: 1 / -1; }
+}
+
+@media (max-width: 480px) {
+  .plans-section { width: calc(100% - 16px); }
+  .community-disclosure > summary small { display: none; }
+}

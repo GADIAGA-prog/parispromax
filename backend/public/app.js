@@ -36,6 +36,8 @@ const FALLBACK_COUNTRIES = [
 
 let deferredInstallPrompt = null;
 const CANONICAL_WEB_ORIGIN = 'https://www.parispromax.com';
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 72;
 const RACE_CAROUSEL_SLIDES = Object.freeze([
   { src: '/assets/race-flat.jpg', alt: 'Chevaux et jockeys pendant une course de plat', label: 'Course de plat' },
   { src: '/assets/race-harness.jpg', alt: 'Chevaux au trot pendant une course attelée', label: 'Trot attelé' },
@@ -512,6 +514,52 @@ function openAuth(tab = 'login') {
   openDialog('#auth-dialog');
 }
 
+function revealHashDisclosure() {
+  const id = String(window.location.hash || '').replace(/^#/, '');
+  if (!id) return;
+  const target = document.getElementById(id);
+  if (!target) return;
+  const disclosure = target.matches('details')
+    ? target
+    : target.closest('details') || $('details', target);
+  if (disclosure) disclosure.open = true;
+}
+
+function passwordPolicyState(value) {
+  const length = String(value || '').length;
+  return {
+    min: length >= PASSWORD_MIN_LENGTH,
+    max: length > 0 && length <= PASSWORD_MAX_LENGTH,
+  };
+}
+
+function updatePasswordChecklist(input) {
+  if (!input) return;
+  const checklist = document.getElementById(input.getAttribute('aria-describedby'));
+  if (!checklist) return;
+  const value = String(input.value || '');
+  const policy = passwordPolicyState(value);
+  $$('[data-password-rule]', checklist).forEach((rule) => {
+    const respected = Boolean(policy[rule.dataset.passwordRule]);
+    const invalid = value.length > 0 && !respected;
+    rule.classList.toggle('is-valid', respected);
+    rule.classList.toggle('is-invalid', invalid);
+    const status = $('[data-password-rule-status]', rule);
+    if (status) status.textContent = respected ? 'Respecté' : invalid ? 'Non respecté' : 'À respecter';
+  });
+}
+
+function togglePasswordVisibility(button) {
+  const input = document.getElementById(button.dataset.passwordToggle);
+  if (!input) return;
+  const visible = input.type === 'text';
+  input.type = visible ? 'password' : 'text';
+  button.textContent = visible ? 'Afficher' : 'Masquer';
+  button.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+  button.setAttribute('aria-pressed', String(!visible));
+  input.focus({ preventScroll: true });
+}
+
 function normalizePhone(raw, countryCode) {
   const country = state.countries.find((item) => item.code === countryCode);
   const source = String(raw || '').trim();
@@ -582,19 +630,6 @@ function renderPlans() {
     </article>`;
   }).join('');
 
-  const ticker = $('#plan-ticker-track');
-  if (ticker) {
-    const tickerItems = (interactive = true) => state.plans.map((plan) => `
-      <button class="plan-ticker-item" type="button" data-plan="${escapeHtml(plan.id)}"${interactive ? '' : ' tabindex="-1"'}>
-        <strong>${escapeHtml(plan.label)}</strong>
-        <span>${Number(plan.pricePromo).toLocaleString('fr-FR')} XOF</span>
-        <small>${escapeHtml(plan.days)} jour${Number(plan.days) > 1 ? 's' : ''}</small>
-      </button>`).join('');
-    ticker.innerHTML = `
-      <div class="plan-ticker-group" role="list">${tickerItems(true)}</div>
-      <div class="plan-ticker-group" aria-hidden="true">${tickerItems(false)}</div>`;
-    ticker.classList.add('is-ready');
-  }
   $$('[data-plan]').forEach((button) => button.addEventListener('click', () => startPayment(button.dataset.plan)));
 }
 
@@ -1850,6 +1885,7 @@ async function register(form) {
   loginForm.elements.phone.value = phone;
   loginForm.elements.country.value = data.country;
   form.reset();
+  updatePasswordChecklist($('#register-password'));
 }
 
 async function refreshMe() {
@@ -2149,6 +2185,13 @@ async function submitReviewForm(form) {
 
 function bindEvents() {
   prepareSiteShareLinks();
+  window.addEventListener('hashchange', revealHashDisclosure);
+  $$('[data-password-toggle]').forEach((button) => button.addEventListener('click', () => togglePasswordVisibility(button)));
+  const registerPassword = $('#register-password');
+  if (registerPassword) {
+    registerPassword.addEventListener('input', () => updatePasswordChecklist(registerPassword));
+    updatePasswordChecklist(registerPassword);
+  }
   $$('[data-install-app]').forEach((button) => button.addEventListener('click', requestAppInstallation));
   $$('[data-open-auth]').forEach((button) => button.addEventListener('click', () => openAuth(button.dataset.openAuth)));
   $$('[data-open-notifications]').forEach((button) => button.addEventListener('click', openNotifications));
@@ -2259,6 +2302,7 @@ async function boot() {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   bindEvents();
+  revealHashDisclosure();
   startRaceCarousels();
   renderCountryMarquee();
   try { await loadCatalogs(); }

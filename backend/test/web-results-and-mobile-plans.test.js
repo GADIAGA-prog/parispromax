@@ -82,13 +82,18 @@ test('le paiement explique comment obtenir le code OTP pour chaque operateur', (
   assert.match(paywall, /\*144\*4\*6\*\$\{amount\}#/);
 });
 
-test('les tarifs officiels défilent en haut du site sans figer les petits écrans', () => {
-  assert.match(html, /id="plan-ticker-track"/);
-  assert.match(webApp, /plan-ticker-group/);
-  assert.match(webApp, /ticker\.classList\.add\('is-ready'\)/);
-  assert.match(webApp, /Number\(plan\.pricePromo\)\.toLocaleString/);
-  assert.match(styles, /@keyframes plan-ticker-scroll/);
-  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.plan-ticker-track \{ width: auto; animation: none; \}/);
+test('l’accueil met les abonnements, courses et pronostics en avant sans ticker', () => {
+  const heroPosition = html.indexOf('id="accueil"');
+  const plansPosition = html.indexOf('id="abonnements"');
+  const coursesPosition = html.indexOf('id="courses-du-jour"');
+
+  assert.ok(heroPosition > -1);
+  assert.ok(plansPosition > heroPosition);
+  assert.ok(coursesPosition > plansPosition);
+  assert.match(html, /ABONNEMENTS[\s\S]*Choisissez votre formule/);
+  assert.match(html, /COURSE &amp; PRONOSTIC/);
+  assert.doesNotMatch(html, /plan-ticker/);
+  assert.doesNotMatch(webApp, /plan-ticker-group|plan-ticker-track/);
 });
 
 test('la fenêtre de paiement reste lisible après le passage du site au thème clair', () => {
@@ -96,8 +101,11 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260804-6/);
-  assert.match(serviceWorker, /parispromax-shell-20260804-6/);
+  assert.match(html, /styles\.css\?v=20260810-1/);
+  assert.match(html, /app\.js\?v=20260810-1/);
+  assert.match(serviceWorker, /parispromax-shell-20260810-1/);
+  assert.match(serviceWorker, /styles\.css\?v=20260810-1/);
+  assert.match(serviceWorker, /app\.js\?v=20260810-1/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -151,17 +159,34 @@ test('le support WhatsApp officiel est disponible sur le web et Android', () => 
   assert.doesNotMatch(profile, /\+226 68 25 49 41/);
 });
 
-test('la navigation principale suit les quatre parcours demandés', () => {
-  assert.match(html, /href="#courses-du-jour">Courses du jour/);
-  assert.match(html, /href="#resultats">Résultats/);
-  assert.match(html, /href="#abonnements">Abonnements/);
-  assert.match(html, /href="#contact">Contact/);
+test('la navigation web se limite aux trois parcours prioritaires', () => {
+  const desktopNavigation = html.match(/<nav class="desktop-nav"[\s\S]*?<\/nav>/)?.[0] || '';
+  const mobileNavigation = html.match(/<nav class="mobile-nav[\s\S]*?<\/nav>/)?.[0] || '';
+
+  [desktopNavigation, mobileNavigation].forEach((navigation) => {
+    assert.match(navigation, /href="#courses-du-jour">Courses/);
+    assert.match(navigation, /href="#quinte-pays">Pronostics/);
+    assert.match(navigation, /href="#abonnements">Abonnements/);
+    assert.doesNotMatch(navigation, /href="#resultats"|href="#contact"/);
+  });
+  assert.equal((desktopNavigation.match(/<a /g) || []).length, 3);
+
+  // L’application conserve ses quatre onglets utiles, avec Compte à la place de Contact.
   assert.match(navigator, /name="Courses du jour"/);
   assert.match(navigator, /name="Résultats"/);
   assert.match(navigator, /name="Abonnements"/);
   assert.match(navigator, /name="Compte"/);
   assert.doesNotMatch(navigator, /name="Contact"/);
   assert.match(profile, />Mon compte</);
+});
+
+test('les informations secondaires sont repliées et restent ouvrables par leur ancre', () => {
+  assert.match(html, /<details class="performance-disclosure">[\s\S]*<summary>Voir la performance passée des pronostics<\/summary>[\s\S]*id="prediction-performance"/);
+  assert.match(html, /<details class="community-disclosure">[\s\S]*<summary>[\s\S]*Besoin d’aide \?[\s\S]*<\/summary>[\s\S]*id="contact-referral-link"/);
+  assert.doesNotMatch(html, /<details class="(?:performance|community)-disclosure" open/);
+  assert.match(webApp, /function revealHashDisclosure\(\)/);
+  assert.match(webApp, /window\.addEventListener\('hashchange', revealHashDisclosure\)/);
+  assert.match(webApp, /revealHashDisclosure\(\);[\s\S]*startRaceCarousels\(\)/);
 });
 
 test('les résultats et le contact séparent les parcours utiles', () => {
@@ -199,14 +224,24 @@ test('Android permet de partager le lien officiel de l’application', () => {
   assert.match(profile, /const onShareAndroidApp = useCallback/);
 
   const blockStart = profile.indexOf("{Platform.OS === 'android' && (");
-  const blockEnd = profile.indexOf('<Text style={styles.sectionLabel}>Nous contacter</Text>', blockStart);
+  const blockEnd = profile.indexOf('<View style={styles.referralCard}>', blockStart);
   assert.notEqual(blockStart, -1);
   assert.notEqual(blockEnd, -1);
 
   const appShareBlock = profile.slice(blockStart, blockEnd);
+  assert.equal((profile.match(/<View style=\{styles\.androidAppCard\}>/g) || []).length, 1);
+  assert.match(appShareBlock, /<View style=\{styles\.androidAppCard\}>/);
+  assert.match(appShareBlock, />ParisPromax Android</);
+  assert.match(appShareBlock, /Envoyez le lien officiel de téléchargement à vos proches/);
   assert.match(appShareBlock, /onPress=\{onShareAndroidApp\}/);
-  assert.match(appShareBlock, />Partager l’application</);
-  assert.match(appShareBlock, /accessibilityLabel="Partager l’application Android ParisPromax"/);
+  assert.match(appShareBlock, /accessibilityRole="button"/);
+  assert.match(appShareBlock, /accessibilityLabel="Partager ParisPromax pour Android"/);
+  assert.match(appShareBlock, /accessibilityHint="Ouvre la feuille de partage avec le lien officiel de téléchargement"/);
+  assert.match(appShareBlock, /accessibilityState=\{\{ disabled: sharingAndroidApp, busy: sharingAndroidApp \}\}/);
+  assert.match(appShareBlock, /disabled=\{sharingAndroidApp\}/);
+  assert.match(appShareBlock, /'Ouverture du partage…' : 'Partager ParisPromax'/);
+  assert.match(profile, /if \(sharingAndroidApp\) return;[\s\S]*setSharingAndroidApp\(true\);[\s\S]*finally \{[\s\S]*setSharingAndroidApp\(false\)/);
+  assert.match(profile, /androidShareButton: \{[\s\S]{0,120}minHeight: 48/);
   assert.doesNotMatch(appShareBlock, /github\.com\/GADIAGA-prog\/parispromax\/releases/);
   assert.match(profile, /Share\.share\([\s\S]{0,400}ANDROID_DOWNLOAD_URL[\s\S]{0,200}dialogTitle: 'Partager ParisPromax'/);
 });
@@ -216,13 +251,16 @@ test('Android affiche la version native installée et le build EAS', () => {
   assert.match(profile, /Application\.nativeApplicationVersion/);
   assert.match(profile, /Application\.nativeBuildVersion/);
   assert.match(profile, /Constants\.executionEnvironment === 'storeClient'/);
-  assert.match(profile, />Version installée</);
-  assert.match(profile, /build Android/);
-  assert.match(profile, />Télécharger la version la plus récente</);
+  assert.match(profile, />ParisPromax Android</);
+  assert.match(profile, /v\{appVersion\}/);
+  assert.match(profile, /build \$\{androidBuildVersion\}/);
+  assert.match(profile, /accessibilityRole="link"/);
+  assert.match(profile, /accessibilityLabel="Télécharger la dernière version Android"/);
+  assert.match(profile, />Télécharger la dernière version</);
   assert.match(profile, /const onDownloadLatestAndroid = useCallback/);
   assert.match(profile, /Linking\.openURL\(ANDROID_DOWNLOAD_URL\)/);
   assert.match(profile, /onPress=\{onDownloadLatestAndroid\}/);
-  assert.equal(appConfig.expo.version, '1.1.0');
+  assert.equal(appConfig.expo.version, '1.2.0');
   assert.equal(mobilePackage.version, appConfig.expo.version);
   assert.equal(mobilePackageLock.version, appConfig.expo.version);
   assert.equal(mobilePackageLock.packages[''].version, appConfig.expo.version);
