@@ -22,6 +22,7 @@ const state = {
   selectedPlan: null,
   recovery: { phone: '', country: 'bf' },
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
+  dailyPublicationText: '',
 };
 
 const FALLBACK_COUNTRIES = [
@@ -533,6 +534,125 @@ function passwordPolicyState(value) {
   };
 }
 
+function dailyPublicationUrl() {
+  return new URL('/#publications', publicWebOrigin()).href;
+}
+
+function plainRaceLine(race, prefix = '') {
+  const reference = raceReference(race);
+  const time = race.time ? ` | Depart ${race.time}` : '';
+  const distance = race.distance ? ` | ${race.distance}` : '';
+  const runners = race.runners ? ` | ${race.runners} participants` : '';
+  return `${prefix}${reference ? `${reference} - ` : ''}${race.name || 'Course du jour'}${time}${distance}${runners}`;
+}
+
+function setDailyPublicationMessage(message) {
+  const node = $('#daily-publication-message');
+  if (!node) return;
+  node.textContent = message || '';
+  clearTimeout(setDailyPublicationMessage.timer);
+  if (message) setDailyPublicationMessage.timer = setTimeout(() => { node.textContent = ''; }, 3800);
+}
+
+function buildDailyPublicationText(nationalRace, ecdRaces, country) {
+  const date = dateLabel(state.raceDate || nationalRace?.date || new Date().toISOString());
+  const nationalLine = nationalRace
+    ? plainRaceLine(nationalRace)
+    : 'La course nationale est en cours de preparation.';
+  const ecdLines = ecdRaces.slice(0, 5).map((race, index) => plainRaceLine(race, `${index + 1}. `));
+  return [
+    `🏇 PARISPROMAX - PUBLICATION DU JOUR`,
+    `📅 ${date} | ${country.flag || ''} ${country.name}`,
+    '',
+    'Les informations officielles du programme sont disponibles sur ParisPromax. Consultez la course nationale, le programme ECD, les resultats et l’application Android.',
+    '',
+    '🏁 COURSE NATIONALE',
+    nationalLine,
+    '',
+    '📋 PROGRAMME ECD',
+    ecdLines.length ? ecdLines.join('\n') : 'Programme ECD en cours de preparation.',
+    '',
+    '📱 Module du jour: La fiche Course nationale',
+    'Un ecran clair pour lire rapidement hippodrome, depart, discipline, distance et nombre de partants.',
+    '',
+    '🚀 Avancee ParisPromax: application Android version 1.2.0 disponible.',
+    '',
+    `🌐 Site officiel: ${new URL('/', publicWebOrigin()).href}`,
+    `🏇 Course nationale: ${new URL('/#quinte-pays', publicWebOrigin()).href}`,
+    `📋 Programme ECD: ${new URL('/#ecd', publicWebOrigin()).href}`,
+    `📊 Resultats: ${new URL('/#resultats', publicWebOrigin()).href}`,
+    `📲 Android: ${new URL('/download/android', publicWebOrigin()).href}`,
+    '📢 Telegram: https://t.me/ParisPromaxOfficiel',
+    '📘 Facebook: https://www.facebook.com/parispromax',
+    '',
+    'Information uniquement. Aucun pronostic dans cette publication. Reserve aux adultes. Aucun gain garanti. ParisPromax ne prend ni n’encaisse aucun pari.',
+  ].join('\n');
+}
+
+function renderDailyPublication(data = {}) {
+  const card = $('#daily-publication-card');
+  const summary = $('#daily-publication-summary');
+  if (!card || !summary) return;
+
+  const country = countryDetails(state.nationalCountry);
+  const nationalRace = data.nationalRace || fallbackQuinte();
+  const ecdRaces = state.racetracks.flatMap((track) => (track.races || []).map((race) => ({ ...race, trackName: track.name })));
+  state.dailyPublicationText = buildDailyPublicationText(nationalRace, ecdRaces, country);
+  summary.textContent = `Une annonce publique pour ${country.name}, avec la nationale, les ECD et tous les liens utiles.`;
+
+  const highlight = nationalRace || ecdRaces[0] || {};
+  const ecdMarkup = ecdRaces.slice(0, 4).map((race) => `
+    <li><strong>${escapeHtml(raceReference(race) || 'ECD')}</strong><span>${escapeHtml(race.name || 'Course ECD')}</span><small>${escapeHtml([race.time, race.distance, `${race.runners || 0} partants`].filter(Boolean).join(' · '))}</small></li>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="daily-card-hero">
+      <span>🏇 ParisPromax</span>
+      <strong>Programme officiel du jour</strong>
+      <small>${escapeHtml(dateLabel(state.raceDate || highlight.date))} · ${escapeHtml(country.name)}</small>
+    </div>
+    <div class="daily-card-race">
+      <span>🏁 Course nationale</span>
+      <h3>${escapeHtml(highlight.name || 'Course en préparation')}</h3>
+      <p>${escapeHtml([raceReference(highlight), highlight.track || highlight.trackName, highlight.time, highlight.distance, `${highlight.runners || 0} participants`].filter(Boolean).join(' · '))}</p>
+    </div>
+    <ul class="daily-card-ecd">${ecdMarkup || '<li><strong>ECD</strong><span>Programme en cours de préparation</span><small>Revenez dans un instant</small></li>'}</ul>
+    <div class="daily-card-links">
+      <a href="/#quinte-pays">Nationale</a>
+      <a href="/#ecd">ECD</a>
+      <a href="/#resultats">Résultats</a>
+      <a href="/download/android">Android</a>
+    </div>
+    <p>Information uniquement. Aucun pronostic dans cette publication.</p>
+  `;
+}
+
+async function copyDailyPublication() {
+  if (!state.dailyPublicationText) renderDailyPublication();
+  await copyPlainText(state.dailyPublicationText);
+  setDailyPublicationMessage('Publication copiée. Elle est prête à coller sur Facebook, Telegram ou un groupe.');
+  toast('Publication copiée');
+}
+
+async function shareDailyPublication() {
+  if (!state.dailyPublicationText) renderDailyPublication();
+  const payload = {
+    title: 'ParisPromax - publication du jour',
+    text: state.dailyPublicationText,
+    url: dailyPublicationUrl(),
+  };
+  if (navigator.share) {
+    try {
+      await navigator.share(payload);
+      setDailyPublicationMessage('Publication partagée.');
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+    }
+  }
+  await copyDailyPublication();
+}
+
 function updatePasswordChecklist(input) {
   if (!input) return;
   const checklist = document.getElementById(input.getAttribute('aria-describedby'));
@@ -674,6 +794,7 @@ async function loadRaces() {
     list.innerHTML = `<div class="empty-state"><p>${escapeHtml(error.message)}</p></div>`;
   } finally {
     await loadNationalSpotlight();
+    renderDailyPublication();
   }
 }
 
@@ -1518,6 +1639,7 @@ async function loadNationalSpotlight() {
     const game = data.game || null;
     state.nationalGame = game;
     state.nationalRaceId = nationalRace?.id || null;
+    renderDailyPublication({ nationalRace });
     const gameGuide = renderNationalGameGuide(game);
     if (!race) {
       node.innerHTML = `<div class="national-empty"><strong>${escapeHtml(country.flag)} Sélection ${escapeHtml(country.name)}</strong><p>La course nationale est en cours de préparation. Les règles du jeu du jour restent disponibles ci-dessous.</p></div>${gameGuide}`;
@@ -2260,6 +2382,8 @@ function bindEvents() {
   $('#notification-read-all').addEventListener('click', () => markNotificationsRead());
   $('#native-share').addEventListener('click', shareSite);
   $('#copy-site-link').addEventListener('click', copySiteLink);
+  $$('[data-copy-daily-publication]').forEach((button) => button.addEventListener('click', copyDailyPublication));
+  $$('[data-share-daily-publication]').forEach((button) => button.addEventListener('click', shareDailyPublication));
   $('#copy-referral').addEventListener('click', copyReferralCode);
   $('#copy-referral-link').addEventListener('click', copyReferralLink);
   $('#share-referral-link').addEventListener('click', shareReferralLink);

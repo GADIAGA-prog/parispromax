@@ -101,11 +101,11 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260811-2/);
-  assert.match(html, /app\.js\?v=20260811-2/);
-  assert.match(serviceWorker, /parispromax-shell-20260811-2/);
-  assert.match(serviceWorker, /styles\.css\?v=20260811-2/);
-  assert.match(serviceWorker, /app\.js\?v=20260811-2/);
+  assert.match(html, /styles\.css\?v=20260914-1/);
+  assert.match(html, /app\.js\?v=20260914-1/);
+  assert.match(serviceWorker, /parispromax-shell-20260914-1/);
+  assert.match(serviceWorker, /styles\.css\?v=20260914-1/);
+  assert.match(serviceWorker, /app\.js\?v=20260914-1/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -159,17 +159,18 @@ test('le support WhatsApp officiel est disponible sur le web et Android', () => 
   assert.doesNotMatch(profile, /\+226 68 25 49 41/);
 });
 
-test('la navigation web se limite aux trois parcours prioritaires', () => {
+test('la navigation web expose les quatre parcours prioritaires', () => {
   const desktopNavigation = html.match(/<nav class="desktop-nav"[\s\S]*?<\/nav>/)?.[0] || '';
   const mobileNavigation = html.match(/<nav class="mobile-nav[\s\S]*?<\/nav>/)?.[0] || '';
 
   [desktopNavigation, mobileNavigation].forEach((navigation) => {
     assert.match(navigation, /href="#courses-du-jour">Courses/);
     assert.match(navigation, /href="#quinte-pays">Pronostics/);
+    assert.match(navigation, /href="#publications">Publications/);
     assert.match(navigation, /href="#abonnements">Abonnements/);
     assert.doesNotMatch(navigation, /href="#resultats"|href="#contact"/);
   });
-  assert.equal((desktopNavigation.match(/<a /g) || []).length, 3);
+  assert.equal((desktopNavigation.match(/<a /g) || []).length, 4);
 
   // L’application conserve ses quatre onglets utiles, avec Compte à la place de Contact.
   assert.match(navigator, /name="Courses du jour"/);
@@ -178,6 +179,18 @@ test('la navigation web se limite aux trois parcours prioritaires', () => {
   assert.match(navigator, /name="Compte"/);
   assert.doesNotMatch(navigator, /name="Contact"/);
   assert.match(profile, />Mon compte</);
+});
+
+test('le site affiche une publication du jour attractive et partageable', () => {
+  assert.match(html, /id="publications"/);
+  assert.match(html, /data-copy-daily-publication/);
+  assert.match(html, /data-share-daily-publication/);
+  assert.match(webApp, /function renderDailyPublication/);
+  assert.match(webApp, /buildDailyPublicationText/);
+  assert.match(webApp, /dailyPublicationUrl/);
+  assert.match(webApp, /copyDailyPublication/);
+  assert.match(styles, /\.daily-publication-shell/);
+  assert.match(styles, /\.daily-publication-card/);
 });
 
 test('les informations secondaires sont repliées et restent ouvrables par leur ancre', () => {

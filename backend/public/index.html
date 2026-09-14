@@ -28,7 +28,7 @@
   <link rel="icon" href="/assets/logo-emblem-128.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest?v=20260722-1" />
-  <link rel="stylesheet" href="/styles.css?v=20260811-2" />
+  <link rel="stylesheet" href="/styles.css?v=20260914-1" />
   <title>ParisPromax | Pronostics PMU Burkina Faso et résultats</title>
   <script type="application/ld+json">
   {
@@ -96,6 +96,7 @@
     <nav class="desktop-nav" aria-label="Navigation principale">
       <a href="#courses-du-jour">Courses</a>
       <a href="#quinte-pays">Pronostics</a>
+      <a href="#publications">Publications</a>
       <a href="#abonnements">Abonnements</a>
     </nav>
     <div class="header-actions">
@@ -120,7 +121,7 @@
     </div>
     <button class="mobile-signup-cta" type="button" data-open-auth="register">Créer un compte</button>
     <button class="mobile-login-cta" type="button" data-open-auth="login">Connexion</button>
-    <a href="#courses-du-jour">Courses</a><a href="#quinte-pays">Pronostics</a><a href="#abonnements">Abonnements</a>
+    <a href="#courses-du-jour">Courses</a><a href="#quinte-pays">Pronostics</a><a href="#publications">Publications</a><a href="#abonnements">Abonnements</a>
   </nav>
 
   <main>
@@ -185,6 +186,25 @@
           <div class="skeleton-line"></div><div class="skeleton-line"></div>
         </div>
       </article>
+    </section>
+
+    <section class="section daily-publication-section" id="publications" aria-labelledby="daily-publication-title">
+      <div class="daily-publication-shell reveal">
+        <div class="daily-publication-copy">
+          <span class="section-kicker">PUBLICATION DU JOUR</span>
+          <h2 id="daily-publication-title">La pub ParisPromax prête à partager.</h2>
+          <p id="daily-publication-summary">Chargement de la publication du jour...</p>
+          <div class="daily-publication-actions">
+            <button class="button button-primary" type="button" data-copy-daily-publication>Copier la pub</button>
+            <button class="button button-outline" type="button" data-share-daily-publication>Partager</button>
+            <a class="button button-android" href="/download/android">Télécharger Android</a>
+          </div>
+          <p class="daily-publication-message" id="daily-publication-message" role="status" aria-live="polite"></p>
+        </div>
+        <article class="daily-publication-card" id="daily-publication-card" aria-live="polite">
+          <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
+        </article>
+      </div>
     </section>
 
     <section class="section race-section" id="ecd">
@@ -486,6 +506,6 @@
   </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/app.js?v=20260811-2" defer></script>
+  <script src="/app.js?v=20260914-1" defer></script>
 </body>
 </html>
