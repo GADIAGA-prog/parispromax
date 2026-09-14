@@ -238,6 +238,75 @@ a { color: inherit; }
 .grand-carnet-total strong { margin-top:2px; color:var(--green); font-size:15px; }
 .grand-carnet>p { margin:8px 0 0; color:var(--faint); font-size:9px; }
 
+.daily-publication-section { padding-top: 34px; }
+.daily-publication-shell {
+  display: grid;
+  grid-template-columns: minmax(0, .82fr) minmax(360px, 1.18fr);
+  gap: clamp(18px, 4vw, 42px);
+  align-items: stretch;
+  padding: clamp(20px, 3vw, 34px);
+  border: 1px solid rgba(245, 199, 97, .34);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 84% 18%, rgba(245, 199, 97, .22), transparent 30%),
+    linear-gradient(135deg, #101f31, #071421 54%, #0a2c24);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .32);
+}
+.daily-publication-copy { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.daily-publication-copy h2 { margin: 9px 0 10px; font-size: clamp(29px, 4vw, 48px); line-height: 1.04; letter-spacing: -1.3px; }
+.daily-publication-copy p { color: #bfd0df; }
+.daily-publication-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.daily-publication-message { min-height: 19px; margin: 13px 0 0; color: var(--green); font-size: 12px; font-weight: 800; }
+.daily-publication-card {
+  min-width: 0;
+  overflow: hidden;
+  color: #10212d;
+  border: 1px solid rgba(255, 255, 255, .54);
+  border-radius: 22px;
+  background: #f8fbf8;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, .25);
+}
+.daily-card-hero {
+  padding: 22px;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(6, 16, 29, .34), rgba(6, 16, 29, .86)),
+    url('/assets/race-finish.jpg') center / cover;
+}
+.daily-card-hero span,
+.daily-card-hero strong,
+.daily-card-hero small { display: block; }
+.daily-card-hero span { color: var(--gold); font-size: 12px; font-weight: 950; letter-spacing: 1px; text-transform: uppercase; }
+.daily-card-hero strong { margin-top: 24px; font-size: clamp(25px, 3.6vw, 39px); line-height: 1.04; letter-spacing: -1px; }
+.daily-card-hero small { margin-top: 7px; color: #d5e9f8; font-weight: 800; }
+.daily-card-race { padding: 19px 22px 15px; border-bottom: 1px solid #dbe7df; }
+.daily-card-race span { color: #087554; font-size: 11px; font-weight: 950; letter-spacing: .9px; text-transform: uppercase; }
+.daily-card-race h3 { margin: 5px 0 7px; font-size: clamp(21px, 3vw, 29px); line-height: 1.12; }
+.daily-card-race p { margin: 0; color: #566978; font-size: 13px; }
+.daily-card-ecd { display: grid; gap: 8px; margin: 0; padding: 16px 22px; list-style: none; }
+.daily-card-ecd li {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 6px 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #eef7f3;
+}
+.daily-card-ecd strong { grid-row: 1 / span 2; align-self: center; color: #065f46; font-size: 14px; font-weight: 950; }
+.daily-card-ecd span { overflow: hidden; font-size: 13px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.daily-card-ecd small { color: #667987; font-size: 11px; }
+.daily-card-links { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 18px; }
+.daily-card-links a {
+  padding: 8px 10px;
+  color: #ffffff;
+  border-radius: 999px;
+  background: #087554;
+  font-size: 11px;
+  font-weight: 900;
+  text-decoration: none;
+}
+.daily-publication-card > p { margin: 0; padding: 13px 22px 18px; color: #6c7881; font-size: 11px; border-top: 1px solid #dbe7df; }
+
 .race-workspace { display: grid; grid-template-columns: 320px 1fr; min-height: 590px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: rgba(8, 21, 37, .72); box-shadow: var(--shadow); }
 .ecd-program-links { grid-column:1/-1; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; margin-top:10px; }
 .ecd-program-links:empty { display:none; }
@@ -1601,6 +1670,11 @@ html { scroll-padding-top: 126px; }
 @media (max-width: 760px) {
   html { scroll-padding-top: 118px; }
   .mobile-nav { top: 114px; max-height: calc(100dvh - 126px); }
+  .daily-publication-shell { grid-template-columns: 1fr; padding: 18px; border-radius: 20px; }
+  .daily-publication-copy h2 { font-size: 30px; }
+  .daily-publication-actions { display: grid; grid-template-columns: 1fr; }
+  .daily-card-ecd li { grid-template-columns: 48px minmax(0, 1fr); }
+  .daily-card-ecd span { white-space: normal; }
 }
 
 @media (max-width: 480px) {
