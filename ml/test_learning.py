@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from data_export import _finalize
-from train_ltr import _grouped_time_split
+from train_ltr import _grouped_time_split, ndcg_at_three
 
 
 def field(course='race', winners='[1,2,3]', **extra):
@@ -11,6 +11,11 @@ def field(course='race', winners='[1,2,3]', **extra):
 
 
 class LearningDataTests(unittest.TestCase):
+    def test_metric_is_numeric_and_ties_do_not_depend_on_runner_order(self):
+        self.assertEqual(ndcg_at_three([3, 2, 1, 0], [4, 3, 2, 1]), 1.0)
+        self.assertLess(ndcg_at_three([3, 2, 1, 0], [1, 2, 3, 4]), 1.0)
+        self.assertAlmostEqual(ndcg_at_three([3, 2, 1, 0], [1, 1, 1, 1]), ndcg_at_three([0, 1, 2, 3], [1, 1, 1, 1]))
+
     def test_partial_arrivals_are_not_losing_training_labels(self):
         frame = _finalize(pd.DataFrame(field('partial', '[1,2]') + field('complete')))
         self.assertEqual(set(frame.course_id), {'complete'})

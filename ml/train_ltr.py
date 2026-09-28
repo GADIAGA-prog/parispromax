@@ -27,6 +27,23 @@ from data_export import load_training_frame, load_from_json
 from ltr_features import build_features, relevance_from_finish, FEATURES
 
 
+def ndcg_at_three(labels, scores):
+    """NDCG with linear relevance and tie-averaged gains, independent of order."""
+    labels, scores = np.asarray(labels, dtype=float), np.asarray(scores, dtype=float)
+    if not np.isfinite(labels).all() or not np.isfinite(scores).all():
+        return float('nan')
+    order = np.argsort(-scores, kind='stable')
+    gains = labels[order].copy()
+    ranked_scores = scores[order]
+    for score in np.unique(ranked_scores):
+        tied = ranked_scores == score
+        gains[tied] = gains[tied].mean()
+    k = min(3, len(gains))
+    discounts = 1 / np.log2(np.arange(2, k + 2))
+    ideal = float(np.dot(np.sort(labels)[::-1][:k], discounts))
+    return float(np.dot(gains[:k], discounts) / ideal) if ideal else 0.0
+
+
 def _grouped_time_split(course_ids, n_folds=4, race_dates=None):
     """Split par blocs de courses contigus (le passé entraîne, le futur valide)."""
     uniq = list(dict.fromkeys(course_ids))  # ordre d'apparition (déjà trié par course)
@@ -89,7 +106,6 @@ def train(df, out_path="model/model.cbm"):
 
     # Evaluate explicitly: CatBoost ranking get_best_score() can be empty.
     # Refuse an unmeasurable model instead of silently publishing ndcg=None.
-    from sklearn.metrics import ndcg_score
     valid_frame = df.loc[va]
     predicted = np.asarray(model.predict(X.loc[va]))
     actual = y[va]
@@ -100,8 +116,8 @@ def train(df, out_path="model/model.cbm"):
         mask = ids == course_id
         if mask.sum() < 2:
             continue
-        scores.append(ndcg_score([actual[mask]], [predicted[mask]], k=3))
-        baselines.append(ndcg_score([actual[mask]], [market[mask]], k=3))
+        scores.append(ndcg_at_three(actual[mask], predicted[mask]))
+        baselines.append(ndcg_at_three(actual[mask], market[mask]))
     ndcg = float(np.mean(scores)) if scores else float("nan")
     baseline = float(np.mean(baselines)) if baselines else float("nan")
     print(f"[train] NDCG@3 = {ndcg:.6f}; marché = {baseline:.6f}; courses validation = {len(scores)}")
