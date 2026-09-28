@@ -14,7 +14,7 @@ test('un rafraichissement conserve les positions officielles des Runner', () => 
   assert.doesNotMatch(ingest, /runner\.deleteMany/);
   assert.match(ingest, /prisma\.\$transaction\(runners\.map/);
   assert.match(ingest, /where: \{ raceId_number: \{ raceId, number \} \}/);
-  assert.match(ingest, /update: mutable/);
+  assert.match(ingest, /update: beforeStart \? mutable : \{\}/);
   assert.match(ingest, /create: \{ raceId, number, \.\.\.mutable, finishPos: null \}/);
   assert.match(ingest, /if \(process\.env\.REDIS_URL\) await enqueuePrediction\(externalId\)/);
 });

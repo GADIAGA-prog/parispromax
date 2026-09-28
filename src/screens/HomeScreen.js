@@ -241,6 +241,20 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </View>
             </View>
+            <Pressable
+              style={styles.dailyPublicationCta}
+              onPress={() => navigation.navigate(hasAccess ? 'PublicationDuJour' : 'Paywall')}
+              accessibilityRole="button"
+              accessibilityLabel={hasAccess ? 'Ouvrir la publication premium du jour' : 'S’abonner pour ouvrir la publication du jour'}
+            >
+              <View style={styles.dailyPublicationIcon}><Ionicons name={hasAccess ? 'newspaper' : 'lock-closed'} size={19} color={COLORS.gold} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dailyPublicationKicker}>PUBLICATION DU JOUR</Text>
+                <Text style={styles.dailyPublicationTitle}>{hasAccess ? 'Programme, Podium + 2 et résultats' : 'Réservée aux abonnés actifs'}</Text>
+                <Text style={styles.dailyPublicationText}>{hasAccess ? 'Les arrivées officielles s’ajoutent automatiquement.' : 'Abonnez-vous pour consulter les sélections complètes.'}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={COLORS.white} />
+            </Pressable>
             <View style={styles.sectionLabelRow}>
               <View>
                 <Text style={styles.sectionKicker}>JEU NATIONAL DU JOUR</Text>
@@ -504,4 +518,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(6, 37, 28, 0.72)',
   },
   raceVisualLabel: { color: COLORS.white, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  dailyPublicationCta: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.xl },
+  dailyPublicationIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(251,191,36,.14)' },
+  dailyPublicationKicker: { color: COLORS.gold, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  dailyPublicationTitle: { color: COLORS.white, fontSize: FONT.sm, fontWeight: '900', marginTop: 2 },
+  dailyPublicationText: { color: '#BED0C8', fontSize: 10, marginTop: 2 },
 });

@@ -160,6 +160,11 @@ export const api = {
   ),
   raceDetail: (externalId) => request(`/races/${externalId}`),
   prediction: (externalId) => request(`/races/${externalId}/prediction`, { auth: true }),
+  // Feuille premium : programme, Podium + 2 et résultats officiels dès leur disponibilité.
+  dailyPublication: (date) => request(
+    `/publications/daily${date ? `?date=${encodeURIComponent(date)}` : ''}`,
+    { auth: true }
+  ),
 
   // Plans
   plans: () => request('/plans'),

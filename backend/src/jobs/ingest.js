@@ -15,6 +15,7 @@ const { availableProviders } = require('../services/paymentProvider');
 const { countriesForProviderIds } = require('../services/paymentCountries');
 const { enqueuePrediction } = require('../services/queue');
 const { computeRatings, ratingForHorse, ratingFrom, syncActorStats } = require('./ratings');
+const { parisStartIso } = require('../services/raceTime');
 
 const RACES_FILE = path.resolve(__dirname, '../../../src/services/live_races.json');
 
@@ -109,13 +110,17 @@ async function ingestData(data) {
           trainerRating: ratingFrom(ratings.trainer.get(h.trainer)) || 50,
         }));
       if (runners.length) {
+        const startsAt = Date.parse(parisStartIso(date, race.time) || '');
+        const beforeStart = Number.isFinite(startsAt) && Date.now() < startsAt;
         await prisma.$transaction(runners.map((runner) => {
           const { raceId, number, ...mutable } = runner;
           return prisma.runner.upsert({
             where: { raceId_number: { raceId, number } },
             // finishPos is deliberately absent: refreshed odds/form must never
             // erase an official training label already attached to the runner.
-            update: mutable,
+            // Freeze features at the start: later results/ratings must not leak
+            // into the historical examples used to validate the next model.
+            update: beforeStart ? mutable : {},
             create: { raceId, number, ...mutable, finishPos: null },
           });
         }));

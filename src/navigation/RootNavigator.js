@@ -12,6 +12,7 @@ import AgeGateScreen from '../screens/AgeGateScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import QuintePlusScreen from '../screens/QuintePlusScreen';
+import DailyPublicationScreen from '../screens/DailyPublicationScreen';
 import RaceDetailScreen from '../screens/RaceDetailScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import HistoryScreen from '../screens/HistoryScreen';
@@ -50,6 +51,7 @@ function MainTabs() {
           const icons = {
             'Courses du jour': 'home',
             'Résultats': 'trophy',
+            'Pronostics': 'grid',
             'Abonnements': 'diamond',
             'Compte': 'person-circle',
           };
@@ -58,6 +60,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Courses du jour" component={HomeScreen} />
+      <Tab.Screen name="Pronostics" component={DailyPublicationScreen} />
       <Tab.Screen name="Résultats" component={HistoryScreen} />
       <Tab.Screen name="Abonnements" component={PaywallScreen} />
       <Tab.Screen name="Compte" component={ProfileScreen} />
@@ -109,6 +112,11 @@ export default function RootNavigator() {
               name="Nationale"
               component={QuintePlusScreen}
               options={{ title: 'Course nationale' }}
+            />
+            <Stack.Screen
+              name="PublicationDuJour"
+              component={DailyPublicationScreen}
+              options={{ title: 'Publication du jour' }}
             />
             <Stack.Screen
               name="Paywall"

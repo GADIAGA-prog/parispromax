@@ -101,11 +101,11 @@ test('la fenêtre de paiement reste lisible après le passage du site au thème 
   assert.match(finalContrastLayer, /\.modal \{[\s\S]*--text: #14212b;[\s\S]*background: #ffffff;/);
   assert.match(finalContrastLayer, /\.form-stack input,[\s\S]*color: #14212b;[\s\S]*background: #f7f9fa;/);
   assert.match(finalContrastLayer, /\.operator-chip\.active \{[\s\S]*background: #eaf7f1;/);
-  assert.match(html, /styles\.css\?v=20260914-1/);
-  assert.match(html, /app\.js\?v=20260914-1/);
-  assert.match(serviceWorker, /parispromax-shell-20260914-1/);
-  assert.match(serviceWorker, /styles\.css\?v=20260914-1/);
-  assert.match(serviceWorker, /app\.js\?v=20260914-1/);
+  assert.match(html, /styles\.css\?v=20260928-2/);
+  assert.match(html, /app\.js\?v=20260928-2/);
+  assert.match(serviceWorker, /parispromax-shell-20260928-2/);
+  assert.match(serviceWorker, /styles\.css\?v=20260928-2/);
+  assert.match(serviceWorker, /app\.js\?v=20260928-2/);
 });
 
 test('les règles responsive finales couvrent tablette et téléphone', () => {
@@ -295,7 +295,7 @@ test('Android affiche la version native installée et le build EAS', () => {
   assert.match(profile, /const onDownloadLatestAndroid = useCallback/);
   assert.match(profile, /Linking\.openURL\(ANDROID_DOWNLOAD_URL\)/);
   assert.match(profile, /onPress=\{onDownloadLatestAndroid\}/);
-  assert.equal(appConfig.expo.version, '1.2.0');
+  assert.equal(appConfig.expo.version, '1.3.0');
   assert.equal(mobilePackage.version, appConfig.expo.version);
   assert.equal(mobilePackageLock.version, appConfig.expo.version);
   assert.equal(mobilePackageLock.packages[''].version, appConfig.expo.version);

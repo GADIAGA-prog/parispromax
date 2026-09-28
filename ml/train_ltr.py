@@ -77,24 +77,28 @@ def train(df, out_path="model/model.cbm"):
     )
     model.fit(train_pool, eval_set=valid_pool, use_best_model=bool(valid_pool))
 
-    # Qualité mesurée sur la validation TEMPORELLE (le futur du jeu de données).
-    # Journalisée à chaque entraînement ; PPM_MIN_NDCG (optionnel) refuse de
-    # remplacer le modèle si le score chute en dessous du seuil.
-    ndcg = None
-    if valid_pool is not None:
-        try:
-            best = model.get_best_score() or {}
-            ndcg = best.get("validation", {}).get("NDCG:top=3;type=Base")
-            if ndcg is None:
-                vals = list(best.get("validation", {}).values())
-                ndcg = vals[0] if vals else None
-        except Exception:  # noqa: BLE001
-            ndcg = None
-        print(f"[train] NDCG@3 (validation temporelle) = {ndcg}")
-        min_ndcg = float(os.environ.get("PPM_MIN_NDCG", "0"))
-        if ndcg is not None and min_ndcg > 0 and ndcg < min_ndcg:
-            print(f"[train] NDCG {ndcg:.4f} < seuil {min_ndcg} -> modèle NON remplacé.")
-            raise SystemExit(0)
+    # Evaluate explicitly: CatBoost ranking get_best_score() can be empty.
+    # Refuse an unmeasurable model instead of silently publishing ndcg=None.
+    from sklearn.metrics import ndcg_score
+    valid_frame = df.loc[va]
+    predicted = np.asarray(model.predict(X.loc[va]))
+    actual = y[va]
+    market = feats.loc[va, "market_prob"].to_numpy()
+    scores, baselines = [], []
+    ids = valid_frame["course_id"].to_numpy()
+    for course_id in dict.fromkeys(ids):
+        mask = ids == course_id
+        if mask.sum() < 2:
+            continue
+        scores.append(ndcg_score([actual[mask]], [predicted[mask]], k=3))
+        baselines.append(ndcg_score([actual[mask]], [market[mask]], k=3))
+    ndcg = float(np.mean(scores)) if scores else float("nan")
+    baseline = float(np.mean(baselines)) if baselines else float("nan")
+    print(f"[train] NDCG@3 = {ndcg:.6f}; marché = {baseline:.6f}; courses validation = {len(scores)}")
+    minimum = max(float(os.environ.get("PPM_MIN_NDCG", "0")), baseline)
+    if not np.isfinite(ndcg) or not np.isfinite(baseline) or ndcg < minimum:
+        print("[train] Validation refusée : modèle précédent conservé.")
+        return None
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     model.save_model(out_path)

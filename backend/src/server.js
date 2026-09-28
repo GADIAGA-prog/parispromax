@@ -16,6 +16,7 @@ const adminRoutes = require('./routes/admin');
 const mlRoutes = require('./routes/ml');
 const legalRoutes = require('./routes/legal');
 const feedbackRoutes = require('./routes/feedback');
+const publicationRoutes = require('./routes/publications');
 const { backfillReferralCodes } = require('./services/referral');
 const { getProvider } = require('./services/paymentProvider');
 const { canonicalRedirectTarget } = require('./services/canonicalWeb');
@@ -126,6 +127,7 @@ app.use('/admin', adminRoutes);
 app.use('/ml', mlRoutes);
 app.use('/legal', legalRoutes);
 app.use('/feedback', feedbackRoutes);
+app.use('/publications', publicationRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found', path: req.path }));
 

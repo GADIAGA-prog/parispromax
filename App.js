@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
+import AndroidUpdateBanner from './src/components/AndroidUpdateBanner';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -19,7 +21,10 @@ export default function App() {
       <SettingsProvider>
         <AuthProvider>
           <StatusBar style="dark" />
-          <RootNavigator />
+          <View style={{ flex: 1 }}>
+            <AndroidUpdateBanner />
+            <RootNavigator />
+          </View>
         </AuthProvider>
       </SettingsProvider>
     </SafeAreaProvider>

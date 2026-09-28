@@ -23,6 +23,7 @@ const state = {
   recovery: { phone: '', country: 'bf' },
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
   dailyPublicationText: '',
+  dailyPublication: null,
 };
 
 const FALLBACK_COUNTRIES = [
@@ -36,6 +37,8 @@ const FALLBACK_COUNTRIES = [
 ];
 
 let deferredInstallPrompt = null;
+let dailyPublicationTimer = null;
+let dailyPublicationLoading = false;
 const CANONICAL_WEB_ORIGIN = 'https://www.parispromax.com';
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 72;
@@ -554,28 +557,27 @@ function setDailyPublicationMessage(message) {
   if (message) setDailyPublicationMessage.timer = setTimeout(() => { node.textContent = ''; }, 3800);
 }
 
-function buildDailyPublicationText(nationalRace, ecdRaces, country) {
-  const date = dateLabel(state.raceDate || nationalRace?.date || new Date().toISOString());
-  const nationalLine = nationalRace
-    ? plainRaceLine(nationalRace)
-    : 'La course nationale est en cours de preparation.';
-  const ecdLines = ecdRaces.slice(0, 5).map((race, index) => plainRaceLine(race, `${index + 1}. `));
+function buildDailyPublicationText(publication, country) {
+  const national = publication?.national || null;
+  const raceLine = (entry, prefix = '') => {
+    const race = entry.race || {};
+    const picks = (entry.selection || []).map((pick) => pick.number).join(' - ');
+    const result = race.result?.available ? ` | Arrivée officielle : ${race.result.arrival.join(' - ')}` : '';
+    return `${prefix}${plainRaceLine(race)} | Podium + 2 : ${picks || 'en préparation'}${result}`;
+  };
+  const nationalLine = national ? raceLine(national) : 'La course nationale est en cours de préparation.';
+  const ecdLines = (publication?.ecd || []).map((entry, index) => raceLine(entry, `${index + 1}. `));
   return [
     `🏇 PARISPROMAX - PUBLICATION DU JOUR`,
-    `📅 ${date} | ${country.flag || ''} ${country.name}`,
+    `📅 ${dateLabel(publication?.date)} | ${country.flag || ''} ${country.name}`,
     '',
-    'Les informations officielles du programme sont disponibles sur ParisPromax. Consultez la course nationale, le programme ECD, les resultats et l’application Android.',
+    'Publication premium : programme officiel, sélections Podium + 2 et arrivées disponibles.',
     '',
     '🏁 COURSE NATIONALE',
     nationalLine,
     '',
-    '📋 PROGRAMME ECD',
+    '📋 PROGRAMME ECD OFFICIEL',
     ecdLines.length ? ecdLines.join('\n') : 'Programme ECD en cours de preparation.',
-    '',
-    '📱 Module du jour: La fiche Course nationale',
-    'Un ecran clair pour lire rapidement hippodrome, depart, discipline, distance et nombre de partants.',
-    '',
-    '🚀 Avancee ParisPromax: application Android version 1.2.0 disponible.',
     '',
     `🌐 Site officiel: ${new URL('/', publicWebOrigin()).href}`,
     `🏇 Course nationale: ${new URL('/#quinte-pays', publicWebOrigin()).href}`,
@@ -585,57 +587,87 @@ function buildDailyPublicationText(nationalRace, ecdRaces, country) {
     '📢 Telegram: https://t.me/ParisPromaxOfficiel',
     '📘 Facebook: https://www.facebook.com/parispromax',
     '',
-    'Information uniquement. Aucun pronostic dans cette publication. Reserve aux adultes. Aucun gain garanti. ParisPromax ne prend ni n’encaisse aucun pari.',
+    'Information uniquement. Réservé aux adultes. Aucun gain garanti. ParisPromax ne prend ni n’encaisse aucun pari.',
   ].join('\n');
 }
 
-function renderDailyPublication(data = {}) {
+function renderDailyPublication() {
   const card = $('#daily-publication-card');
   const summary = $('#daily-publication-summary');
   if (!card || !summary) return;
-
   const country = countryDetails(state.nationalCountry);
-  const nationalRace = data.nationalRace || fallbackQuinte();
-  const ecdRaces = state.racetracks.flatMap((track) => (track.races || []).map((race) => ({ ...race, trackName: track.name })));
-  state.dailyPublicationText = buildDailyPublicationText(nationalRace, ecdRaces, country);
-  summary.textContent = `Une annonce publique pour ${country.name}, avec la nationale, les ECD et tous les liens utiles.`;
+  const hasAccess = Boolean(state.me?.access?.hasAccess);
+  const copyButton = $('[data-copy-daily-publication]');
+  const shareButton = $('[data-share-daily-publication]');
+  if (!hasAccess) {
+    state.dailyPublicationText = '';
+    summary.textContent = 'Programme, sélections Podium + 2 et résultats officiels : contenu réservé aux abonnés actifs.';
+    if (copyButton) copyButton.textContent = 'Voir les abonnements';
+    if (shareButton) shareButton.classList.add('hidden');
+    card.innerHTML = `<div class="daily-card-hero"><span>🔒 ParisPromax</span><strong>Publication premium</strong><small>${escapeHtml(country.name)}</small></div><div class="daily-card-race"><span>Accès abonné requis</span><h3>La feuille du jour est protégée.</h3><p>Activez votre formule pour consulter le programme, les pronostics Podium + 2 et les arrivées officielles dès leur publication.</p></div><p>Les sélections ne sont jamais chargées dans cette page sans abonnement actif.</p>`;
+    return;
+  }
+  if (copyButton) copyButton.textContent = 'Copier la publication';
+  if (shareButton) shareButton.classList.remove('hidden');
+  const publication = state.dailyPublication;
+  if (!publication) {
+    summary.textContent = 'Chargement de votre publication premium…';
+    card.innerHTML = '<div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>';
+    return;
+  }
+  state.dailyPublicationText = buildDailyPublicationText(publication, country);
+  const allRows = publication.rows || [publication.national, ...(publication.ecd || [])].filter(Boolean);
+  summary.textContent = `${allRows.length} courses publiées · ${publication.resultsAvailable || 0} résultat${publication.resultsAvailable > 1 ? 's' : ''} officiel${publication.resultsAvailable > 1 ? 's' : ''} disponible${publication.resultsAvailable > 1 ? 's' : ''}.`;
+  const rowMarkup = (entry) => {
+    const race = entry.race || {};
+    const result = race.result || {};
+    const picks = (entry.selection || []).map((pick) => `<span class="prediction-number" title="${escapeHtml(pick.name)}">${escapeHtml(pick.number)}</span>`).join('');
+    const arrival = (result.arrival || []).map((number) => `<span class="prediction-number result-number">${escapeHtml(number)}</span>`).join('');
+    return `<tr><th scope="row"><strong>${escapeHtml(race.reference)}</strong><span>${escapeHtml(race.track)}</span><small>${escapeHtml(race.name)}</small><small>${escapeHtml((entry.contexts || []).join(' · ') || 'Programme international')}</small></th><td><strong>${escapeHtml(race.time || '—')} GMT</strong><small>${escapeHtml(race.discipline || '')}</small><small>${escapeHtml(race.distance || '')} · ${race.runners || 0} partants</small></td><td><span class="table-status">${escapeHtml(entry.label || 'Podium')} · ${entry.selectionSize} chevaux</span><div class="prediction-numbers">${picks || '<span class="table-pending">' + (entry.predictionStatus === 'not-archived' ? 'Aucun pronostic archivé avant le départ' : 'En préparation') + '</span>'}</div>${entry.predictionStatus === 'archived' ? '<small>Figé avant le départ</small>' : ''}</td><td><span class="table-status">${result.available ? (result.complete ? 'Arrivée officielle' : 'Arrivée partielle') : 'En attente'}</span><div class="prediction-numbers">${arrival || '<span class="table-pending">Pas encore publié</span>'}</div></td></tr>`;
+  };
+  card.innerHTML = `<div class="prediction-table-heading"><span class="section-kicker">PRONOSTICS DU JOUR</span><h3>${escapeHtml(dateLabel(publication.date))}</h3><p>Toutes les courses, leurs sélections et les arrivées officielles réunies.</p></div><div class="prediction-table-scroll" role="region" aria-label="Tableau des pronostics du jour, défilement horizontal" tabindex="0"><table class="prediction-table"><caption>Programme du ${escapeHtml(dateLabel(publication.date))} · heures GMT</caption><thead><tr><th scope="col">Course</th><th scope="col">Informations</th><th scope="col">Pronostic IA</th><th scope="col">Résultat officiel</th></tr></thead><tbody>${allRows.map(rowMarkup).join('') || '<tr><td colspan="4">Programme du jour en préparation.</td></tr>'}</tbody></table></div><p class="prediction-table-note">Sur téléphone, faites glisser le tableau horizontalement. Les pronostics sont figés au départ ; les arrivées sont ajoutées dès leur publication.</p>`;
 
-  const highlight = nationalRace || ecdRaces[0] || {};
-  const ecdMarkup = ecdRaces.slice(0, 4).map((race) => `
-    <li><strong>${escapeHtml(raceReference(race) || 'ECD')}</strong><span>${escapeHtml(race.name || 'Course ECD')}</span><small>${escapeHtml([race.time, race.distance, `${race.runners || 0} partants`].filter(Boolean).join(' · '))}</small></li>
-  `).join('');
+}
 
-  card.innerHTML = `
-    <div class="daily-card-hero">
-      <span>🏇 ParisPromax</span>
-      <strong>Programme officiel du jour</strong>
-      <small>${escapeHtml(dateLabel(state.raceDate || highlight.date))} · ${escapeHtml(country.name)}</small>
-    </div>
-    <div class="daily-card-race">
-      <span>🏁 Course nationale</span>
-      <h3>${escapeHtml(highlight.name || 'Course en préparation')}</h3>
-      <p>${escapeHtml([raceReference(highlight), highlight.track || highlight.trackName, highlight.time, highlight.distance, `${highlight.runners || 0} participants`].filter(Boolean).join(' · '))}</p>
-    </div>
-    <ul class="daily-card-ecd">${ecdMarkup || '<li><strong>ECD</strong><span>Programme en cours de préparation</span><small>Revenez dans un instant</small></li>'}</ul>
-    <div class="daily-card-links">
-      <a href="/#quinte-pays">Nationale</a>
-      <a href="/#ecd">ECD</a>
-      <a href="/#resultats">Résultats</a>
-      <a href="/download/android">Android</a>
-    </div>
-    <p>Information uniquement. Aucun pronostic dans cette publication.</p>
-  `;
+async function loadSubscriberDailyPublication() {
+  if (!state.me?.access?.hasAccess) {
+    state.dailyPublication = null;
+    renderDailyPublication();
+    return;
+  }
+  if (dailyPublicationLoading) return;
+  dailyPublicationLoading = true;
+  renderDailyPublication();
+  try {
+    state.dailyPublication = await api('/publications/daily');
+  } catch (error) {
+    state.dailyPublication = null;
+    const summary = $('#daily-publication-summary');
+    if (summary) summary.textContent = error.message || 'La publication premium est momentanément indisponible.';
+  }
+  dailyPublicationLoading = false;
+  renderDailyPublication();
 }
 
 async function copyDailyPublication() {
-  if (!state.dailyPublicationText) renderDailyPublication();
+  if (!state.me?.access?.hasAccess) {
+    window.location.hash = 'abonnements';
+    return;
+  }
+  if (!state.dailyPublicationText) await loadSubscriberDailyPublication();
+  if (!state.dailyPublicationText) return;
   await copyPlainText(state.dailyPublicationText);
   setDailyPublicationMessage('Publication copiée. Elle est prête à coller sur Facebook, Telegram ou un groupe.');
   toast('Publication copiée');
 }
 
 async function shareDailyPublication() {
-  if (!state.dailyPublicationText) renderDailyPublication();
+  if (!state.me?.access?.hasAccess) {
+    window.location.hash = 'abonnements';
+    return;
+  }
+  if (!state.dailyPublicationText) await loadSubscriberDailyPublication();
+  if (!state.dailyPublicationText) return;
   const payload = {
     title: 'ParisPromax - publication du jour',
     text: state.dailyPublicationText,
@@ -2041,6 +2073,12 @@ function renderSession() {
   if (!loggedIn) {
     $('#referral-link').value = '';
     $('#contact-referral-link').value = '';
+    state.dailyPublication = null;
+    if (dailyPublicationTimer) {
+      window.clearInterval(dailyPublicationTimer);
+      dailyPublicationTimer = null;
+    }
+    renderDailyPublication();
     return;
   }
   const { user, access, referral } = state.me;
@@ -2056,6 +2094,15 @@ function renderSession() {
   $('#access-detail').textContent = access?.hasAccess
     ? `Formule ${access.plan || 'active'}${access.paidUntil ? ` · jusqu’au ${dateLabel(access.paidUntil)}` : ''}`
     : 'Choisissez une formule pour débloquer les pronostics complets.';
+  if (access?.hasAccess) {
+    void loadSubscriberDailyPublication();
+    if (!dailyPublicationTimer) {
+      dailyPublicationTimer = window.setInterval(() => { void loadSubscriberDailyPublication(); }, 60000);
+    }
+  } else if (dailyPublicationTimer) {
+    window.clearInterval(dailyPublicationTimer);
+    dailyPublicationTimer = null;
+  }
 }
 
 function logout() {
@@ -2425,6 +2472,13 @@ async function boot() {
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
+  fetch('/android-release.json', { cache: 'no-store' }).then((response) => response.ok ? response.json() : null).then((release) => {
+    if (!release) return;
+    const banner = document.querySelector('[data-android-download-banner] strong');
+    if (banner) banner.textContent = 'Android ' + release.version + ' · dernière version';
+    const label = document.getElementById('android-release-label');
+    if (label) label.textContent = 'ParisPromax ' + release.version + ' (version ' + release.versionCode + ') est disponible. Téléchargez le fichier APK pour mettre à jour votre application.';
+  }).catch(() => {});
   bindEvents();
   revealHashDisclosure();
   startRaceCarousels();

@@ -205,8 +205,25 @@ async function startPredictionWorker({
         // Chargement différé : le client de cache IA n'essaie jamais Redis tant
         // qu'un job n'est pas réellement consommé.
         const { getPredictions } = require('./iaClient');
+        const { resolveCanonicalPrediction } = require('./predictionResolver');
+        const prisma = require('../db');
+        const { parisStartIso } = require('./raceTime');
         const { externalId } = job.data;
+        const race = await prisma.race.findUnique({
+          where: { externalId },
+          include: { result: true, predictions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+        });
+        if (!race || race.result) return { skipped: true };
+        let raw = {};
+        try { raw = JSON.parse(race.raw || '{}'); } catch {}
+        const start = Date.parse(parisStartIso(race.date, raw.time) || '');
+        if (!Number.isFinite(start) || Date.now() >= start) return { skipped: true };
         const result = await getPredictions(externalId, { force: true });
+        // A cached ranking alone is lost to history when nobody opens the race.
+        // Persist the trained prediction while it is still genuinely pre-race.
+        if (Date.now() < start && result?.predictions?.length) {
+          await resolveCanonicalPrediction(race, { iaEnabled: true, getPredictionsFn: async () => result });
+        }
         if (result) broadcastPredictions(externalId, result);
         return { ok: true, externalId };
       },

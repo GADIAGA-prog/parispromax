@@ -23,6 +23,9 @@ SELECT
   r.date                AS race_date,
   r.discipline          AS discipline,
   r.distance            AS distance_raw,
+  r."nonPartants"        AS non_partants,
+  r.raw                 AS race_raw,
+  ru."createdAt"        AS features_created_at,
   ru.number             AS number,
   ru.name               AS name,
   ru."coteFloat"        AS cote,
@@ -60,6 +63,40 @@ def _finalize(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
     df = df.copy()
+    if 'features_created_at' in df and 'race_raw' in df:
+        def start_time(row):
+            try:
+                raw = row['race_raw'] if isinstance(row['race_raw'], dict) else json.loads(row['race_raw'] or '{}')
+                return pd.Timestamp(str(row['race_date']) + ' ' + raw['time']).tz_localize('Europe/Paris').tz_convert('UTC')
+            except (ValueError, TypeError, KeyError):
+                return pd.NaT
+        starts = df.apply(start_time, axis=1)
+        created = pd.to_datetime(df['features_created_at'], utc=True, errors='coerce')
+        # Exclude whole fields with retrospective runner creation (backfills).
+        safe = (created <= starts).groupby(df['course_id']).transform('all')
+        df = df.loc[safe].copy()
+        if df.empty:
+            return df
+    def numbers(value):
+        try:
+            values = value if isinstance(value, list) else json.loads(value or '[]')
+            return [int(n) for n in values] if isinstance(values, list) else []
+        except (ValueError, TypeError):
+            return []
+    if 'non_partants' in df:
+        df = df.loc[~df.apply(lambda row: int(row['number']) in numbers(row['non_partants']), axis=1)].copy()
+    # An unknown third place is not a losing label. Keep only races whose
+    # entire top three is known, unique and represented in the active field.
+    valid_courses = []
+    for course_id, field in df.groupby('course_id', sort=False):
+        arrival = numbers(field.iloc[0]['winners'])
+        podium = arrival[:3]
+        if len(podium) == 3 and len(set(arrival)) == len(arrival) and set(podium).issubset(set(field['number'].astype(int))):
+            valid_courses.append(course_id)
+    df = df.loc[df['course_id'].isin(valid_courses)].copy()
+    if df.empty:
+        return df
+    df['winners'] = df['winners'].map(numbers)
     df["distance_m"] = df["distance_raw"].map(_distance_m)
     df["finish_pos"] = df.apply(lambda r: _finish_pos(r["number"], r["winners"]), axis=1)
     # musique : psycopg2 renvoie déjà un dict pour un champ jsonb ; sinon parse.

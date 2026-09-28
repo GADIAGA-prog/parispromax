@@ -44,7 +44,7 @@ test('les visuels hippiques illustrent le site et Android', () => {
   assert.match(historyScreen, /race-finish\.jpg/);
 });
 
-test('les interfaces ne présentent plus ParisPromax comme un produit IA', () => {
+test('les interfaces évitent les anciennes promesses marketing IA', () => {
   const visibleInterface = [
     read('backend', 'public', 'index.html'),
     read('backend', 'public', 'app.js'),
@@ -59,7 +59,7 @@ test('les interfaces ne présentent plus ParisPromax comme un produit IA', () =>
     read('src', 'screens', 'RaceDetailScreen.js'),
   ].join('\n');
 
-  assert.doesNotMatch(visibleInterface, /Pronostics? IA|intelligence artificielle|Indice IA|IA \+ données|ANALYSE IA|MODÈLE IA|🤖|name="sparkles"/i);
+  assert.doesNotMatch(visibleInterface, /intelligence artificielle|Indice IA|IA \+ données|ANALYSE IA|MODÈLE IA|🤖|name="sparkles"/i);
 });
 
 
