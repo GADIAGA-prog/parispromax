@@ -33,6 +33,10 @@ class LearningDataTests(unittest.TestCase):
         rows[-1]['features_created_at'] = '2026-09-27T15:00:00Z'
         self.assertTrue(_finalize(pd.DataFrame(rows)).empty)
 
+    def test_removed_raw_runner_is_not_a_negative_example(self):
+        frame = _finalize(pd.DataFrame(field(race_raw='{"horses":[{"number":1},{"number":2},{"number":3},{"number":4},{"number":5}]}')))
+        self.assertEqual(set(frame.number), {1, 2, 3, 4, 5})
+
     def test_validation_uses_later_days_not_same_day(self):
         train, valid = _grouped_time_split(['a', 'b', 'c', 'd', 'e'], race_dates=['2026-09-26']*2 + ['2026-09-27']*3)
         self.assertEqual(train, {'a', 'b'})
