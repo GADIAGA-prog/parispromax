@@ -27,9 +27,16 @@ from data_export import load_training_frame, load_from_json
 from ltr_features import build_features, relevance_from_finish, FEATURES
 
 
-def _grouped_time_split(course_ids, n_folds=4):
+def _grouped_time_split(course_ids, n_folds=4, race_dates=None):
     """Split par blocs de courses contigus (le passé entraîne, le futur valide)."""
     uniq = list(dict.fromkeys(course_ids))  # ordre d'apparition (déjà trié par course)
+    if race_dates is not None:
+        dates = sorted(set(str(day) for day in race_dates))
+        if len(dates) < 2:
+            return set(), set(uniq)
+        cutoff = dates[min(len(dates) - 1, max(1, int(len(dates) * n_folds / (n_folds + 1))))]
+        train_c = {course for course, day in zip(course_ids, race_dates) if str(day) < cutoff}
+        return train_c, set(uniq) - train_c
     cut = int(len(uniq) * (n_folds / (n_folds + 1)))
     train_c, valid_c = set(uniq[:cut]), set(uniq[cut:])
     return train_c, valid_c
@@ -57,7 +64,10 @@ def train(df, out_path="model/model.cbm"):
     group = df["course_id"].astype("category").cat.codes.to_numpy()  # entiers contigus
 
     # Split temporel par groupes (courses).
-    train_c, valid_c = _grouped_time_split(df["course_id"].tolist())
+    train_c, valid_c = _grouped_time_split(df["course_id"].tolist(), race_dates=df.get('race_date'))
+    if not train_c or not valid_c:
+        print('[train] Historique temporel insuffisant : modèle conservé.')
+        return None
     tr = df["course_id"].isin(train_c).to_numpy()
     va = df["course_id"].isin(valid_c).to_numpy()
 

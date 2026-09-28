@@ -24,6 +24,7 @@ const state = {
   payment: { provider: null, operator: null, otpMode: 'none', transactionId: null },
   dailyPublicationText: '',
   dailyPublication: null,
+  dailyPublicationError: null,
 };
 
 const FALLBACK_COUNTRIES = [
@@ -565,6 +566,11 @@ function buildDailyPublicationText(publication, country) {
     const result = race.result?.available ? ` | Arrivée officielle : ${race.result.arrival.join(' - ')}` : '';
     return `${prefix}${plainRaceLine(race)} | Podium + 2 : ${picks || 'en préparation'}${result}`;
   };
+  if (publication?.rows) return [
+    'PARISPROMAX · PRONOSTICS DU JOUR', dateLabel(publication.date), '',
+    ...publication.rows.map((entry, index) => raceLine(entry, (index + 1) + '. ')), '',
+    'Publication réservée aux abonnés · ' + dailyPublicationUrl(),
+  ].join('\n');
   const nationalLine = national ? raceLine(national) : 'La course nationale est en cours de préparation.';
   const ecdLines = (publication?.ecd || []).map((entry, index) => raceLine(entry, `${index + 1}. `));
   return [
@@ -611,8 +617,11 @@ function renderDailyPublication() {
   if (shareButton) shareButton.classList.remove('hidden');
   const publication = state.dailyPublication;
   if (!publication) {
-    summary.textContent = 'Chargement de votre publication premium…';
-    card.innerHTML = '<div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>';
+    state.dailyPublicationText = '';
+    summary.textContent = state.dailyPublicationError || 'Chargement de votre publication premium…';
+    card.innerHTML = state.dailyPublicationError
+      ? `<div class="empty-state"><p>${escapeHtml(state.dailyPublicationError)}</p></div>`
+      : '<div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>';
     return;
   }
   state.dailyPublicationText = buildDailyPublicationText(publication, country);
@@ -640,8 +649,10 @@ async function loadSubscriberDailyPublication() {
   renderDailyPublication();
   try {
     state.dailyPublication = await api('/publications/daily');
+    state.dailyPublicationError = null;
   } catch (error) {
     state.dailyPublication = null;
+    state.dailyPublicationError = error.message || 'La publication premium est momentanément indisponible.';
     const summary = $('#daily-publication-summary');
     if (summary) summary.textContent = error.message || 'La publication premium est momentanément indisponible.';
   }

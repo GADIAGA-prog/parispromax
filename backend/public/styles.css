@@ -1720,3 +1720,9 @@ html { scroll-padding-top: 126px; }
 .table-pending { font-size: 12px; color: #6a7972; max-width: 170px; }
 .prediction-table-note { padding: 15px 24px; margin: 0; }
 @media(max-width:600px) { .prediction-table-heading { padding: 18px; } .prediction-table th, .prediction-table td { padding: 14px; } }
+.daily-publication-shell { background: #fff; border: 1px solid #dce9e0; box-shadow: 0 14px 42px rgba(19,59,42,.06); padding: 28px; gap: 20px; }
+.daily-publication-copy h2 { color: #173b2b; font-size: clamp(24px,3vw,34px); }
+.daily-publication-copy p { color: #567064; }
+.daily-publication-actions .button-android { background: #eff6f1; color: #194b34; border-color: #c3d8ca; }
+.daily-publication-card { border: 1px solid #dce9e0; }
+@media(max-width:600px) { .daily-publication-shell { padding: 14px; } .daily-publication-copy h2 { font-size: 25px; } }

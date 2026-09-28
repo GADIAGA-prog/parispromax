@@ -165,8 +165,8 @@ test('la navigation web expose les quatre parcours prioritaires', () => {
 
   [desktopNavigation, mobileNavigation].forEach((navigation) => {
     assert.match(navigation, /href="#courses-du-jour">Courses/);
-    assert.match(navigation, /href="#quinte-pays">Pronostics/);
-    assert.match(navigation, /href="#publications">Publications/);
+    assert.match(navigation, /href="#publications">Pronostics/);
+    assert.match(navigation, /href="#quinte-pays">Nationale/);
     assert.match(navigation, /href="#abonnements">Abonnements/);
     assert.doesNotMatch(navigation, /href="#resultats"|href="#contact"/);
   });
