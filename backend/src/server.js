@@ -182,4 +182,5 @@ server.listen(config.port, () => {
     }\n`
   );
   void startOptionalRealtime();
+  if (config.isProd) require('./services/dailyRefresh').start();
 });

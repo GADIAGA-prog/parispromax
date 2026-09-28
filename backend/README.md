@@ -22,6 +22,18 @@ npm run dev                   # démarre l'API sur http://localhost:4000
 
 ## Endpoints principaux
 
+### Actualisation quotidienne (GMT / UTC)
+
+En production, le serveur lance la collecte au démarrage, à 00:00 GMT,
+puis chaque heure jusqu'à 06:00, à 11:00 et à 15:30. Une collecte vide ou
+en échec est retentée après 15 minutes. Le cron externe partage le même
+verrou pour éviter deux collectes simultanées dans le processus.
+Les routes du programme et de la sélection nationale utilisent la date GMT
+du jour par défaut ; une date explicite permet toujours de consulter les archives.
+Les données officielles non encore publiées restent en attente pour cette date.
+Le serveur doit rester actif pour exécuter sa minuterie ; GitHub Actions sert
+de secours (ses déclenchements peuvent être retardés).
+
 | Méthode | Route | Auth | Rôle |
 |--------|-------|------|------|
 | POST | `/auth/request-otp` | — | Envoie un code (dev : renvoyé dans la réponse) |

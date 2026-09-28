@@ -54,13 +54,9 @@ function grandCarnetOfficialReport(report, { operator = null } = {}) {
   };
 }
 
-// GET /races — list of today's (latest) races, grouped by track. Public.
+// GET /races — list of today's GMT races, grouped by track. Public.
 router.get('/', async (req, res) => {
-  let date = req.query.date;
-  if (!date) {
-    const latest = await prisma.race.findFirst({ orderBy: { date: 'desc' }, select: { date: true } });
-    date = latest?.date;
-  }
+  const date = req.query.date || new Date().toISOString().slice(0, 10);
   const where = date ? { date } : {};
   const races = await prisma.race.findMany({
     where,
@@ -105,13 +101,7 @@ router.get('/', async (req, res) => {
 // GET /races/full — complete dataset (tracks -> races -> horses) in the app's
 // schema, so the mobile app can render + compute AI locally. Public.
 router.get('/full', async (req, res) => {
-  let date = req.query.date;
-  // No date specified -> use the most recent race date available (so a fresh
-  // live scrape supersedes older/demo data instead of mixing with it).
-  if (!date) {
-    const latest = await prisma.race.findFirst({ orderBy: { date: 'desc' }, select: { date: true } });
-    date = latest?.date;
-  }
+  const date = req.query.date || new Date().toISOString().slice(0, 10);
   const where = date ? { date } : {};
   const races = await prisma.race.findMany({
     where, orderBy: { createdAt: 'desc' }, take: 300, include: { result: true },
@@ -162,11 +152,7 @@ router.get('/full', async (req, res) => {
 router.get('/national', optionalAuth, async (req, res) => {
   const country = String(req.query.country || '').trim().toLowerCase();
   if (!country) return res.status(400).json({ error: 'country requis' });
-  let date = req.query.date;
-  if (!date) {
-    const latest = await prisma.race.findFirst({ orderBy: { date: 'desc' }, select: { date: true } });
-    date = latest?.date || new Date().toISOString().slice(0, 10);
-  }
+  const date = req.query.date || new Date().toISOString().slice(0, 10);
 
   const pick = await prisma.nationalPick.findUnique({
     where: { date_country: { date, country } },
@@ -244,14 +230,7 @@ router.get('/ecd', async (req, res) => {
   const profile = getEcdProfile(country);
   if (!profile) return res.status(400).json({ error: 'country invalide' });
 
-  let date = req.query.date;
-  if (!date) {
-    const latest = await prisma.race.findFirst({
-      orderBy: { date: 'desc' },
-      select: { date: true },
-    });
-    date = latest?.date || new Date().toISOString().slice(0, 10);
-  }
+  const date = req.query.date || new Date().toISOString().slice(0, 10);
 
   let officialProgram = null;
   try {

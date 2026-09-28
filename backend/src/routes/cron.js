@@ -1,8 +1,7 @@
 const express = require('express');
 const prisma = require('../db');
 const config = require('../config');
-const { scrapeProgramme } = require('../jobs/scrape');
-const { ingestData } = require('../jobs/ingest');
+const dailyRefresh = require('../services/dailyRefresh');
 const { detectResults } = require('../jobs/results');
 const { syncOfficialResultsData } = require('../services/officialCatchup');
 
@@ -23,53 +22,12 @@ function checkToken(req, res, next) {
   next();
 }
 
-// The actual heavy work: scrape today's programme (clean replace) + auto-detect
-// results for today + yesterday. Runs in the background (can take minutes).
-async function runRefresh() {
-  const today = new Date().toISOString().slice(0, 10);
-  try {
-    // The scheduled refresh runs in the background, so it can load the whole
-    // PMU card rather than the smaller, interactive admin preview.
-    const payload = await scrapeProgramme(today, { maxReunions: 20, maxCourses: 20 });
-    if (payload.racetracks.length) {
-      // Assign the declared Quinte as soon as the complete PMU payload exists.
-      // This must not depend on the heavier prediction/Runner ingestion below.
-      const { autoAssignNationalPicks } = require('../jobs/ingest');
-      await autoAssignNationalPicks(payload);
-
-      // ingestData upserts races. Do not delete the date first: doing so erased
-      // already detected results and could leave the day empty after a partial
-      // upstream response or an ingestion failure.
-      const scraped = await ingestData(payload);
-      console.log(`[cron] scraped ${scraped} races (${payload.racetracks.length} tracks) for ${today}`);
-    }
-  } catch (e) {
-    console.error('[cron] scrape error:', e.message);
-  }
-  try {
-    const r = await detectResults({ dates: [today, isoDaysAgo(1)] });
-    console.log('[cron] results:', r);
-  } catch (e) {
-    console.error('[cron] results error:', e.message);
-  }
-  try {
-    const official = await syncOfficialResultsData({ dates: [today, isoDaysAgo(1)] });
-    console.log('[cron] official reports:', official);
-  } catch (e) {
-    console.error('[cron] official ECD error:', e.message);
-  }
-}
-
-// POST /cron/refresh — responds immediately (202) and runs the job in the
-// background, so the caller (GitHub Actions) never times out.
-let running = false;
+// Cron and the server timer share one in-flight job.
 router.post('/refresh', checkToken, (req, res) => {
-  if (running) return res.status(200).json({ ok: true, alreadyRunning: true });
-  running = true;
-  res.status(202).json({ ok: true, started: true });
-  runRefresh()
-    .catch((e) => console.error('[cron/refresh] unhandled error:', e))
-    .finally(() => { running = false; });
+  const result = dailyRefresh.trigger({ force: true });
+  res.status(result.started ? 202 : 200).json({
+    ok: true, started: result.started, alreadyRunning: result.reason === 'already-running',
+  });
 });
 
 // POST /cron/results — LIGHT & FREQUENT: only detect results (arrivals) for
