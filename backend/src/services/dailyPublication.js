@@ -60,7 +60,7 @@ function publishedPicks(race, resolved, podium) {
   // never rewrite the publication that users saw before the race.
   const start = Date.parse(raceSummary(race).startsAt || '');
   const closed = Boolean(race?.result) || (Number.isFinite(start) && Date.now() >= start);
-  const snapshot = parse(race?.result?.predictionSnapshot, {});
+  const snapshot = parse(race?.result?.predictionSnapshot, {}) || {};
   const frozen = snapshot.ranking || preRacePredictionPicks(race);
   const ranking = closed ? frozen : resolved?.picks || [];
   return groupPicks(ranking, race, podium).selected.map(compactPick);

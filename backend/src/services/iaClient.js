@@ -33,7 +33,7 @@ async function buildPayload(race) {
   const runners = await prisma.runner.findMany({ where: { raceId: race.id } });
   let excluded = [];
   try { excluded = JSON.parse(race.nonPartants || '[]'); } catch {}
-  const nonPartants = new Set(excluded.map(Number));
+  const nonPartants = new Set((Array.isArray(excluded) ? excluded : []).map(Number));
   let activeNumbers = null;
   try {
     const raw = JSON.parse(race.raw || '{}');

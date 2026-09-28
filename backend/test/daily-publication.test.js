@@ -48,7 +48,7 @@ test('la publication premium joint programme, Podium + 2 et arrivée officielle'
 });
 
 test('une arrivée fige la sélection publiée avant le départ', async () => {
-  const finished = race({ id: 'finished', number: 'R1C2', result: { winners: '[2,1,3]' } });
+  const finished = race({ id: 'finished', number: 'R1C2', result: { winners: '[2,1,3]', predictionSnapshot: null } });
   finished.predictions = [{
     createdAt: new Date('2026-09-24T11:00:00Z'),
     topPicks: JSON.stringify([5, 4, 3, 2, 1].map((number, index) => ({ number, name: `Cheval ${number}`, rank: index + 1 }))),
