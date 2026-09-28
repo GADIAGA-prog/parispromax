@@ -63,6 +63,17 @@ def _finalize(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
     df = df.copy()
+    if 'race_raw' in df:
+        def is_active(row):
+            try:
+                raw = row['race_raw'] if isinstance(row['race_raw'], dict) else json.loads(row['race_raw'] or '{}')
+                horses = raw.get('horses')
+                return not isinstance(horses, list) or int(row['number']) in {int(h['number']) for h in horses}
+            except (ValueError, TypeError, KeyError):
+                return False
+        df = df.loc[df.apply(is_active, axis=1)].copy()
+        if df.empty:
+            return df
     if 'features_created_at' in df and 'race_raw' in df:
         def start_time(row):
             try:

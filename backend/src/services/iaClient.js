@@ -34,9 +34,14 @@ async function buildPayload(race) {
   let excluded = [];
   try { excluded = JSON.parse(race.nonPartants || '[]'); } catch {}
   const nonPartants = new Set(excluded.map(Number));
+  let activeNumbers = null;
+  try {
+    const raw = JSON.parse(race.raw || '{}');
+    if (Array.isArray(raw.horses)) activeNumbers = new Set(raw.horses.map((horse) => Number(horse.number)));
+  } catch {}
   return {
     race_id: race.externalId,
-    runners: runners.filter((r) => !nonPartants.has(r.number)).map((r) => ({
+    runners: runners.filter((r) => !nonPartants.has(r.number) && (!activeNumbers || activeNumbers.has(r.number))).map((r) => ({
       number: r.number,
       name: r.name,
       cote: r.coteFloat,
